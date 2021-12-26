@@ -261,7 +261,7 @@ Sort:<br>
 					if (FilteredListForDisplay.length != 0) {
 						document.getElementById("StringHowManyShown_Number").innerHTML = BigInt(FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(FilteredListForDisplay.length, InputList.length, 2) + " of all URLs submitted)"
 						for (Index = 0; Index < FilteredListForDisplay.length; Index++) {
-							Output += escapeHTMLChars(FilteredListForDisplay[Index][0][0])
+							Output += FilteredListForDisplay[Index][0][0]
 							if (Index != FilteredListForDisplay.length - 1) {
 								Output += "\n"
 							}
