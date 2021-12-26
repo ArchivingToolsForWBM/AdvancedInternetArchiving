@@ -100,29 +100,38 @@ Sort:<input type="checkbox" onchange="AutoUpdateCode()" id="SortReverse"><label 
 		//InputList[Index][0][0]: Contains the list of URLs the user sent (column A)
 		//InputList[Index][0][1]: Contains YES/NO (column B)
 		//InputList[Index][0][2]: Contains the WBM version of the URL, or blank if not saved (column C)
-		//InputList[Index][1]: contains a string representing the timestamp in YYYY-MM-DD hh:mm:ss format, if it was saved, otherwise it will be "NotSaved"
+		//InputList[Index][1]: contains a string representing the timestamp in YYYY-MM-DD hh:mm:ss format, if it was saved, otherwise it will be "NotSaved". Will say "Error" if invalid string was supplied.
 		//InputList[Index][2]: Status (used for color indicator or filtering): "NotSaved", "Saved", "SavedRedirected"
 		let Count_Saved = 0
 		let Count_Redirected = 0
 		let Count_NotSaved = 0
 		let Count_NotSaved_AfterFilter = 0
 		let Count_TotalURLs = InputList.length
-		let Date_Earliest = "9999-99-99 99:99:99"
-		let Date_Latest = "0000-00-00 00:00:00"
-		let Date_Earliest_AfterFilter = "9999-99-99 99:99:99"
-		let Date_Latest_AfterFilter = "0000-00-00 00:00:00"
+		let Date_Earliest = "?"
+		let Date_Latest = "?"
+		let Date_Earliest_AfterFilter = "?"
+		let Date_Latest_AfterFilter = "?"
 		for (let Index = 0; Index < InputList.length; Index++) {
 			if (InputList[Index][0][2] != "") { //If it WAS saved...
-				let TimestampStringFromURL = InputList[Index][0][2].match(RegExp("(?<=" + String2Regex_IA_URLPartBeforeTimestamp + ")\\d+(?=\\/)"))[0]
-				if (TimestampStringFromURL.length != 0) {
-					InputList[Index][1] = ConvertTimeStampStringToEasyToRead(TimestampStringFromURL)
-					//Place in the earliest and latest date (initially invalid, but will get replaced with an earlier date or later date)
-						if (Date_Earliest > InputList[Index][1]) {
-							Date_Earliest = InputList[Index][1]
-						}
-						if (Date_Latest < InputList[Index][1]) {
-							Date_Latest = InputList[Index][1]
-						}
+				let TimestampStringFromURL = InputList[Index][0][2].match(RegExp("(?<=" + String2Regex_IA_URLPartBeforeTimestamp + ")\\d*(?=\\/)"))[0]
+				InputList[Index][1] = ConvertTimeStampStringToEasyToRead(TimestampStringFromURL)
+				//Place in the earliest and latest date (initially invalid, but will get replaced with an earlier date or later date)
+					if (InputList[Index][1] != "Error") { //If the dates are valid...
+						//Default the dates to whatever date that is valid, and work our way finding the lowest and highest.
+							if (Date_Earliest == "?") {
+								Date_Earliest = InputList[Index][1]
+							}
+							if (Date_Latest == "?") {
+								Date_Latest = InputList[Index][1]
+							}
+						//Now set the lowest and highest.
+							if (Date_Earliest > InputList[Index][1]) {
+								Date_Earliest = InputList[Index][1]
+							}
+							if (Date_Latest < InputList[Index][1]) {
+								Date_Latest = InputList[Index][1]
+							}
+					}
 					if (InputList[Index][0][0] != InputList[Index][0][2].replace(RegExp(String2Regex_IA_URLPartBeforeTimestamp + "\\d+\\/"), "") ) { //If a redirection have been found...
 						InputList[Index][2] = "SavedRedirected"
 						Count_Redirected++
@@ -130,9 +139,6 @@ Sort:<input type="checkbox" onchange="AutoUpdateCode()" id="SortReverse"><label 
 						InputList[Index][2] = "Saved"
 						Count_Saved++
 					}
-				} else {
-					InputList[Index][1] = "Error"
-				}
 			} else { //If not saved
 				InputList[Index][2] = "NotSaved"
 				InputList[Index][1] = "NotSaved"
@@ -144,7 +150,13 @@ Sort:<input type="checkbox" onchange="AutoUpdateCode()" id="SortReverse"><label 
 			InputList = FilterList(InputList)
 		//Get statistics after filtering
 			for (let Index = 0; Index < InputList.length; Index++) {
-				if (InputList[Index][1] != "NotSaved") {
+				if (InputList[Index][1] != "NotSaved"&&InputList[Index][1] != "Error") {
+					if (Date_Earliest_AfterFilter == "?") {
+						Date_Earliest_AfterFilter = InputList[Index][1]
+					}
+					if (Date_Latest_AfterFilter == "?") {
+						Date_Latest_AfterFilter = InputList[Index][1]
+					}
 					if (Date_Earliest_AfterFilter > InputList[Index][1]) {
 						Date_Earliest_AfterFilter = InputList[Index][1]
 					}
@@ -227,20 +239,23 @@ Sort:<input type="checkbox" onchange="AutoUpdateCode()" id="SortReverse"><label 
 	}
 	function ConvertTimeStampStringToEasyToRead(String) {
 		//This converts the timestamp string "YYYYMMDDhhmmss" to "YYYY-MM-DD HH:MM:SS" format.
-		//YYYYMMDDhhmmss
-		let DateString_Year = String.match(/\d{4}/)[0]
-		//----MMDDhhmmss
-		let DateString_Month = String.match(/(?<=\d{4})\d{2}/)[0]
-		//------DDhhmmss
-		let DateString_Day = String.match(/(?<=\d{6})\d{2}/)[0]
-		//--------hhmmss
-		let DateString_Hour = String.match(/(?<=\d{8})\d{2}/)[0]
-		//----------mmss
-		let DateString_Minute = String.match(/(?<=\d{10})\d{2}/)[0]
-		//------------ss
-		let DateString_Second = String.match(/(?<=\d{12})\d{2}/)[0]
-		
-		return DateString_Year + "-" + DateString_Month + "-" + DateString_Day + " " + DateString_Hour + ":" + DateString_Minute + ":" + DateString_Second
+			if ((/^\d{14}$/).test(String)) {
+				//YYYYMMDDhhmmss
+				let DateString_Year = String.match(/\d{4}/)[0]
+				//----MMDDhhmmss
+				let DateString_Month = String.match(/(?<=\d{4})\d{2}/)[0]
+				//------DDhhmmss
+				let DateString_Day = String.match(/(?<=\d{6})\d{2}/)[0]
+				//--------hhmmss
+				let DateString_Hour = String.match(/(?<=\d{8})\d{2}/)[0]
+				//----------mmss
+				let DateString_Minute = String.match(/(?<=\d{10})\d{2}/)[0]
+				//------------ss
+				let DateString_Second = String.match(/(?<=\d{12})\d{2}/)[0]
+				return DateString_Year + "-" + DateString_Month + "-" + DateString_Day + " " + DateString_Hour + ":" + DateString_Minute + ":" + DateString_Second
+			} else {
+				return "Error"
+			}
 	}
 	function CompareDates(a, b) {
 		if (a[1] === b[1]) {
