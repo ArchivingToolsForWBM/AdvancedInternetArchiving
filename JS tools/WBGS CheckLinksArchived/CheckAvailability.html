@@ -1,0 +1,442 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+			input { font-family: monospace;}
+		</style>
+	</head>
+<body>
+<h1 style="text-align: center;">Check availability</h1>
+<p>This tool takes a given google sheet processed by WBGS's &ldquo;Check if URLs are archived in the Wayback Machine&rdquo;, converts the list to whatever is defined here (sort, filter)</p>
+
+<p>NOTE: This simply reads the timestamp in the WBM version of the URL (<kbd>https://web.archive.org/web/<u>YYYYMMDDhhmmss</u>/&lt;SiteURL&gt;</kbd>) to figure out when it was saved.</p>
+
+<p>Text format must be this (below) using tab-separated values (Only copy columns A-C on google sheets).
+<table><tr><td><pre>OriginalURL	YES/NO	WBMURL
+OriginalURL	YES/NO	WBMURL
+OriginalURL	YES/NO	WBMURL</pre></td></tr></table>
+</p>
+<input type="checkbox" onchange="AutoUpdateCode()" id="AutoUpdate" checked><label for="AutoUpdate">Auto update (note: may be laggy on large number of URLs!)</label><br>
+
+<textarea id="InputList" cols="100" rows="30" oninput="AutoUpdateCode()"></textarea><br>
+Filter:<br>
+<ul>
+	<li>Availability: <button onclick="CheckAllFilters()">Check All</button><button onclick="UncheckAllFilters()">Uncheck all</button><button onclick="InvertFilters()">Invert</button><br>
+		<ul>
+			<li><input type="checkbox" onchange="AutoUpdateCode()" class="FilterSettings" checked id="Filter_IfSaved" data-savedlist_status_name="Saved"><label for="Filter_IfSaved">Include URLs that have been saved</label></li>
+			<li><input type="checkbox" onchange="AutoUpdateCode()" class="FilterSettings" checked id="Filter_SavedButRedirected" data-savedlist_status_name="SavedRedirected"><label for="Filter_SavedButRedirected">Include URLs that have been saved and got a different URL.</label></li>
+			<li><input type="checkbox" onchange="AutoUpdateCode()" class="FilterSettings" checked id="Filter_IfNotSaved" data-savedlist_status_name="NotSaved"><label for="Filter_IfNotSaved">Include URLs that haven't been saved</label></li>
+		</ul>
+	</li>
+	<li>Is within a given date range: <abbr title="Inclusive, URLs before this date will be excluded.">Start</abbr>: <input type="date" oninput="AutoUpdateCode()" id="DateRangeStart" onchange="ValidateDateRange()"> <abbr title="Exclusive, URLs on or after this date will be excluded">End</abbr>: <input type="date" oninput="AutoUpdateCode()" id="DateRangeEnd" onchange="ValidateDateRange()">
+	Any date that is not valid (such as missing year, month and/or day) will not apply its exclusion (example: having just the end date would mean ALL URLs before it will be shown in the output). If you entered a date and wish to invalidate it, use BACKSPACE, when editing the text string (in Google Chrome, make sure the <a href="https://en.wikipedia.org/wiki/Date_picker">date picker</a> isn't present).</li>
+</ul>
+Sort:<input type="checkbox" onchange="AutoUpdateCode()" id="SortReverse"><label for="SortReverse">Reverse</label><br>
+<input type="radio" onchange="AutoUpdateCode()" id="Sort_None" name="SortURLs" checked><label for="Sort_None">Keep the same order you sent</label><br>
+<input type="radio" onchange="AutoUpdateCode()" id="Sort_Date" name="SortURLs"><label for="Sort_Date">Sort by date (non-saved URLs are treated as the latest/highest position).</label><br>
+
+<button onclick="Submit()" id="SubmitButton">Submit</button> <span id="InvalidDateMessage"></span>
+<hr>
+<span id="Output"></span>
+</body>
+<script>
+	const String2Regex_IA_URLPartBeforeTimestamp = "https:\\/\\/web\\.archive\\.org\\/web\\/"
+	function CheckAllFilters() {
+		let FilterSettingsList = document.getElementsByClassName("FilterSettings")
+		for (let Index = 0; Index < FilterSettingsList.length; Index++) {
+			FilterSettingsList[Index].checked = 1
+		}
+		AutoUpdateCode()
+	}
+	function UncheckAllFilters() {
+		let FilterSettingsList = document.getElementsByClassName("FilterSettings")
+		for (let Index = 0; Index < FilterSettingsList.length; Index++) {
+			FilterSettingsList[Index].checked = 0
+		}
+		AutoUpdateCode()
+	}
+	function InvertFilters() {
+		let FilterSettingsList = document.getElementsByClassName("FilterSettings")
+		for (let Index = 0; Index < FilterSettingsList.length; Index++) {
+			FilterSettingsList[Index].checked = FilterSettingsList[Index].checked ^ 1
+		}
+		AutoUpdateCode()
+	}
+	function ValidateDateRange() {
+		if ((document.getElementById("DateRangeStart").value != "")&&(document.getElementById("DateRangeEnd").value != "")&&(document.getElementById("DateRangeEnd").value < document.getElementById("DateRangeStart").value)) {
+			document.getElementById("SubmitButton").disabled = true
+			document.getElementById("InvalidDateMessage").innerHTML = "<kbd style='color: #ff0000'>End date is before the start!</kbd>"
+		} else {
+			document.getElementById("SubmitButton").disabled = false
+			document.getElementById("InvalidDateMessage").innerHTML = ""
+		}
+	}
+	function AutoUpdateCode() {
+		if (document.getElementById("AutoUpdate").checked) {
+			if ((document.getElementById("DateRangeStart").value != "")&&(document.getElementById("DateRangeEnd").value != "")&&(document.getElementById("DateRangeEnd").value < document.getElementById("DateRangeStart").value)) {
+				document.getElementById("Output").innerHTML = "<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>"
+			} else {
+				Submit()
+			}
+		}
+	}
+	function Submit() {
+		let Output = ""
+		let InputList = LookForValidLines((document.getElementById("InputList").value).split('\n'))
+		//InputList: contains this data:
+		//InputList[Index][0]: contains google sheet list:
+		//InputList[Index][0][0]: Contains the list of URLs the user sent (column A)
+		//InputList[Index][0][1]: Contains YES/NO (column B)
+		//InputList[Index][0][2]: Contains the WBM version of the URL, or blank if not saved (column C)
+		//InputList[Index][1]: contains a string representing the timestamp in YYYY-MM-DD hh:mm:ss format, if it was saved, otherwise it will be "NotSaved"
+		//InputList[Index][2]: Status (used for color indicator or filtering): "NotSaved", "Saved", "SavedRedirected"
+		let Count_Saved = 0
+		let Count_Redirected = 0
+		let Count_NotSaved = 0
+		let Count_NotSaved_AfterFilter = 0
+		let Count_TotalURLs = InputList.length
+		let Date_Earliest = "9999-99-99 99:99:99"
+		let Date_Latest = "0000-00-00 00:00:00"
+		let Date_Earliest_AfterFilter = "9999-99-99 99:99:99"
+		let Date_Latest_AfterFilter = "0000-00-00 00:00:00"
+		for (let Index = 0; Index < InputList.length; Index++) {
+			if (InputList[Index][0][2] != "") { //If it WAS saved...
+				let TimestampStringFromURL = InputList[Index][0][2].match(RegExp("(?<=" + String2Regex_IA_URLPartBeforeTimestamp + ")\\d+(?=\\/)"))[0]
+				InputList[Index][1] = ConvertTimeStampStringToEasyToRead(TimestampStringFromURL)
+				//Place in the earliest and latest date (initially invalid, but will get replaced with an earlier date or later date)
+					if (Date_Earliest > InputList[Index][1]) {
+						Date_Earliest = InputList[Index][1]
+					}
+					if (Date_Latest < InputList[Index][1]) {
+						Date_Latest = InputList[Index][1]
+					}
+				if (InputList[Index][0][0] != InputList[Index][0][2].replace(RegExp(String2Regex_IA_URLPartBeforeTimestamp + "\\d+\\/"), "") ) { //If a redirection have been found...
+					InputList[Index][2] = "SavedRedirected"
+					Count_Redirected++
+				} else {
+					InputList[Index][2] = "Saved"
+					Count_Saved++
+				}
+			} else { //If not saved
+				InputList[Index][2] = "NotSaved"
+				InputList[Index][1] = "NotSaved"
+				Count_NotSaved++
+			}
+			
+		}
+		//Filter
+			InputList = FilterList(InputList)
+		//Get statistics after filtering
+			for (let Index = 0; Index < InputList.length; Index++) {
+				if (InputList[Index][1] != "NotSaved") {
+					if (Date_Earliest_AfterFilter > InputList[Index][1]) {
+						Date_Earliest_AfterFilter = InputList[Index][1]
+					}
+					if (Date_Latest_AfterFilter < InputList[Index][1]) {
+						Date_Latest_AfterFilter = InputList[Index][1]
+					}
+				} else {
+					Count_NotSaved_AfterFilter++
+				}
+			}
+		//Sort
+			if (document.getElementById("Sort_Date").checked) {
+				if (document.getElementById("SortReverse").checked == false) {
+					InputList = InputList.sort(CompareDates)
+				} else {
+					InputList = InputList.sort(CompareDatesReverse)
+				}
+			}
+		//Output
+			Output += "<h1>Statistics (before filter)</h1>"
+			Output += "<ul>"
+			if (Count_NotSaved != Count_TotalURLs) {
+				Output += "<li><kbd>Earliest date: " + Date_Earliest + "</kbd></li>"
+				Output += "<li><kbd>Latest date: " + Date_Latest + "</kbd></li>"
+			} else {
+				Output += "<li><kbd>No URL with a timestamp found.</kbd></li>"
+			}
+			Output += "<li><kbd>Total number of URLs: " + BigInt(Count_TotalURLs).toString(10) + "</kbd></li>" //Bigint just in case should it show E notation.
+			Output += "<ul>"
+			Output += "<li><kbd style='color: #00ff00'>Number of URLs that were saved: " + BigInt(Count_Saved).toString(10) + " (" + BetterPercentageUsingInts(Count_Saved, Count_TotalURLs, 2) + ")</kbd></li>"
+			Output += "<li><kbd style='color: #ffff00'>Number of URLs that were saved and got a different URL: " + BigInt(Count_Redirected).toString(10) + " (" + BetterPercentageUsingInts(Count_Redirected, Count_TotalURLs, 2) + ")</kbd></li>"
+			Output += "<li><kbd style='color: #ff0000'>Number of URLs that were not saved: " + BigInt(Count_NotSaved).toString(10) + " (" + BetterPercentageUsingInts(Count_NotSaved, Count_TotalURLs, 2) + ")</kbd></li>"
+			Output += "</ul>"
+			Output += "</ul>"
+			Output += "<h1>Statistics (after filter)</h1>"
+			Output += "<ul>"
+			if (Count_NotSaved_AfterFilter != InputList.length) {
+				Output += "<li><kbd>Earliest date: " + Date_Earliest_AfterFilter + "</kbd></li>"
+				Output += "<li><kbd>Latest date: " + Date_Latest_AfterFilter + "</kbd></li>"
+			} else {
+				Output += "<li><kbd>No URL with a timestamp found.</kbd></li>"
+			}
+			Output += "<li><kbd>Number of results found: " + BigInt(InputList.length).toString(10) + "</kbd></li>"
+			Output += "</ul>"
+			if (InputList.length != 0) {
+				Output += "<textarea readonly cols='100' rows='30'>"
+				for (var Index = 0; Index < InputList.length; Index++) {
+					Output += escapeHTMLChars(InputList[Index][0][0])
+					if (Index != InputList.length - 1) {
+						Output += "\n"
+					}
+				}
+				Output += "</textarea><br>"
+				Output += "<table>"
+				Output += "<tr><th>Google sheets - Sent URLs</th><th>Google sheets - WBM YES/NO</th><th>WBM URL version</th><th>Date</th></tr>"
+				for (var Index = 0; Index < InputList.length; Index++) {
+					Output += "<tr>"
+					Output += "<td style='background-color: " + ColorStatus(InputList[Index][2]) + "'><kbd>" + escapeHTMLChars(InputList[Index][0][0]) + "</kbd></td>"
+					Output += "<td style='background-color: " + ColorStatus(InputList[Index][2]) + "'><kbd>" + escapeHTMLChars(InputList[Index][0][1]) + "</kbd></td>"
+					Output += "<td style='background-color: " + ColorStatus(InputList[Index][2]) + "'><kbd>" + escapeHTMLChars(InputList[Index][0][2]) + "</kbd></td>"
+					Output += "<td style='background-color: " + ColorStatus(InputList[Index][2]) + "'><kbd><span class='NoLineBreak'>" + InputList[Index][1] + "</span></kbd></td>"
+					Output += "</tr>"
+				}
+				Output += "</table>"
+			} else {
+				Output += "<kbd>No URLs found</kbd>"
+			}
+			document.getElementById("Output").innerHTML = Output
+	}
+	function LookForValidLines(InputArray) {
+		let Output = []
+		for (var Index = 0; Index < InputArray.length; Index++) {
+			if ((/^[^\t]+?\t[^\t]*?\t[^\t]*?$/).test(InputArray[Index])) {
+				Output.push([InputArray[Index].split('\t'), "", "", ""])
+			}
+		}
+		return Output
+	}
+	function ConvertTimeStampStringToEasyToRead(String) {
+		//This converts the timestamp string "YYYYMMDDhhmmss" to "YYYY-MM-DD HH:MM:SS" format.
+		//YYYYMMDDhhmmss
+		let DateString_Year = String.match(/\d{4}/)[0]
+		//----MMDDhhmmss
+		let DateString_Month = String.match(/(?<=\d{4})\d{2}/)[0]
+		//------DDhhmmss
+		let DateString_Day = String.match(/(?<=\d{6})\d{2}/)[0]
+		//--------hhmmss
+		let DateString_Hour = String.match(/(?<=\d{8})\d{2}/)[0]
+		//----------mmss
+		let DateString_Minute = String.match(/(?<=\d{10})\d{2}/)[0]
+		//------------ss
+		let DateString_Second = String.match(/(?<=\d{12})\d{2}/)[0]
+		
+		return DateString_Year + "-" + DateString_Month + "-" + DateString_Day + " " + DateString_Hour + ":" + DateString_Minute + ":" + DateString_Second
+	}
+	function CompareDates(a, b) {
+		if (a[1] === b[1]) {
+			return 0;
+		}
+		else {
+			return (a[1] < b[1]) ? -1 : 1;
+		}
+	}
+	function CompareDatesReverse(a, b) {
+		if (a[1] === b[1]) {
+			return 0;
+		}
+		else {
+			return (a[1] < b[1]) ? 1 : -1;
+		}
+	}
+	function FilterList(List) {
+		//InputList: contains this data:
+		//InputList[Index][0]: contains google sheet list:
+		//InputList[Index][0][0]: Contains the list of URLs the user sent (column A)
+		//InputList[Index][0][1]: Contains YES/NO (column B)
+		//InputList[Index][0][2]: Contains the WBM version of the URL, or blank if not saved (column C)
+		//InputList[Index][1]: contains a string representing the timestamp in YYYY-MM-DD hh:mm:ss format, if it was saved, otherwise it will be "NotSaved"
+		//InputList[Index][2]: Status (used for color indicator or filtering): "NotSaved", "Saved", "SavedRedirected"
+		let OutputArray = new Array()
+		let FilterArrayList = new Array()
+		let FilterSettingsList = document.getElementsByClassName("FilterSettings")
+		for (let Index = 0; Index < FilterSettingsList.length; Index++) {
+			if (FilterSettingsList[Index].checked) {
+				FilterArrayList.push(FilterSettingsList[Index].dataset.savedlist_status_name)
+			}
+		}
+		for (let Index = 0; Index < List.length; Index++) {
+			let IncludedStatus = false
+			for (let Index2 = 0; Index2 < FilterArrayList.length; Index2++) {
+				if (List[Index][2] == FilterArrayList[Index2]) {
+					IncludedStatus = true
+				}
+			}
+			let StartDateCheck = ((/^\d{4}-\d{2}-\d{2}$/).test(document.getElementById("DateRangeStart").value))
+			let EndDateCheck = ((/^\d{4}-\d{2}-\d{2}$/).test(document.getElementById("DateRangeEnd").value))
+			
+			let UrlIsBeforeStartDate = false
+			if (StartDateCheck&&(List[Index][1] != "NotSaved")&&(List[Index][1] < (document.getElementById("DateRangeStart").value + " 00:00:00"))) {
+				UrlIsBeforeStartDate = true
+			}
+			
+			let UrlIsAfterEndDate = false
+			if (EndDateCheck&&(List[Index][1] != "NotSaved")&&(List[Index][1] >= (document.getElementById("DateRangeEnd").value + " 00:00:00"))) {
+				UrlIsAfterEndDate = true
+			}
+			
+			if ((UrlIsBeforeStartDate == false)&&(UrlIsAfterEndDate == false)&&(IncludedStatus)) {
+				OutputArray.push(List[Index])
+			}
+		}
+		return OutputArray
+	}
+	function ColorStatus(Status) {
+		let Output = ""
+		switch (Status) {
+		
+		case "NotSaved":
+			Output = "#800000"
+			break
+		case "Saved":
+			Output = "#008000"
+			break
+		case "SavedRedirected":
+			Output = "#808000"
+			break
+		default:
+			Output = "#000080"
+		}
+		return Output
+	}
+	function escapeHTMLChars(string) {
+		//Should the user's input contains "<", ">", and "&", prevent the innerHTML from treating these as HTML tags/escapes
+			string = string.replaceAll("&", "&amp;") //This must be done first, to avoid replacing already-replaced symbol's ampersand character.
+			string = string.replaceAll("<", "&lt;")
+			string = string.replaceAll(">", "&gt;")
+			return string
+	}
+	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec) {
+		//This function calculates a percentage of a value (must be bigint), and returns a
+		//string representing a percentage using fixed-point arithmetic (https://en.wikipedia.org/wiki/Fixed-point_arithmetic ).
+		//Unlike a typical Quantity*100/MaxQuantity (or Quantity / MaxQuantity * 100)
+		//This also reports if rounding to 0 or 100% have occurred.
+		//Note: Don't use negative or decimal numbers for any of the parameters!
+		
+		//Output: A string:
+		//"--" if MaxQuantity is 0 (division by zero in bigint is not handled unlike double-precision floating point)
+		//"<number>%" a percentage. Rounds half-up.
+		//"Greater than <1*(10**(2+NumberOfDigitsAfterDec_BigInt))-1>" if results between 99.99..% and 100% (avoids rounding up towards 100%).
+		//"Less than <1/(10**NumberOfDigitsAfterDec_BigInt)>" is same as above but avoids rounding towards 0%.
+		
+		//100.0 is 1000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 1
+		//100.00 is 10000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 2
+		//100.000 is 100000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 3
+		Quantity = BigInt(Quantity)
+		MaxQuantity = BigInt(MaxQuantity)
+		NumberOfDigitsAfterDec_BigInt = BigInt(NumberOfDigitsAfterDec)
+		if (MaxQuantity == 0n) {
+			return "--"
+		} else {
+			let Percentage = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) / MaxQuantity
+			let Modulo = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) % MaxQuantity
+			//Check if remainder is greater than or equal to half of MaxQuantity, if so, increment
+			//Percentage by 1 unit.
+			
+			//Get halfway point, note: this must be rounded half up as well so that if Modulo is 0.5 greater in the case MaxQuantity is an odd number,
+			//would correctly round upwards. Example: 3/2 is 1.5 (default round to 1), since we are dealing with integers, Remainder being 2 or more should be
+			//consider a round up for percentage
+				let HalfwayPointOfMaxQuantity = MaxQuantity / 2n
+				if ((MaxQuantity % 2n) != 0n) {
+					HalfwayPointOfMaxQuantity++
+				}
+			//Round half-up
+				if (Modulo >= HalfwayPointOfMaxQuantity) { //round upwards
+					Percentage++
+					//We rounded the number up (actually increased the value), but it can potentially be at 100%, lets check it and if it did, override it.
+					if (Percentage == 100n*10n**NumberOfDigitsAfterDec_BigInt) {
+						//Rounded to 100% detected
+						//Note to self:
+						//Should say 99% if NumberOfDigitsAfterDec_BigInt = 0
+						//Should say 99.9% if NumberOfDigitsAfterDec_BigInt = 1
+						//99.99 if NumberOfDigitsAfterDec_BigInt = 2
+						//and so on.
+						//So basically the number of 9s after the decimal
+						//is NumberOfDigitsAfterDec_BigInt.
+							let DecimalPortion = ""
+							if (NumberOfDigitsAfterDec_BigInt != 0n) {
+								DecimalPortion += "."
+								for (let NineCount = 0; NineCount < NumberOfDigitsAfterDec; NineCount++) {
+									DecimalPortion += "9"
+								}
+							}
+						return "Greater than 99" + DecimalPortion + "%"
+					}
+				} else {
+					//Rounded downwards (default)
+					
+					if ((Modulo != 0n)&&(Percentage == 0n)) {
+						//Rounded to 0% detected
+						//Note to self:
+						//Should say 1% if NumberOfDigitsAfterDec_BigInt = 0
+						//Should say 0.1% if NumberOfDigitsAfterDec_BigInt = 1
+						//0.01% if NumberOfDigitsAfterDec_BigInt = 2
+						//and so on.
+						//Basically, if NumberOfDigitsAfterDec_BigInt = 2, the number of zeros
+						//between the decimal point and "1" is NumberOfDigitsAfterDec_BigInt - 1
+							let DecimalPortion = ""
+							if (NumberOfDigitsAfterDec_BigInt != 0n) {
+								DecimalPortion += "."
+								for (let ZeroCount = 0; ZeroCount < NumberOfDigitsAfterDec - 1; ZeroCount++) {
+									DecimalPortion += "0"
+								}
+								return "Less than 0" + DecimalPortion + "1%"
+							} else {
+								return "Less than 1%"
+							}
+					}
+				}
+				//Split the number separated by decimal point.
+					let OutputString = Percentage.toString(10)
+					let WholeNumberPart = OutputString.substring(0, OutputString.length - NumberOfDigitsAfterDec)
+					if (WholeNumberPart == "") {
+						WholeNumberPart = "0"
+					}
+					//This make sure that leading zeros (when less than 1%) exists, should the value in fixed point have fewer digits
+					//so that it can display things like 0.01 (stored internally in fixed point as 1) instead of 0.1 when NumberOfDigitsAfterDec is set to 2.
+					//It is due to the fact that toString(10) removes all leading zeros.
+						if (OutputString.length < NumberOfDigitsAfterDec) {
+							let NumberOfLeadingZeroesNeeded = NumberOfDigitsAfterDec - OutputString.length //example: 34 (length = 2) which is supposed to be 0.00034% when NumberOfDigitsAfterDec = 5, so 5-2 = 3, so 3 0s are needed.
+							let LeadingZeroes = ""
+							for (let Count = 0; Count < NumberOfLeadingZeroesNeeded; Count++) {
+								LeadingZeroes += "0"
+							}
+							OutputString = LeadingZeroes + OutputString
+						}
+					let DecimalPart = OutputString.substring(OutputString.length - NumberOfDigitsAfterDec)
+			return WholeNumberPart + "." + DecimalPart + "%"
+		}
+	}
+	function BetterPercentageUsingFloatsForBarGraphs(Quantity, MaxQuantity) {
+		//This one is made for bar graphs, specifically used for CSS
+		//linear gradients. If division by zero occurred, returns 0,
+		//Otherwise it return a string representing values 0-100%
+		//(clamped to 0-100).
+		if (MaxQuantity == 0) {
+			return "0%"
+		} else {
+			return clamp((Quantity * 100 / MaxQuantity), 0, 100).toString(10) + "%" //I find it more exact to multiply by 100 first and then divide so that most of the rounding errors happen on the final step.
+		}
+	}
+	function clamp(num, min, max) {
+		//Restrict a number within a specified range.
+			if (isNaN(num) == true) {
+				num = 0
+			}
+			return num <= min ? min : num >= max ? max : num;
+	}
+</script>

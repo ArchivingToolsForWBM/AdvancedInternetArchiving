@@ -1,0 +1,567 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+		</style>
+	</head>
+<body>
+
+<p>This tool will take a given <a href="https://en.wikipedia.org/wiki/Tab-separated_values">tab-seperated values (TSV)</a> table from google sheets of the archive results  (&ldquo;Archive URLs&rdquo;), and searches for any potential issues or anomalies.
+Note: this tool only judges based on the output data of the table, not the actual web-page content.</p>
+
+<p>It will output a list of URLs filtered by their statuses.</p>
+
+<p>Enter your data like this (same format as google sheets, can be easily copied from there):
+<table><tr><td><pre>SentURL1	YES/NO	HTTPStatus	ArchiveURL/Error	Number	FirstArchive
+SentURL2	YES/NO	HTTPStatus	ArchiveURL/Error	Number	FirstArchive
+SentURL3	YES/NO	HTTPStatus	ArchiveURL/Error	Number	FirstArchive
+...</pre></td></tr></table></p>
+^There must be EXACTLY 6 columns of data (including &ldquo;cells&rdquo; with blank data), that means each line
+MUST have exactly 5 tab characters between each data. This can be achieved by highlighting columns A-F on google sheets, and copying that (CTRL+C). Reason why this tool exists is to search for
+issues not caught by the system, things like redirects (twitter), blank cell (column D), and many other issues. 
+
+Paste your google sheet result here:<br><br>
+<input type="checkbox" id="AutoUpdate" checked onchange="AutoUpdate()"><label for="AutoUpdate">Auto update</label><br>
+<textarea id="GsheetInput" cols="100" rows="30" oninput="AutoUpdate()"></textarea><br>
+Filter:<br>
+<button onclick="CheckAllFilters(); AutoUpdate()">Check All</button><button onclick="UnCheckAllFilters(); AutoUpdate()">Uncheck All</button><button onclick="InvertFilters(); AutoUpdate()">Invert</button><br>
+<ul>
+	<li>Sure saved:</li>
+	<ul>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_SavedBefore" class="FilterSettings" data-status_list_name="Success_SavedBefore"><label for="Filter_Success_SavedBefore">Success (have saved before)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_SuccessFirstArchive" class="FilterSettings" data-status_list_name="Success_FirstArchive"><label for="Filter_SuccessFirstArchive">Success (&ldquo;First Archive&rdquo;) </label></li>
+	</ul>
+	<li>Unsure saved:</li>
+	<ul>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_NoIAResult" checked class="FilterSettings" data-status_list_name="NoIAResult"><label for="Filter_NoIAResult">No results</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Blank_Column_D" checked class="FilterSettings" data-status_list_name="Blank_Column_D"><label for="Filter_Blank_Column_D">Result but column D is blank</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Redirected" checked class="FilterSettings" data-status_list_name="Redirected"><label for="Filter_Redirected">Redirects</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Errors" checked class="FilterSettings" data-status_list_name="Error"><label for="Filter_Errors">Errors</label></li>
+	</ul>
+</ul>
+<br>
+Sort:<br>
+<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_UserSentURLOrder" name="Sort_Output" checked>Same order of URLs you set</label><br>
+<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse" name="Sort_Output">Based on the status message. Note: Any non-error or redirected results are ordered <abbr title="It is because the URL starts with &ldquo;https://web.archive.org/web/YYYYMMDDhhmmss/[...]&rdquo; and &ldquo;YYYYMMDDhhmmss&rdquo; is the timestamp.">chronologically</abbr></label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse_Reverse" name="Sort_Output">Reverse</label>)<br>
+<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusType" name="Sort_Output">Based on the status <abbr title="Missing data, missing URLs, errors, redirects, and successes.">type</abbr> identified from the save results</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusType_Reverse" name="Sort_Output">Reverse</label>)<br>
+<button onclick="CheckURLs()">Submit</button><button onclick="Reset()">Reset</button><br><br>
+<hr>
+<span id="Output_Statistics"></span>
+<kbd id="StringHowManyShown" hidden>Displayed: <span id="StringHowManyShown_Number"></span></kbd><br>
+<textarea readonly id="Output_Plaintext" hidden cols="100" rows="30"></textarea>
+<span id="Output_table"></span>
+</body>
+<script>
+	function AutoUpdate() {
+		if (document.getElementById("AutoUpdate").checked) {
+			CheckURLs()
+		}
+	}
+	function CheckAllFilters() {
+		let FilterListSettings = document.getElementsByClassName("FilterSettings")
+		for (let Index = 0; Index < FilterListSettings.length; Index++) {
+			FilterListSettings[Index].checked = true
+		}
+	}
+	function UnCheckAllFilters() {
+		let FilterListSettings = document.getElementsByClassName("FilterSettings")
+		for (let Index = 0; Index < FilterListSettings.length; Index++) {
+			FilterListSettings[Index].checked = false
+		}
+	}
+	function InvertFilters() {
+		let FilterListSettings = document.getElementsByClassName("FilterSettings")
+		for (let Index = 0; Index < FilterListSettings.length; Index++) {
+			FilterListSettings[Index].checked = (FilterListSettings[Index].checked ^ 1)
+		}
+	}
+	function CheckURLs() {
+		const regex_IA_URLPart = /^https:\/\/web\.archive\.org\/web\/\d*\//
+		const regex_IAURLExtractMainSiteURL_Start = /(?<=https:\/\/web\.archive\.org\/web\/\d*\/)/
+		const regex_IAURLExtractMainSiteURL_End = /$/
+		//Clear out the output area.
+			document.getElementById("Output_Statistics").innerHTML = ""
+			document.getElementById("StringHowManyShown").hidden = true
+			document.getElementById("Output_Plaintext").hidden = true
+		
+		let Output = ""
+		let InputList = RemoveInvalidData((document.getElementById("GsheetInput").value).split('\n'))
+		//let OutputTable_NotConfirmedToBeSaved = new Array()
+		//let OutputTable_SuccessList = new Array()
+		
+		let Index = 0
+		let Count_NoIAResult = 0
+		let Count_Blank_Column_D = 0
+		let Count_Success = 0
+		let Count_Success_SavedBefore = 0
+		let Count_Success_FirstArchive = 0
+		let Count_Redirected = 0
+		let Count_Error = 0
+		let Count_NotConfirmedToBeSaved = 0
+		//Create a table
+			for (Index = 0; Index < InputList.length; Index++) {
+				InputList[Index] = Array((InputList[Index]).split('\t'), "")
+			}
+		//Note to self on what sub-array it contains:
+		//InputList[Index][0] = Gsheet sub-array
+		//InputList[Index][0][0] = (Google sheets' column A) SentURL
+		//InputList[Index][0][1] = (Google sheets' column B) YES/NO
+		//InputList[Index][0][2] = (Google sheets' column C) HTTPStatus
+		//InputList[Index][0][3] = (Google sheets' column D) ArchiveURL/Error
+		//InputList[Index][0][4] = (Google sheets' column E) Number
+		//InputList[Index][0][5] = (Google sheets' column F) FirstArchive
+		//InputList[Index][1] = This javascript status indicator (NoIAResult, Blank_Column_D, Success_SavedBefore, Success_FirstArchive, Redirected, Error).
+		
+		//Verify URLs
+		//Note to self:
+		//-If ArchiveURL/Error has the https://web.archive.org/web/YYYYMMDDhhmmss/ part of the URL it is marked as a "success", but may be a redirect
+		//--If the website part of the IA URL matches, then it is a true success and not a redirect, otherwise if the string is different, then flag it as a redirect.
+		//-If ArchiveURL/Error contains a description instead of the IA part (like "Cannot get status of spn2-<code>"), then it is an error.
+		//-If ArchiveURL/Error contains blank instead of the IA part (like "Cannot get status of spn2-<code>"), then it is an error by the system failing to print it, it may be marked as a success or fail.
+			for (Index = 0; Index < InputList.length; Index++) {
+				//Check
+					if (JSON.stringify(InputList[Index][0]) == JSON.stringify([InputList[Index][0][0], "", "", "", "", ""])) {
+						//Although I could do this:
+						// (InputList[Index][0] == Array(InputList[Index][0][0], "", "", "", "", ""))
+						//but it doesn't work if you compare an array with another array, that it ALWAYS
+						//returns false, even when all the elements in the two are the identical!
+						//https://stackoverflow.com/questions/7837456/how-to-compare-arrays-in-javascript
+						//
+						//A workaround is by performing "stringify", converting the entire object (in this case, an array) into a string.
+						//
+						//This checks if the entire result is blank.
+							InputList[Index][1] = "NoIAResult"
+							//OutputTable_NotConfirmedToBeSaved.push(InputList[Index])
+							
+							Count_NoIAResult++
+							Count_NotConfirmedToBeSaved++
+					} else if (InputList[Index][0][3] == "") {
+						//If there is blank on the spot where it shows the IA version of the URL or error.
+							InputList[Index][1] = "Blank_Column_D"
+							//OutputTable_NotConfirmedToBeSaved.push(InputList[Index])
+							
+							Count_Blank_Column_D++
+							Count_NotConfirmedToBeSaved++
+					} else if (regex_IA_URLPart.test(InputList[Index][0][3])) {
+						//Page saved successfully, but did it got redirected?
+							if (InputList[Index][0][0] == InputList[Index][0][3].substring((InputList[Index][0][3]).search(regex_IAURLExtractMainSiteURL_Start), (InputList[Index][0][3]).search(regex_IAURLExtractMainSiteURL_End))) {
+								//Saved without redirects
+									if (InputList[Index][0][5] != "First Archive") {
+										InputList[Index][1] = "Success_SavedBefore"
+										Count_Success_SavedBefore++
+									} else {
+										InputList[Index][1] = "Success_FirstArchive"
+										Count_Success_FirstArchive++
+									}
+									//OutputTable_SuccessList.push(InputList[Index])
+									Count_Success++
+							} else {
+								//Redirected and saved
+									InputList[Index][1] = "Redirected"
+									//OutputTable_NotConfirmedToBeSaved.push(InputList[Index])
+									
+									Count_Redirected++
+									Count_NotConfirmedToBeSaved++
+							}
+					} else {
+						//Page failed/errored (shows error message instead of the IA version of the link)
+							InputList[Index][1] = "Error"
+							//OutputTable_NotConfirmedToBeSaved.push(InputList[Index])
+							
+							Count_Error++
+							Count_NotConfirmedToBeSaved++
+					}
+				//Next
+			}
+			//Filter
+				let FilteredListForDisplay = CheckIncludedInFilter(InputList)
+			//Sort the filtered data. NOTE: array.reverse() is unstable, meaning the order of same keys will be reversed.
+				if (document.getElementById("Sort_Output_SaveStatusResponse").checked) {
+					FilteredListForDisplay = FilteredListForDisplay.sort(CompareSaveStatusResponse)
+				} else if (document.getElementById("Sort_Output_SaveStatusResponse_Reverse").checked) {
+					FilteredListForDisplay = FilteredListForDisplay.sort(CompareSaveStatusResponseReverse)
+				} else if (document.getElementById("Sort_Output_SaveStatusType").checked) {
+					FilteredListForDisplay = FilteredListForDisplay.sort(CompareStatusIndicator)
+				} else if (document.getElementById("Sort_Output_SaveStatusType_Reverse").checked) {
+					FilteredListForDisplay = FilteredListForDisplay.sort(CompareStatusIndicatorReverse)
+				}
+		//Output in HTML
+			if (InputList.length != 0) {
+				//statistics (bar graph)
+					//Show statistics table, I use Bigint to prevent potential E notation.
+					Output += "<pre><table>"
+						//Successful saves
+							Output += "<tr>"
+							Output += "<td rowspan='6'>" +  BigInt(InputList.length).toString(10) + " (100.00%) total URL(s) found</td>"
+							Output += "<td rowspan='2'>" + BigInt(Count_Success).toString(10) + " (" + BetterPercentageUsingInts(Count_Success, InputList.length, 2) + ") successful saves</td>"
+							//Saved before
+								Output += "<td style='background-image: linear-gradient(to right, #008000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_SavedBefore, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_SavedBefore, InputList.length) + " 100%)'>" + BigInt(Count_Success_SavedBefore) + " (" + BetterPercentageUsingInts(Count_Success_SavedBefore, InputList.length, 2) + " of all URLs"
+								if (Count_Success != 0) {
+									Output += ", " + BetterPercentageUsingInts(Count_Success_SavedBefore, Count_Success, 2) + " of all successful saves"
+								}
+								Output += ") were saved before</td>"
+							Output += "</tr>"
+							Output += "<tr>"
+							//First archive
+								Output += "<td style='background-image: linear-gradient(to right, #00C000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_FirstArchive, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_FirstArchive, InputList.length) + " 100%)'>" + BigInt(Count_Success_FirstArchive) + " (" + BetterPercentageUsingInts(Count_Success_FirstArchive, InputList.length, 2) + " of all URLs"
+								if (Count_Success != 0) {
+									Output += ", " + BetterPercentageUsingInts(Count_Success_FirstArchive, Count_Success, 2) + " of all successful saves"
+								}
+								Output += ") first archive(s)</td>"
+						//Unsures
+							Output += "<tr>"
+							Output += "<td rowspan='4'>" + BigInt(Count_NotConfirmedToBeSaved).toString(10) + " (" + BetterPercentageUsingInts(Count_NotConfirmedToBeSaved, InputList.length, 2) + ") not sure saved</td>"
+							//No results
+								Output += "<td style='background-image: linear-gradient(to right, #808080, " + BetterPercentageUsingFloatsForBarGraphs(Count_NoIAResult, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_NoIAResult, InputList.length) + " 100%)'>" + BigInt(Count_NoIAResult).toString(10) + " (" + BetterPercentageUsingInts(Count_NoIAResult, InputList.length, 2) + " of all URLs"
+								if (Count_NotConfirmedToBeSaved != 0) {
+									Output += ", " + BetterPercentageUsingInts(Count_NoIAResult, Count_NotConfirmedToBeSaved, 2) + " of unsures"
+								}
+								Output += ") have no results at all</td>"
+							Output += "</tr>"
+							//Blank column D
+								Output += "<tr><td style='background-image: linear-gradient(to right, #A08080, " + BetterPercentageUsingFloatsForBarGraphs(Count_Blank_Column_D, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Blank_Column_D, InputList.length) + "100%)'>" + BigInt(Count_Blank_Column_D).toString(10) + " (" + BetterPercentageUsingInts(Count_Blank_Column_D, InputList.length, 2) + " of all URLs"
+								if (Count_NotConfirmedToBeSaved != 0) {
+									Output += ", " + BetterPercentageUsingInts(Count_Blank_Column_D, Count_NotConfirmedToBeSaved, 2) + " of unsures"
+								}
+								Output += ") have only column D being blank</td></tr>"
+							//Redirect
+								Output += "<tr><td style='background-image: linear-gradient(to right, #808000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Redirected, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Redirected, InputList.length) + " 100%)'>" + BigInt(Count_Redirected).toString(10) + " (" + BetterPercentageUsingInts(Count_Redirected, InputList.length, 2) + " of all URLs"
+								if (Count_NotConfirmedToBeSaved != 0) {
+									Output += ", " + BetterPercentageUsingInts(Count_Redirected, Count_NotConfirmedToBeSaved, 2) + " of unsures"
+								}
+								Output += ") got redirected</td></tr>"
+							//Error
+								Output += "<tr><td style='background-image: linear-gradient(to right, #800000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Error, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Error, InputList.length) + " 100%)'>" + BigInt(Count_Error).toString(10) + " (" + BetterPercentageUsingInts(Count_Error, InputList.length, 2) + " of all URLs"
+								if (Count_NotConfirmedToBeSaved != 0) {
+									Output += ", " + BetterPercentageUsingInts(Count_Error, Count_NotConfirmedToBeSaved, 2) + " of unsures"
+								}
+								Output += ") errored</td></tr>"
+					Output += "</table></pre>"
+					
+					if (Count_Success == InputList.length) {
+						Output += "<br><br><span style='color: #00ff00; font-size: xx-large'>All " + BigInt(InputList.length).toString(10) + " URL(s) are sure to be saved.</span><br><br>"
+					}
+					Output += "</pre>"
+					document.getElementById("Output_Statistics").innerHTML = Output
+				//Retry list in plaintext
+					Output = ""
+					if (FilteredListForDisplay.length != 0) {
+						document.getElementById("StringHowManyShown_Number").innerHTML = BigInt(FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(FilteredListForDisplay.length, InputList.length, 2) + " of all URLs submitted)"
+						for (Index = 0; Index < FilteredListForDisplay.length; Index++) {
+							Output += escapeHTMLChars(FilteredListForDisplay[Index][0][0])
+							if (Index != FilteredListForDisplay.length - 1) {
+								Output += "\n"
+							}
+						}
+						document.getElementById("StringHowManyShown").hidden = false
+						document.getElementById("Output_Plaintext").hidden = false
+						document.getElementById("Output_Plaintext").value = Output
+					} else {
+						Output += "No items found"
+					}
+				//Display filtered list using HTML table. Shows the URLs, the color indicator, and the WBM response.
+					Output = ""
+					if (FilteredListForDisplay.length != 0) {
+						Output += "<table>"
+						Output += "<tr>"
+						Output += "<th>URLs you&apos;ve sent</th><th>Save status of URLs or errors</th><th>Status type</th>"
+						Output += "</tr>"
+						for (Index = 0; Index < FilteredListForDisplay.length; Index++) {
+							//Table
+								Output += "<tr>"
+								Output += "<td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1]) + ";'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index][0][0]) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1]) + "'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index][0][3]) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1]) + "'><kbd>" + FilteredListForDisplay[Index][1] + "</kbd></td>"
+								Output += "</tr>"
+						}
+						Output += "</table>"
+					} else {
+						Output += "<kbd>No items found</kbd>"
+					}
+			} else {
+				Output += "<kbd>No URLs found</kbd>"
+			}
+		//Done
+			document.getElementById("Output_table").innerHTML = Output
+	}
+	function Reset() {
+		document.getElementById("GsheetInput").value = ""
+		document.getElementById("Filter_NoIAResult").checked = true
+		document.getElementById("Filter_Blank_Column_D").checked = true
+		document.getElementById("Filter_Redirected").checked = true
+		document.getElementById("Filter_Errors").checked = true
+		document.getElementById("Filter_Success_SavedBefore").checked = false
+		document.getElementById("Filter_SuccessFirstArchive").checked = false
+		document.getElementById("Sort_Output_UserSentURLOrder").checked = true
+		document.getElementById("Output_Statistics").innerHTML = ""
+		document.getElementById("StringHowManyShown").hidden = true
+		document.getElementById("Output_Plaintext").hidden = true
+	}
+	
+	function ConvertURLListToTableFlaggingDuplicates(ArrayList) {
+		//This returns a 2D array: [[URL, DuplicateFlag], [URL, DuplicateFlag]]
+		//-URL is the list of stuff (primarily URLs), assuming this do not have any sub-arrays within.
+		//-DuplicateFlag is flagged false when no duplicates exists, otherwise if the second
+		// or later items also exist, they themselves are flagged as true
+		let index1 = 0
+		let index2 = 0
+		let OutputTableDuplicateFlags = new Array(ArrayList.length)
+		for (index1 = 0; index1 < ArrayList.length; index1++) {
+			OutputTableDuplicateFlags[index1] = Array(ArrayList[index1], false)
+		}
+		for (index1 = 0; index1 < ArrayList.length; index1++) {
+			for (index2 = index1 + 1; index2 < ArrayList.length; index2++) {
+				if (ArrayList[index1] == ArrayList[index2]) {
+					OutputTableDuplicateFlags[index2][1] = true
+				}
+			}
+		}
+		return OutputTableDuplicateFlags
+	}
+	function RemoveItemsInTableFlaggedAsDuplicates(TableFlaggingDups) {
+		//Extracts whatever outputted by ConvertURLListToTableFlaggingDuplicates
+		//that aren't duplicates, without gaps.
+		let index1 = 0
+		let OutputArray = new Array()
+		for (index1 = 0; index1 < TableFlaggingDups.length; index1++) {
+			if (TableFlaggingDups[index1][1] == false) {
+				OutputArray.push(TableFlaggingDups[index1][0])
+			}
+		}
+		return OutputArray
+	}
+	function AddMatchIndexNumberToArrayInital(ArrayList) {
+		//Input: array[URL, URL, URL]
+		//This returns a 2D array: [[URL, MatchingID, SuccessOrFail, IAComment], [URL, MatchingID, SuccessOrFail, IAComment]]
+		//-URL is the list of stuff (primarily URLs), assuming this do not have any sub-arrays within.
+		//-MatchingID from this is -1 by default, but to be later use as a matching detector. If a match
+		// is found, MatchingID will be any non-negative number representing the index of the other array that matches.
+		let index1 = 0
+		let OutputArray = new Array()
+		for (index1 = 0; index1 < ArrayList.length; index1++) {
+			OutputArray[index1] = Array(ArrayList[index1], -1, "", "")
+		}
+		return OutputArray
+	}
+	function RemoveInvalidData(InputArray) {
+		let OutputArray = new Array()
+		let index1 = 0
+		for (index1 = 0; index1 < InputArray.length; index1++) {
+			if ((/^[^\t]+?\t[^\t]*?\t[^\t]*?\t[^\t]*?\t[^\t]*?\t[^\t]*?$/).test(InputArray[index1]) == true) {
+				OutputArray.push(InputArray[index1])
+			}
+		}
+		return OutputArray
+	}
+	function escapeHTMLChars(string) {
+		//Should the user's input contains "<", ">", and "&", prevent the innerHTML from treating these as HTML tags/escapes
+			string = string.replaceAll("&", "&amp;") //This must be done first, to avoid replacing already-replaced symbol's ampersand character.
+			string = string.replaceAll("<", "&lt;")
+			string = string.replaceAll(">", "&gt;")
+			return string
+	}
+	function URLColorIndicator(SaveStatus) {
+		let ColorIndicator = "blue"
+		if (SaveStatus == "NoIAResult") {
+			ColorIndicator = "#808080"
+		} else if (SaveStatus == "Blank_Column_D") {
+			ColorIndicator = "#A08080"
+		} else if (SaveStatus == "Success_SavedBefore") {
+			ColorIndicator = "#008000"
+		} else if (SaveStatus == "Success_FirstArchive") {
+			ColorIndicator = "#00C000"
+		} else if (SaveStatus == "Redirected") {
+			ColorIndicator = "#808000"
+		} else if (SaveStatus == "Error") {
+			ColorIndicator = "#800000"
+		}
+		return ColorIndicator
+	}
+	function CheckIncludedInFilter(WBGSInfoList) {
+		//Checks should the URL items should be included in the list
+		//WBGSInfoList is an array containing this:
+		//WBGSInfoList[Index][0] = Gsheet sub-array
+		//WBGSInfoList[Index][0][0] = (Google sheets' column A) SentURL
+		//WBGSInfoList[Index][0][1] = (Google sheets' column B) YES/NO
+		//WBGSInfoList[Index][0][2] = (Google sheets' column C) HTTPStatus
+		//WBGSInfoList[Index][0][3] = (Google sheets' column D) SavedResult
+		//WBGSInfoList[Index][0][4] = (Google sheets' column E) FirstArchive
+		//WBGSInfoList[Index][1] = This javascript status indicator (NoIAResult, Blank_Column_D, Success_SavedBefore, Success_FirstArchive, Redirected, Error).
+			let OutputFilterList = new Array()
+			let ArrayOfEnabledStatuses = new Array()
+			let FilterSettingsElements = document.getElementsByClassName("FilterSettings")
+			for (let Index = 0; Index < FilterSettingsElements.length; Index++) {
+				if (FilterSettingsElements[Index].checked) {
+					ArrayOfEnabledStatuses.push(FilterSettingsElements[Index].dataset.status_list_name)
+				}
+			}
+			for (Index = 0; Index < WBGSInfoList.length; Index++) {
+				for (let Index2 = 0; Index2 < ArrayOfEnabledStatuses.length; Index2++) {
+					if (WBGSInfoList[Index][1] == ArrayOfEnabledStatuses[Index2]) {
+						OutputFilterList.push(WBGSInfoList[Index])
+					}
+				}
+			}
+		return OutputFilterList
+	}
+	//Compare the flagged status based on this JS checking the URL
+		function CompareStatusIndicator(a, b) {
+			if (a[1] === b[1]) {
+				return 0;
+			} else {
+				return (a[1] < b[1]) ? -1 : 1;
+			}
+		}
+		function CompareStatusIndicatorReverse(a, b) {
+			if (a[1] === b[1]) {
+				return 0;
+			} else {
+				return (a[1] < b[1]) ? 1 : -1;
+			}
+		}
+	//Compare Column D's (IA's save status response)
+		function CompareSaveStatusResponse(a, b) {
+			if (a[0][3] === b[0][3]) {
+				return 0;
+			} else {
+				return (a[0][3] < b[0][3]) ? -1 : 1;
+			}
+		}
+		function CompareSaveStatusResponseReverse(a, b) {
+			if (a[0][3] === b[0][3]) {
+				return 0;
+			} else {
+				return (a[0][3] < b[0][3]) ? 1 : -1;
+			}
+		}
+	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec) {
+		//This function calculates a percentage of a value (must be bigint), and returns a
+		//string representing a percentage using fixed-point arithmetic (https://en.wikipedia.org/wiki/Fixed-point_arithmetic ).
+		//Unlike a typical Quantity*100/MaxQuantity (or Quantity / MaxQuantity * 100)
+		//This also reports if rounding to 0 or 100% have occurred.
+		//Note: Don't use negative or decimal numbers for any of the parameters!
+		
+		//Output: A string:
+		//"--" if MaxQuantity is 0 (division by zero in bigint is not handled unlike double-precision floating point)
+		//"<number>%" a percentage. Rounds half-up.
+		//"Greater than <1*(10**(2+NumberOfDigitsAfterDec_BigInt))-1>" if results between 99.99..% and 100% (avoids rounding up towards 100%).
+		//"Less than <1/(10**NumberOfDigitsAfterDec_BigInt)>" is same as above but avoids rounding towards 0%.
+		
+		//100.0 is 1000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 1
+		//100.00 is 10000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 2
+		//100.000 is 100000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 3
+		Quantity = BigInt(Quantity)
+		MaxQuantity = BigInt(MaxQuantity)
+		NumberOfDigitsAfterDec_BigInt = BigInt(NumberOfDigitsAfterDec)
+		if (MaxQuantity == 0n) {
+			return "--"
+		} else {
+			let Percentage = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) / MaxQuantity
+			let Modulo = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) % MaxQuantity
+			//Check if remainder is greater than or equal to half of MaxQuantity, if so, increment
+			//Percentage by 1 unit.
+			
+			//Get halfway point, note: this must be rounded half up as well so that if Modulo is 0.5 greater in the case MaxQuantity is an odd number,
+			//would correctly round upwards. Example: 3/2 is 1.5 (default round to 1), since we are dealing with integers, Remainder being 2 or more should be
+			//consider a round up for percentage
+				let HalfwayPointOfMaxQuantity = MaxQuantity / 2n
+				if ((MaxQuantity % 2n) != 0n) {
+					HalfwayPointOfMaxQuantity++
+				}
+			//Round half-up
+				if (Modulo >= HalfwayPointOfMaxQuantity) { //round upwards
+					Percentage++
+					//We rounded the number up (actually increased the value), but it can potentially be at 100%, lets check it and if it did, override it.
+					if (Percentage == 100n*10n**NumberOfDigitsAfterDec_BigInt) {
+						//Rounded to 100% detected
+						//Note to self:
+						//Should say 99% if NumberOfDigitsAfterDec_BigInt = 0
+						//Should say 99.9% if NumberOfDigitsAfterDec_BigInt = 1
+						//99.99 if NumberOfDigitsAfterDec_BigInt = 2
+						//and so on.
+						//So basically the number of 9s after the decimal
+						//is NumberOfDigitsAfterDec_BigInt.
+							let DecimalPortion = ""
+							if (NumberOfDigitsAfterDec_BigInt != 0n) {
+								DecimalPortion += "."
+								for (let NineCount = 0; NineCount < NumberOfDigitsAfterDec; NineCount++) {
+									DecimalPortion += "9"
+								}
+							}
+						return "Greater than 99" + DecimalPortion + "%"
+					}
+				} else {
+					//Rounded downwards (default)
+					
+					if ((Modulo != 0n)&&(Percentage == 0n)) {
+						//Rounded to 0% detected
+						//Note to self:
+						//Should say 1% if NumberOfDigitsAfterDec_BigInt = 0
+						//Should say 0.1% if NumberOfDigitsAfterDec_BigInt = 1
+						//0.01% if NumberOfDigitsAfterDec_BigInt = 2
+						//and so on.
+						//Basically, if NumberOfDigitsAfterDec_BigInt = 2, the number of zeros
+						//between the decimal point and "1" is NumberOfDigitsAfterDec_BigInt - 1
+							let DecimalPortion = ""
+							if (NumberOfDigitsAfterDec_BigInt != 0n) {
+								DecimalPortion += "."
+								for (let ZeroCount = 0; ZeroCount < NumberOfDigitsAfterDec - 1; ZeroCount++) {
+									DecimalPortion += "0"
+								}
+								return "Less than 0" + DecimalPortion + "1%"
+							} else {
+								return "Less than 1%"
+							}
+					}
+				}
+				//Split the number separated by decimal point.
+					let OutputString = Percentage.toString(10)
+					let WholeNumberPart = OutputString.substring(0, OutputString.length - NumberOfDigitsAfterDec)
+					if (WholeNumberPart == "") {
+						WholeNumberPart = "0"
+					}
+					//This make sure that leading zeros (when less than 1%) exists, should the value in fixed point have fewer digits
+					//so that it can display things like 0.01 (stored internally in fixed point as 1) instead of 0.1 when NumberOfDigitsAfterDec is set to 2.
+					//It is due to the fact that toString(10) removes all leading zeros.
+						if (OutputString.length < NumberOfDigitsAfterDec) {
+							let NumberOfLeadingZeroesNeeded = NumberOfDigitsAfterDec - OutputString.length //example: 34 (length = 2) which is supposed to be 0.00034% when NumberOfDigitsAfterDec = 5, so 5-2 = 3, so 3 0s are needed.
+							let LeadingZeroes = ""
+							for (let Count = 0; Count < NumberOfLeadingZeroesNeeded; Count++) {
+								LeadingZeroes += "0"
+							}
+							OutputString = LeadingZeroes + OutputString
+						}
+					let DecimalPart = OutputString.substring(OutputString.length - NumberOfDigitsAfterDec)
+			return WholeNumberPart + "." + DecimalPart + "%"
+		}
+	}
+	function BetterPercentageUsingFloatsForBarGraphs(Quantity, MaxQuantity) {
+		//This one is made for bar graphs, specifically used for CSS
+		//linear gradients. If division by zero occurred, returns 0,
+		//Otherwise it return a string representing values 0-100%
+		//(clamped to 0-100).
+		if (MaxQuantity == 0) {
+			return "0%"
+		} else {
+			return clamp((Quantity * 100 / MaxQuantity), 0, 100).toString(10) + "%" //I find it more exact to multiply by 100 first and then divide so that most of the rounding errors happen on the final step.
+		}
+	}
+	function clamp(num, min, max) {
+		//Restrict a number within a specified range.
+			if (isNaN(num) == true) {
+				num = 0
+			}
+			return num <= min ? min : num >= max ? max : num;
+	}
+</script>

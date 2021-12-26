@@ -1,0 +1,537 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+		</style>
+	</head>
+<body>
+<p>This tool will check each URL(s) you sent and compare with the results to search for any potential issues or anomalies. It detects if URLs you sent are properly saved not caught by the system. Note: this tool only
+judges based on the URLs you sent and the save results, not the actual web-page content.</p>
+<input type="checkbox" id="AutoUpdate" checked onchange="AutoUpdateCode()"><label for="AutoUpdate">Auto update</label><br>
+Paste your list of sent URLs here (one item per line and not starting with space):<br>
+<textarea id="UserSentURLs" cols="100" rows="30" oninput="AutoUpdateCode()"></textarea><br>
+Paste the IA results list returned to you here (same 1-item and not starting with space rule apply):<br>
+<textarea id="IAReturnedResults" cols="100" rows="30" oninput="AutoUpdateCode()"></textarea><br><br>
+
+Filter:<br>
+<button onclick="CheckAllFilters(); AutoUpdateCode()">Check all</button><button onclick="UncheckAllFilters(); AutoUpdateCode()">Uncheck all</button><button onclick="InvertAllFilters(); AutoUpdateCode()">Invert</button><br>
+<ul>
+	<li>Sure saved:</li>
+	<ul>
+		<li><input type="checkbox" onchange="AutoUpdateCode()" id="Filter_SuccessSavedBefore"  class="FilterSettings" data-status_list_name="SuccessSavedBefore"><label for="Filter_SuccessSavedBefore">Success (have saved before)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdateCode()" id="Filter_SuccessFirstSave"  class="FilterSettings" data-status_list_name="SuccessFirstSave"><label for="Filter_SuccessFirstSave">Success (&ldquo;First Archive&rdquo;)</label></li>
+	</ul>
+	<li>Unsure saved:</li>
+	<ul>
+		<li><input type="checkbox" onchange="AutoUpdateCode()" id="Filter_Failed" checked  class="FilterSettings" data-status_list_name="Failed"><label for="Filter_Failed">Errors</label></li>
+		<li><input type="checkbox" onchange="AutoUpdateCode()" id="Filter_RedirectedOrMissing" checked  class="FilterSettings" data-status_list_name="RedirectedOrMissing"><label for="Filter_RedirectedOrMissing">Redirected or missing</label></li>
+	</ul>
+</ul>
+Sort:<br>
+<label><input type="radio" onchange="AutoUpdateCode()" id="Sort_Output_UserSentURLOrder" name="Sort_Output" checked>Same order of URLs you set</label><br>
+<label><input type="radio" onchange="AutoUpdateCode()" id="Sort_Output_SaveStatusResponse" name="Sort_Output">Based on the save status response from the saved result</label> (<label><input type="radio" onchange="AutoUpdateCode()" id="Sort_Output_SaveStatusResponse_Reverse" name="Sort_Output">Reverse</label>)<br>
+<label><input type="radio" onchange="AutoUpdateCode()" id="Sort_Output_SaveStatusType" name="Sort_Output">Based on the status <abbr title="First archive, have saved before, errors, and redirects">type</abbr> identified from the save results</label> (<label><input type="radio" onchange="AutoUpdateCode()" id="Sort_Output_SaveStatusType_Reverse" name="Sort_Output">Reverse</label>)<br>
+<br>
+
+<button onclick="CheckURLs()">Submit</button><button onclick="Reset()">Reset</button>
+<hr>
+<span id="Output"></span>
+</body>
+<script>
+	//stuff just in case the IA changed its system
+		const regex_IAURLBeginningPart = /^https:\/\/web.archive.org\/web\/\d+\/.*$/
+		const regex_IAURLExtractMainSiteURL_Start = /(?<=https:\/\/web\.archive\.org\/web\/\d*\/)/
+		const regex_IAURLExtractMainSiteURL_End = /(\s|$)/
+		const regex_IAURLExtractFailedLink_End = /(\s|$)/
+		const String2Regex_IAExtractSiteURL = "(?<=https:\\/\\/web\\.archive\\.org\\/web\\/\\d+/).+$"
+	function AutoUpdateCode() {
+		if (document.getElementById("AutoUpdate").checked) {
+			CheckURLs()
+		}
+	}
+	function CheckAllFilters() {
+		let FilterListSettings = document.getElementsByClassName("FilterSettings")
+		let Index = 0
+		for (Index = 0; Index < FilterListSettings.length; Index++) {
+			FilterListSettings[Index].checked = true
+		}
+	}
+	function UncheckAllFilters() {
+		let FilterListSettings = document.getElementsByClassName("FilterSettings")
+		let Index = 0
+		for (Index = 0; Index < FilterListSettings.length; Index++) {
+			FilterListSettings[Index].checked = false
+		}
+	}
+	function InvertAllFilters() {
+		let FilterListSettings = document.getElementsByClassName("FilterSettings")
+		let Index = 0
+		for (Index = 0; Index < FilterListSettings.length; Index++) {
+			FilterListSettings[Index].checked = (FilterListSettings[Index].checked ^ 1)
+		}
+	}
+	function Reset() {
+		document.getElementById("Filter_Failed").checked = true
+		document.getElementById("Filter_RedirectedOrMissing").checked = true
+		document.getElementById("Filter_SuccessSavedBefore").checked = false
+		document.getElementById("Filter_SuccessFirstSave").checked = false
+		document.getElementById("Output").innerHTML = ""
+	}
+	function CheckURLs() {
+		//initialize stuff
+			let Output = ""
+		//Prepare list
+			let UserSentURLsList = RemoveBlankOrSpacesEntry(RemoveItemsInTableFlaggedAsDuplicates(ConvertURLListToTableFlaggingDuplicates((document.getElementById("UserSentURLs").value).split('\n'))))
+			let Index = 0
+			let UserSentURLsList_WithStates = new Array()
+			//UserSentURLsList_WithStates[Index][0] = Sent URLs
+			//UserSentURLsList_WithStates[Index][1] = WBM response, if a match is found will contain the comment of the WBM, otherwise (if redirected or not found), will say "(redirected or WBM version not found)"
+			//UserSentURLsList_WithStates[Index][2] = Status indicator, marks if SuccessSavedBefore, SuccessFirstSave, Failed, or RedirectedOrMissing
+				for (Index = 0; Index < UserSentURLsList.length; Index++) {
+					UserSentURLsList_WithStates.push([UserSentURLsList[Index], "(redirected or WBM version not found)", ""])
+				}
+			let IAURLsList = RemoveBlankOrSpacesEntry((document.getElementById("IAReturnedResults").value).split('\n')) //Note: It is possible that two different URLs may redirect to the same URL, so we do not want to delete duplicates here
+			Index = 0
+			let IAURLsList_WithStates = new Array()
+			//IAURLsList_WithStates[Index2][0] = Response from WBM
+			//IAURLsList_WithStates[Index2][1] = Already checked flag, used for comparing the two list to avoid re-checking to improve performance.
+			//IAURLsList_WithStates[Index2][2] = Match found flag, if no user sent URL matches with any stuff here, remains false, and will be shown to the user in case if redirects are legitimate.
+			// This is also used to find potential redirects, listing the IA results that have no connections.
+				for (Index = 0; Index < IAURLsList.length; Index++) {
+					IAURLsList_WithStates.push([IAURLsList[Index], false, false])
+				}
+		//Compare list
+			Index = 0
+			let Index2 = 0
+			let MatchFound = false
+			let Count_Success = 0
+			let Count_SuccessSavedBefore = 0
+			let Count_SuccessFirstSave = 0
+			let Count_Failed = 0
+			let Count_RedirectedOrMissing = 0
+			let Count_NotConfirmedSaved = 0
+			for (Index = 0; Index < UserSentURLsList_WithStates.length; Index++) {
+				MatchFound = false
+				Index2 = 0
+				while (Index2 < IAURLsList_WithStates.length) {
+					if (IAURLsList_WithStates[Index2][1] == false) { //Avoid re-checking
+						//Find a match, either if it was successful or failed, it must have at least the corresponding URL somewhere, else go to the next WBM response
+							if (((regex_IAURLBeginningPart).test(IAURLsList_WithStates[Index2][0]))&&(UserSentURLsList_WithStates[Index][0] == (IAURLsList_WithStates[Index2][0]).substring((IAURLsList_WithStates[Index2][0]).search(regex_IAURLExtractMainSiteURL_Start), (IAURLsList_WithStates[Index2][0]).search(regex_IAURLExtractMainSiteURL_End)))) {
+								//^((regex_IAURLBeginningPart).test(IAURLsList_WithStates[Index2][0])) is needed to prevent .search(regex) from returning -1 and substring-ing reading that invalid index number.
+								//https://web.archive.org/web/YYYYMMDDhhmmss/https://www.example.com
+									MatchFound = true
+									UserSentURLsList_WithStates[Index][1] = IAURLsList_WithStates[Index2][0]
+									IAURLsList_WithStates[Index2][2] = true
+									//First archive?
+										if ((IAURLsList_WithStates[Index2][0]).search(/( First Archive)/) == -1) {
+											UserSentURLsList_WithStates[Index][2] = "SuccessSavedBefore"
+											Count_SuccessSavedBefore++
+											Count_Success++
+										} else {
+											UserSentURLsList_WithStates[Index][2] = "SuccessFirstSave"
+											Count_SuccessFirstSave++
+											Count_Success++
+										}
+										break
+							} else if (UserSentURLsList_WithStates[Index][0] == (IAURLsList_WithStates[Index2][0]).substring(0, (IAURLsList_WithStates[Index2][0]).search(regex_IAURLExtractFailedLink_End))) {
+								//https://www.example.com Error! <error statement>
+									MatchFound = true
+									UserSentURLsList_WithStates[Index][1] = IAURLsList_WithStates[Index2][0]
+									IAURLsList_WithStates[Index2][2] = true
+									UserSentURLsList_WithStates[Index][2] = "Failed"
+									Count_Failed++
+									Count_NotConfirmedSaved++
+									break
+							}
+					}
+					Index2++
+				}
+				if (MatchFound == false) {
+					UserSentURLsList_WithStates[Index][2] = "RedirectedOrMissing"
+					Count_RedirectedOrMissing++
+					Count_NotConfirmedSaved++
+				}
+			}
+			//Filter
+				let FilteredListForDisplay = CheckIncludedInFilter(UserSentURLsList_WithStates)
+			//Sort
+				if (document.getElementById("Sort_Output_SaveStatusResponse").checked) {
+					FilteredListForDisplay = FilteredListForDisplay.sort(CompareStatusResponse)
+				} else if (document.getElementById("Sort_Output_SaveStatusResponse_Reverse").checked) {
+					FilteredListForDisplay = FilteredListForDisplay.sort(CompareStatusResponseReverse)
+				} else if (document.getElementById("Sort_Output_SaveStatusType").checked) {
+					FilteredListForDisplay = FilteredListForDisplay.sort(CompareStatusIndicator)
+				} else if (document.getElementById("Sort_Output_SaveStatusType_Reverse").checked) {
+					FilteredListForDisplay = FilteredListForDisplay.sort(CompareStatusIndicatorReverse)
+				}
+			//Get potential redirect destination URLs found in the WBM list
+				let RedirectDestFromWBM = new Array()
+				Index = 0
+				for (Index = 0; Index < IAURLsList_WithStates.length; Index++) {
+					if (IAURLsList_WithStates[Index][2] == false) {
+						RedirectDestFromWBM.push(IAURLsList_WithStates[Index][0])
+					}
+				}
+			//Display output
+				//statistics
+					Output += "<h1>Web saving statistics</h1>"
+					if (UserSentURLsList_WithStates.length != 0) {
+						//Statistics table, used bigint to avoid potential E notation.
+						Output += "<pre>"
+						Output += "<table>"
+						Output += "<tr>"
+						Output += "<td rowspan='4'>" + BigInt(UserSentURLsList_WithStates.length).toString(10) + " total URL(s) found (100.00%)</td>"
+						//Successful saves
+							Output += "<td rowspan='2'>" + BigInt(Count_Success).toString(10) + " (" + BetterPercentageUsingInts(Count_Success, UserSentURLsList_WithStates.length, 2) + " of all URLs) successful save(s)</td>"
+							//Saved before
+								Output += "<td style='background-image: linear-gradient(to right, #008000 " + BetterPercentageUsingFloatsForBarGraphs(Count_SuccessSavedBefore, UserSentURLsList_WithStates.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_SuccessSavedBefore, UserSentURLsList_WithStates.length) + " 100%)'>" + BigInt(Count_SuccessSavedBefore).toString(10) + " (" + BetterPercentageUsingInts(Count_SuccessSavedBefore, UserSentURLsList_WithStates.length, 2) + " of all URLs"
+								if (Count_Success != 0) {
+									Output += ", " + BetterPercentageUsingInts(Count_SuccessSavedBefore, Count_Success, 2) + " of all successful save(s)"
+								}
+								Output += ") were saved before</td>"
+						Output += "</tr>"
+							//First archive
+								Output += "<tr><td style='background-image: linear-gradient(to right, #00C000 " + BetterPercentageUsingFloatsForBarGraphs(Count_SuccessFirstSave, UserSentURLsList_WithStates.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_SuccessFirstSave, UserSentURLsList_WithStates.length) + " 100%)'>" + BigInt(Count_SuccessFirstSave).toString(10) + " (" + BetterPercentageUsingInts(Count_SuccessFirstSave, UserSentURLsList_WithStates.length, 2) + " of all URLs"
+								if (Count_Success != 0) {
+									Output += ", " + BetterPercentageUsingInts(Count_SuccessFirstSave, Count_Success, 2) + " of all successful save(s)"
+								}
+								Output += ") first archive(s)</td></tr>"
+						//Unsures
+						Output += "<tr>"
+							Output += "<td rowspan='2'>" + BigInt(Count_NotConfirmedSaved).toString(10) + " (" + BetterPercentageUsingInts(Count_NotConfirmedSaved, UserSentURLsList_WithStates.length, 2) + " of all URLs) not sure saved</td>"
+						//Redirect/missing
+							Output += "<td style='background-image: linear-gradient(to right, #808000 " + BetterPercentageUsingFloatsForBarGraphs(Count_RedirectedOrMissing, UserSentURLsList_WithStates.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_RedirectedOrMissing, UserSentURLsList_WithStates.length) + " 100%)'>" + BigInt(Count_RedirectedOrMissing).toString(10) + " (" + BetterPercentageUsingInts(Count_RedirectedOrMissing, UserSentURLsList_WithStates.length, 2) + " of all URLs"
+							if (Count_NotConfirmedSaved != 0) {
+								Output += ", " + BetterPercentageUsingInts(Count_RedirectedOrMissing, Count_NotConfirmedSaved, 2) + " of all unsure(s)"
+							}
+							Output += ") redirected or WBM version not found</td>"
+						Output += "</tr>"
+						//Errors
+							Output += "<td style='background-image: linear-gradient(to right, #800000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Failed, UserSentURLsList_WithStates.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Failed, UserSentURLsList_WithStates.length) + " 100%)'>" + BigInt(Count_Failed).toString(10) + " (" + BetterPercentageUsingInts(Count_Failed, UserSentURLsList_WithStates.length, 2) + " of all URLs"
+							if (Count_NotConfirmedSaved != 0) {
+								Output += ", " + BetterPercentageUsingInts(Count_Failed, Count_NotConfirmedSaved, 2) + " of all unsure(s)"
+							}
+							Output += ") errored</td>"
+						Output += "</table>"
+						if (Count_Success == UserSentURLsList_WithStates.length) {
+							Output += "<br><br><span style='color: #00ff00; font-size: xx-large'>All " + BigInt(UserSentURLsList_WithStates.length).toString(10) + " URL(s) are saved.</span><br><br>"
+						}
+						Output += "</pre>"
+					} else {
+						Output += "<kbd>No items found</kbd>"
+					}
+					Output += "<h1>List of URLs in plaintext (easy to copy)</h1>"
+				//Retry list (plaintext)
+					if (FilteredListForDisplay.length != 0) {
+						Output += "<kbd>Number of findings: " + BigInt(FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(FilteredListForDisplay.length, UserSentURLsList_WithStates.length, 2) + " of all URLs submitted)</kbd><br>"
+						Output += "<textarea readonly='true' cols='100' rows='30'>"
+						Index = 0
+						for (Index = 0; Index < FilteredListForDisplay.length; Index++) {
+							Output += escapeHTMLChars(FilteredListForDisplay[Index][0])
+							if (Index != FilteredListForDisplay.length - 1) {
+								Output += "\n"
+							}
+						}
+						Output += "</textarea><br>"
+					} else {
+						Output += "<kbd>No items found</kbd>"
+					}
+				//Display filtered list using HTML table. Shows the URLs, the color indicator, and the WBM response.
+					Output += "<h1>Find results</h1>"
+					if (FilteredListForDisplay.length != 0) {
+						Index = 0
+						Output += "<table>"
+						Output += "<tr>"
+						Output += "<th>URLs you&apos;ve sent</th><th>Save status of URLs or errors</th><th>Status type</th>"
+						Output += "</tr>"
+						for (Index = 0; Index < FilteredListForDisplay.length; Index++) {
+							//Table
+								Output += "<tr>"
+								Output += "<td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][2]) + "'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index][0]) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][2]) + "'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index][1]) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][2]) + "'><kbd>" + FilteredListForDisplay[Index][2] + "</kbd></td>"
+								Output += "</tr>"
+							//Next
+						}
+						Output += "</table>"
+					} else {
+						Output += "<kbd>No items found</kbd>"
+					}
+				//Display the WBM redirect destinations list
+					Output += "<h1>List of redirect destinations from the WBM</h1>"
+					if (RedirectDestFromWBM.length != 0) {
+						Output += "<kbd>Number of findings: " + BigInt(RedirectDestFromWBM.length).toString(10) + "<kbd><br>"
+						Output += "<textarea readonly='true' cols='100' rows='30'>"
+						Index = 0
+						for (Index = 0; Index < RedirectDestFromWBM.length; Index++) {
+							Output += RedirectDestFromWBM[Index]
+							if (Index != RedirectDestFromWBM.length - 1) {
+								Output += "\n"
+							}
+						}
+						Output += "</textarea>"
+					} else {
+						Output += "<kbd>There are no WBM redirected results found.</kbd>"
+					}
+			//And done
+				document.getElementById("Output").innerHTML = Output
+	}
+
+	function ConvertURLListToTableFlaggingDuplicates(ArrayList) {
+		//This returns a 2D array: [[URL, DuplicateFlag], [URL, DuplicateFlag]]
+		//-URL is the list of stuff (primarily URLs), assuming this do not have any sub-arrays within.
+		//-DuplicateFlag is flagged false when no duplicates exists, otherwise if the second
+		// or later items also exist, they themselves are flagged as true
+		let index1 = 0
+		let index2 = 0
+		let OutputTableDuplicateFlags = new Array(ArrayList.length)
+		for (index1 = 0; index1 < ArrayList.length; index1++) {
+			OutputTableDuplicateFlags[index1] = Array(ArrayList[index1], false)
+		}
+		index1 = 0
+		for (index1 = 0; index1 < ArrayList.length; index1++) {
+			for (index2 = index1 + 1; index2 < ArrayList.length; index2++) {
+				if (ArrayList[index1] == ArrayList[index2]) {
+					OutputTableDuplicateFlags[index2][1] = true
+				}
+			}
+		}
+		return OutputTableDuplicateFlags
+	}
+	function RemoveItemsInTableFlaggedAsDuplicates(TableFlaggingDups) {
+		//Extracts whatever outputted by ConvertURLListToTableFlaggingDuplicates
+		//that aren't duplicates, without gaps.
+		let index1 = 0
+		let OutputArray = new Array()
+		for (index1 = 0; index1 < TableFlaggingDups.length; index1++) {
+			if (TableFlaggingDups[index1][1] == false) {
+				OutputArray.push(TableFlaggingDups[index1][0])
+			}
+		}
+		return OutputArray
+	}
+	function RemoveBlankOrSpacesEntry(InputArray) {
+		let OutputArray = new Array()
+		let index1 = 0
+		for (index1 = 0; index1 < InputArray.length; index1++) {
+			if ((/^(\s*)$|^()$/).test(InputArray[index1]) == false) {
+				OutputArray.push(InputArray[index1])
+			}
+		}
+		return OutputArray
+	}
+	function escapeHTMLChars(string) {
+		//Should the user's input contains "<", ">", and "&", prevent the innerHTML from treating these as HTML tags/escapes
+			string = string.replaceAll("&", "&amp;") //This must be done first, to avoid replacing already-replaced symbol's ampersand character.
+			string = string.replaceAll("<", "&lt;")
+			string = string.replaceAll(">", "&gt;")
+			return string
+	}
+	function CheckIncludedInFilter(WBGSInfoList) {
+		let FilterSettingsElements = document.getElementsByClassName("FilterSettings")
+		let IncludedStatuses = new Array()
+		let OutputFilterList = new Array()
+		let Index = 0
+		for (Index = 0; Index < FilterSettingsElements.length; Index++) {
+			if (FilterSettingsElements[Index].checked) {
+				IncludedStatuses.push(FilterSettingsElements[Index].dataset.status_list_name)
+			}
+		}
+		//WBGSInfoList[Index][0] = Sent URLs
+		//WBGSInfoList[Index][1] = WBM response, if a match is found, otherwise blank
+		//WBGSInfoList[Index][2] = Status indicator, marks if SuccessSavedBefore, SuccessFirstSave, Failed, or RedirectedOrMissing
+		let Index2 = 0
+		for (Index = 0; Index < WBGSInfoList.length; Index++) {
+			for (Index2 = 0; Index2 < IncludedStatuses.length; Index2++) {
+				if (WBGSInfoList[Index][2] == IncludedStatuses[Index2]) {
+					OutputFilterList.push(WBGSInfoList[Index])
+				}
+			}
+		}
+		return OutputFilterList
+	}
+	////Compare the flagged status based on this JS checking the URL
+		function CompareStatusIndicator(a, b) {
+			if (a[2] === b[2]) {
+				return 0;
+			}
+			else {
+				return (a[2] < b[2]) ? -1 : 1;
+			}
+		}
+		function CompareStatusIndicatorReverse(a, b) {
+			if (a[2] === b[2]) {
+				return 0;
+			}
+			else {
+				return (a[2] < b[2]) ? 1 : -1;
+			}
+		}
+	//Compare Column D's (IA's save status response)
+		function CompareStatusResponse(a, b) {
+			let a_Response = GetStatusResponse(a[1])
+			let b_Response = GetStatusResponse(b[1])
+			if (a_Response === b_Response) {
+				return 0;
+			}
+			else {
+				return (a_Response < b_Response) ? -1 : 1;
+			}
+		}
+		function CompareStatusResponseReverse(a, b) {
+			let a_Response = GetStatusResponse(a[1])
+			let b_Response = GetStatusResponse(b[1])
+			if (a_Response === b_Response) {
+				return 0;
+			}
+			else {
+				return (a_Response < b_Response) ? 1 : -1;
+			}
+		}
+	function URLColorIndicator(SaveStatus) {
+		let ColorIndicator = "blue"
+		if (SaveStatus == "SuccessSavedBefore") {
+			ColorIndicator = "#008000"
+		} else if (SaveStatus == "SuccessFirstSave") {
+			ColorIndicator = "#00C000"
+		} else if (SaveStatus == "RedirectedOrMissing") {
+			ColorIndicator = "#808000"
+		} else if (SaveStatus == "Failed") {
+			ColorIndicator = "#800000"
+		}
+		return ColorIndicator
+	}
+	function GetStatusResponse(IAURLResponse) {
+		return IAURLResponse.replace(/^.+? Error!/, "")
+	}
+	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec) {
+		//This function calculates a percentage of a value (must be bigint), and returns a
+		//string representing a percentage using fixed-point arithmetic (https://en.wikipedia.org/wiki/Fixed-point_arithmetic ).
+		//Unlike a typical Quantity*100/MaxQuantity (or Quantity / MaxQuantity * 100)
+		//This also reports if rounding to 0 or 100% have occurred.
+		//Note: Don't use negative or decimal numbers for any of the parameters!
+		
+		//Output: A string:
+		//"--" if MaxQuantity is 0 (division by zero in bigint is not handled unlike double-precision floating point)
+		//"<number>%" a percentage. Rounds half-up.
+		//"Greater than <1*(10**(2+NumberOfDigitsAfterDec_BigInt))-1>" if results between 99.99..% and 100% (avoids rounding up towards 100%).
+		//"Less than <1/(10**NumberOfDigitsAfterDec_BigInt)>" is same as above but avoids rounding towards 0%.
+		
+		//100.0 is 1000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 1
+		//100.00 is 10000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 2
+		//100.000 is 100000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 3
+		Quantity = BigInt(Quantity)
+		MaxQuantity = BigInt(MaxQuantity)
+		NumberOfDigitsAfterDec_BigInt = BigInt(NumberOfDigitsAfterDec)
+		if (MaxQuantity == 0n) {
+			return "--"
+		} else {
+			let Percentage = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) / MaxQuantity
+			let Modulo = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) % MaxQuantity
+			//Check if remainder is greater than or equal to half of MaxQuantity, if so, increment
+			//Percentage by 1 unit.
+			
+			//Get halfway point, note: this must be rounded half up as well so that if Modulo is 0.5 greater in the case MaxQuantity is an odd number,
+			//would correctly round upwards. Example: 3/2 is 1.5 (default round to 1), since we are dealing with integers, Remainder being 2 or more should be
+			//consider a round up for percentage
+				let HalfwayPointOfMaxQuantity = MaxQuantity / 2n
+				if ((MaxQuantity % 2n) != 0n) {
+					HalfwayPointOfMaxQuantity++
+				}
+			//Round half-up
+				if (Modulo >= HalfwayPointOfMaxQuantity) { //round upwards
+					Percentage++
+					//We rounded the number up (actually increased the value), but it can potentially be at 100%, lets check it and if it did, override it.
+					if (Percentage == 100n*10n**NumberOfDigitsAfterDec_BigInt) {
+						//Rounded to 100% detected
+						//Note to self:
+						//Should say 99% if NumberOfDigitsAfterDec_BigInt = 0
+						//Should say 99.9% if NumberOfDigitsAfterDec_BigInt = 1
+						//99.99 if NumberOfDigitsAfterDec_BigInt = 2
+						//and so on.
+						//So basically the number of 9s after the decimal
+						//is NumberOfDigitsAfterDec_BigInt.
+							let DecimalPortion = ""
+							if (NumberOfDigitsAfterDec_BigInt != 0n) {
+								DecimalPortion += "."
+								for (let NineCount = 0; NineCount < NumberOfDigitsAfterDec; NineCount++) {
+									DecimalPortion += "9"
+								}
+							}
+						return "Greater than 99" + DecimalPortion + "%"
+					}
+				} else {
+					//Rounded downwards (default)
+					
+					if ((Modulo != 0n)&&(Percentage == 0n)) {
+						//Rounded to 0% detected
+						//Note to self:
+						//Should say 1% if NumberOfDigitsAfterDec_BigInt = 0
+						//Should say 0.1% if NumberOfDigitsAfterDec_BigInt = 1
+						//0.01% if NumberOfDigitsAfterDec_BigInt = 2
+						//and so on.
+						//Basically, if NumberOfDigitsAfterDec_BigInt = 2, the number of zeros
+						//between the decimal point and "1" is NumberOfDigitsAfterDec_BigInt - 1
+							let DecimalPortion = ""
+							if (NumberOfDigitsAfterDec_BigInt != 0n) {
+								DecimalPortion += "."
+								for (let ZeroCount = 0; ZeroCount < NumberOfDigitsAfterDec - 1; ZeroCount++) {
+									DecimalPortion += "0"
+								}
+								return "Less than 0" + DecimalPortion + "1%"
+							} else {
+								return "Less than 1%"
+							}
+					}
+				}
+				//Split the number separated by decimal point.
+					let OutputString = Percentage.toString(10)
+					let WholeNumberPart = OutputString.substring(0, OutputString.length - NumberOfDigitsAfterDec)
+					if (WholeNumberPart == "") {
+						WholeNumberPart = "0"
+					}
+					//This make sure that leading zeros (when less than 1%) exists, should the value in fixed point have fewer digits
+					//so that it can display things like 0.01 (stored internally in fixed point as 1) instead of 0.1 when NumberOfDigitsAfterDec is set to 2.
+					//It is due to the fact that toString(10) removes all leading zeros.
+						if (OutputString.length < NumberOfDigitsAfterDec) {
+							let NumberOfLeadingZeroesNeeded = NumberOfDigitsAfterDec - OutputString.length //example: 34 (length = 2) which is supposed to be 0.00034% when NumberOfDigitsAfterDec = 5, so 5-2 = 3, so 3 0s are needed.
+							let LeadingZeroes = ""
+							for (let Count = 0; Count < NumberOfLeadingZeroesNeeded; Count++) {
+								LeadingZeroes += "0"
+							}
+							OutputString = LeadingZeroes + OutputString
+						}
+					let DecimalPart = OutputString.substring(OutputString.length - NumberOfDigitsAfterDec)
+			return WholeNumberPart + "." + DecimalPart + "%"
+		}
+	}
+	function BetterPercentageUsingFloatsForBarGraphs(Quantity, MaxQuantity) {
+		//This one is made for bar graphs, specifically used for CSS
+		//linear gradients. If division by zero occurred, returns 0,
+		//Otherwise it return a string representing values 0-100%
+		//(clamped to 0-100).
+		if (MaxQuantity == 0) {
+			return "0%"
+		} else {
+			return clamp((Quantity * 100 / MaxQuantity), 0, 100).toString(10) + "%" //I find it more exact to multiply by 100 first and then divide so that most of the rounding errors happen on the final step.
+		}
+	}
+	function clamp(num, min, max) {
+		//Restrict a number within a specified range.
+			if (isNaN(num) == true) {
+				num = 0
+			}
+			return num <= min ? min : num >= max ? max : num;
+	}
+</script>

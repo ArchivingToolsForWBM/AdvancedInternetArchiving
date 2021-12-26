@@ -1,0 +1,335 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: #000207;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+			
+			abbr{cursor: help;}
+		</style>
+	</head>
+<body>
+<h1><center>How to save pages using the internet archive's savepagenow@archive.org</center></h1>
+<p>While it's good news they've implemented an email-based automated tasks (announced
+<a href="https://blog.archive.org/2019/10/23/the-wayback-machines-save-page-now-is-new-and-improved/">here</a>),
+It may not be sunshines and rainbows as pages can fail to save. So this tutorial will help you deal with such problems effectively.</p>
+
+<p>I recommend the following tools:
+	<ul>
+		<li><a href="https://notepad-plus-plus.org/downloads/">Notepad++</a> (<a href="https://github.com/notepad-plus-plus/notepad-plus-plus">github</a>). Because
+		several features that Microsoft's notepad don't have are required.<br><br>
+		Plugins for notepad++:
+			<ul>
+				<li>Compare (<a href="https://github.com/jsleroy/compare-plugin">github</a>). This is needed to check if all the URLs have saved correctly (mainly
+				for random redirects like on twitter).</li>
+			</ul>
+		</li>
+	</ul>
+</p>
+<h2>NP++'s macro feature</h2>
+<p>A lot of things going on takes place on notepad++, and almost all of them uses the replace function. If you find this tedious to do these, I recommend
+setting up <a href="https://npp-user-manual.org/docs/macros/">macros</a> and record yourself doing these steps.</p>
+
+<h2>Saving pages</h2>
+<ol>
+	<li id="ListOfLinksToSend">After having a list of URLs, have them formatted:
+		<ol>
+			<li>Make sure that all URLs are on their own line (don't have multiple URLs on the same line)</li>
+			<li>sort the lines alphabetically (Edit &rightarrow; Line Operations &rightarrow; Sort Lines Lexicographically)</li>
+			<li>Have duplicates removed (Edit &rightarrow; Line Operations &rightarrow; Remove Consecutive Duplicate lines)</li>
+			<li>Make sure you have that list saved, so you can search for links that have failed.</li>
+		</ol>
+	</li>
+	<li>
+		Send the links:
+		<ul>
+			<li>
+				If you have any URL using special characters or non-UTF-8 characters (such as japanese characters or a space character.
+				They're often <a href="https://en.wikipedia.org/wiki/Percent-encoding">percent encoded</a>) and are prone to be saved
+				incorrectly. If the URLs contain raw characters, convert them into percent encoded form, and unstead of submitting these
+				links as raw text, create a blank HTML file, paste your links, then replace (CTRL+H) and do the following:
+				<ol>
+					<li> Wrap the URLs into an HTML hyperlink by prepending <kbd>&lt;a href="</kbd> to the left of the links: ...
+						<table>
+							<tr>
+								<td>Find what:</td>
+								<td><kbd>^</kbd></td>
+							</tr>
+							<tr>
+								<td>Replace with:</td>
+								<td><kbd>&lt;a href="</kbd></td>
+							</tr>
+							<tr>
+								<td>Search mode:</td>
+								<td>Regular Expression</td>
+							</tr>
+						</table>
+						and hit &ldquo;Replace all&rdquo;
+					</li>
+					<li>...Now append <kbd>"&gt;Link&lt;/a&gt;</kbd> to mark the end of the HTML tag as well as the clickable link:
+						<table>
+							<tr>
+								<td>Find what:</td>
+								<td><kbd>$</kbd></td>
+							</tr>
+							<tr>
+								<td>Replace with:</td>
+								<td><kbd>"&gt;Link&lt;/a&gt;</kbd></td>
+							</tr>
+							<tr>
+								<td>Search mode:</td>
+								<td>Regular Expression</td>
+							</tr>
+						</table>
+					</li>
+					<li>
+						All the URLs should now look like this:
+						<table><tr><td>
+<pre>&lt;a href="https://www.example.com"&gt;link&lt;/a&gt;
+&lt;a href="https://www.example2.com"&gt;link&lt;/a&gt;
+&lt;a href="https://www.example3.com"&gt;link&lt;/a&gt;
+...
+</pre>
+						</td></tr></table>
+						Then save. Open the created HTML file with any browser, and copy that text. Paste that into an email (it should retain the HTML formatting) and send it.
+					</li>
+				</ol>
+			</li>
+			<li>
+				Otherwise if there are no such characters in the links, then you can submit them as raw text.
+			</li>
+		</ul>
+	</li>
+	<li>
+		You then should wait until you get a reply.
+	</li>
+</ol>
+<h2>Retry saving failed links</h2>
+<ol>
+	<li>
+		Once you get a reply, it should send you back all the URLs found. The list of URLs are formatted like this:
+		<table><tr><td>
+		<ol>
+			<li><kbd>&lt;URL address1&gt;</kbd> <kbd>&lt;Status&gt;</kbd></li>
+			<li><kbd>&lt;URL address2&gt;</kbd> <kbd>&lt;Status&gt;</kbd></li>
+			<li><kbd>&lt;URL address3&gt;</kbd> <kbd>&lt;Status&gt;</kbd></li>
+			...
+		</ol>
+		</td></tr></table>
+		This shows every URL you attempt to save and also indicates which links have failed to save and so on. The legends follow:
+		<ul>
+			<li><kbd>&lt;URL addressX&gt;</kbd> The URL you submitted. When failed, shows the original URL, when successful, will show up as
+			an internet archive URL version
+			(<span class="NoLineBreak"><kbd>https://web.archive.org/web/YYYYMMDDhhmmss/&lt;URL addressX&gt;</kbd></span>) instead.</li>
+			<li>
+				<kbd>&lt;Status&gt;</kbd> The status indicating if the page have been saved or not. List of statuses included but not limited to:
+				<ul>
+					<li>When saving fails:
+						<ul>
+							<li>Error! Browser timeout for &lt;URL address&gt;</li>
+							<li>Error! Capture timed out</li>
+							<li>Error! Expecting value: line 1 column 1 (char 0)</li>
+							<li>Error! Internal Server Error for &lt;URL address&gt; (HTTP status=500)</li>
+							<li>Error! Job failed</li>
+							<li>Error! Live page is not available: &lt;URL address&gt;</li>
+							<li>Error! System proxy error for URL &lt;URL address&gt;</li>
+							<li>Error! The server didn't respond in time for &lt;URL address&gt;</li>
+							<li>Error! The server response status was 502.</li>
+						</ul>
+					</li>
+				</ul>
+				When successful and saved a URL for the first time displays &ldquo;First Archive&rdquo;, otherwise no status is shown.
+			</li>
+		</ul><br>
+		Now note: During my testing, if the WBM gets redirected when saving URLs, it will just display the redirected destination URL, not the URL you have sent (and no indication explicitly saying a redirect occured).
+		This is problematic if pages randomly redirects when it shouldn't. Twitter, for example, can randomly redirect and only display one of these if a URL
+		is redirected (including but not limited to):
+		<ul>
+			<li><kbd>https://web.archive.org/web/YYYYMMDDhhmmss/https://api.twitter.com/2/timeline/conversation/&lt;TweetID&gt;.json?&lt;long string of commands&gt;</kbd></li>
+			<li><kbd>https://web.archive.org/web/YYYYMMDDhhmmss/https://twitter.com/i/js_inst?c_name=ui_metrics</kbd></li>
+			<li><kbd>https://web.archive.org/web/YYYYMMDDhhmmss/https://pbs.twimg.com/hashflag/config-&lt;year&gt;-&lt;month&gt;-&lt;day&gt;-16.json</kbd></li>
+		</ul>
+		See <a href="#RandomRedirect" target="_blank">here</a> on how to re-attempt to save links that have been redirected
+	</li>
+	<li>Saving errors:
+		<h3>For links that errored out</h3>
+		<ol>
+			<li>
+				To obtain URLs that have errored out, copy all that text and paste in notepad++. Use the find function to extract URLs with an error on it:
+				<table>
+					<tr>
+						<td>Find what:</td>
+						<td><kbd>Error!</kbd></td>
+					</tr>
+					<tr>
+						<td>Search mode:</td>
+						<td><kbd>Normal</kbd></td>
+					</tr>
+				</table>
+				Then click the &ldquo;Find All in Current Document&rdquo;. This will extract line-by-line format of lines that contain the word &ldquo;Error!&rdquo; and should
+				be all the URLs failed to save. Rightclick on the top bar and copy it, it should copy all the lines in the search result.
+			</li>
+			<li>
+				Paste the links in a blank new document/tab in notepad++.
+			</li>
+			<li>
+				<span id="GetOriginalLinksFromArchive">Extract the ORIGINAL URLs from internet archive URLs by doing these:</span>
+				<ol>
+					<li>
+						Remove IA's URL part of the link:
+						<table>
+							<tr>
+								<td>Find what:</td>
+								<td><kbd>https://web\.archive\.org/web/[0-9]*/</kbd></td>
+							</tr>
+							<tr>
+								<td>Replace with:</td>
+								<td>(nothing)</td>
+							</tr>
+							<tr>
+							<tr>
+								<td>Wrap around:</td>
+								<td>Checked</td>
+							</tr>
+								<td>Search mode:</td>
+								<td>Regular Expression</td>
+							</tr>
+						</table>
+						Note: Depending on what browser you are using, certain characters may be added. Firefox, for example,
+						prepends anything within an HTML tag that has a closing tag with 4 spaces. So make sure you remove those.
+					</li>
+					<li>
+						Remove the status at the end of the URL:
+						<table>
+							<tr>
+								<td>Find what:</td>
+								<td><pre> Error! .*$</pre> (note: keep the space character before &ldquo;Error!&rdquo;)</td>
+							</tr>
+							<tr>
+								<td>Replace with:</td>
+								<td>(nothing)</td>
+							</tr>
+							<tr>
+								<td>Wrap around:</td>
+								<td>Checked</td>
+							</tr>
+							<tr>
+								<td>Search mode:</td>
+								<td>Regular Expression</td>
+							</tr>
+							<tr>
+								<td>. matches newline:</td>
+								<td>Unchecked</td>
+							</tr>
+						</table>
+					</li>
+				</ol>
+			</li>
+			<li>
+				Now resend those failed links. Make sure you have a copy of that so you can check via compare. Repeat until all links are sucessfully saved.
+			</li>
+		</ol>
+		<h3 id="RandomRedirect">Randomly redirected links</h3>
+		<ol>
+			<li>
+				Make sure you have the list of links you sent to the internet archive prior doing this (and following <a href="#ListOfLinksToSend" target="_blank">these rules</a>). Once you get a reply showing the save status, open a new
+				tab/document in notepad++ and paste the list of links from the archive.
+			</li>
+			<li>
+				Do <a href="#GetOriginalLinksFromArchive" target="_blank">this familiar move</a> to convert the list of links to original links.
+			</li>
+			<li>
+				Now after you got the original links, copy all of that, go to the list of the URLs you sent, and paste the archive links below it. Essentially
+				you are combining two lists into one. Make sure the paste isn't inserted on the same line as the last item of the sent URL.
+			</li>
+			<li>
+				Sort lines alphabetically (Edit &rightarrow; Line Operations &rightarrow; Sort Lines Lexicographically Ascending). Any Link that wasn't redirected should now
+				exist exactly twice (1 URL you sent, another second copy from the one you got in the reply), placed next to another, while URLs that DO get redirected
+				will exist only once (because the URLs redirected you sent are replaced with the redirected location). For made-up example:
+				<table><tr>
+					<td>
+<pre>
+https://www.google.com
+https://example.com
+https://twitter.com
+https://wikipedia.org
+https://www.google.com
+https://example.com
+</pre>
+					</td>
+					<td>
+					Becomes:
+					</td>
+					<td>
+<pre>https://example.com
+https://example.com
+https://twitter.com
+https://wikipedia.org
+https://www.google.com
+https://www.google.com</pre>
+					</td>
+				</tr></table>
+				example.com existed twice, and so is google, so they were saved properly, but wikipedia and twitter aren't, so a redirect has occured.
+			</li>
+			<li>
+				Go to the bottom on the last URL, and make a linebreak (there must be a last line that is blank after last URL).
+			</li>
+			<li>
+				Now replace:
+				<table>
+					<tr>
+						<td>Find what:</td>
+						<td><kbd>(?-s)^(.+\R)\1+</kbd></td>
+					</tr>
+					<tr>
+						<td>Replace with:</td>
+						<td>(nothing)</td>
+					</tr>
+					<tr>
+						<td>Search mode:</td>
+						<td>Regular Expression</td>
+					</tr>
+					<tr>
+						<td>Wrap around:</td>
+						<td>Checked</td>
+					</tr>
+				</table>
+				This will delete all URLs that have 2+ copies placed next to another (not to be confused with notepad++'s &ldquo;Remove Consecutive Duplicate Lines&rdquo;, which that
+				reduces all duplicates to one and not erase them entirely), while URLs existed once will still exist, using the same example as above, it should
+				resulted in this:
+				<table><tr>
+					<td>
+<pre>https://example.com
+https://example.com
+https://twitter.com
+https://wikipedia.org
+https://www.google.com
+https://www.google.com</pre>
+					</td>
+					<td>
+						Becomes:
+					</td>
+					<td>
+<pre>https://twitter.com
+https://wikipedia.org
+</pre>
+					</td>
+				</tr></table>
+			</li>
+			<li>
+				Now resend those links and repeat (check again in case a random redirect still happens).
+			</li>
+		</ol>
+	</li>
+</ol>

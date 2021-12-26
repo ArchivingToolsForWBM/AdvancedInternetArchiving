@@ -1,0 +1,153 @@
+Because spaces may be included in the text, regular expressions shown here are to be used excluding the outermost brackets.
+
+Most of the instructions involve using Notepad++ to edit text documents (mainly, regular expressions).
+
+Using internet archive's email (savepagenow@archive.org) page saver:
+	Before we begin, the IA returns the email back to the user to indicate
+	if the links actually saved or not. It is formatted like this:
+	<Line number>. <URL address> <Status>
+	
+	<Line number>:
+		Used for listing each URL. Not actually part of the text and acts as [<ol><li>...</li></ol>]
+		in HTML.
+	<URL address>:
+		Indicates what URL the WBM have saved. When successful, will show the archive URL, otherwise
+		if failed ("Error!"), displays the original URL.
+	<Status>:
+		When saving the URL for the first time, will say "First Archive", otherwise
+		if saving a URL that was previously saved, won't display anything, otherwise
+		if saving a URL results in a fail, outputs these errors:
+			Error! Browser timeout for <URL address>
+			Error! Capture timed out
+			Error! Expecting value: line 1 column 1 (char 0)
+			Error! Internal Server Error for <URL address> (HTTP status=500)
+			Error! Job failed
+			Error! Live page is not available: <URL address>
+			Error! System proxy error for URL <URL address>
+			Error! The server didn't respond in time for <URL address>
+			Error! The server response status was 502.
+	
+	Follow these instructions in order to retry saving a link:
+		Convert IA links back to normal links:
+			(1) Remove the IA's string part of the URL:
+				Find what: [https://web\.archive\.org/web/[0-9]*/]
+				Replace with: [] (nothing)
+				Wrap around: checked
+				Search mode: Regular Expression
+		
+			(2) Remove all stuff after the URLs:
+				Find what: [ Error! .*$]
+				Replace with: [] (nothing)
+				Wrap around: checked
+				. matches newline: unchecked
+			or:
+				Find what: [^(?'URL'https://([A-Za-z0-9/\.%\-\?\=\+]*)) .*$]
+				Replace with: [$+{URL}]
+				Wrap around: checked
+				Search mode: Regular Expression
+	You should now have the URLs that didn't save, just submit those and repeat until all links are successful. However, if you have
+	links with special/non-UTF characters, try saving via HTML-styled hyperlinks:
+		If the URL contains special characters and non-UTF characters (which often results in emails that characters on or after the first invalid character are ignored),
+		create a blank HTML file and paste the URLs formatted as a list with each line containing exactly 1 link. Then use Notepad++'s regular expression feature
+		to add this:
+		
+			Find what: [^]
+			Replace with: [<a href="]
+			
+		then do this:
+			
+			Find what: [$]
+			Replace with: [">Link</a>]
+			
+		Save and then open the HTML file with a browser (preferably Firefox or chrome), copy all the text and paste them into the email. During copying and pasting,
+		it should also copy the format and not just text (in this case, clickable hyperlinks). That way, the internet archive will save the WHOLE URL strings and not just
+		try to save the first n characters that are "valid".
+		
+		Note!: It is possible that mojibakes can occur, which is why it is mostly recommended to get the percent encoded form instead.
+		
+		If you are saving pages on twitter, please read the “Email saving used on twitter” as there is another possibility of not saving pages.
+		
+	Email saving used on twitter.
+		Due to the new twitter layout, make sure you have these extensions:
+			GoodTwitter: https://github.com/ZusorCode/GoodTwitter
+			Link gopher: https://github.com/az0/linkgopher/
+			
+			If you use link Gopher, it will extract all CURRENTLY LOADED links in the HTML file. So by loading stuff (scrolling down) on the bottom,
+			they will be caught by the extension too.
+			
+		When saving tweets on twitter, it's possible that saving any twitter pages can randomly redirect to (but not limited to):
+			[https://api.twitter.com/1.1/jot/client_event.json]
+			[https://api.twitter.com/2/timeline/conversation/<TweetID>.json?<long string of commands>]
+			[https://api.twitter.com/graphql/<long list of commands>]
+			[https://abs.twimg.com/responsive-web/client-web/polyfills.<hex string>.js]
+			[https://pbs.twimg.com/hashflag/config-<year>-<month>-<day>-16.json]
+			[https://twitter.com/i/js_inst?c_name=ui_metrics]
+			[https://abs.twimg.com/responsive-web/web/i18n-rweb/en.2e279514.js]
+			[https://t.co/<Base64_string>]
+		
+		When a redirect happens, currently, the WBM will simply show the URL redirected to, not the link you gave it.
+		To retry these redirected links, follow these instructions:
+		
+			Have 2 lists. One containing the links you sent, and the links you got back. Make sure both lists are formatted
+			with 1 URL on each line, and the one you sent must be sorted alphabetically (Edit -> Line Operations -> Sort lines Lexicography ascending)
+			and MAKE SURE YOU REMOVE DUPLICATES HERE (Edit -> Line Operations -> Remove Consecutive Duplicate lines). Having duplicates in the list you
+			sent to the IA will not show up the links redirected.
+			
+			On the links you got back from a reply, convert them into regular non-archive links (“Convert IA links back to normal links”). You should
+			now have 2 almost-identical links.
+			
+			Combine the lists: Take one, and paste it on the bottom of the other (don't paste it positioned so that the pasted list's first URL is on
+			the same line as the other list's last item, there should still be 1 URL per line).
+			
+			Sort the URLS alphabetically (Edit -> Line Operations -> Sort lines Lexicography ascending).
+			This will caused duplicate lines that have not been redirected to be placed next to another.
+			This time, do NOT remove duplicates, they're there to indicate that they weren't redirected,
+			doing that will just reduce all duplicates to one instead of getting a URL that only exists once.
+			
+			Make a line break on the last item on the bottom.
+			
+			Replace by doing this:
+				Find what box: [(?-s)^(.+\R)\1+]
+				Replace with box: [] (empty)
+				Search mode radiobutton: Regular expression
+				Wrap around checkbox: ticked
+				. matches newline checkbox: doesn’t matter (because the (?-s) leading off the Find what box contains an s variant)
+				
+			Then press the Replace All button. This looks for 2 adjacent lines that are exactly the same, if they are, then
+			remove all that duplicates (those are URLs you sent and the same you got back from reply). If there are only one (you sent a URL, and
+			returns a different URL from reply, which is a redirected link), then leave it there.
+	New method (this version uses a "tagging" system to aid on distinguishing which URLs is from the user and from the IA):
+		(1) With the list of URLs, email it to spn@archive.org. Make sure you have a copy of it.
+		(2) With that copy, paste it in notepad++, (as always, the format should be that each URL is in their own lines, with nothing before it besides
+		    the beginning of the line), then prepend each of them with a tab followed by "[UserSent]":
+			Find what: [$]
+			Replace with: [\t\[UserSent\]]
+		(3) Wait until you received an email back, copy that list of URLs (also the similar list format as mentioned at step 2), paste it in a blank document, convert them into "normal list" of URLs
+		    but with a tab followed by "[IAReceivedSuccess]". The regex to convert URLs is performed like so:
+			Find what: [^https://web\.archive\.org/web/\d*/(?'OriginalURL'[^\t\n\r ]*)( First Archive)?( Seed URL)?$]
+			Replace with: [$+{OriginalURL}\t[IAReceivedSuccess]]
+			
+		    After converting, clean out the list by removing duplicate and redundant lines by doing this:
+			(3.1.1) Edit -> Line operations -> Sort Lines Lexicography ascending, this will sort it so that both URLs from the IA and what you sent placed next to another.
+			(3.1.2) Edit -> Line operations -> Remove Consecutive Duplicate lines
+			(3.1.3) Edit -> Line operations -> Remove Empty lines (containing blank characters)
+		(4) Extract the successful URLs like so:
+			Find what: [\[IAReceivedSuccess\]]
+			Press "Find all in Current Document"
+			now copy that by right-click the GREEN PART (the line showing the number of hits) and “copy”. Now combine it with the sent URLs you have.
+			
+			^Edit: As of 2021-04-11 (notepad++ version 7.9.5), right-click the green path, and select “Copy Selected Line(s)”.
+		(5) Now with the original URLs you sent and the URLs from the email you received and converted, extract the failed URLs by doing this:
+			(5.1) Cleanup by removing duplicates, as mentioned at step 3.1.1 to 3.1.3.
+			(5.2) Remove URLs that have been saved correctly by performing this regular expression:
+				Find what: [^(?'URL'[^\t\n\r]*)\t\[IAReceivedSuccess\]\r\n\g{URL}\t\[UserSent\]]
+				Replace with: []
+			(5.3) Perform step 5.1 again to clean up empty spaces
+		(6) Extract the URLs that failed sent by you by CTRL+F
+			Find what: [\t\[UserSent\]]
+			Press "Find all in Current Document"
+			and do the same copy as with step 4.
+		(7) To send the URLs to the WBM again, have a copy of the URLs you sent, but without the tab followed by [UserSent]:
+			Find what: [\t\[UserSent\]]
+			Replace with: []
+		(8) Resubmit and repeat the entire steps until all links are properly saved.

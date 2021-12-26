@@ -1,0 +1,99 @@
+Due to the new layout and that the legacy version of twitter is going to be shut down on 2020/06/01, I documented several info and about on new ways
+to save tweets and media on the forced-new-layout.
+
+Note: As of around 2021-01-14, saving media pages no longer works, results in error 404 to the WBM.
+
+How to get URLs off of twitter's new layout:
+	Userscript console logging method:
+		It is very possible to automate the copying of URLs from the HTML using userscripts. Tampermonkey/Greasemonkey browser extension
+		is needed, then you need this script:
+			Code:
+				// ==UserScript==
+				// @name         Extract Twitter links, videos (internal) and images
+				// @namespace    twitter.com
+				// @version      0.2
+				// @description  try to take over the world!
+				// @include      https://twitter.com/*
+				// @grant        none
+				// ==/UserScript==
+				(function() {
+				'use strict';
+				const all = window.allLink = new Set();
+				function getLink() {
+					Array.from(document.querySelectorAll('a[href*="/status/"]')).forEach(link=>{
+					if(!all.has(link.href)&&link.href.match(/twitter\.com\/.+?\/status\/\d+$/)) {
+						all.add(link.href);
+						console.log(link.href);
+					}
+					});
+					Array.from(document.querySelectorAll('[src*="pbs.twimg.com"]')).forEach(link=>{
+					if(!all.has(link.src)) {
+						all.add(link.src);
+						console.log(link.src);
+					}
+					});
+					Array.from(document.querySelectorAll('[src*="video.twimg.com/"]')).forEach(link=>{
+					if(!all.has(link.src)) {
+						all.add(link.src);
+						console.log(link.src);
+					}
+					});
+				}
+				getLink();
+				window.addEventListener('scroll',getLink);
+				})();
+		(source: https://greasyfork.org/en/forum/discussion/79273/extract-links-to-tweet-and-media-on-twitter-as-you-scroll-down )
+		
+		Create a new script and paste that. What will happen is that when you go to twitter, a list of links to images, videos and tweets
+		will be logged into the browser's console log (each time you scroll down), this console log is located in the Dev tools by inspect-element
+		on the context menu or F12. Great care should be taken that if more than a certain number of logs is reached, the oldest will get erased, so
+		increasing this log limit to a large number is needed if you wanted to capture all the URLs loaded. This can be done on firefox on [about:config],
+		search for [devtools.hud.loglimit.console] and [extensions.firebug.console.logLimit] and set it to a number 2147483647 (the highest value allowed).
+		Should you have more than that number, you gonna have to break that into groups of that value by copying them and pasting them in NP++ to back it up,
+		very unlikely you would ever reach that number though.
+		
+		Note that the console log also logs errors and other stuff, so make sure you toggle the display on the tabs on what to show (on google chrome it is
+		a dropdown list). Disabling errors and warnings should leave you just URLs.
+		
+		To copy the list, right-click and select all (on firefox), then copy message. When pasted in notepad++, you should now have the list of URLs.
+		To remove junks around the URLs, use this replace function:
+			Find and replace:
+				find what: [^.*(?'URL'https://[^ ]*?) .*$]
+				Replace with: [$+{URL}]
+		and you should have only URLs on each line. Then remove any unnecessary URLs. Remember they are formated like this:
+			Tweets:
+				As I said before, it's:
+					https://twitter.com/<username>/status/<TweetID>
+				so far, this does not show in the network, someone has to make an extension/script that logs each tweet being loaded into the HTML
+				or make it so that twitter does not unload tweets leaving the screen.
+			Media:
+				Image URL formats (in case this gets affected when shut down):
+					URL format:
+						Old:
+							https://pbs.twimg.com/media/<base64string>.<extension>:<resolution_name>
+						New:
+							https://pbs.twimg.com/media/<base64string>?format=<extension>&name=<resolution_name>
+					Legends:
+						<extension>: file extension (jpg, png, etc.)
+						<resolution_name>:
+							Not having [&name=<resolution_name>] gives you the "medium" resolution
+							[thumb] = thumbnail
+							[large] = larger
+							[orig] = original resolution
+							<width>x<height> = the approximate width and height set to.
+				Gifs
+					video thumbnail (static picture)
+						old:
+							https://video.twimg.com/tweet_video_thumb/<base64string>.mp4
+						new:
+							https://pbs.twimg.com/tweet_video_thumb/<base64string>?format=<extension>&name=<resolution_name>
+					source video (uses mp4 the same as actual video):
+						https://video.twimg.com/tweet_video/<base64string>.mp4
+Other stuff
+	Fast way to obtain user homepage URLs (and also find them)
+		Find what: [^https://twitter\.com/(?'UserName'[^/]*?)/(status/\d*|media)$]
+		Replace with: [https://twitter\.com/$+{UserName}]
+	
+	Rid out the media section of user page since IA cannot save them
+		Find what: [^https://twitter\.com/[^/]*?/media$]
+		Replace with: []

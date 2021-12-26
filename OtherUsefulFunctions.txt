@@ -1,0 +1,189 @@
+These contains misc functions useful in somewhat rare cases. Note that this entire tutorial assumes when you create a list of URLs, you have them formatted
+with one URL per line (other than the spreadsheet format that you pasted).
+
+Again, documents here expect you to use notepad++.
+
+Get human-readable timestamp from internet archive URL.
+When viewing an archived page, the IA stores the timestamp in this format:
+	https://web.archive.org/web/YYYYMMDDhhmmss/<Website original URL>
+	
+	YYYYMMDDhhmmss: Each character is a digit of a number. If fewer digits,
+	leading zeroes are added.
+	YYYY = year
+	MM = months
+	DD = day
+	hh = hour
+	mm = minute
+	ss = second
+
+	This regular expression replaces the timestamp to readable format:
+		Find what: [(?'ArchiveURL'https://web.archive.org/web/(?'Year'\d\d\d\d)(?'Month'\d\d)(?'Day'\d\d)(?'Hours'\d\d)(?'Minutes'\d\d)(?'Seconds'\d\d)/(.*)$)]
+		Replace with: [$+{Year}-$+{Month}-$+{Day} $+{Hours}:$+{Minutes}:$+{Seconds} Link: $+{ArchiveURL}]
+		Search mode: Regular expression.
+		
+		
+Continuous saving via "decaying" list
+	Perhaps if you have thousands of URLs and are submitting each URL containing 500 or less links on there
+	all at once. So I provided a strategy checking if the URLs have failed or are waiting to get a reply on it.
+	Before even submitting, have a "master list" that CAN have more than 500 (lines sorted alphabetically, no duplicate lines),
+	take each group of 500 and submit them. Once you get the last group. Then as each reply is sent to your inbox, copy all those URLs detected, and do this:
+		The reply from the IA:
+			Remove the potential "First Archive":
+				Find what: [ First Archive$]
+				Replace with: [] (nothing)
+				Wrap around: checked
+				Search mode: Regular expression
+				. matches newline: unchecked
+			Then, we want to reformat the successful saves so that it starts with the original URL (so that later when
+			sorting lines alphabetically with both sent and reply list combined, you have the sent links and the successfully
+			saved link from reply next to one another):
+				Find what: [https://web.archive.org/web/[0-9]*/(?'URL'https?://([^[:s:]]*))*]
+				Replace with: [$+{URL} success]
+				Wrap around: checked
+				Search mode: Regular expression
+				. matches newline: unchecked
+					^This will revert the Internet archive URL to an original URL with the word "success" added after only for URLs that
+					have truly successfully saved.
+					
+		Ridding out the URLs that were saved:
+			Then copy that reformatted list and combine it with the master list. Sort lines alphabetically ascending (Edit -> Line Operations ->
+			Sort Lines Lexicographically ascending, not descending!). Then do this:
+				Find what: [^(?'URL'https://([^[:s:]]+))\R\g'URL' success]
+				Replace with: [] (nothing)
+				Wrap around: checked
+				Search mode: Regular expression
+					^This will get rid of all URLs that have successfully been saved (confirmed), while ones that only 1 exists
+					(either due to redirect, or waiting for a reply), errors out or any "unsure" if the URL have been saved or not
+					will still exist to be (re-)saved.
+			Feel free to remove duplicate URLs by Edit -> Line Operations -> Remove Consecutive Duplicate lines (this brings all the URLs
+			together and removes all but one empty line) afterwards. You can also safely remove empty lines (located in the line operations -> Remove Empty Lines)
+			Since errors and whatever on the list are both "not saved" URLs, do this to clean up:
+				Find what: [^https://[^[:s:]]* Error!.*$]
+				Replace with: [] (nothing)
+				Wrap around: checked
+				Search mode: Regular expression
+	Essentially, the "master list" is a "to save/resave list". If any fails, remains on the list to be tried again, and successfully saved links
+	disappear off the list.
+	
+	Be very careful if the link contains special characters not being percent encoded. This replace mechanism assumes the space character marks the end
+	of the URL and so does most online platforms when posting a reply. Also note that the space character in a FTP have two symbols for substitution with
+	safer characters:
+		[+] (plus sigh) which then becomes %2B
+		[ ] (space character) becomes %20
+	Which they are interpreted differently.
+	
+Looking for URLs that vanished or newly created from a list.
+	This assumes you have stored a list of URLs on your PC, and then you have another list that is slightly different due to new content being added. Useful
+	if you want to save each new URL once.
+	
+	To obtain only the new URLs, have two lists, one from an earlier date and the one most recent. I recommend naming these txt files as a date (YYYY-MM-DD
+	leading zeroes included if you are keeping records of old lists) and sort them by name for easy finding.
+	
+	On the older list, append " old" at the end of each URLs (example: [https://www.example.com old]):
+		Find what: [$]
+		Replace with: [ old]
+		Wrap around: checked
+		Search mode: Regular expression
+	Then copy all of that, and then add/combine to the list containing the newer list. Sort lines alphabetically. Then do this to extract only URLs that
+	disappeared or appeared:
+		Find what: [^(?'URL'https://([^[:s:]]+))\R\g'URL' old]
+		Replace with: [] (nothing)
+		Wrap around: checked
+		Search mode: Regular expression
+			^Removes all URLs that existed in the past and present. Leaving out deleted URLs and ones newly created.
+	Feel free to sort lines alphabetically once again (and remove duplicate lines) for convenient format.
+	
+	Of course, if you want to sort them by which one are old and which are new, do this:
+		Find what: [^(?'URL'https://([^[:s:]]+)) old]
+		Replace with: [old: $+{URL}]
+		Wrap around: checked
+		Search mode: Regular expression
+			^This will move the old to the left margin so that the sort line catches that and puts
+			 all of them together.
+	Then sort lines alphabetically. This will first move the word “old” to the left (since the sort lines function scans characters left to right),
+	and that will cause the sorter to recognize this and place anything starting with that word together with all other old links that died.
+Dealing with huge number of URLs (more than 500).
+	Perhaps, you want to re-attempt to save links that failed email-by-email based instead of waiting till all emails are "replied"
+	then saving a list of URLs that failed.
+		1. Have a list of URLs ("master list"), this time, "group sorted" by each email you sent containing no more than 500.
+		   Avoid having this master list be [Ridding out the URLs that were saved]'d because we're not doing the entire list at once, but
+		   each email group at a time.
+		2. Email each group. Make sure each of them matches so you can find them on the later steps.
+		3. Every time you receive an email, copy that, paste into an empty document, then in "master list" look for a group that matches with the email sent.
+		   CUT (not copy) that group from "master list" and paste it into the new document you created.
+		4. Perform [Ridding out the URLs that were saved] on that new document. You'll have a list of failed links within that group. Now paste that back to the
+		   master list.
+		5. Also email that what you've pasted.
+	This method is really good if there are pages that get deleted early. However, having tons of groups may be time consuming, and rushing could make you send an
+	unintentional number of URLs (such as 499 or 501 URLs). So you could manually split each lines by 500, but a regex will do that for you:
+
+	Splitting the URL into groups of 500:
+		It is possible you may be wanting to save more than 500 and you have to split the URLs into groups of 500 for each email. Well, the regex to do that is this:
+			Search mode: Regular expression
+			Find what: [((^.*?$\R){500})]
+			Replace with: [\1\n]
+			Wrap around: checked
+			Search mode: Regular Expression
+		And you should get breakages at 501, 1002, 1503 and so on (a period of 501 lines; 501*G where G is an integer not negative).
+		EDIT: There is a bug found here: https://github.com/notepad-plus-plus/notepad-plus-plus/issues/8554 which causes it to DELETE some URLs
+		due to the last n URLs being less than 500 causes the replace to select the entire document. The current solution is to use this instead:
+			find what: [(?-s)(.*\R){500}\K]
+			replace with: [\n]
+			Wrap around: checked
+			Search mode: Regular expression
+			Click only in "Replace All"
+Using the IA's spread sheet-based saver.
+	Note: This tutorial assumes you have a google sheet document formatted in a list-based format (each row contains 1 URL):
+			A	B	C	D
+		1	[URL1]	[empty]	[empty]	[empty]
+		2	[URL2]	[empty]	[empty]	[empty]
+		3	[URL3]	[empty]	[empty]	[empty]
+	So after you have your list of URLs, and that you went to here: https://archive.org/services/wayback-gsheets/ and selected
+	"Archive URLs" and it edits the spreadsheet showing the save results:
+			A	B	C	         D
+		1	[URL1]	[Y/N]	[HTTPStat]	 [IAURL1]
+		2	[URL1]	[Y/N]	[HTTPStat]	 [IAURL2]
+		3	[URL1]	[Y/N]	[HTTPStat]	 [IAURL3]
+		
+		Notes:
+			IAURL is usually [https://web.archive.org/web/YYYYMMDDhhmmss/SiteURL] when saved successfully, possible errors
+			that the links may not be saved are these instead of the IA archived URL:
+				[This URL has been already captured 10 times today. Please email us at "info@archive.org" if you would like to discuss this more.]
+				[The server response status was 502.]
+	Do one of these to obtain just the URLs you sent and the AI url, in text format:
+		-Drag column D and place it before B (you should have URL and IAURL next to one another), Copy columns A and the new B and paste it into notepad++.
+		-Hold down CTRL, select column A and D, hit CTRL+C, and when you paste, should be correctly formatted.
+	the table should get converted to text using tab-separated values. (each line is two urls with your sent on the left margin, followed by a tab character, and
+	then the IA version).
+	Then replace:
+		Find what: [^(?'URL'[^[:s:]]+)\thttps://web\.archive\.org/web/[0-9]*/\g'URL'$]
+		Replace with: []
+		Wrap around: checked
+		Search Mode: Regular expression
+		
+		Hit "Replace all"
+		
+		^Removes all lines that were saved successfully (A URL, and the IA version without any redirects).
+	Now we have only URLs that that errored. To remove URLs that “cannot save” (such as being saved 10 times in a row within a day), do this:
+		Find what: [^.+?(This URL has been already captured 10 times today).+?$] (note, there may be other errors I haven't discovered yet, if you find more, use “|<another message>” in the parenthesis)
+		Wrap around: checked
+		Search Mode: Regular expression
+		
+		Hit "Replace all"
+	Then to leave out only the URLs that should be reattempted, do this to remove all content after the URLs in each line:
+		Find what: [\t.*?$]
+		Replace with: []
+		Wrap around: checked
+		Search Mode: Regular expression
+		
+		Hit "Replace all"
+Credits:
+	Notepad++ community:
+		sasumner ( https://github.com/sasumner ) and xylographe ( https://github.com/xylographe )
+			Got help in this thread:
+				https://github.com/notepad-plus-plus/notepad-plus-plus/issues/8102
+			boost.org's info:
+				https://www.boost.org/doc/libs/1_70_0/libs/regex/doc/html/boost_regex/format/perl_format.html
+				https://www.boost.org/doc/libs/1_70_0/libs/regex/doc/html/boost_regex/syntax/perl_syntax.html
+		
+		for helping me with using whatever is matched into a capture group. This is often useful for moving texts around.

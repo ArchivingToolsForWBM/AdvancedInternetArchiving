@@ -1,0 +1,94 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+			
+			abbr{cursor: help;}
+			img.img-hor {
+				-moz-transform: scaleX(-1);
+				-o-transform: scaleX(-1);
+				-webkit-transform: scaleX(-1);
+				transform: scaleX(-1);
+				filter: FlipH;
+				-ms-filter: "FlipH";
+			}
+		</style>
+	</head>
+<center>This tool takes a given number of URLs processed in <i>wayback gsheets</i> (wayback google sheets), and calculates at what nth URL the next update on google sheets will happen.</center><br><br>
+<div align="center">
+<body onload="Initialize()">
+Total URLs processed: <input type="number" min="0" max="50000" value="0" onchange="Calculate()" id="Input"> <button onclick="Initialize()">Reset</button><br><br>
+<span id="Output"></span>
+</div><br><br>
+
+<span style="vertical-align: bottom">Credits:
+	<ul>
+		<li><a href="https://stackoverflow.com/questions/67755872/how-do-i-center-a-displaced-text"> Sven Eberth</a> on stackoverflow.</li>
+		<li><a href="https://developer.mozilla.org/en-US/docs/Learn/CSS">Mozilla</a> for documenting CSS and HTML</li>
+	</ul>
+</span>
+</body>
+<script>
+	LastTotalNumberOfLinksProcessed = 0n
+	function Initialize() {
+		document.getElementById("Input").value = "0"
+		document.getElementById("Input").focus()
+		document.getElementById("Input").select()
+		LastTotalNumberOfLinksProcessed = 0n
+		Calculate()
+	}
+	function Calculate() {
+		const BatchSize = 80n //How many URLs before each update.
+		const MaxURLs = 50000n //The maximum number of URLs to process.
+		let Output = ""
+		let NumberOfUrlsProcessed = BigintClamp(CorrectDecBigIntValue(document.getElementById("Input").value), 0n, MaxURLs)
+		document.getElementById("Input").value = NumberOfUrlsProcessed.toString(10)
+		let QuotientResult = NumberOfUrlsProcessed/BatchSize //BigInt automatically rounds down. By doing floor(x/m)*m you can round to specified increment, see https://en.wikipedia.org/wiki/Rounding#Rounding_to_other_values
+		let ModResult = NumberOfUrlsProcessed % BatchSize
+		let RemainingLeft = BatchSize - ModResult
+		let LowerInterval = QuotientResult * BatchSize
+		let UpperInterval = LowerInterval + BatchSize
+		let PercentageWithinBatch = (Number(ModResult) * 100/Number(BatchSize))
+		let NumberOfURLsSubmittedSinceLastEntry = BigintClamp(NumberOfUrlsProcessed - LastTotalNumberOfLinksProcessed, 0n, MaxURLs)
+		LastTotalNumberOfLinksProcessed = NumberOfUrlsProcessed //Reset so that the third entry measures the difference between the third and second (updates the last total to be 1-before the newly submitted number).
+		//Statistics table
+			Output += "<table style='width: 300px'>"
+			Output += "<tr ><td style='padding: 10px'><kbd>URLs processed:</kbd></td><td align='right'><kbd>" + NumberOfUrlsProcessed.toString(10) + "</kbd></td></tr>"
+			Output += "<tr ><td style='padding: 10px'><kbd>Range within:</kbd></td><td align='right'><kbd>" + LowerInterval.toString(10) + "-" + UpperInterval.toString(10)
+			Output += "<tr ><td style='padding: 10px'><kbd>Number of URLs within each " + BatchSize.toString(10) + " interval:</kbd></td><td align='right'><kbd>" + ModResult.toString(10) + "/" + BatchSize.toString(10) + " (" + PercentageWithinBatch.toFixed(0) + "%)</kbd></td></tr>"
+			Output += "<tr ><td style='padding: 10px'><kbd>Remaining to next update:</kbd></td><td align='right'><kbd>" + RemainingLeft.toString(10) + "</kbd></td></tr>"
+			Output += "</table>"
+		//Progress bar, using CSS
+			Output += "<table>"
+			Output += "<tr>"
+			Output += "<td align='right'><kbd><div style='width: 200px'>" + LowerInterval.toString(10) + "</div></kbd></td>"
+			Output += "<td style='border: 1px solid white; width: 300px; height: 10px; background-image: linear-gradient(to right, rgb(0, 127, 0) " + PercentageWithinBatch.toString(10) + "%, rgb(0, 127, 0) " + PercentageWithinBatch.toString(10) + "%, rgba(0, 127, 0, 0.5) " + PercentageWithinBatch.toString(10) + "%); position: relative;'><kbd style='position: absolute; left: " + PercentageWithinBatch.toString(10) +  "%; top: 15px; transform: translateX(-50%);'>" + NumberOfUrlsProcessed.toString(10) + "</kbd></td>"
+			Output += "<td align='left'><kbd><div style='width: 200px'>" + UpperInterval.toString(10) + "</div></kbd></td>"
+			Output += "</tr></table><br><br>"
+		
+		Output += "<kbd>" + NumberOfURLsSubmittedSinceLastEntry.toString(10) + " URLs processed since the last entry.</kbd>"
+		document.getElementById("Output").innerHTML = Output
+	}
+
+
+	function CorrectDecBigIntValue(String) {
+		//This converts the user's input decimal string (negative numbers not allowed)
+		//to BigInt.
+		if ((/^([0-9])+$/).test(String) == false) {
+			String = 0n
+		}
+		return CanConvertHexStringToBigInt = BigInt(String)
+	}
+	function BigintClamp(num, min, max) {
+		//Restrict a number within a specified range, bigInt edition.
+			return num <= min ? min : num >= max ? max : num;
+	}
+</script>

@@ -1,0 +1,224 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+		</style>
+	</head>
+<body>
+<p>This tool takes 2 lists, with one being the list you want to remove some URLs, and the other being the &ldquo;blacklist-er&rdquo; (list of URLs you want to remove). Once both of them filled out, will output the items that passed the filter from the first list</p>
+
+<p>This is useful if you don't want to save pages you know will not change.</p>
+
+<p>NOTE: Whitespace characters are also checked, meaning similar items may not find a match and not remove them should one of them have a whitespace character.</p>
+
+<h3>list of URLs you want to remove some</h3>
+<textarea cols="200" rows="12" id="ListToFilter" oninput="Main()"></textarea><br>
+
+<h3>The blacklist</h3>
+<textarea cols="200" rows="12" id="Blacklist" oninput="Main()"></textarea><br>
+<hr>
+<h3>The result</h3>
+<table>
+<tr><th>Type</th><th>Quantity</th></tr>
+<tr><td>Number of unique URLs to remove some:</td><td><kbd><span id="NumberOfUrlsToRemoveSome">0</span></kbd></td></tr>
+<tr><td>Number of unique URLs in blacklist:</td><td><kbd><span id="NumberOfBlacklistedUrls">0</span></kbd></td></tr>
+<tr><td>Number of unique URLs that were removed:</td><td><kbd><span id="NumberOfRemovedUrls">0</span><span id="PercentageOfURLsRemoved"></span></kbd></td></tr>
+<tr><td>Number of unique URLs remaining:</td><td><kbd><span id="NumberOfRemainingUrls">0</span><span id="PercentageOfURLsRemain"></span></kbd></td></tr>
+</table><br>
+<textarea cols="200" rows="12" id="CleanedList" readonly></textarea>
+<script>
+	function Main() {
+		let ListToFilter = RemoveBlankOrSpacesEntry(RemoveItemsInTableFlaggedAsDuplicates(ConvertURLListToTableFlaggingDuplicates((document.getElementById("ListToFilter").value).split('\n'))))
+		let BlackList = RemoveBlankOrSpacesEntry(RemoveItemsInTableFlaggedAsDuplicates(ConvertURLListToTableFlaggingDuplicates((document.getElementById("Blacklist").value).split('\n'))))
+		let CleanedList = new Array()
+		let Output = ""
+		
+		if (ListToFilter.length != 0 && BlackList.length != 0) {
+			for (let Index = 0; Index < ListToFilter.length; Index++) {
+				let IsItemIn_ListToFilter_BlackListed = false
+				for (let Index2 = 0; ((Index2 < BlackList.length)&&(IsItemIn_ListToFilter_BlackListed == false)); Index2++) {
+					if (ListToFilter[Index] == BlackList[Index2]) {
+						IsItemIn_ListToFilter_BlackListed = true
+					}
+				}
+				if (IsItemIn_ListToFilter_BlackListed == false) {
+					CleanedList.push(ListToFilter[Index])
+				}
+			}
+		}
+		
+		for (Index = 0; Index < CleanedList.length; Index++) {
+			Output += CleanedList[Index]
+			if (Index != CleanedList.length - 1) {
+				Output += "\n"
+			}
+		}
+		document.getElementById("NumberOfUrlsToRemoveSome").innerHTML = BigInt(ListToFilter.length).toString(10)
+		document.getElementById("NumberOfBlacklistedUrls").innerHTML = BigInt(BlackList.length).toString(10)
+		document.getElementById("NumberOfRemovedUrls").innerHTML = BigInt(ListToFilter.length - CleanedList.length).toString(10)
+		document.getElementById("NumberOfRemainingUrls").innerHTML = BigInt(CleanedList.length).toString(10)
+		if (ListToFilter.length != 0) {
+			document.getElementById("PercentageOfURLsRemoved").innerHTML = " (" + BetterPercentageUsingInts(ListToFilter.length - CleanedList.length, ListToFilter.length, 2) + " of the unique URLs you want to clean out)"
+			document.getElementById("PercentageOfURLsRemain").innerHTML = " (" + BetterPercentageUsingInts(CleanedList.length, ListToFilter.length, 2) + " of the unique URLs you want to clean out)"
+		}
+		
+		document.getElementById("CleanedList").value = Output
+	}
+	function ConvertURLListToTableFlaggingDuplicates(ArrayList) {
+		//This returns a 2D array: [[URL, DuplicateFlag], [URL, DuplicateFlag]]
+		//-URL is the list of stuff (primarily URLs), assuming this do not have any sub-arrays within.
+		//-DuplicateFlag is flagged false when no duplicates exists, otherwise if the second
+		// or later items also exist, they themselves are flagged as true
+		let index1 = 0
+		let index2 = 0
+		let OutputTableDuplicateFlags = new Array(ArrayList.length)
+		for (index1 = 0; index1 < ArrayList.length; index1++) {
+			OutputTableDuplicateFlags[index1] = Array(ArrayList[index1], false)
+		}
+		index1 = 0
+		for (index1 = 0; index1 < ArrayList.length; index1++) {
+			for (index2 = index1 + 1; index2 < ArrayList.length; index2++) {
+				if (ArrayList[index1] == ArrayList[index2]) {
+					OutputTableDuplicateFlags[index2][1] = true
+				}
+			}
+		}
+		return OutputTableDuplicateFlags
+	}
+	function RemoveItemsInTableFlaggedAsDuplicates(TableFlaggingDups) {
+		//Extracts whatever outputted by ConvertURLListToTableFlaggingDuplicates
+		//that aren't duplicates, without gaps.
+		let index1 = 0
+		let OutputArray = new Array()
+		for (index1 = 0; index1 < TableFlaggingDups.length; index1++) {
+			if (TableFlaggingDups[index1][1] == false) {
+				OutputArray.push(TableFlaggingDups[index1][0])
+			}
+		}
+		return OutputArray
+	}
+	function RemoveBlankOrSpacesEntry(InputArray) {
+		let OutputArray = new Array()
+		let index1 = 0
+		for (index1 = 0; index1 < InputArray.length; index1++) {
+			if ((/^(\s*)$|^()$/).test(InputArray[index1]) == false) {
+				OutputArray.push(InputArray[index1])
+			}
+		}
+		return OutputArray
+	}
+	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec) {
+		//This function calculates a percentage of a value (must be bigint), and returns a
+		//string representing a percentage using fixed-point arithmetic (https://en.wikipedia.org/wiki/Fixed-point_arithmetic ).
+		//Unlike a typical Quantity*100/MaxQuantity (or Quantity / MaxQuantity * 100)
+		//This also reports if rounding to 0 or 100% have occurred.
+		//Note: Don't use negative or decimal numbers for any of the parameters!
+		
+		//Output: A string:
+		//"--" if MaxQuantity is 0 (division by zero in bigint is not handled unlike double-precision floating point)
+		//"<number>%" a percentage. Rounds half-up.
+		//"Greater than <1*(10**(2+NumberOfDigitsAfterDec_BigInt))-1>" if results between 99.99..% and 100% (avoids rounding up towards 100%).
+		//"Less than <1/(10**NumberOfDigitsAfterDec_BigInt)>" is same as above but avoids rounding towards 0%.
+		
+		//100.0 is 1000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 1
+		//100.00 is 10000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 2
+		//100.000 is 100000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 3
+		Quantity = BigInt(Quantity)
+		MaxQuantity = BigInt(MaxQuantity)
+		NumberOfDigitsAfterDec_BigInt = BigInt(NumberOfDigitsAfterDec)
+		if (MaxQuantity == 0n) {
+			return "--"
+		} else {
+			let Percentage = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) / MaxQuantity
+			let Modulo = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) % MaxQuantity
+			//Check if remainder is greater than or equal to half of MaxQuantity, if so, increment
+			//Percentage by 1 unit.
+			
+			//Get halfway point, note: this must be rounded half up as well so that if Modulo is 0.5 greater in the case MaxQuantity is an odd number,
+			//would correctly round upwards. Example: 3/2 is 1.5 (default round to 1), since we are dealing with integers, Remainder being 2 or more should be
+			//consider a round up for percentage
+				let HalfwayPointOfMaxQuantity = MaxQuantity / 2n
+				if ((MaxQuantity % 2n) != 0n) {
+					HalfwayPointOfMaxQuantity++
+				}
+			//Round half-up
+				if (Modulo >= HalfwayPointOfMaxQuantity) { //round upwards
+					Percentage++
+					//We rounded the number up (actually increased the value), but it can potentially be at 100%, lets check it and if it did, override it.
+					if (Percentage == 100n*10n**NumberOfDigitsAfterDec_BigInt) {
+						//Rounded to 100% detected
+						//Note to self:
+						//Should say 99% if NumberOfDigitsAfterDec_BigInt = 0
+						//Should say 99.9% if NumberOfDigitsAfterDec_BigInt = 1
+						//99.99 if NumberOfDigitsAfterDec_BigInt = 2
+						//and so on.
+						//So basically the number of 9s after the decimal
+						//is NumberOfDigitsAfterDec_BigInt.
+							let DecimalPortion = ""
+							if (NumberOfDigitsAfterDec_BigInt != 0n) {
+								DecimalPortion += "."
+								for (let NineCount = 0; NineCount < NumberOfDigitsAfterDec; NineCount++) {
+									DecimalPortion += "9"
+								}
+							}
+						return "Greater than 99" + DecimalPortion + "%"
+					}
+				} else {
+					//Rounded downwards (default)
+					
+					if ((Modulo != 0n)&&(Percentage == 0n)) {
+						//Rounded to 0% detected
+						//Note to self:
+						//Should say 1% if NumberOfDigitsAfterDec_BigInt = 0
+						//Should say 0.1% if NumberOfDigitsAfterDec_BigInt = 1
+						//0.01% if NumberOfDigitsAfterDec_BigInt = 2
+						//and so on.
+						//Basically, if NumberOfDigitsAfterDec_BigInt = 2, the number of zeros
+						//between the decimal point and "1" is NumberOfDigitsAfterDec_BigInt - 1
+							let DecimalPortion = ""
+							if (NumberOfDigitsAfterDec_BigInt != 0n) {
+								DecimalPortion += "."
+								for (let ZeroCount = 0; ZeroCount < NumberOfDigitsAfterDec - 1; ZeroCount++) {
+									DecimalPortion += "0"
+								}
+								return "Less than 0" + DecimalPortion + "1%"
+							} else {
+								return "Less than 1%"
+							}
+					}
+				}
+				//Split the number separated by decimal point.
+					let OutputString = Percentage.toString(10)
+					let WholeNumberPart = OutputString.substring(0, OutputString.length - NumberOfDigitsAfterDec)
+					if (WholeNumberPart == "") {
+						WholeNumberPart = "0"
+					}
+					//This make sure that leading zeros (when less than 1%) exists, should the value in fixed point have fewer digits
+					//so that it can display things like 0.01 (stored internally in fixed point as 1) instead of 0.1 when NumberOfDigitsAfterDec is set to 2.
+					//It is due to the fact that toString(10) removes all leading zeros.
+						if (OutputString.length < NumberOfDigitsAfterDec) {
+							let NumberOfLeadingZeroesNeeded = NumberOfDigitsAfterDec - OutputString.length //example: 34 (length = 2) which is supposed to be 0.00034% when NumberOfDigitsAfterDec = 5, so 5-2 = 3, so 3 0s are needed.
+							let LeadingZeroes = ""
+							for (let Count = 0; Count < NumberOfLeadingZeroesNeeded; Count++) {
+								LeadingZeroes += "0"
+							}
+							OutputString = LeadingZeroes + OutputString
+						}
+					let DecimalPart = OutputString.substring(OutputString.length - NumberOfDigitsAfterDec)
+			return WholeNumberPart + "." + DecimalPart + "%"
+		}
+	}
+</script>
