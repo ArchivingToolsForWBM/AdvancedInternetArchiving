@@ -48,11 +48,12 @@ Sort:<br>
 
 <button onclick="CheckURLs()">Submit</button><button onclick="Reset()">Reset</button>
 <hr>
-<span id="Output"></span>
 <span id="Output_Statistics"></span>
-<textarea hidden id="Output_Plaintext"></textarea>
+<kbd id="Output_ItemCountText" hidden>Number of items shown: <span id="Output_ItemCountNumber"></span></kbd><br>
+<textarea hidden id="Output_Plaintext" cols="100" rows="30"></textarea>
 <span id="Output_table"></span>
-<textarea hidden id="Output_Redirected"></textarea>
+<kbd id="Output_RedirectedCountText" hidden>Number of redirect destination(s) found: <span id="Output_RedirectedCountNumber"></span></kbd><br>
+<textarea hidden id="Output_Redirected" cols="100" rows="30"></textarea>
 </body>
 <script>
 	//stuff just in case the IA changed its system
@@ -92,7 +93,13 @@ Sort:<br>
 		document.getElementById("Filter_RedirectedOrMissing").checked = true
 		document.getElementById("Filter_SuccessSavedBefore").checked = false
 		document.getElementById("Filter_SuccessFirstSave").checked = false
-		document.getElementById("Output").innerHTML = ""
+		
+		document.getElementById("Output_ItemCountText").hidden = true
+		document.getElementById("Output_Statistics").innerHTML = ""
+		document.getElementById("Output_Plaintext").hidden = true
+		document.getElementById("Output_table").innerHTML = ""
+		document.getElementById("Output_RedirectedCountText").hidden = true
+		document.getElementById("Output_Redirected").hidden = true
 	}
 	function CheckURLs() {
 		//initialize stuff
@@ -237,24 +244,24 @@ Sort:<br>
 					} else {
 						Output += "<kbd>No items found</kbd>"
 					}
-					Output += "<h1>List of URLs in plaintext (easy to copy)</h1>"
+					document.getElementById("Output_Statistics").innerHTML = Output
 				//Retry list (plaintext)
+					Output = ""
+					document.getElementById("Output_ItemCountText").hidden = false
+					document.getElementById("Output_ItemCountNumber").innerHTML = BigInt(FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(FilteredListForDisplay.length, UserSentURLsList_WithStates.length, 2) + " of all URLs submitted)"
 					if (FilteredListForDisplay.length != 0) {
-						Output += "<kbd>Number of findings: " + BigInt(FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(FilteredListForDisplay.length, UserSentURLsList_WithStates.length, 2) + " of all URLs submitted)</kbd><br>"
-						Output += "<textarea readonly='true' cols='100' rows='30'>"
-						Index = 0
+						//Output += "<kbd>Number of findings: " + BigInt(FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(FilteredListForDisplay.length, UserSentURLsList_WithStates.length, 2) + " of all URLs submitted)</kbd><br>"
 						for (Index = 0; Index < FilteredListForDisplay.length; Index++) {
-							Output += escapeHTMLChars(FilteredListForDisplay[Index][0])
+							Output += FilteredListForDisplay[Index][0]
 							if (Index != FilteredListForDisplay.length - 1) {
 								Output += "\n"
 							}
 						}
-						Output += "</textarea><br>"
-					} else {
-						Output += "<kbd>No items found</kbd>"
 					}
+					document.getElementById("Output_Plaintext").hidden = false
+					document.getElementById("Output_Plaintext").value = Output
 				//Display filtered list using HTML table. Shows the URLs, the color indicator, and the WBM response.
-					Output += "<h1>Find results</h1>"
+					Output = ""
 					if (FilteredListForDisplay.length != 0) {
 						Index = 0
 						Output += "<table>"
@@ -272,11 +279,13 @@ Sort:<br>
 					} else {
 						Output += "<kbd>No items found</kbd>"
 					}
+					document.getElementById("Output_table").innerHTML = Output
 				//Display the WBM redirect destinations list
-					Output += "<h1>List of redirect destinations from the WBM</h1>"
+					Output = ""
 					if (RedirectDestFromWBM.length != 0) {
-						Output += "<kbd>Number of findings: " + BigInt(RedirectDestFromWBM.length).toString(10) + "<kbd><br>"
-						Output += "<textarea readonly='true' cols='100' rows='30'>"
+						//Output += "<kbd>Number of findings: " + BigInt(RedirectDestFromWBM.length).toString(10) + "<kbd><br>"
+						document.getElementById("Output_RedirectedCountText").hidden = false
+						document.getElementById("Output_RedirectedCountNumber").innerHTML = BigInt(RedirectDestFromWBM.length).toString(10)
 						Index = 0
 						for (Index = 0; Index < RedirectDestFromWBM.length; Index++) {
 							Output += RedirectDestFromWBM[Index]
@@ -284,12 +293,12 @@ Sort:<br>
 								Output += "\n"
 							}
 						}
-						Output += "</textarea>"
 					} else {
-						Output += "<kbd>There are no WBM redirected results found.</kbd>"
+						Output += "There are no WBM redirected results found."
 					}
+					document.getElementById("Output_Redirected").hidden = false
+					document.getElementById("Output_Redirected").value = Output
 			//And done
-				document.getElementById("Output").innerHTML = Output
 	}
 
 	function ConvertURLListToTableFlaggingDuplicates(ArrayList) {
