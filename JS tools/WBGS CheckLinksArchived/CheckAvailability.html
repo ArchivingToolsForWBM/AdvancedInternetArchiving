@@ -50,7 +50,10 @@ Sort:<input type="checkbox" onchange="AutoUpdateCode()" id="SortReverse"><label 
 
 <button onclick="Submit()" id="SubmitButton">Submit</button> <span id="InvalidDateMessage"></span>
 <hr>
-<span id="Output"></span>
+<span id="Output_Statistics"></span><br>
+<kbd hidden id="Output_NumberOfResultsText">Number of results found: <span id="Output_NumberOfResultsNumber"></span></kbd><br>
+<textarea readonly id="Output_List" cols="100" rows="30"></textarea><br>
+<span id="Output_Table"></span>
 </body>
 <script>
 	const String2Regex_IA_URLPartBeforeTimestamp = "https:\\/\\/web\\.archive\\.org\\/web\\/"
@@ -86,11 +89,7 @@ Sort:<input type="checkbox" onchange="AutoUpdateCode()" id="SortReverse"><label 
 	}
 	function AutoUpdateCode() {
 		if (document.getElementById("AutoUpdate").checked) {
-			if ((document.getElementById("DateRangeStart").value != "")&&(document.getElementById("DateRangeEnd").value != "")&&(document.getElementById("DateRangeEnd").value < document.getElementById("DateRangeStart").value)) {
-				document.getElementById("Output").innerHTML = "<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>"
-			} else {
-				Submit()
-			}
+			Submit()
 		}
 	}
 	function Submit() {
@@ -115,20 +114,24 @@ Sort:<input type="checkbox" onchange="AutoUpdateCode()" id="SortReverse"><label 
 		for (let Index = 0; Index < InputList.length; Index++) {
 			if (InputList[Index][0][2] != "") { //If it WAS saved...
 				let TimestampStringFromURL = InputList[Index][0][2].match(RegExp("(?<=" + String2Regex_IA_URLPartBeforeTimestamp + ")\\d+(?=\\/)"))[0]
-				InputList[Index][1] = ConvertTimeStampStringToEasyToRead(TimestampStringFromURL)
-				//Place in the earliest and latest date (initially invalid, but will get replaced with an earlier date or later date)
-					if (Date_Earliest > InputList[Index][1]) {
-						Date_Earliest = InputList[Index][1]
+				if (TimestampStringFromURL.length != 0) {
+					InputList[Index][1] = ConvertTimeStampStringToEasyToRead(TimestampStringFromURL)
+					//Place in the earliest and latest date (initially invalid, but will get replaced with an earlier date or later date)
+						if (Date_Earliest > InputList[Index][1]) {
+							Date_Earliest = InputList[Index][1]
+						}
+						if (Date_Latest < InputList[Index][1]) {
+							Date_Latest = InputList[Index][1]
+						}
+					if (InputList[Index][0][0] != InputList[Index][0][2].replace(RegExp(String2Regex_IA_URLPartBeforeTimestamp + "\\d+\\/"), "") ) { //If a redirection have been found...
+						InputList[Index][2] = "SavedRedirected"
+						Count_Redirected++
+					} else {
+						InputList[Index][2] = "Saved"
+						Count_Saved++
 					}
-					if (Date_Latest < InputList[Index][1]) {
-						Date_Latest = InputList[Index][1]
-					}
-				if (InputList[Index][0][0] != InputList[Index][0][2].replace(RegExp(String2Regex_IA_URLPartBeforeTimestamp + "\\d+\\/"), "") ) { //If a redirection have been found...
-					InputList[Index][2] = "SavedRedirected"
-					Count_Redirected++
 				} else {
-					InputList[Index][2] = "Saved"
-					Count_Saved++
+					InputList[Index][1] = "Error"
 				}
 			} else { //If not saved
 				InputList[Index][2] = "NotSaved"
@@ -161,40 +164,45 @@ Sort:<input type="checkbox" onchange="AutoUpdateCode()" id="SortReverse"><label 
 				}
 			}
 		//Output
-			Output += "<h1>Statistics (before filter)</h1>"
-			Output += "<ul>"
-			if (Count_NotSaved != Count_TotalURLs) {
-				Output += "<li><kbd>Earliest date: " + Date_Earliest + "</kbd></li>"
-				Output += "<li><kbd>Latest date: " + Date_Latest + "</kbd></li>"
-			} else {
-				Output += "<li><kbd>No URL with a timestamp found.</kbd></li>"
-			}
-			Output += "<li><kbd>Total number of URLs: " + BigInt(Count_TotalURLs).toString(10) + "</kbd></li>" //Bigint just in case should it show E notation.
-			Output += "<ul>"
-			Output += "<li><kbd style='color: #00ff00'>Number of URLs that were saved: " + BigInt(Count_Saved).toString(10) + " (" + BetterPercentageUsingInts(Count_Saved, Count_TotalURLs, 2) + ")</kbd></li>"
-			Output += "<li><kbd style='color: #ffff00'>Number of URLs that were saved and got a different URL: " + BigInt(Count_Redirected).toString(10) + " (" + BetterPercentageUsingInts(Count_Redirected, Count_TotalURLs, 2) + ")</kbd></li>"
-			Output += "<li><kbd style='color: #ff0000'>Number of URLs that were not saved: " + BigInt(Count_NotSaved).toString(10) + " (" + BetterPercentageUsingInts(Count_NotSaved, Count_TotalURLs, 2) + ")</kbd></li>"
-			Output += "</ul>"
-			Output += "</ul>"
-			Output += "<h1>Statistics (after filter)</h1>"
-			Output += "<ul>"
-			if (Count_NotSaved_AfterFilter != InputList.length) {
-				Output += "<li><kbd>Earliest date: " + Date_Earliest_AfterFilter + "</kbd></li>"
-				Output += "<li><kbd>Latest date: " + Date_Latest_AfterFilter + "</kbd></li>"
-			} else {
-				Output += "<li><kbd>No URL with a timestamp found.</kbd></li>"
-			}
-			Output += "<li><kbd>Number of results found: " + BigInt(InputList.length).toString(10) + "</kbd></li>"
-			Output += "</ul>"
-			if (InputList.length != 0) {
-				Output += "<textarea readonly cols='100' rows='30'>"
+			//Statistics
+				Output += "<h1>Statistics (before filter)</h1>"
+				Output += "<ul>"
+				if (Count_NotSaved != Count_TotalURLs) {
+					Output += "<li><kbd>Earliest date: " + Date_Earliest + "</kbd></li>"
+					Output += "<li><kbd>Latest date: " + Date_Latest + "</kbd></li>"
+				} else {
+					Output += "<li><kbd>No URL with a timestamp found.</kbd></li>"
+				}
+				Output += "<li><kbd>Total number of URLs: " + BigInt(Count_TotalURLs).toString(10) + "</kbd></li>" //Bigint just in case should it show E notation.
+				Output += "<ul>"
+				Output += "<li><kbd style='color: #00ff00'>Number of URLs that were saved: " + BigInt(Count_Saved).toString(10) + " (" + BetterPercentageUsingInts(Count_Saved, Count_TotalURLs, 2) + ")</kbd></li>"
+				Output += "<li><kbd style='color: #ffff00'>Number of URLs that were saved and got a different URL: " + BigInt(Count_Redirected).toString(10) + " (" + BetterPercentageUsingInts(Count_Redirected, Count_TotalURLs, 2) + ")</kbd></li>"
+				Output += "<li><kbd style='color: #ff0000'>Number of URLs that were not saved: " + BigInt(Count_NotSaved).toString(10) + " (" + BetterPercentageUsingInts(Count_NotSaved, Count_TotalURLs, 2) + ")</kbd></li>"
+				Output += "</ul>"
+				Output += "</ul>"
+				Output += "<h1>Statistics (after filter)</h1>"
+				Output += "<ul>"
+				if (Count_NotSaved_AfterFilter != InputList.length) {
+					Output += "<li><kbd>Earliest date: " + Date_Earliest_AfterFilter + "</kbd></li>"
+					Output += "<li><kbd>Latest date: " + Date_Latest_AfterFilter + "</kbd></li>"
+				} else {
+					Output += "<li><kbd>No URL with a timestamp found.</kbd></li>"
+				}
+				Output += "<li><kbd>Number of results found: " + BigInt(InputList.length).toString(10) + "</kbd></li>"
+				Output += "</ul>"
+				document.getElementById("Output_Statistics").innerHTML = Output
+			//List
+				Output = ""
 				for (var Index = 0; Index < InputList.length; Index++) {
 					Output += escapeHTMLChars(InputList[Index][0][0])
 					if (Index != InputList.length - 1) {
 						Output += "\n"
 					}
 				}
-				Output += "</textarea><br>"
+				document.getElementById("Output_List").hidden = false
+				document.getElementById("Output_List").value = Output
+			//Table
+				Output = ""
 				Output += "<table>"
 				Output += "<tr><th>Google sheets - Sent URLs</th><th>Google sheets - WBM YES/NO</th><th>WBM URL version</th><th>Date</th></tr>"
 				for (var Index = 0; Index < InputList.length; Index++) {
@@ -206,10 +214,7 @@ Sort:<input type="checkbox" onchange="AutoUpdateCode()" id="SortReverse"><label 
 					Output += "</tr>"
 				}
 				Output += "</table>"
-			} else {
-				Output += "<kbd>No URLs found</kbd>"
-			}
-			document.getElementById("Output").innerHTML = Output
+				document.getElementById("Output_Table").innerHTML = Output
 	}
 	function LookForValidLines(InputArray) {
 		let Output = []
