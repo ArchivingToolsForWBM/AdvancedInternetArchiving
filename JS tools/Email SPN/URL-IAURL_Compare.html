@@ -366,9 +366,11 @@ Sort:<br>
 		//WBGSInfoList[Index][2] = Status indicator, marks if SuccessSavedBefore, SuccessFirstSave, Failed, or RedirectedOrMissing
 		let Index2 = 0
 		for (Index = 0; Index < WBGSInfoList.length; Index++) {
-			for (Index2 = 0; Index2 < IncludedStatuses.length; Index2++) {
+			let IsFilterMatchFound = false
+			for (Index2 = 0; (Index2 < IncludedStatuses.length && IsFilterMatchFound == false); Index2++) {
 				if (WBGSInfoList[Index][2] == IncludedStatuses[Index2]) {
 					OutputFilterList.push(WBGSInfoList[Index])
+					IsFilterMatchFound = true
 				}
 			}
 		}
