@@ -462,9 +462,11 @@ Sort:<br>
 				}
 			}
 			for (Index = 0; Index < WBGSInfoList.length; Index++) {
-				for (let Index2 = 0; Index2 < ArrayOfEnabledStatuses.length; Index2++) {
+				let IsFilterMatchFound = false
+				for (let Index2 = 0; (Index2 < ArrayOfEnabledStatuses.length && IsFilterMatchFound == false); Index2++) {
 					if (WBGSInfoList[Index][1][0] == ArrayOfEnabledStatuses[Index2]) {
 						OutputFilterList.push(WBGSInfoList[Index])
+						IsFilterMatchFound = true
 					}
 				}
 			}
@@ -480,9 +482,11 @@ Sort:<br>
 			}
 		}
 		for (let Index = 0; Index < WBGSInfoList.length; Index++) {
-			for (let Index2 = 0; Index2 < ArrayOfEnabledHTTPStatuses.length; Index2++) {
+			let IsFilterMatchFound = false
+			for (let Index2 = 0; (Index2 < ArrayOfEnabledHTTPStatuses.length && IsFilterMatchFound == false); Index2++) {
 				if (WBGSInfoList[Index][1][1] == ArrayOfEnabledHTTPStatuses[Index2]) {
 					OutputFilterList.push(WBGSInfoList[Index])
+					IsFilterMatchFound = true
 				}
 			}
 		}
