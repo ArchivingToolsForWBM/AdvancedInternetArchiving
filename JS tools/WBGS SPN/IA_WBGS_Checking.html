@@ -41,34 +41,39 @@ Requirement to pass the filter: <br>
 <ul>
 	<li>
 		Requirement to pass filter:
-		<select id="Filter_RequireBothOrAtLeastOne" name="Filter_AndOr" onchange="AutoUpdate()">
-			<option value="Filter_RequireBoth">Must pass both the save status and the HTTP status</option>
-			<option value="Filter_RequireOne">Must pass at least one of either: save status or HTTP status</option>
-		</select>
+		<ul>
+			<li><label><input type="radio" onchange="AutoUpdate()" id="TwoFilters_Setting_PassBoth" name="TwoFilters_PassOneOrBoth">Must pass both: save status and the HTTP status</label></li>
+			<li><label><input type="radio" onchange="AutoUpdate()" id="TwoFilters_Setting_PassAtLeastOne" checked name="TwoFilters_PassOneOrBoth">Must pass at least one of either: save status or HTTP status</label></li>
+		</ul>
 	</li>
-	<li>Save status <button onclick="CheckAllFilters('IASaveStatus'); AutoUpdate()">Check All</button><button onclick="UnCheckAllFilters('IASaveStatus'); AutoUpdate()">Uncheck All</button><button onclick="InvertFilters('IASaveStatus'); AutoUpdate()">Invert</button></li>
-	<ul>
-		<li>Sure saved:</li>
+	<li>
+		2 filters:
 		<ul>
-			<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_SavedBefore" class="FilterSettings_ArchiveStatus" data-status_list_name="Success_SavedBefore"><label for="Filter_Success_SavedBefore">Success (have saved before)</label></li>
-			<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_SuccessFirstArchive" class="FilterSettings_ArchiveStatus" data-status_list_name="Success_FirstArchive"><label for="Filter_SuccessFirstArchive">Success (&ldquo;First Archive&rdquo;) </label></li>
+			<li>Save status <button onclick="CheckAllFilters('IASaveStatus'); AutoUpdate()">Check All</button><button onclick="UnCheckAllFilters('IASaveStatus'); AutoUpdate()">Uncheck All</button><button onclick="InvertFilters('IASaveStatus'); AutoUpdate()">Invert</button></li>
+			<ul>
+				<li>Sure saved:</li>
+				<ul>
+					<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_SavedBefore" class="FilterSettings_ArchiveStatus" data-status_list_name="Success_SavedBefore"><label for="Filter_Success_SavedBefore">Success (have saved before)</label></li>
+					<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_SuccessFirstArchive" class="FilterSettings_ArchiveStatus" data-status_list_name="Success_FirstArchive"><label for="Filter_SuccessFirstArchive">Success (&ldquo;First Archive&rdquo;) </label></li>
+				</ul>
+				<li>Unsure saved:</li>
+				<ul>
+					<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_NoIAResult" checked class="FilterSettings_ArchiveStatus" data-status_list_name="NoIAResult"><label for="Filter_NoIAResult">No results</label></li>
+					<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Blank_Column_D" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Blank_Column_D"><label for="Filter_Blank_Column_D">Result but column D is blank</label></li>
+					<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Redirected" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Redirected"><label for="Filter_Redirected">Redirects</label></li>
+					<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Errors" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Error"><label for="Filter_Errors">Errors</label></li>
+				</ul>
+			</ul>
+			<li>HTTP status <button onclick="CheckAllFilters('HTTPStatus'); AutoUpdate()">Check All</button><button onclick="UnCheckAllFilters('HTTPStatus'); AutoUpdate()">Uncheck All</button><button onclick="InvertFilters('HTTPStatus'); AutoUpdate()">Invert</button><br></li>
+			<ul>
+				<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_HTTPStatus_2XX" class="FilterSettings_HTTPStatus" data-http_status_list_name="HTTPStatus_2XX">2XX (OK)</label></li>
+				<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_HTTPStatus_3XX" class="FilterSettings_HTTPStatus" data-http_status_list_name="HTTPStatus_3XX">3XX (Redirect)</label></li>
+				<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_HTTPStatus_4XX" checked class="FilterSettings_HTTPStatus" data-http_status_list_name="HTTPStatus_4XX">4XX (Error)</label></li>
+				<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_HTTPStatus_5XX" class="FilterSettings_HTTPStatus" data-http_status_list_name="HTTPStatus_5XX">5XX (Server error)</label></li>
+				<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_HTTPStatus_Other" checked class="FilterSettings_HTTPStatus" data-http_status_list_name="HTTPStatus_Other">Other</label></li>
+			</ul>
 		</ul>
-		<li>Unsure saved:</li>
-		<ul>
-			<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_NoIAResult" checked class="FilterSettings_ArchiveStatus" data-status_list_name="NoIAResult"><label for="Filter_NoIAResult">No results</label></li>
-			<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Blank_Column_D" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Blank_Column_D"><label for="Filter_Blank_Column_D">Result but column D is blank</label></li>
-			<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Redirected" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Redirected"><label for="Filter_Redirected">Redirects</label></li>
-			<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Errors" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Error"><label for="Filter_Errors">Errors</label></li>
-		</ul>
-	</ul>
-	<li>HTTP status <button onclick="CheckAllFilters('HTTPStatus'); AutoUpdate()">Check All</button><button onclick="UnCheckAllFilters('HTTPStatus'); AutoUpdate()">Uncheck All</button><button onclick="InvertFilters('HTTPStatus'); AutoUpdate()">Invert</button><br></li>
-	<ul>
-		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_HTTPStatus_2XX" checked class="FilterSettings_HTTPStatus" data-http_status_list_name="HTTPStatus_2XX">2XX (OK)</label></li>
-		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_HTTPStatus_3XX" checked class="FilterSettings_HTTPStatus" data-http_status_list_name="HTTPStatus_3XX">3XX (Redirect)</label></li>
-		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_HTTPStatus_4XX" checked class="FilterSettings_HTTPStatus" data-http_status_list_name="HTTPStatus_4XX">4XX (Error)</label></li>
-		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_HTTPStatus_5XX" checked class="FilterSettings_HTTPStatus" data-http_status_list_name="HTTPStatus_5XX">5XX (Server error)</label></li>
-		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_HTTPStatus_Other" checked class="FilterSettings_HTTPStatus" data-http_status_list_name="HTTPStatus_Other">Other</label></li>
-	</ul>
+	</li>
 </ul>
 Sort:<br>
 <label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_UserSentURLOrder" name="Sort_Output" checked>Same order of URLs you set</label><br>
@@ -125,7 +130,6 @@ Sort:<br>
 		}
 	}
 	function CheckURLs() {
-		let asdf = document.getElementById("Filter_RequireBothOrAtLeastOne").value
 		const regex_IA_URLPart = /^https:\/\/web\.archive\.org\/web\/\d*\//
 		const regex_IAURLExtractMainSiteURL_Start = /(?<=https:\/\/web\.archive\.org\/web\/\d*\/)/
 		const regex_IAURLExtractMainSiteURL_End = /$/
@@ -475,9 +479,9 @@ Sort:<br>
 				}
 			}
 		//Determine should it be included in the output list
-			if (document.getElementById("Filter_RequireBothOrAtLeastOne").value == "Filter_RequireBoth") {
+			if (document.getElementById("TwoFilters_Setting_PassBoth").checked) {
 				return (IsArrayElementPassesArchiveStatus && IsArrayElementPassesHTTPStatus)
-			} else if (document.getElementById("Filter_RequireBothOrAtLeastOne").value == "Filter_RequireOne") {
+			} else if (document.getElementById("TwoFilters_Setting_PassAtLeastOne").checked) {
 				return (IsArrayElementPassesArchiveStatus || IsArrayElementPassesHTTPStatus)
 			}
 	}
