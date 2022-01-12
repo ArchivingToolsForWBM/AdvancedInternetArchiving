@@ -51,7 +51,9 @@ Sort:<br>
 <span id="Output_Statistics"></span>
 <kbd id="Output_ItemCountText" hidden>Number of items shown: <span id="Output_ItemCountNumber"></span></kbd><br>
 <textarea hidden readonly id="Output_Plaintext" cols="100" rows="30"></textarea>
-<span id="Output_table"></span>
+<span id="Output_table"></span><br><br>
+
+<h2 hidden id="RedirectDestinationTitle">Redirect destinations</h2>
 <kbd id="Output_RedirectedCountText" hidden>Number of redirect destination(s) found: <span id="Output_RedirectedCountNumber"></span></kbd><br>
 <textarea hidden readonly id="Output_Redirected" cols="100" rows="30"></textarea>
 </body>
@@ -98,6 +100,7 @@ Sort:<br>
 		document.getElementById("Output_Statistics").innerHTML = ""
 		document.getElementById("Output_Plaintext").hidden = true
 		document.getElementById("Output_table").innerHTML = ""
+		document.getElementById("RedirectDestinationTitle").hidden = true
 		document.getElementById("Output_RedirectedCountText").hidden = true
 		document.getElementById("Output_Redirected").hidden = true
 	}
@@ -177,7 +180,7 @@ Sort:<br>
 				}
 			}
 			//Filter
-				let FilteredListForDisplay = CheckIncludedInFilter(UserSentURLsList_WithStates)
+				let FilteredListForDisplay = UserSentURLsList_WithStates.filter(FilterURL)
 			//Sort
 				if (document.getElementById("Sort_Output_SaveStatusResponse").checked) {
 					FilteredListForDisplay = FilteredListForDisplay.sort(CompareStatusResponse)
@@ -296,6 +299,7 @@ Sort:<br>
 					} else {
 						Output += "There are no WBM redirected results found."
 					}
+					document.getElementById("RedirectDestinationTitle").hidden = false
 					document.getElementById("Output_Redirected").hidden = false
 					document.getElementById("Output_Redirected").value = Output
 			//And done
@@ -351,32 +355,25 @@ Sort:<br>
 			string = string.replaceAll(">", "&gt;")
 			return string
 	}
-	function CheckIncludedInFilter(WBGSInfoList) {
-		let FilterSettingsElements = document.getElementsByClassName("FilterSettings")
-		let IncludedStatuses = new Array()
-		let OutputFilterList = new Array()
-		let Index = 0
-		for (Index = 0; Index < FilterSettingsElements.length; Index++) {
-			if (FilterSettingsElements[Index].checked) {
-				IncludedStatuses.push(FilterSettingsElements[Index].dataset.status_list_name)
-			}
-		}
+	function FilterURL(ArrayElement) {
 		//WBGSInfoList[Index][0] = Sent URLs
 		//WBGSInfoList[Index][1] = WBM response, if a match is found, otherwise blank
 		//WBGSInfoList[Index][2] = Status indicator, marks if SuccessSavedBefore, SuccessFirstSave, Failed, or RedirectedOrMissing
-		let Index2 = 0
-		for (Index = 0; Index < WBGSInfoList.length; Index++) {
-			let IsFilterMatchFound = false
-			for (Index2 = 0; (Index2 < IncludedStatuses.length && IsFilterMatchFound == false); Index2++) {
-				if (WBGSInfoList[Index][2] == IncludedStatuses[Index2]) {
-					OutputFilterList.push(WBGSInfoList[Index])
-					IsFilterMatchFound = true
-				}
+		let IsArrayElementPassesIAStatusType = false
+		let ListOfAcceptedStatuses = new Array()
+		for (let Index = 0; Index < document.getElementsByClassName("FilterSettings").length; Index++) {
+			if (document.getElementsByClassName("FilterSettings")[Index].checked) {
+				ListOfAcceptedStatuses.push(document.getElementsByClassName("FilterSettings")[Index].dataset.status_list_name)
 			}
 		}
-		return OutputFilterList
+		for (let Index = 0; (Index < ListOfAcceptedStatuses.length && IsArrayElementPassesIAStatusType == false); Index++) {
+			if (ArrayElement[2] == ListOfAcceptedStatuses[Index]) {
+				IsArrayElementPassesIAStatusType = true
+			}
+		}
+		return IsArrayElementPassesIAStatusType
 	}
-	////Compare the flagged status based on this JS checking the URL
+	//Compare the flagged status based on this JS checking the URL
 		function CompareStatusIndicator(a, b) {
 			if (a[2] === b[2]) {
 				return 0;
