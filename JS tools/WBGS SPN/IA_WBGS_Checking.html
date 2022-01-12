@@ -36,26 +36,32 @@ issues not caught by the system, things like redirects (twitter), blank cell (co
 Paste your google sheet result here:<br><br>
 <input type="checkbox" id="AutoUpdate" checked onchange="AutoUpdate()"><label for="AutoUpdate">Auto update</label><br>
 <textarea id="GsheetInput" cols="100" rows="30" oninput="AutoUpdate()"></textarea><br>
-Filter status:<br>
-<button onclick="CheckAllFilters('IASaveStatus'); AutoUpdate()">Check All</button><button onclick="UnCheckAllFilters('IASaveStatus'); AutoUpdate()">Uncheck All</button><button onclick="InvertFilters('IASaveStatus'); AutoUpdate()">Invert</button><br>
+Filters:<br>
+Requirement to pass the filter: <br>
 <ul>
-	<li>Sure saved:</li>
+	<li>
+		Requirement to pass filter:
+		<select id="Filter_RequireBothOrAtLeastOne" name="Filter_AndOr" onchange="AutoUpdate()">
+			<option value="Filter_RequireBoth">Must pass both the save status and the HTTP status</option>
+			<option value="Filter_RequireOne">Must pass at least one of either: save status or HTTP status</option>
+		</select>
+	</li>
+	<li>Save status <button onclick="CheckAllFilters('IASaveStatus'); AutoUpdate()">Check All</button><button onclick="UnCheckAllFilters('IASaveStatus'); AutoUpdate()">Uncheck All</button><button onclick="InvertFilters('IASaveStatus'); AutoUpdate()">Invert</button></li>
 	<ul>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_SavedBefore" class="FilterSettings_ArchiveStatus" data-status_list_name="Success_SavedBefore"><label for="Filter_Success_SavedBefore">Success (have saved before)</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_SuccessFirstArchive" class="FilterSettings_ArchiveStatus" data-status_list_name="Success_FirstArchive"><label for="Filter_SuccessFirstArchive">Success (&ldquo;First Archive&rdquo;) </label></li>
+		<li>Sure saved:</li>
+		<ul>
+			<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_SavedBefore" class="FilterSettings_ArchiveStatus" data-status_list_name="Success_SavedBefore"><label for="Filter_Success_SavedBefore">Success (have saved before)</label></li>
+			<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_SuccessFirstArchive" class="FilterSettings_ArchiveStatus" data-status_list_name="Success_FirstArchive"><label for="Filter_SuccessFirstArchive">Success (&ldquo;First Archive&rdquo;) </label></li>
+		</ul>
+		<li>Unsure saved:</li>
+		<ul>
+			<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_NoIAResult" checked class="FilterSettings_ArchiveStatus" data-status_list_name="NoIAResult"><label for="Filter_NoIAResult">No results</label></li>
+			<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Blank_Column_D" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Blank_Column_D"><label for="Filter_Blank_Column_D">Result but column D is blank</label></li>
+			<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Redirected" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Redirected"><label for="Filter_Redirected">Redirects</label></li>
+			<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Errors" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Error"><label for="Filter_Errors">Errors</label></li>
+		</ul>
 	</ul>
-	<li>Unsure saved:</li>
-	<ul>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_NoIAResult" checked class="FilterSettings_ArchiveStatus" data-status_list_name="NoIAResult"><label for="Filter_NoIAResult">No results</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Blank_Column_D" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Blank_Column_D"><label for="Filter_Blank_Column_D">Result but column D is blank</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Redirected" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Redirected"><label for="Filter_Redirected">Redirects</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Errors" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Error"><label for="Filter_Errors">Errors</label></li>
-	</ul>
-</ul>
-Filter HTTP status:<br>
-<button onclick="CheckAllFilters('HTTPStatus'); AutoUpdate()">Check All</button><button onclick="UnCheckAllFilters('HTTPStatus'); AutoUpdate()">Uncheck All</button><button onclick="InvertFilters('HTTPStatus'); AutoUpdate()">Invert</button><br>
-<ul>
-	<li>HTTP status:</li>
+	<li>HTTP status <button onclick="CheckAllFilters('HTTPStatus'); AutoUpdate()">Check All</button><button onclick="UnCheckAllFilters('HTTPStatus'); AutoUpdate()">Uncheck All</button><button onclick="InvertFilters('HTTPStatus'); AutoUpdate()">Invert</button><br></li>
 	<ul>
 		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_HTTPStatus_2XX" checked class="FilterSettings_HTTPStatus" data-http_status_list_name="HTTPStatus_2XX">2XX (OK)</label></li>
 		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_HTTPStatus_3XX" checked class="FilterSettings_HTTPStatus" data-http_status_list_name="HTTPStatus_3XX">3XX (Redirect)</label></li>
@@ -64,7 +70,6 @@ Filter HTTP status:<br>
 		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_HTTPStatus_Other" checked class="FilterSettings_HTTPStatus" data-http_status_list_name="HTTPStatus_Other">Other</label></li>
 	</ul>
 </ul>
-<br>
 Sort:<br>
 <label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_UserSentURLOrder" name="Sort_Output" checked>Same order of URLs you set</label><br>
 <label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse" name="Sort_Output">Based on the status message. Note: Any non-error or redirected results are ordered <abbr title="It is because the URL starts with &ldquo;https://web.archive.org/web/YYYYMMDDhhmmss/[...]&rdquo; and &ldquo;YYYYMMDDhhmmss&rdquo; is the timestamp.">chronologically</abbr></label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse_Reverse" name="Sort_Output">Reverse</label>)<br>
@@ -120,6 +125,7 @@ Sort:<br>
 		}
 	}
 	function CheckURLs() {
+		let asdf = document.getElementById("Filter_RequireBothOrAtLeastOne").value
 		const regex_IA_URLPart = /^https:\/\/web\.archive\.org\/web\/\d*\//
 		const regex_IAURLExtractMainSiteURL_Start = /(?<=https:\/\/web\.archive\.org\/web\/\d*\/)/
 		const regex_IAURLExtractMainSiteURL_End = /$/
@@ -234,8 +240,7 @@ Sort:<br>
 				//Next
 			}
 			//Filter
-				let FilteredListForDisplay = FilterArchiveStatus(InputList)
-				FilteredListForDisplay = FilterHTTPStatus(FilteredListForDisplay)
+				let FilteredListForDisplay = InputList.filter(FilterUrls)
 			//Sort the filtered data. NOTE: array.reverse() is unstable, meaning the order of same keys will be reversed.
 				if (document.getElementById("Sort_Output_SaveStatusResponse").checked) {
 					FilteredListForDisplay = FilteredListForDisplay.sort(CompareSaveStatusResponse)
@@ -440,57 +445,41 @@ Sort:<br>
 		}
 		return ColorIndicator
 	}
-	function FilterArchiveStatus(WBGSInfoList) {
-		//Checks should the URL items should be included in the list
-		//WBGSInfoList is an array containing this:
-		//InputList[Index][0] = Gsheet sub-array:
-		//InputList[Index][0][0] = (Google sheets' column A) SentURL
-		//InputList[Index][0][1] = (Google sheets' column B) YES/NO
-		//InputList[Index][0][2] = (Google sheets' column C) HTTPStatus
-		//InputList[Index][0][3] = (Google sheets' column D) ArchiveURL/Error
-		//InputList[Index][0][4] = (Google sheets' column E) Number
-		//InputList[Index][0][5] = (Google sheets' column F) FirstArchive
-		//InputList[Index][1] = Javascript sub-array:
-		//InputList[Index][1][0] = This javascript status indicator (NoIAResult, Blank_Column_D, Success_SavedBefore, Success_FirstArchive, Redirected, Error).
-		//InputList[Index][1][1] = HTTP indicator (class)
-			let OutputFilterList = new Array()
-			let ArrayOfEnabledStatuses = new Array()
-			let FilterSettingsElements = document.getElementsByClassName("FilterSettings_ArchiveStatus")
-			for (let Index = 0; Index < FilterSettingsElements.length; Index++) {
-				if (FilterSettingsElements[Index].checked) {
-					ArrayOfEnabledStatuses.push(FilterSettingsElements[Index].dataset.status_list_name)
+	function FilterUrls(ArrayElement) {
+		let IsArrayElementPassesArchiveStatus = false
+		let IsArrayElementPassesHTTPStatus = false
+		//Archive save status
+			let ListOfEnabledSaveStatus = new Array()
+			for (let Index = 0; Index < document.getElementsByClassName("FilterSettings_ArchiveStatus").length; Index++) {
+				if (document.getElementsByClassName("FilterSettings_ArchiveStatus")[Index].checked) {
+					ListOfEnabledSaveStatus.push(document.getElementsByClassName("FilterSettings_ArchiveStatus")[Index].dataset.status_list_name)
 				}
 			}
-			for (Index = 0; Index < WBGSInfoList.length; Index++) {
-				let IsFilterMatchFound = false
-				for (let Index2 = 0; (Index2 < ArrayOfEnabledStatuses.length && IsFilterMatchFound == false); Index2++) {
-					if (WBGSInfoList[Index][1][0] == ArrayOfEnabledStatuses[Index2]) {
-						OutputFilterList.push(WBGSInfoList[Index])
-						IsFilterMatchFound = true
-					}
+			
+			for (let Index = 0; (Index < ListOfEnabledSaveStatus.length && IsArrayElementPassesArchiveStatus == false); Index++) {
+				if (ArrayElement[1][0] == ListOfEnabledSaveStatus[Index]) {
+					IsArrayElementPassesArchiveStatus = true
 				}
 			}
-		return OutputFilterList
-	}
-	function FilterHTTPStatus(WBGSInfoList) {
-		let OutputFilterList = new Array()
-		let ArrayOfEnabledHTTPStatuses = new Array()
-		let FilterSettingsElements = document.getElementsByClassName("FilterSettings_HTTPStatus")
-		for (let Index = 0; Index < FilterSettingsElements.length; Index++) {
-			if (FilterSettingsElements[Index].checked) {
-				ArrayOfEnabledHTTPStatuses.push(FilterSettingsElements[Index].dataset.http_status_list_name)
-			}
-		}
-		for (let Index = 0; Index < WBGSInfoList.length; Index++) {
-			let IsFilterMatchFound = false
-			for (let Index2 = 0; (Index2 < ArrayOfEnabledHTTPStatuses.length && IsFilterMatchFound == false); Index2++) {
-				if (WBGSInfoList[Index][1][1] == ArrayOfEnabledHTTPStatuses[Index2]) {
-					OutputFilterList.push(WBGSInfoList[Index])
-					IsFilterMatchFound = true
+		//HTTP status
+			let ListOfEnabledHTTPStatus = new Array()
+			for (let Index = 0; Index < document.getElementsByClassName("FilterSettings_HTTPStatus").length; Index++) {
+				if (document.getElementsByClassName("FilterSettings_HTTPStatus")[Index].checked) {
+					ListOfEnabledHTTPStatus.push(document.getElementsByClassName("FilterSettings_HTTPStatus")[Index].dataset.http_status_list_name)
 				}
 			}
-		}
-		return OutputFilterList
+			
+			for (let Index = 0; (Index < ListOfEnabledHTTPStatus.length && IsArrayElementPassesHTTPStatus == false); Index++) {
+				if (ArrayElement[1][1] == ListOfEnabledHTTPStatus[Index]) {
+					IsArrayElementPassesHTTPStatus = true
+				}
+			}
+		//Determine should it be included in the output list
+			if (document.getElementById("Filter_RequireBothOrAtLeastOne").value == "Filter_RequireBoth") {
+				return (IsArrayElementPassesArchiveStatus && IsArrayElementPassesHTTPStatus)
+			} else if (document.getElementById("Filter_RequireBothOrAtLeastOne").value == "Filter_RequireOne") {
+				return (IsArrayElementPassesArchiveStatus || IsArrayElementPassesHTTPStatus)
+			}
 	}
 	//Compare the flagged status based on this JS checking the URL
 		function CompareStatusIndicator(a, b) {
