@@ -70,7 +70,7 @@ Requirement to pass the filter: <br>
 				<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_HTTPStatus_3XX" class="FilterSettings_HTTPStatus" data-http_status_list_name="HTTPStatus_3XX">3XX (Redirect)</label></li>
 				<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_HTTPStatus_4XX" checked class="FilterSettings_HTTPStatus" data-http_status_list_name="HTTPStatus_4XX">4XX (Error)</label></li>
 				<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_HTTPStatus_5XX" class="FilterSettings_HTTPStatus" data-http_status_list_name="HTTPStatus_5XX">5XX (Server error)</label></li>
-				<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_HTTPStatus_Other" checked class="FilterSettings_HTTPStatus" data-http_status_list_name="HTTPStatus_Other">Other</label></li>
+				<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_HTTPStatus_Other" class="FilterSettings_HTTPStatus" data-http_status_list_name="HTTPStatus_Other">Other</label></li>
 			</ul>
 		</ul>
 	</li>
@@ -320,7 +320,7 @@ Sort:<br>
 				//Retry list in plaintext
 					Output = ""
 					if (FilteredListForDisplay.length != 0) {
-						document.getElementById("StringHowManyShown_Number").innerHTML = BigInt(FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(FilteredListForDisplay.length, InputList.length, 2) + " of all URLs submitted)"
+						document.getElementById("StringHowManyShown_Number").innerHTML = BigInt(FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(FilteredListForDisplay.length, InputList.length, 2) + " of all URLs submitted), " + BigInt(InputList.length - FilteredListForDisplay.length).toString(10) + " filtered out."
 						for (Index = 0; Index < FilteredListForDisplay.length; Index++) {
 							Output += FilteredListForDisplay[Index][0][0]
 							if (Index != FilteredListForDisplay.length - 1) {
