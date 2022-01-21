@@ -21,6 +21,7 @@ https://exampleRedirectFrom.com	YES	-	https://web.archive.org/web/20210101000000
 https://exampleError.com	YES	-	Service Unavailable for https://exampleError.com (HTTP status=503)	0	
 https://exampleBlankColumnD.com	YES	-		0	
 https://exampleNoResultsAtAll.com					
+https://exampleSavedButHTTP4xx	YES	429	https://web.archive.org/web/20210101000000/https://exampleSavedButHTTP4xx	0	
 ```
 ![alt text](https://user-images.githubusercontent.com/13095760/132143024-a6c6b7a5-c294-4a8a-88b3-702a1df7a35d.png)
 ![alt text](https://user-images.githubusercontent.com/13095760/132142344-84d86405-8d4a-475d-86bf-0da1e6a2e299.png)
