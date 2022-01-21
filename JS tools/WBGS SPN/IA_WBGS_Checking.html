@@ -45,16 +45,16 @@ Paste your google sheet result here:<br><br>
 	</ul>
 	<li>Unsure saved:</li>
 	<ul>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_NoIAResult" checked class="FilterSettings_ArchiveStatus" data-status_list_name="NoIAResult"><label for="Filter_NoIAResult">No results (grey)</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Blank_Column_D" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Blank_Column_D"><label for="Filter_Blank_Column_D">Result but column D is blank (light red)</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Redirected" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Redirected"><label for="Filter_Redirected">Redirects (yellow)</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Errors" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Error"><label for="Filter_Errors">Errors (red)</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_SavedA4XX" checked class="FilterSettings_ArchiveStatus" data-status_list_name="SavedA4XX"><label for="Filter_SavedA4XX">Saved but was a 4XX (orange)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_NoIAResult" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Unsure_NoIAResult"><label for="Filter_Unsure_NoIAResult">No results (grey)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_BlankColumnD" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Unsure_BlankColumnD"><label for="Filter_Unsure_BlankColumnD">Result but column D is blank (light red)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Redirected" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Unsure_Redirected"><label for="Filter_Unsure_Redirected">Redirects (yellow)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Errors" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Unsure_Error"><label for="Filter_Unsure_Errors">Errors (red)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_SavedA4XX" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Unsure_SavedA4XX"><label for="Filter_SavedA4XX">Saved but was a 4XX (orange)</label></li>
 	</ul>
 </ul>
 Sort:<br>
 <label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_UserSentURLOrder" name="Sort_Output" checked>Same order of URLs you set</label><br>
-<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse" name="Sort_Output">Based on the status message. Note: Any non-error or redirected results are ordered <abbr title="It is because the URL starts with &ldquo;https://web.archive.org/web/YYYYMMDDhhmmss/[...]&rdquo; and &ldquo;YYYYMMDDhhmmss&rdquo; is the timestamp.">chronologically</abbr></label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse_Reverse" name="Sort_Output">Reverse</label>)<br>
+<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse" name="Sort_Output">Based on the status message. Note: Any results displaying the URL versions are ordered <abbr title="It is because the URL starts with &ldquo;https://web.archive.org/web/YYYYMMDDhhmmss/[...]&rdquo; and &ldquo;YYYYMMDDhhmmss&rdquo; is the timestamp.">chronologically</abbr></label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse_Reverse" name="Sort_Output">Reverse</label>)<br>
 <label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusType" name="Sort_Output">Based on the status <abbr title="Missing data, missing URLs, errors, redirects, and successes.">type</abbr> identified from the save results</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusType_Reverse" name="Sort_Output">Reverse</label>)<br>
 <label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_HTTPStatus" name="Sort_Output">Based on the HTTP status code</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_HTTPStatus_Reverse" name="Sort_Output">Reverse</label>)<br><br>
 <button onclick="CheckURLs()">Submit</button><button onclick="Reset()">Reset</button><br><br>
@@ -124,12 +124,12 @@ Sort:<br>
 		let Count_Success = 0
 		let Count_Success_SavedBefore = 0
 		let Count_Success_FirstArchive = 0
-		let Count_NotConfirmedToBeSaved = 0
-		let Count_NoIAResult = 0
-		let Count_Blank_Column_D = 0
-		let Count_Redirected = 0
-		let Count_Error = 0
-		let Count_SavedA4XX = 0
+		let Count_Unsures = 0
+		let Count_Unsure_NoIAResult = 0
+		let Count_Unsure_BlankColumnD = 0
+		let Count_Unsure_Redirected = 0
+		let Count_Unsure_Error = 0
+		let Count_Unsure_SavedA4XX = 0
 		//Create a table
 			for (Index = 0; Index < InputList.length; Index++) {
 				InputList[Index] = Array((InputList[Index]).split('\t'), Array("", ""))
@@ -143,11 +143,9 @@ Sort:<br>
 		//InputList[Index][0][4] = (Google sheets' column E) Number
 		//InputList[Index][0][5] = (Google sheets' column F) FirstArchive
 		//InputList[Index][1] = Javascript sub-array:
-		//InputList[Index][1][0] = This javascript status indicator (NoIAResult, Blank_Column_D, Success_SavedBefore, Success_FirstArchive, Redirected, Error, SavedA4XX).
+		//InputList[Index][1][0] = This javascript status indicator (Unsure_NoIAResult, Unsure_BlankColumnD, Success_SavedBefore, Success_FirstArchive, Unsure_Redirected, Unsure_Error, Unsure_SavedA4XX).
 		//InputList[Index][1][1] = HTTP indicator (class)
 		//
-		//InputList[Index][1] = This javascript status indicator (NoIAResult, Blank_Column_D, Success_SavedBefore, Success_FirstArchive, Redirected, Error).
-		//InputList[Index][2] = This javascript HTTP indicator
 		//Verify URLs
 		//Note to self:
 		//-If ArchiveURL/Error has the https://web.archive.org/web/YYYYMMDDhhmmss/ part of the URL it is marked as a "success", but may be a redirect
@@ -166,20 +164,18 @@ Sort:<br>
 						//A workaround is by performing "stringify", converting the entire object (in this case, an array) into a string.
 						//
 						//This checks if the entire result is blank.
-							InputList[Index][1][0] = "NoIAResult"
-							//OutputTable_NotConfirmedToBeSaved.push(InputList[Index])
+							InputList[Index][1][0] = "Unsure_NoIAResult"
 							
-							Count_NoIAResult++
-							Count_NotConfirmedToBeSaved++
+							Count_Unsure_NoIAResult++
+							Count_Unsures++
 					} else if (InputList[Index][0][3] == "") {
 						//If there is blank on the spot where it shows the IA version of the URL or error.
-							InputList[Index][1][0] = "Blank_Column_D"
-							//OutputTable_NotConfirmedToBeSaved.push(InputList[Index])
+							InputList[Index][1][0] = "Unsure_BlankColumnD"
 							
-							Count_Blank_Column_D++
-							Count_NotConfirmedToBeSaved++
+							Count_Unsure_BlankColumnD++
+							Count_Unsures++
 					} else if (regex_IA_URLPart.test(InputList[Index][0][3])) {
-						//Page saved successfully, but did it got redirected?
+						//Page saved successfully, but did it got Redirected?
 							if (InputList[Index][0][0] == InputList[Index][0][3].substring((InputList[Index][0][3]).search(regex_IAURLExtractMainSiteURL_Start), (InputList[Index][0][3]).search(regex_IAURLExtractMainSiteURL_End))) {
 								//Saved without redirects, but did it saved an error page?
 								if ((/^4\d\d/).test(InputList[Index][0][2]) == false) {
@@ -194,25 +190,24 @@ Sort:<br>
 									Count_Success++
 								} else {
 									//Saved a page with HTTP status of 4XX
-									InputList[Index][1][0] = "SavedA4XX"
+									InputList[Index][1][0] = "Unsure_SavedA4XX"
 									
-									Count_SavedA4XX++
-									Count_NotConfirmedToBeSaved++
+									Count_Unsure_SavedA4XX++
+									Count_Unsures++
 								}
 							} else {
 								//Redirected and saved
-									InputList[Index][1][0] = "Redirected"
+									InputList[Index][1][0] = "Unsure_Redirected"
 									
-									Count_Redirected++
-									Count_NotConfirmedToBeSaved++
+									Count_Unsure_Redirected++
+									Count_Unsures++
 							}
 					} else {
 						//Page failed/errored (shows error message instead of the IA version of the link)
-							InputList[Index][1][0] = "Error"
-							//OutputTable_NotConfirmedToBeSaved.push(InputList[Index])
+							InputList[Index][1][0] = "Unsure_Error"
 							
-							Count_Error++
-							Count_NotConfirmedToBeSaved++
+							Count_Unsure_Error++
+							Count_Unsures++
 					}
 				//HTTP status flags
 					if ((/2\d\d/).test(InputList[Index][0][2])) {
@@ -269,37 +264,38 @@ Sort:<br>
 								Output += ") first archive(s)</td>"
 						//Unsures
 							Output += "<tr>"
-							Output += "<td rowspan='5'>" + BigInt(Count_NotConfirmedToBeSaved).toString(10) + " (" + BetterPercentageUsingInts(Count_NotConfirmedToBeSaved, InputList.length, 2) + ") not sure saved</td>"
+							Output += "<td rowspan='5'>" + BigInt(Count_Unsures).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsures, InputList.length, 2) + ") not sure saved</td>"
 							//No results
-								Output += "<td style='background-image: linear-gradient(to right, #808080, " + BetterPercentageUsingFloatsForBarGraphs(Count_NoIAResult, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_NoIAResult, InputList.length) + " 100%)'>" + BigInt(Count_NoIAResult).toString(10) + " (" + BetterPercentageUsingInts(Count_NoIAResult, InputList.length, 2) + " of all URLs"
-								if (Count_NotConfirmedToBeSaved != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_NoIAResult, Count_NotConfirmedToBeSaved, 2) + " of unsures"
+								Output += "<td style='background-image: linear-gradient(to right, #808080, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_NoIAResult, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_NoIAResult, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_NoIAResult).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_NoIAResult, InputList.length, 2) + " of all URLs"
+								if (Count_Unsures != 0) {
+									Output += ", " + BetterPercentageUsingInts(Count_Unsure_NoIAResult, Count_Unsures, 2) + " of unsures"
 								}
 								Output += ") have no results at all</td>"
 							Output += "</tr>"
 							//Blank column D
-								Output += "<tr><td style='background-image: linear-gradient(to right, #A08080, " + BetterPercentageUsingFloatsForBarGraphs(Count_Blank_Column_D, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Blank_Column_D, InputList.length) + "100%)'>" + BigInt(Count_Blank_Column_D).toString(10) + " (" + BetterPercentageUsingInts(Count_Blank_Column_D, InputList.length, 2) + " of all URLs"
-								if (Count_NotConfirmedToBeSaved != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_Blank_Column_D, Count_NotConfirmedToBeSaved, 2) + " of unsures"
+								Output += "<tr><td style='background-image: linear-gradient(to right, #A08080, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_BlankColumnD, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_BlankColumnD, InputList.length) + "100%)'>" + BigInt(Count_Unsure_BlankColumnD).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_BlankColumnD, InputList.length, 2) + " of all URLs"
+								if (Count_Unsures != 0) {
+									Output += ", " + BetterPercentageUsingInts(Count_Unsure_BlankColumnD, Count_Unsures, 2) + " of unsures"
 								}
 								Output += ") have only column D being blank</td></tr>"
 							//Redirect
-								Output += "<tr><td style='background-image: linear-gradient(to right, #808000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Redirected, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Redirected, InputList.length) + " 100%)'>" + BigInt(Count_Redirected).toString(10) + " (" + BetterPercentageUsingInts(Count_Redirected, InputList.length, 2) + " of all URLs"
-								if (Count_NotConfirmedToBeSaved != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_Redirected, Count_NotConfirmedToBeSaved, 2) + " of unsures"
+								Output += "<tr><td style='background-image: linear-gradient(to right, #808000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Redirected, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Redirected, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_Redirected).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Redirected, InputList.length, 2) + " of all URLs"
+								if (Count_Unsures != 0) {
+									Output += ", " + BetterPercentageUsingInts(Count_Unsure_Redirected, Count_Unsures, 2) + " of unsures"
 								}
 								Output += ") got redirected</td></tr>"
 							//Error
-								Output += "<tr><td style='background-image: linear-gradient(to right, #800000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Error, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Error, InputList.length) + " 100%)'>" + BigInt(Count_Error).toString(10) + " (" + BetterPercentageUsingInts(Count_Error, InputList.length, 2) + " of all URLs"
-								if (Count_NotConfirmedToBeSaved != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_Error, Count_NotConfirmedToBeSaved, 2) + " of unsures"
+								Output += "<tr><td style='background-image: linear-gradient(to right, #800000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Error, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Error, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_Error).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Error, InputList.length, 2) + " of all URLs"
+								if (Count_Unsures != 0) {
+									Output += ", " + BetterPercentageUsingInts(Count_Unsure_Error, Count_Unsures, 2) + " of unsures"
 								}
 								Output += ") errored</td></tr>"
 							//Saved a 4XX
-								Output += "<tr><td style='background-image: linear-gradient(to right, #FFA500, " + BetterPercentageUsingFloatsForBarGraphs(Count_SavedA4XX, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_SavedA4XX, InputList.length) + " 100%)'>" + BigInt(Count_SavedA4XX).toString(10) + " (" + BetterPercentageUsingInts(Count_SavedA4XX, InputList.length, 2) + " of all URLs"
-								if (Count_NotConfirmedToBeSaved != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_SavedA4XX, Count_NotConfirmedToBeSaved, 2) + " of unsures"
+								Output += "<tr><td style='background-image: linear-gradient(to right, #FFA500, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_SavedA4XX, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_SavedA4XX, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_SavedA4XX).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_SavedA4XX, InputList.length, 2) + " of all URLs"
+								if (Count_Unsures != 0) {
+									Output += ", " + BetterPercentageUsingInts(Count_Unsure_SavedA4XX, Count_Unsures, 2) + " of unsures"
 								}
+								Output += ") saved a client error page (4XX)"
 					Output += "</table></pre>"
 					
 					if (Count_Success == InputList.length) {
@@ -348,10 +344,10 @@ Sort:<br>
 	}
 	function Reset() {
 		document.getElementById("GsheetInput").value = ""
-		document.getElementById("Filter_NoIAResult").checked = true
-		document.getElementById("Filter_Blank_Column_D").checked = true
-		document.getElementById("Filter_Redirected").checked = true
-		document.getElementById("Filter_Errors").checked = true
+		document.getElementById("Filter_Unsure_NoIAResult").checked = true
+		document.getElementById("Filter_Unsure_BlankColumnD").checked = true
+		document.getElementById("Filter_Unsure_Redirected").checked = true
+		document.getElementById("Filter_Unsure_Errors").checked = true
 		document.getElementById("Filter_Success_SavedBefore").checked = false
 		document.getElementById("Filter_SuccessFirstArchive").checked = false
 		document.getElementById("Sort_Output_UserSentURLOrder").checked = true
@@ -425,10 +421,10 @@ Sort:<br>
 	function URLColorIndicator(SaveStatus) {
 		let ColorIndicator = "black"
 		switch (SaveStatus) {
-			case "NoIAResult":
+			case "Unsure_NoIAResult":
 				ColorIndicator = "#808080"
 				break
-			case "Blank_Column_D":
+			case "Unsure_BlankColumnD":
 				ColorIndicator = "#A08080"
 				break
 			case "Success_SavedBefore":
@@ -437,13 +433,13 @@ Sort:<br>
 			case "Success_FirstArchive":
 				ColorIndicator = "#00C000"
 				break
-			case "Redirected":
+			case "Unsure_Redirected":
 				ColorIndicator = "#808000"
 				break
-			case "Error":
+			case "Unsure_Error":
 				ColorIndicator = "#800000"
 				break
-			case "SavedA4XX":
+			case "Unsure_SavedA4XX":
 				ColorIndicator = "#FFA500"
 		}
 		return ColorIndicator
