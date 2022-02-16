@@ -131,9 +131,7 @@ Sort:<br>
 		let Count_Unsure_Error = 0
 		let Count_Unsure_SavedA4XX = 0
 		//Create a table
-			for (Index = 0; Index < InputList.length; Index++) {
-				InputList[Index] = Array((InputList[Index]).split('\t'), Array("", ""))
-			}
+			InputList = InputList.map((ArrayElement) => [ArrayElement.split('\t'), ["", ""]])
 		//Note to self on what sub-array it contains:
 		//InputList[Index][0] = Gsheet sub-array:
 		//InputList[Index][0][0] = (Google sheets' column A) SentURL
