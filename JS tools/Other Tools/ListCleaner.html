@@ -93,7 +93,7 @@ Duplicate list sort:<br>
 				}
 			
 			if (DuplicateDataTable.length != 0) {
-				HTMLDuplicateList += "<kbd>Number of unique items that were duplicates: " + BigInt(DuplicateDataTable.length).toString(10) +"</kbd>"
+				HTMLDuplicateList += "<kbd>Number of items that were duplicates (excluding blank lines or lines with just any whitespace characters on it): " + BigInt(DuplicateDataTable.length).toString(10) +"</kbd>"
 				HTMLDuplicateList += "<table>"
 				HTMLDuplicateList += "<tr><th>item</th><th>Number of duplicates</th></tr>"
 				for (let Index = 0; Index < DuplicateDataTable.length; Index++) {
