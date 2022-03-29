@@ -94,7 +94,13 @@ Sort:<input type="checkbox" onchange="AutoUpdateCode()" id="SortReverse"><label 
 	}
 	function Submit() {
 		let Output = ""
-		let InputList = LookForValidLines((document.getElementById("InputList").value).split('\n'))
+		let InputList = LookForValidLines((document.getElementById("InputList").value).split(/(\n)(?=(?:[^"]|"[^"]*")*$)/))
+		//Credit goes to MarkusQ : https://stackoverflow.com/questions/632475/regex-to-pick-characters-outside-of-pair-of-quotes
+		//If you have spreadsheet reserved characters such as newline in a cell (ALT+ENTER), they're escaped by wrapping the entire string in quotes
+		//when converted to plaintext, much line windows command prompt when dealing with file path containing spaces.
+		//
+		//I use that instead of '\n' because of a rare chance in the future should the WBGS ever enters data in a cell that uses newline.
+
 		//InputList: contains this data:
 		//InputList[Index][0]: contains google sheet list:
 		//InputList[Index][0][0]: Contains the list of URLs the user sent (column A)
@@ -338,6 +344,7 @@ Sort:<input type="checkbox" onchange="AutoUpdateCode()" id="SortReverse"><label 
 			string = string.replaceAll("&", "&amp;") //This must be done first, to avoid replacing already-replaced symbol's ampersand character.
 			string = string.replaceAll("<", "&lt;")
 			string = string.replaceAll(">", "&gt;")
+			string = string.replaceAll("\n", "<br>") //Again just in case if WBGS would ever use linebreaks in a cell.
 			return string
 	}
 	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec) {

@@ -116,9 +116,12 @@ Sort:<br>
 			document.getElementById("Output_Plaintext").hidden = true
 		
 		let Output = ""
-		let InputList = RemoveInvalidData((document.getElementById("GsheetInput").value).split('\n'))
-		//let OutputTable_NotConfirmedToBeSaved = new Array()
-		//let OutputTable_SuccessList = new Array()
+		let InputList = (document.getElementById("GsheetInput").value).split(/(\n)(?=(?:[^"]|"[^"]*")*$)/).filter(RemoveInvalidData)
+		//Credit goes to MarkusQ : https://stackoverflow.com/questions/632475/regex-to-pick-characters-outside-of-pair-of-quotes
+		//If you have spreadsheet reserved characters such as newline in a cell (ALT+ENTER), they're escaped by wrapping the entire string in quotes
+		//when converted to plaintext, much line windows command prompt when dealing with file path containing spaces.
+		//
+		//I use that instead of '\n' because of a rare chance in the future should the WBGS ever enters data in a cell that uses newline.
 		
 		let Index = 0
 		let Count_Success = 0
@@ -399,21 +402,15 @@ Sort:<br>
 		}
 		return OutputArray
 	}
-	function RemoveInvalidData(InputArray) {
-		let OutputArray = new Array()
-		let index1 = 0
-		for (index1 = 0; index1 < InputArray.length; index1++) {
-			if ((/^[^\t]+?\t[^\t]*?\t[^\t]*?\t[^\t]*?\t[^\t]*?\t[^\t]*?$/).test(InputArray[index1]) == true) {
-				OutputArray.push(InputArray[index1])
-			}
-		}
-		return OutputArray
+	function RemoveInvalidData(ArrayElement) {
+		return ((/^[^\t]+?\t[^\t]*?\t[^\t]*?\t[^\t]*?\t[^\t]*?\t[^\t]*?$/).test(ArrayElement))
 	}
 	function escapeHTMLChars(string) {
 		//Should the user's input contains "<", ">", and "&", prevent the innerHTML from treating these as HTML tags/escapes
 			string = string.replaceAll("&", "&amp;") //This must be done first, to avoid replacing already-replaced symbol's ampersand character.
 			string = string.replaceAll("<", "&lt;")
 			string = string.replaceAll(">", "&gt;")
+			string = string.replaceAll("\n", "<br>") //Again just in case if WBGS would ever use linebreaks in a cell.
 			return string
 	}
 	function URLColorIndicator(SaveStatus) {
