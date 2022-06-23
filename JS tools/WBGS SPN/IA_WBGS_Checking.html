@@ -55,7 +55,7 @@ Paste your google sheet result here:<br><br>
 		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_BlankColumnD" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Unsure_BlankColumnD"><label for="Filter_Unsure_BlankColumnD">Result but column D is blank (light red)</label></li>
 		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Redirected" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Unsure_Redirected"><label for="Filter_Unsure_Redirected">Redirects (yellow)</label></li>
 		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Errors" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Unsure_Error"><label for="Filter_Unsure_Errors">Errors (red)</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_SavedA4XX" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Unsure_SavedA4XX"><label for="Filter_SavedA4XX">Saved but was a 4XX (orange)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_SavedA4XX" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Unsure_SavedA4XXOr5XX"><label for="Filter_SavedA4XX">Saved but was a 4XX (orange)</label></li>
 	</ul>
 </ul>
 Sort:<br>
@@ -139,7 +139,7 @@ Sort:<br>
 		let Count_Unsure_BlankColumnD = 0
 		let Count_Unsure_Redirected = 0
 		let Count_Unsure_Error = 0
-		let Count_Unsure_SavedA4XX = 0
+		let Count_Unsure_SavedA4XXOr5XX = 0
 		//Create a table
 			InputList = InputList.map((ArrayElement) => [ArrayElement.split('\t'), ["", ""]])
 		//Note to self on what sub-array it contains:
@@ -151,7 +151,7 @@ Sort:<br>
 		//InputList[Index][0][4] = (Google sheets' column E) Number (it's now the number of outlinks saved)
 		//InputList[Index][0][5] = (Google sheets' column F) FirstArchive
 		//InputList[Index][1] = Javascript sub-array:
-		//InputList[Index][1][0] = This javascript status indicator (Unsure_NoIAResult, Unsure_BlankColumnD, Success_SavedBefore, Success_FirstArchive, Unsure_Redirected, Unsure_Error, Unsure_SavedA4XX).
+		//InputList[Index][1][0] = This javascript status indicator (Unsure_NoIAResult, Unsure_BlankColumnD, Success_SavedBefore, Success_FirstArchive, Unsure_Redirected, Unsure_Error, Unsure_SavedA4XXOr5XX).
 		//InputList[Index][1][1] = HTTP indicator (class)
 		//
 		//Verify URLs
@@ -186,7 +186,7 @@ Sort:<br>
 						//Page saved successfully, but did it got Redirected?
 							if (InputList[Index][0][0] == InputList[Index][0][3].substring((InputList[Index][0][3]).search(regex_IAURLExtractMainSiteURL_Start), (InputList[Index][0][3]).search(regex_IAURLExtractMainSiteURL_End))) {
 								//Saved without redirects, but did it saved an error page?
-								if ((/^4\d\d/).test(InputList[Index][0][2]) == false) {
+								if ((/^(4|5)\d\d/).test(InputList[Index][0][2]) == false) {
 									//Saved the page without issues
 									if (InputList[Index][0][5] != "First Archive") {
 										InputList[Index][1][0] = "Success_SavedBefore"
@@ -198,9 +198,9 @@ Sort:<br>
 									Count_Success++
 								} else {
 									//Saved a page with HTTP status of 4XX
-									InputList[Index][1][0] = "Unsure_SavedA4XX"
+									InputList[Index][1][0] = "Unsure_SavedA4XXOr5XX"
 									
-									Count_Unsure_SavedA4XX++
+									Count_Unsure_SavedA4XXOr5XX++
 									Count_Unsures++
 								}
 							} else {
@@ -303,11 +303,11 @@ Sort:<br>
 								}
 								Output += ") errored</td></tr>"
 							//Saved a 4XX
-								Output += "<tr><td style='background-image: linear-gradient(to right, #FFA500, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_SavedA4XX, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_SavedA4XX, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_SavedA4XX).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_SavedA4XX, InputList.length, 2) + " of all URLs"
+								Output += "<tr><td style='background-image: linear-gradient(to right, #FFA500, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_SavedA4XXOr5XX, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_SavedA4XXOr5XX, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_SavedA4XXOr5XX).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_SavedA4XXOr5XX, InputList.length, 2) + " of all URLs"
 								if (Count_Unsures != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_Unsure_SavedA4XX, Count_Unsures, 2) + " of unsures"
+									Output += ", " + BetterPercentageUsingInts(Count_Unsure_SavedA4XXOr5XX, Count_Unsures, 2) + " of unsures"
 								}
-								Output += ") saved a client error page (4XX)"
+								Output += ") saved a client error page (4XX or 5XX)"
 					Output += "</table></pre>"
 					
 					if (Count_Success == InputList.length) {
@@ -445,7 +445,7 @@ Sort:<br>
 			case "Unsure_Error":
 				ColorIndicator = "#800000"
 				break
-			case "Unsure_SavedA4XX":
+			case "Unsure_SavedA4XXOr5XX":
 				ColorIndicator = "#FFA500"
 		}
 		return ColorIndicator
