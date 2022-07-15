@@ -20,64 +20,66 @@
 <body>
 <p>This javascript tool clears out a given list (text form), keeping the original order of items first appearing on the list. It removes duplicates and blank lines (or lines with just spaces, tabs, or any whitespace characters). This is useful
 for setting up a list of URLs to archive.</p>
-<textarea cols="100" rows="30" id="ListOfItems" oninput="ClearStatistic()"></textarea><br>
-Duplicate list sort:<br>
+<textarea cols="100" rows="30" id="ListOfItems" oninput="ClearButNotTheUserText()"></textarea><br>
+Duplicate list settings:<br>
 <label><input type="radio" onchange="CleanList()" id="Sort_None" name="SortSetting_DuplicateList" checked>Keep original order based on submission</label><br>
 <label><input type="radio" onchange="CleanList()" id="Sort_Alphabetically" name="SortSetting_DuplicateList">Sort alphabetically</label> <label><input type="radio" onchange="CleanList()" id="Sort_Alphabetically_Inverse" name="SortSetting_DuplicateList">Inverse</label><br>
 <label><input type="radio" onchange="CleanList()" id="Sort_NumberOfDups" name="SortSetting_DuplicateList">Sort based on how many duplicates</label> <label><input type="radio" onchange="CleanList()" id="Sort_NumberOfDups_Inverse" name="SortSetting_DuplicateList">Inverse</label><br>
 <button onclick="CleanList()">Submit</button><button onclick="Clear()">Clear</button><br>
 <hr>
-<span id="Statistic"></span><br><br>
-
+<span id="RemovalListStatistics" hidden>
+<kbd>Number of lines in original list: <span id="StatisticOriginalListCount">0</span></kbd><br>
+<kbd>Total number of lines removed: <span id="StatisticRemovalCount">0</span></kbd><br>
+<kbd>Number of lines remaining: <span id="StatisticRemaining">0</span></kbd><br>
 <textarea readonly cols="100" rows="30" id="CleanedListOutput"></textarea><br>
+</span>
 
 <span id="DuplicateList"></span>
 
 <script>
 	function Clear() {
 		document.getElementById("ListOfItems").value = ""
-		document.getElementById("Statistic").innerHTML = ""
-		document.getElementById("DuplicateList").innerHTML = ""
-		document.getElementById("CleanedListOutput").innerHTML = ""
-		document.getElementById("Sort_None").checked = true
+		ClearButNotTheUserText()
 	}
-	function ClearStatistic() {
-		document.getElementById("Statistic").innerHTML = ""
+	function ClearButNotTheUserText() {
+		document.getElementById("RemovalListStatistics").hidden = true
+		document.getElementById("StatisticOriginalListCount").innerHTML = "0"
+		document.getElementById("StatisticRemovalCount").innerHTML = "0"
+		document.getElementById("StatisticRemaining").innerHTML = "0"
+		document.getElementById("DuplicateList").innerHTML = ""
+		document.getElementById("CleanedListOutput").value = ""
+		document.getElementById("Sort_None").checked = true
 		document.getElementById("DuplicateList").innerHTML = ""
 	}
 	function CleanList() {
 		let Statistic = ""
 		let InputList = (document.getElementById("ListOfItems").value).split('\n') //Each line = each element in array
 		//Clean the list
+			document.getElementById("RemovalListStatistics").hidden = false
 			if (document.getElementById("ListOfItems").value != "") {
 				let OriginalListNumberOfItems = InputList.length //Get number of items before the cleaning
 				let OutputList = RemoveBlankOrSpacesEntry(RemoveItemsInTableFaggedAsDuplicates(ConvertURLListToTableFlaggingDuplicates(InputList))) //Get the cleaned list
 				let CleanedListNumberOfItems = OutputList.length //Get number of items after the cleaning
-				let OutputString = "" //Reset the string should another data is entered/
+				let OutputDuplicatelessList = "" //Reset the string should another data is entered/
 				let Index = 0
 				//Format the output so each element in the array is each line
 					while (Index < OutputList.length) {
-						OutputString += OutputList[Index]
+						OutputDuplicatelessList += OutputList[Index]
 						if (Index != OutputList.length - 1) {
-							OutputString += "\n"
+							OutputDuplicatelessList += "\n"
 						}
 						Index++
 					}
 				//Process output
-					document.getElementById("CleanedListOutput").value = OutputString
-					Statistic += "<kbd>" 
+					document.getElementById("StatisticOriginalListCount").innerHTML = BigInt(OriginalListNumberOfItems).toString(10)
+					document.getElementById("CleanedListOutput").value = OutputDuplicatelessList //Display the duplicateless list
 					if ((OriginalListNumberOfItems - CleanedListNumberOfItems) == 0) {
-						Statistic += "No spaces or duplicates found."
+						document.getElementById("StatisticRemovalCount").innerHTML = "0"
 					} else {
-						Statistic += "Total number of items cleaned out: " + (BigInt(OriginalListNumberOfItems - CleanedListNumberOfItems)).toString(10)
+						document.getElementById("StatisticRemovalCount").innerHTML = (BigInt(OriginalListNumberOfItems - CleanedListNumberOfItems)).toString(10) + " (" + BetterPercentageUsingInts(OriginalListNumberOfItems - CleanedListNumberOfItems, OriginalListNumberOfItems, 2) + " of the original list removed)"
 					}
-					Statistic += "</kbd>"
-			} else {
-				Statistic += "<kbd>List is empty.</kbd>"
+					document.getElementById("StatisticRemaining").innerHTML = BigInt(CleanedListNumberOfItems).toString(10) + " (" + BetterPercentageUsingInts(CleanedListNumberOfItems, OriginalListNumberOfItems, 2) + " of the original list remaining)<br>"
 			}
-			//Write to HTML
-				document.getElementById("Statistic").innerHTML = Statistic
-		
 		//List the duplicates
 			let HTMLDuplicateList = ""
 			let DuplicateDataTable = CountDuplicates(RemoveBlankOrSpacesEntry(InputList))
@@ -213,6 +215,107 @@ Duplicate list sort:<br>
 			return 0;
 		} else {
 			return Number(b[1] - a[1])
+		}
+	}
+	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec) {
+		//This function calculates a percentage of a value (must be bigint), and returns a
+		//string representing a percentage using fixed-point arithmetic (https://en.wikipedia.org/wiki/Fixed-point_arithmetic ).
+		//Unlike a typical Quantity*100/MaxQuantity (or Quantity / MaxQuantity * 100)
+		//This also reports if rounding to 0 or 100% have occurred.
+		//Note: Don't use negative or decimal numbers for any of the parameters!
+		
+		//Output: A string:
+		//"--" if MaxQuantity is 0 (division by zero in bigint is not handled unlike double-precision floating point)
+		//"<number>%" a percentage. Rounds half-up.
+		//"Greater than <1*(10**(2+NumberOfDigitsAfterDec_BigInt))-1>" if results between 99.99..% and 100% (avoids rounding up towards 100%).
+		//"Less than <1/(10**NumberOfDigitsAfterDec_BigInt)>" is same as above but avoids rounding towards 0%.
+		
+		//100.0 is 1000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 1
+		//100.00 is 10000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 2
+		//100.000 is 100000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 3
+		Quantity = BigInt(Quantity)
+		MaxQuantity = BigInt(MaxQuantity)
+		NumberOfDigitsAfterDec_BigInt = BigInt(NumberOfDigitsAfterDec)
+		if (MaxQuantity == 0n) {
+			return "--"
+		} else {
+			let Percentage = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) / MaxQuantity
+			let Modulo = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) % MaxQuantity
+			//Check if remainder is greater than or equal to half of MaxQuantity, if so, increment
+			//Percentage by 1 unit.
+			
+			//Get halfway point, note: this must be rounded half up as well so that if Modulo is 0.5 greater in the case MaxQuantity is an odd number,
+			//would correctly round upwards. Example: 3/2 is 1.5 (default round to 1), since we are dealing with integers, Remainder being 2 or more should be
+			//consider a round up for percentage
+				let HalfwayPointOfMaxQuantity = MaxQuantity / 2n
+				if ((MaxQuantity % 2n) != 0n) {
+					HalfwayPointOfMaxQuantity++
+				}
+			//Round half-up
+				if (Modulo >= HalfwayPointOfMaxQuantity) { //round upwards
+					Percentage++
+					//We rounded the number up (actually increased the value), but it can potentially be at 100%, lets check it and if it did, override it.
+					if (Percentage == 100n*10n**NumberOfDigitsAfterDec_BigInt) {
+						//Rounded to 100% detected
+						//Note to self:
+						//Should say 99% if NumberOfDigitsAfterDec_BigInt = 0
+						//Should say 99.9% if NumberOfDigitsAfterDec_BigInt = 1
+						//99.99 if NumberOfDigitsAfterDec_BigInt = 2
+						//and so on.
+						//So basically the number of 9s after the decimal
+						//is NumberOfDigitsAfterDec_BigInt.
+							let DecimalPortion = ""
+							if (NumberOfDigitsAfterDec_BigInt != 0n) {
+								DecimalPortion += "."
+								for (let NineCount = 0; NineCount < NumberOfDigitsAfterDec; NineCount++) {
+									DecimalPortion += "9"
+								}
+							}
+						return "Greater than 99" + DecimalPortion + "%"
+					}
+				} else {
+					//Rounded downwards (default)
+					
+					if ((Modulo != 0n)&&(Percentage == 0n)) {
+						//Rounded to 0% detected
+						//Note to self:
+						//Should say 1% if NumberOfDigitsAfterDec_BigInt = 0
+						//Should say 0.1% if NumberOfDigitsAfterDec_BigInt = 1
+						//0.01% if NumberOfDigitsAfterDec_BigInt = 2
+						//and so on.
+						//Basically, if NumberOfDigitsAfterDec_BigInt = 2, the number of zeros
+						//between the decimal point and "1" is NumberOfDigitsAfterDec_BigInt - 1
+							let DecimalPortion = ""
+							if (NumberOfDigitsAfterDec_BigInt != 0n) {
+								DecimalPortion += "."
+								for (let ZeroCount = 0; ZeroCount < NumberOfDigitsAfterDec - 1; ZeroCount++) {
+									DecimalPortion += "0"
+								}
+								return "Less than 0" + DecimalPortion + "1%"
+							} else {
+								return "Less than 1%"
+							}
+					}
+				}
+				//Split the number separated by decimal point.
+					let OutputString = Percentage.toString(10)
+					let WholeNumberPart = OutputString.substring(0, OutputString.length - NumberOfDigitsAfterDec)
+					if (WholeNumberPart == "") {
+						WholeNumberPart = "0"
+					}
+					//This make sure that leading zeros (when less than 1%) exists, should the value in fixed point have fewer digits
+					//so that it can display things like 0.01 (stored internally in fixed point as 1) instead of 0.1 when NumberOfDigitsAfterDec is set to 2.
+					//It is due to the fact that toString(10) removes all leading zeros.
+						if (OutputString.length < NumberOfDigitsAfterDec) {
+							let NumberOfLeadingZeroesNeeded = NumberOfDigitsAfterDec - OutputString.length //example: 34 (length = 2) which is supposed to be 0.00034% when NumberOfDigitsAfterDec = 5, so 5-2 = 3, so 3 0s are needed.
+							let LeadingZeroes = ""
+							for (let Count = 0; Count < NumberOfLeadingZeroesNeeded; Count++) {
+								LeadingZeroes += "0"
+							}
+							OutputString = LeadingZeroes + OutputString
+						}
+					let DecimalPart = OutputString.substring(OutputString.length - NumberOfDigitsAfterDec)
+			return WholeNumberPart + "." + DecimalPart + "%"
 		}
 	}
 </script>
