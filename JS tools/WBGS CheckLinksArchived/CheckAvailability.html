@@ -94,7 +94,7 @@ Sort:<input type="checkbox" onchange="AutoUpdateCode()" id="SortReverse"><label 
 	}
 	function Submit() {
 		let Output = ""
-		let InputList = LookForValidLines((document.getElementById("InputList").value).split(/(\n)(?=(?:[^"]|"[^"]*")*$)/))
+		let InputList = LookForValidLines((document.getElementById("InputList").value).split(/(?:\n)(?=(?:[^"]|"[^"]*")*$)/))
 		//Credit goes to MarkusQ : https://stackoverflow.com/questions/632475/regex-to-pick-characters-outside-of-pair-of-quotes
 		//If you have spreadsheet reserved characters such as newline in a cell (ALT+ENTER), they're escaped by wrapping the entire string in quotes
 		//when converted to plaintext, much line windows command prompt when dealing with file path containing spaces.

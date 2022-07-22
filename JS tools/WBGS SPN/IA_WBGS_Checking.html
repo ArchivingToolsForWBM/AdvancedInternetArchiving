@@ -123,7 +123,11 @@ Sort:<br>
 			document.getElementById("Output_Plaintext").hidden = true
 		
 		let Output = ""
-		let InputList = (document.getElementById("GsheetInput").value).split(/(\n)(?=(?:[^"]|"[^"]*")*$)/).filter(RemoveInvalidData)
+		let InputList = (document.getElementById("GsheetInput").value).split(/(?:\n)(?=(?:[^"]|"[^"]*")*$)/).map((ArrayElement, Index) => [ArrayElement, Index + 1]).filter(RemoveInvalidData)
+		//Contains:
+		//InputList[Index][0] = google sheet row.
+		//InputList[Index][1] = String line number (ignoring linebreaks within a cell).
+		
 		//Credit goes to MarkusQ : https://stackoverflow.com/questions/632475/regex-to-pick-characters-outside-of-pair-of-quotes
 		//If you have spreadsheet reserved characters such as newline in a cell (ALT+ENTER), they're escaped by wrapping the entire string in quotes
 		//when converted to plaintext, much line windows command prompt when dealing with file path containing spaces.
@@ -141,7 +145,7 @@ Sort:<br>
 		let Count_Unsure_Error = 0
 		let Count_Unsure_SavedA4XXOr5XX = 0
 		//Create a table
-			InputList = InputList.map((ArrayElement) => [ArrayElement.split('\t'), ["", ""]])
+			InputList = InputList.map((ArrayElement) => [ArrayElement[0].split('\t'), ["", "", ArrayElement[1]]])
 		//Note to self on what sub-array it contains:
 		//InputList[Index][0] = Gsheet sub-array:
 		//InputList[Index][0][0] = (Google sheets' column A) SentURL
@@ -153,6 +157,7 @@ Sort:<br>
 		//InputList[Index][1] = Javascript sub-array:
 		//InputList[Index][1][0] = This javascript status indicator (Unsure_NoIAResult, Unsure_BlankColumnD, Success_SavedBefore, Success_FirstArchive, Unsure_Redirected, Unsure_Error, Unsure_SavedA4XXOr5XX).
 		//InputList[Index][1][1] = HTTP indicator (class)
+		//InputList[Index][1][2] = Line position in google sheet.
 		//
 		//Verify URLs
 		//Note to self:
@@ -336,12 +341,12 @@ Sort:<br>
 					if (FilteredListForDisplay.length != 0) {
 						Output += "<table>"
 						Output += "<tr>"
-						Output += "<th>URLs you&apos;ve sent</th><th>HTTP status</th><th>Save status of URLs or errors</th><th>Number of outlinks saved</th><th>Status type</th>"
+						Output += "<th>GS line number</th><th>URLs you&apos;ve sent</th><th>HTTP status</th><th>Save status of URLs or errors</th><th>Number of outlinks saved</th><th>Status type</th>"
 						Output += "</tr>"
 						for (Index = 0; Index < FilteredListForDisplay.length; Index++) {
 							//Table
 								Output += "<tr>"
-								Output += "<td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + ";'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index][0][0]) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + ";'><kbd>" + FilteredListForDisplay[Index][0][2] + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + "'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index][0][3]) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + ";'>" + FilteredListForDisplay[Index][0][4] + "</td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + "'><kbd>" + FilteredListForDisplay[Index][1][0] + "</kbd></td>"
+								Output += "<td style='text-align: center;'><kbd>" + BigInt(FilteredListForDisplay[Index][1][2]).toString(10) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + ";'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index][0][0]) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + ";'><kbd>" + FilteredListForDisplay[Index][0][2] + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + "'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index][0][3]) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + ";'>" + FilteredListForDisplay[Index][0][4] + "</td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + "'><kbd>" + FilteredListForDisplay[Index][1][0] + "</kbd></td>"
 								Output += "</tr>"
 						}
 						Output += "</table>"
@@ -414,7 +419,7 @@ Sort:<br>
 		return OutputArray
 	}
 	function RemoveInvalidData(ArrayElement) {
-		return ((/^[^\t]+?\t[^\t]*?\t[^\t]*?\t[^\t]*?\t[^\t]*?\t[^\t]*?$/).test(ArrayElement))
+		return ((/^[^\t]+?\t[^\t]*?\t[^\t]*?\t[^\t]*?\t[^\t]*?\t[^\t]*?$/).test(ArrayElement[0]))
 	}
 	function escapeHTMLChars(string) {
 		//Should the user's input contains "<", ">", and "&", prevent the innerHTML from treating these as HTML tags/escapes
