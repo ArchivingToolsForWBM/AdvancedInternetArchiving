@@ -1,0 +1,372 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+		</style>
+	</head>
+<body>
+<h1 style="text-align: center;">List cleaner</h1>
+<p>This HTML javascript takes a given list and identify them if there are duplicates, empty lines, or lines with just spaces. Useful to remove unwanted data. Along with this, it also will display various other information</p>
+<label><input type="checkbox" id="Option_AutoUpdate" onchange="AutoUpdate()" checked>Auto update</label><br>
+<textarea id="TextInput" cols="100" rows="30" oninput="AutoUpdate()"></textarea><br>
+Filter: <button onclick="ChangeFilterSettings('Filters', 1); AutoUpdate()">Check All</button><button onclick="ChangeFilterSettings('Filters', 0); AutoUpdate()">Uncheck All</button><button onclick="ChangeFilterSettings('Filters', 2); AutoUpdate()">Invert</button>
+<ul>
+<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_FirstCopy" data-js_list_filter="FirstCopy" checked>Only by the first items of 0 or more copies exist</label></li>
+<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_Duplicates" data-js_list_filter="Duplicate">Lines that are duplicates</label></li>
+<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_EmptyLines" data-js_list_filter="Blank">Just empty lines</label></li>
+<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_Spaces" data-js_list_filter="JustSpace">Lines containing nothing but spaces</label></li>
+</ul>
+Sort:
+<ul>
+<li><label><input type="radio" name="Sort" onchange="AutoUpdate()" id="Sort_SameOrderEntered" checked>Same order you entered</label></li>
+<li><label><input type="radio" name="Sort" onchange="AutoUpdate()" id="Sort_Alphabetically">Alphabetically</label> (<label><input type="radio" name="Sort" onchange="AutoUpdate()" id="Sort_Alphabetically_Reverse">Reverse</label>)</li>
+<li><label><input type="radio" name="Sort" onchange="AutoUpdate()" id="Sort_DupeCount">Duplicate count</label> (<label><input type="radio" name="Sort" onchange="AutoUpdate()"  id="Sort_DupeCount_Reverse">Reverse</label>)</li>
+<li><label><input type="radio" name="Sort" onchange="AutoUpdate()" id="Sort_Status">Status (FirstCopy/Duplicate/Blank/JustSpace)</label> (<label><input type="radio" name="Sort" onchange="AutoUpdate()" id="Sort_Status_Reverse">Reverse</label>)</li>
+</ul>
+<button onclick="MainFunction()">Submit</button><button onclick="Reset()">Reset</button>
+<hr>
+<textarea id="TextOutput"cols="100" rows="30" readonly></textarea><br>
+<table>
+<tr><th colspan="2">Statistics</th></tr>
+<tr><td><kbd>Total number of lines:</kbd></td><td><kbd><span id="HTML_LineCount"></span></kbd></td></tr>
+<tr><td><kbd>How many after filtering:</kbd></td><td><kbd><span id="HTML_HowManyAfterFilter"></span></kbd></td></tr>
+<tr><td><kbd>How many removed after filtering:</kbd></td><td><kbd><span id="HTML_HowManyRemovedAfterFilter"></span></kbd></td></tr>
+<tr><td><kbd>Total number of duplicates:</kbd></td><td><kbd><span id="HTML_DupeCount"></span></kbd></td></tr>
+<tr><td><kbd>Total number of empty lines:</kbd></td><td><kbd><span id="HTML_EmptyCount"></span></kbd></td></tr>
+<tr><td><kbd>Total number of lines only having space characters:</kbd></td><td><kbd><span id="HTML_SpaceCount"></span></td></tr>
+</table><br>
+
+<span id="OutputTable"></span>
+
+</body>
+<script>
+	function ChangeFilterSettings(ElementClass, Setting) {
+		if (Setting < 2) {
+			for (i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
+				document.getElementsByClassName(ElementClass)[i].checked = Setting
+			}
+		} else {
+			for (i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
+				document.getElementsByClassName(ElementClass)[i].checked = document.getElementsByClassName(ElementClass)[i].checked ^ 1
+			}
+		}
+	}
+	function AutoUpdate() {
+		if (document.getElementById("Option_AutoUpdate").checked) {
+			MainFunction()
+		}
+	}
+	function Reset() {
+		ChangeFilterSettings("Filters", 0)
+		document.getElementById("Filter_FirstCopy").checked = true
+		document.getElementById("Sort_SameOrderEntered").checked = true
+		document.getElementById("TextInput").value = ""
+		document.getElementById("OutputTable").innerHTML = ""
+		document.getElementById("TextOutput").value = ""
+		
+		let StatisticsArray = ["HTML_LineCount", "HTML_HowManyAfterFilter", "HTML_HowManyRemovedAfterFilter", "HTML_DupeCount", "HTML_EmptyCount", "HTML_SpaceCount"]
+		for (let Index = 0; Index < StatisticsArray.length; Index++) {
+			document.getElementById(StatisticsArray[Index]).innerHTML = ""
+		}
+	}
+	function MainFunction() {
+		let InputList = ((document.getElementById("TextInput").value).split('\n'))
+		InputList = InputList.map((ArrayElement, Index) => [ArrayElement, Index, "FirstCopy", 0, false, -1])
+		//InputList[Index]: Contains info for each line
+		//InputList[Index][0]: The line of text
+		//InputList[Index][1]: Line number (0 based)
+		//InputList[Index][2]: (Written later) Status ("FirstCopy", "Duplicate", "Blank", "JustSpace")
+		//InputList[Index][3]: (Written later) Duplicate count (0 means no dups were found)
+		//InputList[Index][4]: (Written later) Rerun flag, for optimization purposes (also so that what duplicate of points to the first copy)
+		//InputList[Index][5]: (Written later) Duplicate of <index> (original copy)
+		let Count_Lines = InputList.length
+		let Count_Duplicates = 0
+		let Count_EmptyLines = 0
+		let Count_LinesWithJustSpace = 0
+		for (let Index = 0; Index < InputList.length; Index++) {
+			//Check for lines that are blank or just spaces
+				if (InputList[Index][0] == "") {
+					InputList[Index][2] = "Blank"
+					InputList[Index][4] = true
+					Count_EmptyLines++
+				} else if (/^\s*$/.test(InputList[Index][0])) {
+					InputList[Index][2] = "JustSpace"
+					InputList[Index][4] = true
+					Count_LinesWithJustSpace++
+				}
+			//Find duplicates
+				if (InputList[Index][4] == false) { //Skip if the outer loop runs into a duplicate that is already processed by inner loop.
+					for (let Index2 = Index+1; Index2 < InputList.length; Index2++) {
+						if (InputList[Index2][4] == false) {
+							if (InputList[Index][0] === InputList[Index2][0]) {
+								//Flag second, and beyond items as duplicate
+									InputList[Index2][2] = "Duplicate"
+								//Increase duplicate count
+									InputList[Index][3]++
+								//Count total duplicate of entire list
+									Count_Duplicates++
+								//Flag second and beyond copies so it doesn't get processed multiple times, which is uncessary.
+									InputList[Index2][4] = true
+								//Duplicate of first item on list
+									InputList[Index2][5] = Index
+							}
+						}
+					}
+				}
+				//Write number of duplicates on original and all copies of it
+					for (let Index2 = Index+1; Index2 < InputList.length; Index2++) {
+						if (InputList[Index][0] === InputList[Index2][0]) {
+							InputList[Index2][3] = InputList[Index][3]
+						}
+					}
+		}
+		//Filter
+			InputList = InputList.filter(FilterItemType)
+		//Sort
+			if (document.getElementById("Sort_Alphabetically").checked) {
+				InputList.sort(function CompareTextLines(a, b) {
+					if (a[0] === b[0]) {
+						return 0;
+					}
+					else {
+						return (a[0] < b[0]) ? -1 : 1;
+					}
+				})
+			} else if (document.getElementById("Sort_Alphabetically_Reverse").checked) {
+				InputList.sort(function CompareTextLines_Reverse(a, b) {
+					if (a[0] === b[0]) {
+						return 0;
+					}
+					else {
+						return (a[0] < b[0]) ? 1 : -1;
+					}
+				})
+			} else if (document.getElementById("Sort_DupeCount").checked) {
+				InputList.sort(function CompareDupeCount(a, b) {
+					return a[3] - b[3]
+				})
+			} else if (document.getElementById("Sort_DupeCount_Reverse").checked) {
+				InputList.sort(function CompareDupeCount_Reverse(a, b) {
+					return b[3] - a[3]
+				})
+			} else if (document.getElementById("Sort_Status").checked) {
+				InputList.sort(function CompareSortStatus(a, b) {
+					if (a[2] === b[2]) {
+						return 0;
+					}
+					else {
+						return (a[2] < b[2]) ? -1 : 1;
+					}
+				})
+			} else if (document.getElementById("Sort_Status_Reverse").checked) {
+				InputList.sort(function CompareSortStatus_Reverse(a, b) {
+					if (a[2] === b[2]) {
+						return 0;
+					}
+					else {
+						return (a[2] < b[2]) ? 1 : -1;
+					}
+				})
+			}
+		//Output
+			//Statistics
+				document.getElementById("HTML_LineCount").innerHTML = BigInt(Count_Lines).toString(10)
+				document.getElementById("HTML_HowManyAfterFilter").innerHTML = BigInt(InputList.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length, Count_Lines, 2) + ")"
+				document.getElementById("HTML_HowManyRemovedAfterFilter").innerHTML = BigInt(Count_Lines - InputList.length).toString(10) + " (" + BetterPercentageUsingInts(Count_Lines - InputList.length, Count_Lines, 2) + ")"
+				document.getElementById("HTML_DupeCount").innerHTML = BigInt(Count_Duplicates).toString(10)
+				document.getElementById("HTML_EmptyCount").innerHTML = BigInt(Count_EmptyLines).toString(10)
+				document.getElementById("HTML_SpaceCount").innerHTML = BigInt(Count_LinesWithJustSpace).toString(10)
+			//Plaintext
+				let OutputTextArea = ""
+				for (let Index = 0; Index < InputList.length; Index++) {
+					OutputTextArea += InputList[Index][0]
+					if (Index != InputList.length - 1) {
+						OutputTextArea += "\n"
+					}
+				}
+				document.getElementById("TextOutput").value = OutputTextArea
+				
+			let OutputHTMLText = ""
+			OutputHTMLText += "<table><th>Line number</th><th>String</th><th>Status</th><th>Duplicate info</th>"
+			for (let Index = 0; Index < InputList.length; Index++) {
+				OutputHTMLText += "<tr>"
+				//Line number
+					OutputHTMLText += "<td style='text-align: center;'><kbd>" + BigInt(InputList[Index][1] + 1).toString(10) + "</kbd></td>"
+				//Text (string)
+					OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>" + escapeHTMLChars(InputList[Index][0]) + "</kbd></td>"
+				//Status
+					OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>" + InputList[Index][2] + "</kbd></td>"
+				//Duplicate info
+					OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>"
+					if ((InputList[Index][3] != 0 && InputList[Index][2] != "FirstCopy")) {
+						OutputHTMLText += "Duplicate of: Line " + BigInt(InputList[Index][5] + 1).toString(10)
+						if (InputList[Index][3] != 0) {
+							OutputHTMLText += ", "
+						}
+					}
+					if (InputList[Index][3] != 0) {
+						OutputHTMLText += "Number of copies: " + BigInt(InputList[Index][3]).toString(10)
+					} else if ((InputList[Index][2] == "Blank" || InputList[Index][2] == "JustSpace") == false) {
+						OutputHTMLText += "No duplicate exists"
+					}
+					OutputHTMLText += "</kbd></td>"
+				
+				OutputHTMLText += "</tr>"
+			}
+			OutputHTMLText += "</table>"
+			document.getElementById("OutputTable").innerHTML = OutputHTMLText
+	}
+	function ColorCodedStatus(StatusString) {
+		let ColorIndicator = "black"
+		switch (StatusString) {
+			case "FirstCopy":
+				ColorIndicator = "#008000"
+				break
+			case "Duplicate":
+				ColorIndicator = "#800000"
+				break
+			case "Blank":
+				ColorIndicator = "#808080"
+				break
+			case "JustSpace":
+				ColorIndicator = "#A08080"
+		}
+		return ColorIndicator
+	}
+	function FilterItemType(ArrayElement) {
+		let IsArrayElementPassesType = false
+		let ListOfAcceptedTypes = new Array()
+		for (let Index = 0; Index < document.getElementsByClassName("Filters").length; Index++) {
+			if (document.getElementsByClassName("Filters")[Index].checked) {
+				ListOfAcceptedTypes.push(document.getElementsByClassName("Filters")[Index].dataset.js_list_filter)
+			}
+		}
+		for (let Index = 0; (Index < ListOfAcceptedTypes.length && IsArrayElementPassesType == false); Index++) {
+			if (ArrayElement[2] == ListOfAcceptedTypes[Index]) {
+				IsArrayElementPassesType = true
+			}
+		}
+		return IsArrayElementPassesType
+	}
+	function escapeHTMLChars(string) {
+		//Should the user's input contains "<", ">", and "&", prevent the innerHTML from treating these as HTML tags/escapes
+			string = string.replaceAll("&", "&amp;") //This must be done first, to avoid replacing already-replaced symbol's ampersand character.
+			string = string.replaceAll("<", "&lt;")
+			string = string.replaceAll(">", "&gt;")
+			return string
+	}
+	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec) {
+		//This function calculates a percentage of a value (must be bigint), and returns a
+		//string representing a percentage using fixed-point arithmetic (https://en.wikipedia.org/wiki/Fixed-point_arithmetic ).
+		//Unlike a typical Quantity*100/MaxQuantity (or Quantity / MaxQuantity * 100)
+		//This also reports if rounding to 0 or 100% have occurred.
+		//Note: Don't use negative or decimal numbers for any of the parameters!
+		
+		//Output: A string:
+		//"--" if MaxQuantity is 0 (division by zero in bigint is not handled unlike double-precision floating point)
+		//"<number>%" a percentage. Rounds half-up.
+		//"Greater than <1*(10**(2+NumberOfDigitsAfterDec_BigInt))-1>" if results between 99.99..% and 100% (avoids rounding up towards 100%).
+		//"Less than <1/(10**NumberOfDigitsAfterDec_BigInt)>" is same as above but avoids rounding towards 0%.
+		
+		//100.0 is 1000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 1
+		//100.00 is 10000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 2
+		//100.000 is 100000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 3
+		Quantity = BigInt(Quantity)
+		MaxQuantity = BigInt(MaxQuantity)
+		NumberOfDigitsAfterDec_BigInt = BigInt(NumberOfDigitsAfterDec)
+		if (MaxQuantity == 0n) {
+			return "--"
+		} else {
+			let Percentage = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) / MaxQuantity
+			let Modulo = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) % MaxQuantity
+			//Check if remainder is greater than or equal to half of MaxQuantity, if so, increment
+			//Percentage by 1 unit.
+			
+			//Get halfway point, note: this must be rounded half up as well so that if Modulo is 0.5 greater in the case MaxQuantity is an odd number,
+			//would correctly round upwards. Example: 3/2 is 1.5 (default round to 1), since we are dealing with integers, Remainder being 2 or more should be
+			//consider a round up for percentage
+				let HalfwayPointOfMaxQuantity = MaxQuantity / 2n
+				if ((MaxQuantity % 2n) != 0n) {
+					HalfwayPointOfMaxQuantity++
+				}
+			//Round half-up
+				if (Modulo >= HalfwayPointOfMaxQuantity) { //round upwards
+					Percentage++
+					//We rounded the number up (actually increased the value), but it can potentially be at 100%, lets check it and if it did, override it.
+					if (Percentage == 100n*10n**NumberOfDigitsAfterDec_BigInt) {
+						//Rounded to 100% detected
+						//Note to self:
+						//Should say 99% if NumberOfDigitsAfterDec_BigInt = 0
+						//Should say 99.9% if NumberOfDigitsAfterDec_BigInt = 1
+						//99.99 if NumberOfDigitsAfterDec_BigInt = 2
+						//and so on.
+						//So basically the number of 9s after the decimal
+						//is NumberOfDigitsAfterDec_BigInt.
+							let DecimalPortion = ""
+							if (NumberOfDigitsAfterDec_BigInt != 0n) {
+								DecimalPortion += "."
+								for (let NineCount = 0; NineCount < NumberOfDigitsAfterDec; NineCount++) {
+									DecimalPortion += "9"
+								}
+							}
+						return "Greater than 99" + DecimalPortion + "%"
+					}
+				} else {
+					//Rounded downwards (default)
+					
+					if ((Modulo != 0n)&&(Percentage == 0n)) {
+						//Rounded to 0% detected
+						//Note to self:
+						//Should say 1% if NumberOfDigitsAfterDec_BigInt = 0
+						//Should say 0.1% if NumberOfDigitsAfterDec_BigInt = 1
+						//0.01% if NumberOfDigitsAfterDec_BigInt = 2
+						//and so on.
+						//Basically, if NumberOfDigitsAfterDec_BigInt = 2, the number of zeros
+						//between the decimal point and "1" is NumberOfDigitsAfterDec_BigInt - 1
+							let DecimalPortion = ""
+							if (NumberOfDigitsAfterDec_BigInt != 0n) {
+								DecimalPortion += "."
+								for (let ZeroCount = 0; ZeroCount < NumberOfDigitsAfterDec - 1; ZeroCount++) {
+									DecimalPortion += "0"
+								}
+								return "Less than 0" + DecimalPortion + "1%"
+							} else {
+								return "Less than 1%"
+							}
+					}
+				}
+				//Split the number separated by decimal point.
+					let OutputString = Percentage.toString(10)
+					let WholeNumberPart = OutputString.substring(0, OutputString.length - NumberOfDigitsAfterDec)
+					if (WholeNumberPart == "") {
+						WholeNumberPart = "0"
+					}
+					//This make sure that leading zeros (when less than 1%) exists, should the value in fixed point have fewer digits
+					//so that it can display things like 0.01 (stored internally in fixed point as 1) instead of 0.1 when NumberOfDigitsAfterDec is set to 2.
+					//It is due to the fact that toString(10) removes all leading zeros.
+						if (OutputString.length < NumberOfDigitsAfterDec) {
+							let NumberOfLeadingZeroesNeeded = NumberOfDigitsAfterDec - OutputString.length //example: 34 (length = 2) which is supposed to be 0.00034% when NumberOfDigitsAfterDec = 5, so 5-2 = 3, so 3 0s are needed.
+							let LeadingZeroes = ""
+							for (let Count = 0; Count < NumberOfLeadingZeroesNeeded; Count++) {
+								LeadingZeroes += "0"
+							}
+							OutputString = LeadingZeroes + OutputString
+						}
+					let DecimalPart = OutputString.substring(OutputString.length - NumberOfDigitsAfterDec)
+			return WholeNumberPart + "." + DecimalPart + "%"
+		}
+	}
+</script>
