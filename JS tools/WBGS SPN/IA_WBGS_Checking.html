@@ -47,7 +47,7 @@ Paste your google sheet result here:<br><br>
 	<li>Sure saved:</li>
 	<ul>
 		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_SavedBefore" class="FilterSettings_ArchiveStatus" data-status_list_name="Success_SavedBefore"><label for="Filter_Success_SavedBefore">Success (have saved before (green))</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_SuccessFirstArchive" class="FilterSettings_ArchiveStatus" data-status_list_name="Success_FirstArchive"><label for="Filter_SuccessFirstArchive">Success (&ldquo;First Archive&rdquo; (light green)) </label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_FirstArchive" class="FilterSettings_ArchiveStatus" data-status_list_name="Success_FirstArchive"><label for="Filter_Success_FirstArchive">Success (&ldquo;First Archive&rdquo; (light green)) </label></li>
 	</ul>
 	<li>Unsure saved:</li>
 	<ul>
@@ -59,11 +59,19 @@ Paste your google sheet result here:<br><br>
 	</ul>
 </ul>
 Sort:<br>
-<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_UserSentURLOrder" name="Sort_Output" checked>Same order of URLs you set (not sorting at all)</label><br>
-<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse" name="Sort_Output">Based on the status message (sort by column D). Note: Any results displaying the URL versions are ordered <abbr title="It is because the URL starts with &ldquo;https://web.archive.org/web/YYYYMMDDhhmmss/[...]&rdquo; and &ldquo;YYYYMMDDhhmmss&rdquo; is the timestamp.">chronologically</abbr></label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse_Reverse" name="Sort_Output">Reverse</label>)<br>
-<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusType" name="Sort_Output">Based on the status <abbr title="Missing data, missing URLs, errors, redirects, and successes.">type</abbr> identified from the save results</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusType_Reverse" name="Sort_Output">Reverse</label>)<br>
-<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_HTTPStatus" name="Sort_Output">Based on the HTTP status code (column C)</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_HTTPStatus_Reverse" name="Sort_Output">Reverse</label>)<br>
-<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_OutlinksCount" name="Sort_Output">Out links count (column E)</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_OutlinksCount_Reverse" name="Sort_Output">Reverse</label>)<br><br>
+<ul>
+<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_UserSentURLOrder" name="Sort_Output" checked>Same order of URLs you set (not sorting at all)</label></li>
+<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse" name="Sort_Output">Based on the status message (sort by column D). Note: Any results displaying the URL versions are ordered <abbr title="It is because the URL starts with &ldquo;https://web.archive.org/web/YYYYMMDDhhmmss/[...]&rdquo; and &ldquo;YYYYMMDDhhmmss&rdquo; is the timestamp.">chronologically</abbr></label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse_Reverse" name="Sort_Output">Reverse</label>)</li>
+<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusType" name="Sort_Output">Based on the status <abbr title="Missing data, missing URLs, errors, redirects, and successes.">type</abbr> identified from the save results</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusType_Reverse" name="Sort_Output">Reverse</label>)</li>
+<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_HTTPStatus" name="Sort_Output">Based on the HTTP status code (column C)</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_HTTPStatus_Reverse" name="Sort_Output">Reverse</label>)</li>
+<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_OutlinksCount" name="Sort_Output">Out links count (column E)</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_OutlinksCount_Reverse" name="Sort_Output">Reverse</label>)</li>
+</ul>
+
+URL order numbering:<br>
+<ul>
+<li><label><input type="radio" onchange="AutoUpdate()" id="PositionNumbering_GSRow" name="ItemNumbering" checked>Google sheet rows</label></li>
+<li><label><input type="radio" onchange="AutoUpdate()" id="PositionNumbering_ValidEntries" name="ItemNumbering">Count only valid entries</label></li>
+</ul>
 <button onclick="CheckURLs()">Submit</button><button onclick="Reset()">Reset</button><br><br>
 <hr>
 <span id="Output_Statistics"></span>
@@ -123,7 +131,7 @@ Sort:<br>
 			document.getElementById("Output_Plaintext").hidden = true
 		
 		let Output = ""
-		let InputList = (document.getElementById("GsheetInput").value).split(/(?:\n)(?=(?:[^"]|"[^"]*")*$)/).map((ArrayElement, Index) => [ArrayElement, Index + 1]).filter(RemoveInvalidData)
+		let InputList = (document.getElementById("GsheetInput").value).split(/(?:\n)(?=(?:[^"]|"[^"]*")*$)/).map((ArrayElement, Index) => [ArrayElement, Index]).filter(RemoveInvalidData)
 		//Contains:
 		//InputList[Index][0] = google sheet row.
 		//InputList[Index][1] = String line number (ignoring linebreaks within a cell).
@@ -145,7 +153,14 @@ Sort:<br>
 		let Count_Unsure_Error = 0
 		let Count_Unsure_SavedA4XXOr5XX = 0
 		//Create a table
-			InputList = InputList.map((ArrayElement) => [ArrayElement[0].split('\t'), ["", "", ArrayElement[1]]])
+			//InputList = InputList.map((ArrayElement) => [ArrayElement[0].split('\t'), ["", "", ArrayElement[1]]])
+			InputList = InputList.map(function(ArrayElement, Index) {
+				let PositionNumbering = ArrayElement[1]
+				if (document.getElementById("PositionNumbering_ValidEntries").checked) {
+					PositionNumbering = Index
+				}
+				return [ArrayElement[0].split('\t'), ["", "", PositionNumbering]]
+			})
 		//Note to self on what sub-array it contains:
 		//InputList[Index][0] = Gsheet sub-array:
 		//InputList[Index][0][0] = (Google sheets' column A) SentURL
@@ -157,7 +172,7 @@ Sort:<br>
 		//InputList[Index][1] = Javascript sub-array:
 		//InputList[Index][1][0] = This javascript status indicator (Unsure_NoIAResult, Unsure_BlankColumnD, Success_SavedBefore, Success_FirstArchive, Unsure_Redirected, Unsure_Error, Unsure_SavedA4XXOr5XX).
 		//InputList[Index][1][1] = HTTP indicator (class)
-		//InputList[Index][1][2] = Line position in google sheet.
+		//InputList[Index][1][2] = Line position in google sheet or valid URL position number.
 		//
 		//Verify URLs
 		//Note to self:
@@ -341,12 +356,17 @@ Sort:<br>
 					if (FilteredListForDisplay.length != 0) {
 						Output += "<table>"
 						Output += "<tr>"
-						Output += "<th>GS line number</th><th>URLs you&apos;ve sent</th><th>HTTP status</th><th>Save status of URLs or errors</th><th>Number of outlinks saved</th><th>Status type</th>"
+						if (document.getElementById("PositionNumbering_GSRow").checked) {
+							Output += "<th>GS line number</th>"
+						} else {
+							Output += "<th>Valid item position number</th>"
+						}
+						Output += "<th>URLs you&apos;ve sent</th><th>HTTP status</th><th>Save status of URLs or errors</th><th>Number of outlinks saved</th><th>Status type</th>"
 						Output += "</tr>"
 						for (Index = 0; Index < FilteredListForDisplay.length; Index++) {
 							//Table
 								Output += "<tr>"
-								Output += "<td style='text-align: center;'><kbd>" + BigInt(FilteredListForDisplay[Index][1][2]).toString(10) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + ";'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index][0][0]) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + ";'><kbd>" + FilteredListForDisplay[Index][0][2] + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + "'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index][0][3]) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + ";'>" + FilteredListForDisplay[Index][0][4] + "</td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + "'><kbd>" + FilteredListForDisplay[Index][1][0] + "</kbd></td>"
+								Output += "<td style='text-align: center;'><kbd>" + BigInt(FilteredListForDisplay[Index][1][2]+1).toString(10) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + ";'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index][0][0]) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + ";'><kbd>" + FilteredListForDisplay[Index][0][2] + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + "'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index][0][3]) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + ";'>" + FilteredListForDisplay[Index][0][4] + "</td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + "'><kbd>" + FilteredListForDisplay[Index][1][0] + "</kbd></td>"
 								Output += "</tr>"
 						}
 						Output += "</table>"
@@ -365,12 +385,15 @@ Sort:<br>
 		document.getElementById("Filter_Unsure_BlankColumnD").checked = true
 		document.getElementById("Filter_Unsure_Redirected").checked = true
 		document.getElementById("Filter_Unsure_Errors").checked = true
+		document.getElementById("Filter_SavedA4XX").checked = true
 		document.getElementById("Filter_Success_SavedBefore").checked = false
-		document.getElementById("Filter_SuccessFirstArchive").checked = false
+		document.getElementById("Filter_Success_FirstArchive").checked = false
 		document.getElementById("Sort_Output_UserSentURLOrder").checked = true
 		document.getElementById("Output_Statistics").innerHTML = ""
 		document.getElementById("StringHowManyShown").hidden = true
 		document.getElementById("Output_Plaintext").hidden = true
+		document.getElementById("Output_table").innerHTML = ""
+		document.getElementById("PositionNumbering_GSRow").checked = true
 	}
 	
 	function ConvertURLListToTableFlaggingDuplicates(ArrayList) {
