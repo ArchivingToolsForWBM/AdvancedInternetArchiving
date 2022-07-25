@@ -71,6 +71,7 @@ URL order numbering:<br>
 <ul>
 <li><label><input type="radio" onchange="AutoUpdate()" id="PositionNumbering_GSRow" name="ItemNumbering" checked>Google sheet rows</label></li>
 <li><label><input type="radio" onchange="AutoUpdate()" id="PositionNumbering_ValidEntries" name="ItemNumbering">Count only valid entries</label></li>
+<li><label><input type="radio" onchange="AutoUpdate()" id="PositionNumbering_DisplayedHere" name="ItemNumbering">Count on what's displayed here (after filtering and sorting)</label></li>
 </ul>
 <button onclick="CheckURLs()">Submit</button><button onclick="Reset()">Reset</button><br><br>
 <hr>
@@ -158,6 +159,8 @@ URL order numbering:<br>
 				let PositionNumbering = ArrayElement[1]
 				if (document.getElementById("PositionNumbering_ValidEntries").checked) {
 					PositionNumbering = Index
+				} else if (document.getElementById("PositionNumbering_DisplayedHere").checked) {
+					PositionNumbering = 0
 				}
 				return [ArrayElement[0].split('\t'), ["", "", PositionNumbering]]
 			})
@@ -172,7 +175,7 @@ URL order numbering:<br>
 		//InputList[Index][1] = Javascript sub-array:
 		//InputList[Index][1][0] = This javascript status indicator (Unsure_NoIAResult, Unsure_BlankColumnD, Success_SavedBefore, Success_FirstArchive, Unsure_Redirected, Unsure_Error, Unsure_SavedA4XXOr5XX).
 		//InputList[Index][1][1] = HTTP indicator (class)
-		//InputList[Index][1][2] = Line position in google sheet or valid URL position number.
+		//InputList[Index][1][2] = Line position in google sheet/valid URL position number/position number after filtering and sorting (initally 0 here)
 		//
 		//Verify URLs
 		//Note to self:
@@ -271,6 +274,12 @@ URL order numbering:<br>
 				} else if (document.getElementById("Sort_Output_OutlinksCount_Reverse").checked) {
 					FilteredListForDisplay = FilteredListForDisplay.sort(CompareOutlinksCountReverse)
 				}
+			//Numbering if the user opted to make the number increase for every item displayed.
+				if (document.getElementById("PositionNumbering_DisplayedHere").checked) {
+					for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
+						FilteredListForDisplay[Index][1][2] = Index
+					}
+				}
 		//Output in HTML
 			if (InputList.length != 0) {
 				//statistics (bar graph)
@@ -358,8 +367,10 @@ URL order numbering:<br>
 						Output += "<tr>"
 						if (document.getElementById("PositionNumbering_GSRow").checked) {
 							Output += "<th>GS line number</th>"
-						} else {
+						} else if (document.getElementById("PositionNumbering_ValidEntries")){
 							Output += "<th>Valid item position number</th>"
+						} else {
+							Output += "<th>Numbered based what's displayed here</th>"
 						}
 						Output += "<th>URLs you&apos;ve sent</th><th>HTTP status</th><th>Save status of URLs or errors</th><th>Number of outlinks saved</th><th>Status type</th>"
 						Output += "</tr>"

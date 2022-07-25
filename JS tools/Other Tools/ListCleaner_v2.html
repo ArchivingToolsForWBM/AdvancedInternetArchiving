@@ -24,17 +24,17 @@
 <textarea id="TextInput" cols="100" rows="30" oninput="AutoUpdate()"></textarea><br>
 Filter: <button onclick="ChangeFilterSettings('Filters', 1); AutoUpdate()">Check All</button><button onclick="ChangeFilterSettings('Filters', 0); AutoUpdate()">Uncheck All</button><button onclick="ChangeFilterSettings('Filters', 2); AutoUpdate()">Invert</button>
 <ul>
-<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_FirstCopy" data-js_list_filter="FirstCopy" checked>Only by the first items of 0 or more copies exist</label></li>
-<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_Duplicates" data-js_list_filter="Duplicate">Lines that are duplicates</label></li>
-<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_EmptyLines" data-js_list_filter="Blank">Just empty lines</label></li>
-<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_Spaces" data-js_list_filter="JustSpace">Lines containing nothing but spaces</label></li>
+<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_OriginalItem" data-js_list_filter="OriginalItem" checked>Only by the first item that have 0 or more copies exist (<kbd>OriginalItem</kbd>)</label></li>
+<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_Duplicates" data-js_list_filter="Duplicate">Lines that are duplicates (<kbd>Duplicate</kbd>)</label></li>
+<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_EmptyLines" data-js_list_filter="EmptyLine">Just empty lines (<kbd>EmptyLine</kbd>)</label></li>
+<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_Spaces" data-js_list_filter="JustSpace">Lines containing nothing but spaces (<kbd>JustSpace</kbd>)</label></li>
 </ul>
 Sort:
 <ul>
 <li><label><input type="radio" name="Sort" onchange="AutoUpdate()" id="Sort_SameOrderEntered" checked>Same order you entered</label></li>
 <li><label><input type="radio" name="Sort" onchange="AutoUpdate()" id="Sort_Alphabetically">Alphabetically</label> (<label><input type="radio" name="Sort" onchange="AutoUpdate()" id="Sort_Alphabetically_Reverse">Reverse</label>)</li>
 <li><label><input type="radio" name="Sort" onchange="AutoUpdate()" id="Sort_DupeCount">Duplicate count</label> (<label><input type="radio" name="Sort" onchange="AutoUpdate()"  id="Sort_DupeCount_Reverse">Reverse</label>)</li>
-<li><label><input type="radio" name="Sort" onchange="AutoUpdate()" id="Sort_Status">Status (FirstCopy/Duplicate/Blank/JustSpace)</label> (<label><input type="radio" name="Sort" onchange="AutoUpdate()" id="Sort_Status_Reverse">Reverse</label>)</li>
+<li><label><input type="radio" name="Sort" onchange="AutoUpdate()" id="Sort_Status">Status (OriginalItem/Duplicate/EmptyLine/JustSpace)</label> (<label><input type="radio" name="Sort" onchange="AutoUpdate()" id="Sort_Status_Reverse">Reverse</label>)</li>
 </ul>
 <button onclick="MainFunction()">Submit</button><button onclick="Reset()">Reset</button>
 <hr>
@@ -71,7 +71,7 @@ Sort:
 	}
 	function Reset() {
 		ChangeFilterSettings("Filters", 0)
-		document.getElementById("Filter_FirstCopy").checked = true
+		document.getElementById("Filter_OriginalItem").checked = true
 		document.getElementById("Sort_SameOrderEntered").checked = true
 		document.getElementById("TextInput").value = ""
 		document.getElementById("OutputTable").innerHTML = ""
@@ -84,11 +84,11 @@ Sort:
 	}
 	function MainFunction() {
 		let InputList = ((document.getElementById("TextInput").value).split('\n'))
-		InputList = InputList.map((ArrayElement, Index) => [ArrayElement, Index, "FirstCopy", 0, false, -1])
+		InputList = InputList.map((ArrayElement, Index) => [ArrayElement, Index, "OriginalItem", 0, false, -1])
 		//InputList[Index]: Contains info for each line
 		//InputList[Index][0]: The line of text
 		//InputList[Index][1]: Line number (0 based)
-		//InputList[Index][2]: (Written later) Status ("FirstCopy", "Duplicate", "Blank", "JustSpace")
+		//InputList[Index][2]: (Written later) Status ("OriginalItem", "Duplicate", "EmptyLine", "JustSpace")
 		//InputList[Index][3]: (Written later) Duplicate count (0 means no dups were found)
 		//InputList[Index][4]: (Written later) Rerun flag, for optimization purposes (also so that what duplicate of points to the first copy)
 		//InputList[Index][5]: (Written later) Duplicate of <index> (original copy)
@@ -97,9 +97,9 @@ Sort:
 		let Count_EmptyLines = 0
 		let Count_LinesWithJustSpace = 0
 		for (let Index = 0; Index < InputList.length; Index++) {
-			//Check for lines that are blank or just spaces
+			//Check for lines that are EmptyLine or just spaces
 				if (InputList[Index][0] == "") {
-					InputList[Index][2] = "Blank"
+					InputList[Index][2] = "EmptyLine"
 					InputList[Index][4] = true
 					Count_EmptyLines++
 				} else if (/^\s*$/.test(InputList[Index][0])) {
@@ -211,7 +211,7 @@ Sort:
 					OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>" + InputList[Index][2] + "</kbd></td>"
 				//Duplicate info
 					OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>"
-					if ((InputList[Index][3] != 0 && InputList[Index][2] != "FirstCopy")) {
+					if ((InputList[Index][3] != 0 && InputList[Index][2] != "OriginalItem")) {
 						OutputHTMLText += "Duplicate of: Line " + BigInt(InputList[Index][5] + 1).toString(10)
 						if (InputList[Index][3] != 0) {
 							OutputHTMLText += ", "
@@ -219,7 +219,7 @@ Sort:
 					}
 					if (InputList[Index][3] != 0) {
 						OutputHTMLText += "Number of copies: " + BigInt(InputList[Index][3]).toString(10)
-					} else if ((InputList[Index][2] == "Blank" || InputList[Index][2] == "JustSpace") == false) {
+					} else if ((InputList[Index][2] == "EmptyLine" || InputList[Index][2] == "JustSpace") == false) {
 						OutputHTMLText += "No duplicate exists"
 					}
 					OutputHTMLText += "</kbd></td>"
@@ -232,13 +232,13 @@ Sort:
 	function ColorCodedStatus(StatusString) {
 		let ColorIndicator = "black"
 		switch (StatusString) {
-			case "FirstCopy":
+			case "OriginalItem":
 				ColorIndicator = "#008000"
 				break
 			case "Duplicate":
 				ColorIndicator = "#800000"
 				break
-			case "Blank":
+			case "EmptyLine":
 				ColorIndicator = "#808080"
 				break
 			case "JustSpace":
