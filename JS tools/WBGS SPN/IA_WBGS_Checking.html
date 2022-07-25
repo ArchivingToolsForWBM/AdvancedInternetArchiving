@@ -67,7 +67,7 @@ Sort:<br>
 <li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_OutlinksCount" name="Sort_Output">Out links count (column E)</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_OutlinksCount_Reverse" name="Sort_Output">Reverse</label>)</li>
 </ul>
 
-URL order numbering:<br>
+URL order numbering (this adjust the display of numbers indicating the position in the list):<br>
 <ul>
 <li><label><input type="radio" onchange="AutoUpdate()" id="PositionNumbering_GSRow" name="ItemNumbering" checked>Google sheet rows</label></li>
 <li><label><input type="radio" onchange="AutoUpdate()" id="PositionNumbering_ValidEntries" name="ItemNumbering">Count only valid entries</label></li>
@@ -175,7 +175,7 @@ URL order numbering:<br>
 		//InputList[Index][1] = Javascript sub-array:
 		//InputList[Index][1][0] = This javascript status indicator (Unsure_NoIAResult, Unsure_BlankColumnD, Success_SavedBefore, Success_FirstArchive, Unsure_Redirected, Unsure_Error, Unsure_SavedA4XXOr5XX).
 		//InputList[Index][1][1] = HTTP indicator (class)
-		//InputList[Index][1][2] = Line position in google sheet/valid URL position number/position number after filtering and sorting (initally 0 here)
+		//InputList[Index][1][2] = Line position in google sheet/valid URL position number (if "PositionNumbering_DisplayedHere") is ticked, then it would the GS line number except it won't be used.
 		//
 		//Verify URLs
 		//Note to self:
@@ -274,12 +274,6 @@ URL order numbering:<br>
 				} else if (document.getElementById("Sort_Output_OutlinksCount_Reverse").checked) {
 					FilteredListForDisplay = FilteredListForDisplay.sort(CompareOutlinksCountReverse)
 				}
-			//Numbering if the user opted to make the number increase for every item displayed.
-				if (document.getElementById("PositionNumbering_DisplayedHere").checked) {
-					for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
-						FilteredListForDisplay[Index][1][2] = Index
-					}
-				}
 		//Output in HTML
 			if (InputList.length != 0) {
 				//statistics (bar graph)
@@ -367,7 +361,7 @@ URL order numbering:<br>
 						Output += "<tr>"
 						if (document.getElementById("PositionNumbering_GSRow").checked) {
 							Output += "<th>GS line number</th>"
-						} else if (document.getElementById("PositionNumbering_ValidEntries")){
+						} else if (document.getElementById("PositionNumbering_ValidEntries").checked){
 							Output += "<th>Valid item position number</th>"
 						} else {
 							Output += "<th>Numbered based what's displayed here</th>"
@@ -377,7 +371,12 @@ URL order numbering:<br>
 						for (Index = 0; Index < FilteredListForDisplay.length; Index++) {
 							//Table
 								Output += "<tr>"
-								Output += "<td style='text-align: center;'><kbd>" + BigInt(FilteredListForDisplay[Index][1][2]+1).toString(10) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + ";'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index][0][0]) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + ";'><kbd>" + FilteredListForDisplay[Index][0][2] + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + "'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index][0][3]) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + ";'>" + FilteredListForDisplay[Index][0][4] + "</td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + "'><kbd>" + FilteredListForDisplay[Index][1][0] + "</kbd></td>"
+								if (document.getElementById("PositionNumbering_DisplayedHere").checked != true){
+									Output += "<td style='text-align: center;'><kbd>" + BigInt(FilteredListForDisplay[Index][1][2]+1).toString(10) + "</kbd></td>"
+								} else {
+									Output += "<td style='text-align: center;'><kbd>" + BigInt(Index+1).toString(10) + "</kbd></td>"
+								}
+								Output += "<td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + ";'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index][0][0]) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + ";'><kbd>" + FilteredListForDisplay[Index][0][2] + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + "'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index][0][3]) + "</kbd></td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + ";'>" + FilteredListForDisplay[Index][0][4] + "</td><td style='background-color: " + URLColorIndicator(FilteredListForDisplay[Index][1][0]) + "'><kbd>" + FilteredListForDisplay[Index][1][0] + "</kbd></td>"
 								Output += "</tr>"
 						}
 						Output += "</table>"
