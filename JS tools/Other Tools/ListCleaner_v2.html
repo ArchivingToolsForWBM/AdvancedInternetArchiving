@@ -19,7 +19,7 @@
 	</head>
 <body>
 <h1 style="text-align: center;">List cleaner</h1>
-<p>This HTML javascript takes a given list and identify them if there are duplicates, empty lines, or lines with just spaces. Useful to remove unwanted data. Along with this, it also will display various other information</p>
+<p>This HTML javascript takes a given list (each item is each line in the text) and identify them if there are duplicates, empty lines, or lines with just spaces. Useful to remove unwanted data. Along with this, it also can display various other information</p>
 <label><input type="checkbox" id="Option_AutoUpdate" onchange="AutoUpdate()" checked>Auto update</label><br>
 <textarea id="TextInput" cols="100" rows="30" oninput="AutoUpdate()"></textarea><br>
 Filter: <button onclick="ChangeFilterSettings('Filters', 1); AutoUpdate()">Check All</button><button onclick="ChangeFilterSettings('Filters', 0); AutoUpdate()">Uncheck All</button><button onclick="ChangeFilterSettings('Filters', 2); AutoUpdate()">Invert</button>
@@ -88,10 +88,13 @@ Sort:
 		//InputList[Index]: Contains info for each line
 		//InputList[Index][0]: The line of text
 		//InputList[Index][1]: Line number (0 based)
-		//InputList[Index][2]: (Written later) Status ("OriginalItem", "Duplicate", "EmptyLine", "JustSpace")
-		//InputList[Index][3]: (Written later) Duplicate count (0 means no dups were found)
-		//InputList[Index][4]: (Written later) Rerun flag, for optimization purposes (also so that what duplicate of points to the first copy)
-		//InputList[Index][5]: (Written later) Duplicate of <index> (original copy)
+		//InputList[Index][2]: (Written later) Status ("OriginalItem" (first item of 0 or more copies), "Duplicate" (if this line is the 2nd+ copy of the original),
+		// "EmptyLine" (a line with no characters of any kind, including space), "JustSpace" (a line with just any whitespace character))
+		//InputList[Index][3]: (Written later) Duplicate count (0 means no dups were found). Written on both the original and all duplicates.
+		//InputList[Index][4]: (Written later) Duplicate-have-been-run flag, as inner-loop (second item we check in the array via "InputList[Index2]") checks and flag each item,
+		// The outer loop ("InputList[Index]") doesn't need to re-check currently known duplicates, therefore optimizing the loop. Also used to prevent 2nd and beyond identical
+		// lines from being labeled as "OriginalItem"
+		//InputList[Index][5]: (Written later) Index number representing the original copy.
 		let Count_Lines = InputList.length
 		let Count_Duplicates = 0
 		let Count_EmptyLines = 0
@@ -198,36 +201,36 @@ Sort:
 					}
 				}
 				document.getElementById("TextOutput").value = OutputTextArea
-				
-			let OutputHTMLText = ""
-			OutputHTMLText += "<table><th>Line number</th><th>String</th><th>Status</th><th>Duplicate info</th>"
-			for (let Index = 0; Index < InputList.length; Index++) {
-				OutputHTMLText += "<tr>"
-				//Line number
-					OutputHTMLText += "<td style='text-align: center;'><kbd>" + BigInt(InputList[Index][1] + 1).toString(10) + "</kbd></td>"
-				//Text (string)
-					OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>" + escapeHTMLChars(InputList[Index][0]) + "</kbd></td>"
-				//Status
-					OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>" + InputList[Index][2] + "</kbd></td>"
-				//Duplicate info
-					OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>"
-					if ((InputList[Index][3] != 0 && InputList[Index][2] != "OriginalItem")) {
-						OutputHTMLText += "Duplicate of: Line " + BigInt(InputList[Index][5] + 1).toString(10)
-						if (InputList[Index][3] != 0) {
-							OutputHTMLText += ", "
+			//Table of statuses
+				let OutputHTMLText = ""
+				OutputHTMLText += "<table><th>Line number</th><th>String</th><th>Status</th><th>Duplicate info</th>"
+				for (let Index = 0; Index < InputList.length; Index++) {
+					OutputHTMLText += "<tr>"
+					//Line number
+						OutputHTMLText += "<td style='text-align: center;'><kbd>" + BigInt(InputList[Index][1] + 1).toString(10) + "</kbd></td>"
+					//Text (string)
+						OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>" + escapeHTMLChars(InputList[Index][0]) + "</kbd></td>"
+					//Status
+						OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>" + InputList[Index][2] + "</kbd></td>"
+					//Duplicate info
+						OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>"
+						if ((InputList[Index][3] != 0 && InputList[Index][2] != "OriginalItem")) {
+							OutputHTMLText += "Duplicate of: Line " + BigInt(InputList[Index][5] + 1).toString(10)
+							if (InputList[Index][3] != 0) {
+								OutputHTMLText += ", "
+							}
 						}
-					}
-					if (InputList[Index][3] != 0) {
-						OutputHTMLText += "Number of copies: " + BigInt(InputList[Index][3]).toString(10)
-					} else if ((InputList[Index][2] == "EmptyLine" || InputList[Index][2] == "JustSpace") == false) {
-						OutputHTMLText += "No duplicate exists"
-					}
-					OutputHTMLText += "</kbd></td>"
-				
-				OutputHTMLText += "</tr>"
-			}
-			OutputHTMLText += "</table>"
-			document.getElementById("OutputTable").innerHTML = OutputHTMLText
+						if (InputList[Index][3] != 0) {
+							OutputHTMLText += "Number of copies: " + BigInt(InputList[Index][3]).toString(10)
+						} else if ((InputList[Index][2] == "EmptyLine" || InputList[Index][2] == "JustSpace") == false) {
+							OutputHTMLText += "No duplicate exists"
+						}
+						OutputHTMLText += "</kbd></td>"
+					
+					OutputHTMLText += "</tr>"
+				}
+				OutputHTMLText += "</table>"
+				document.getElementById("OutputTable").innerHTML = OutputHTMLText
 	}
 	function ColorCodedStatus(StatusString) {
 		let ColorIndicator = "black"
