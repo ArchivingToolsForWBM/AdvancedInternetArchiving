@@ -203,11 +203,13 @@ Sort:
 				document.getElementById("TextOutput").value = OutputTextArea
 			//Table of statuses
 				let OutputHTMLText = ""
-				OutputHTMLText += "<table><th>Line number</th><th>String</th><th>Status</th><th>Duplicate info</th>"
+				OutputHTMLText += "<table><th>Line number prior altering</th><th>Line number after altering</th><th>String</th><th>Status</th><th>Duplicate info</th>"
 				for (let Index = 0; Index < InputList.length; Index++) {
 					OutputHTMLText += "<tr>"
 					//Line number
-						OutputHTMLText += "<td style='text-align: center;'><kbd>" + BigInt(InputList[Index][1] + 1).toString(10) + "</kbd></td>"
+						OutputHTMLText += "<td style='background-color: " + ColorCodedAlteredLineNumber(InputList[Index][1], Index) + "; text-align: center;'><kbd>" + BigInt(InputList[Index][1] + 1).toString(10) + "</kbd></td>"
+					//Line number after altering
+						OutputHTMLText += "<td style='background-color: " + ColorCodedAlteredLineNumber(InputList[Index][1], Index) + "; text-align: center;'><kbd>" + BigInt(Index + 1).toString(10) + "</kbd></td>"
 					//Text (string)
 						OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>" + escapeHTMLChars(InputList[Index][0]) + "</kbd></td>"
 					//Status
@@ -231,6 +233,13 @@ Sort:
 				}
 				OutputHTMLText += "</table>"
 				document.getElementById("OutputTable").innerHTML = OutputHTMLText
+	}
+	function ColorCodedAlteredLineNumber(LinePriorAlter, LineAfterAlter) {
+		let ColorIndicator = "black"
+		if (LineAfterAlter != LinePriorAlter) {
+			ColorIndicator = "#808000"
+		}
+		return ColorIndicator
 	}
 	function ColorCodedStatus(StatusString) {
 		let ColorIndicator = "black"
