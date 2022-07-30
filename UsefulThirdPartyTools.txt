@@ -99,6 +99,12 @@ Extensions:
 				Even better, if your browser lets you have a console log for all tabs, such as firefox “Browser Console”:
 				https://firefox-source-docs.mozilla.org/devtools-user/browser_console/index.html , you can extract
 				links even faster. CTRL+click/rightclick -> Open link in a new tab/Pressing the scroll wheel will help you.
+				But be careful with the log limit, they will clear out the oldest entrties if the limit is reached. On
+				firefox, enter "about:config", search for these settings:
+					devtools.hud.loglimit
+					devtools.hud.loglimit.console
+				These are supposed to be numeric entries, and not sure if this is the amount of bytes or the number of entries.
+				Set these to a very large number, at the time of writing this, the highest number allowed is 2,147,483,647.
 	
 	Save to the wayback machine
 		https://chrome.google.com/webstore/detail/save-to-the-wayback-machi/eebpioaailbjojmdbmlpomfgijnlcemk
