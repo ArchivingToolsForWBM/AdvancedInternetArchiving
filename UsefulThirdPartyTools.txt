@@ -95,6 +95,10 @@ Extensions:
 				The outputted URLs will show up in the devtools's console log. I highly recommend changing the log limit to some very large
 				number as old logs may be deleted. This can be changed on firefox's [about:config] and setting [devtools.hud.loglimit.console]
 				and [extensions.firebug.console.logLimit] to the largest value - 2147483647 (the highest signed 32-bit integer).
+				
+				Even better, if your browser lets you have a console log for all tabs, such as firefox “Browser Console”:
+				https://firefox-source-docs.mozilla.org/devtools-user/browser_console/index.html , you can extract
+				links even faster. CTRL+click/rightclick -> Open link in a new tab/Pressing the scroll wheel will help you.
 	
 	Save to the wayback machine
 		https://chrome.google.com/webstore/detail/save-to-the-wayback-machi/eebpioaailbjojmdbmlpomfgijnlcemk
