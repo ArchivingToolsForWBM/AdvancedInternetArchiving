@@ -46,7 +46,7 @@ Number of URLs listed: <span id="NumberOfURLsListed">0</span><br>
 				//ListOfURLs[Index][2] = Duplicate Rerun flag
 			//Correct the URL string (console log may quote a string with a period added at the end, for example)
 				for (let Index = 0; Index < ListOfURLs.length; Index++) {
-					ListOfURLs[Index][0] = "h" + ListOfURLs[Index][0].replace(/\.$/, "")
+					ListOfURLs[Index][0] = "h" + ListOfURLs[Index][0].replace(/\.$/, "").replace(/#.*$/, "")
 				}
 			//Remove duplicates
 				if (document.getElementById("Option_RemoveDup").checked) {
