@@ -23,26 +23,29 @@
 
 <textarea id="ListOfURLs" oninput="Main()" cols="100" rows="30"></textarea>
 <hr>
-<textarea id="OutputURLs" cols="100" rows="30" readonly hidden></textarea>
+<textarea id="OutputURLs" cols="100" rows="30" readonly></textarea>
 
 <script>
 	function Main() {
 		document.getElementById("OutputURLs").value = ""
-		let List = document.getElementById("ListOfURLs").value.split("\n")
+		let List = document.getElementById("ListOfURLs").value.split("\n").map(function(ArrayElement){
+			let Converted = ""
+			if (document.getElementById("PercentEncode_Encode").checked) {
+				Converted = encodeURI(ArrayElement)
+			} else if (document.getElementById("PercentEncode_Decode").checked) {
+				Converted = decodeURI(ArrayElement)
+			}
+			return [ArrayElement, Converted]
+		})
+		//List[Index][0] = User entered URLs
+		//List[Index][1] = Converted URLs
 		let OutputString = ""
 		for (let Index = 0; Index < List.length; Index++) {
-			if (document.getElementById("PercentEncode_Encode").checked) {
-				List[Index] = [List[Index], encodeURI(List[Index])]
-			} else if (document.getElementById("PercentEncode_Decode").checked) {
-				List[Index] = [List[Index], decodeURI(List[Index])]
-			}
-			
 			OutputString += List[Index][1]
 			if (Index != List.length - 1) {
 				OutputString += "\n"
 			}
 		}
 		document.getElementById("OutputURLs").value += OutputString
-		document.getElementById("OutputURLs").hidden = false
 	}
 </script>

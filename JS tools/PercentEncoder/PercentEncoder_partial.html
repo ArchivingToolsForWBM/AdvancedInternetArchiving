@@ -1,0 +1,42 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+		</style>
+	</head>
+<body>
+<p>This tool to be used when you have URLs containing reserved characters along with percent encoded symbols and you wanted them to all be percent encoded without breaking the URL.</p>
+
+<textarea id="ListOfURLs" oninput="Main()" cols="100" rows="30"></textarea>
+<hr>
+<textarea id="OutputURLs" cols="100" rows="30" readonly></textarea>
+
+<script>
+	function Main() {
+		document.getElementById("OutputURLs").value = ""
+		let List = document.getElementById("ListOfURLs").value.split("\n")
+		let OutputString = ""
+		for (let Index = 0; Index < List.length; Index++) {
+			List[Index] = List[Index].replaceAll("!", "%21").replaceAll("$", "%24").replaceAll("&", "%26").replaceAll("\'", "%27").replaceAll("(", "%28").replaceAll(")", "%29").replaceAll("[", "%5B").replaceAll("]", "%5D")
+			
+			OutputString += List[Index]
+			if (Index != List.length - 1) {
+				OutputString += "\n"
+			}
+		}
+		document.getElementById("OutputURLs").value += OutputString
+	}
+</script>

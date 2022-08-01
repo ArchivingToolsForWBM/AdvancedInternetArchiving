@@ -1,0 +1,101 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+		</style>
+	</head>
+<body>
+<p>This tool will search on a plaintext data to find URLs in them. NOTE: Will find any text that begins with <kbd>ttp://</kbd> instead of checking <kbd>http://</kbd> or <kbd>https://</kbd> as from what I tested from firefox, truncates
+URLs by removing the substring in the middle of the URL. So when extracting URLs, make sure you remove that <kbd>h</kbd> at the start of the URL to avoid truncation and so this script will obtain the links.</p>
+<label><input type="checkbox" id="Option_AutoUpdate" oninput="AutoUpdate()" checked>Auto Update</label><br>
+<textarea id="TextInput" cols="100" rows="30" oninput="AutoUpdate()"></textarea><br>
+<label><input type="checkbox" id="Option_RemoveDup" onchange="AutoUpdate()" checked>Remove duplicates</label><br><br>
+Sort:
+<ul>
+	<li><label><input type="radio" id="Option_Sort_None" name="SortSetting" onchange="AutoUpdate()" checked>No sort</label></li>
+	<li><label><input type="radio" id="Option_Sort_Alphabetically" name="SortSetting" onchange="AutoUpdate()">Sort Alphabetically</label> (<label><input type="radio" id="Option_Sort_Alphabetically_Reverse" name="SortSetting" onchange="AutoUpdate()">Reverse</label>)</li>
+</ul>
+<hr>
+Number of URLs listed: <span id="NumberOfURLsListed">0</span><br>
+<textarea id="OutputURLs" cols="100" rows="30" style="white-space: nowrap" readonly></textarea><br>
+<script>
+	function AutoUpdate() {
+		if (document.getElementById("Option_AutoUpdate").checked) {
+			GetURLsFromText()
+		}
+	}
+	function GetURLsFromText() {
+		if (document.getElementById("TextInput").value.match(/ttp(s)?:\/\/[^\s\"\']+/g) != null) {
+			let ListOfURLs = document.getElementById("TextInput").value.match(/ttp(s)?\:\/\/[^\s\"\']+/g)
+			ListOfURLs = ListOfURLs.map((ArrayElement) => [ArrayElement, "", false])
+				//ListOfURLs[Index][0] = URL
+				//ListOfURLs[Index][1] = Duplicate Status
+				//ListOfURLs[Index][2] = Duplicate Rerun flag
+			//Correct the URL string (console log may quote a string with a period added at the end, for example)
+				for (let Index = 0; Index < ListOfURLs.length; Index++) {
+					ListOfURLs[Index][0] = "h" + ListOfURLs[Index][0].replace(/\.$/, "")
+				}
+			//Remove duplicates
+				if (document.getElementById("Option_RemoveDup").checked) {
+					for (let Index = 0; Index < ListOfURLs.length; Index++) {
+						if (ListOfURLs[Index][2] == false) {
+							for (let Index2 = Index+1; Index2 < ListOfURLs.length; Index2++) {
+								if (ListOfURLs[Index2][2] == false) {
+									if (ListOfURLs[Index][0] == ListOfURLs[Index2][0]) {
+										ListOfURLs[Index2][1] = "Duplicate"
+										ListOfURLs[Index2][2] = true
+									}
+								}
+							}
+						}
+					}
+					ListOfURLs = ListOfURLs.filter((ArrayElement) => (ArrayElement[1] == ""))
+				}
+			//Sort
+				if (document.getElementById("Option_Sort_Alphabetically").checked) {
+					ListOfURLs.sort(function CompareURLs(a, b) {
+						if (a[0] === b[0]) {
+							return 0;
+						} else {
+							return (a[0] < b[0]) ? -1 : 1;
+						}
+					})
+				} else if (document.getElementById("Option_Sort_Alphabetically_Reverse").checked) {
+					ListOfURLs.sort(function CompareURLsReverse(a, b) {
+						if (a[0] === b[0]) {
+							return 0;
+						} else {
+							return (a[0] < b[0]) ? 1 : -1;
+						}
+					})
+				}
+			//Output
+				let OutputString = ""
+				document.getElementById("NumberOfURLsListed").innerHTML = BigInt(ListOfURLs.length).toString(10) //BigInt so that it won't display e-notation
+				for (let Index = 0; Index < ListOfURLs.length; Index++) {
+					OutputString += ListOfURLs[Index][0]
+					if (Index != ListOfURLs.length-1) {
+						OutputString += "\n"
+					}
+					document.getElementById("OutputURLs").value = OutputString
+				}
+				
+		} else {
+			document.getElementById("NumberOfURLsListed").innerHTML = "0"
+			document.getElementById("OutputURLs").value = "No URLs found."
+		}
+	}
+</script>
