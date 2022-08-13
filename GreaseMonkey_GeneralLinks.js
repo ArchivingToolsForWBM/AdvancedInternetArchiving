@@ -7,8 +7,18 @@
 // @grant        none
 // ==/UserScript==
 
-//Note: This was tested on firefox.
+//Notes:
+//- This was tested on firefox.
+//- If you are extracting a large number of links, make sure:
+//-- On firefox, go on the search bar and enter "about:config", "Accept the Risk and Continue" and type "HUD" and find these settings:
+//--- devtools.hud.loglimit (this is the console log limit for the console.log per-tab)
+//--- devtools.hud.loglimit.console (same as above but for firefox's browser console: https://firefox-source-docs.mozilla.org/devtools-user/browser_console/index.html )
+//   And set them to a number: 2147483647 else the log may DELETE entries to make more room.
 (function() {
+	//"all" is a set that contains only unique items, the console.log however isn't necessarily a set so that COULD have duplicate items in it.
+	//The [(!all.has(URLString[0])] code makes it so that if something is already on the set, then don't add the duplicate. However,
+	//Because "all" is per-tab, and also resets when going to a different pages, duplicates may appear on the console log when the console.log's
+	//"Persist Log" (gear icon on the top-right of the devtool UI).
 	'use strict';
 	const all = window.allLink = new Set();
 	function getLink(PageDocument) {
