@@ -41,7 +41,7 @@ issues not caught by the system, things like redirects (twitter), blank cell (co
 
 Paste your google sheet result here:<br><br>
 <input type="checkbox" id="AutoUpdate" checked onchange="AutoUpdate()"><label for="AutoUpdate">Auto update</label><br>
-<textarea id="GsheetInput" cols="100" rows="30" oninput="AutoUpdate()" style="white-space: nowrap"></textarea><br>
+<textarea id="GsheetInput" cols="100" rows="30" oninput="AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
 	Search URLs based on their flagged status: <button onclick="CheckAllFilters('IASaveStatus'); AutoUpdate()">Check All</button><button onclick="UnCheckAllFilters('IASaveStatus'); AutoUpdate()">Uncheck All</button><button onclick="InvertFilters('IASaveStatus'); AutoUpdate()">Invert</button><br>
 <ul>
 	<li>Sure saved:</li>
@@ -77,7 +77,7 @@ URL order numbering (this adjust the display of numbers indicating the position 
 <hr>
 <span id="Output_Statistics"></span>
 <kbd id="StringHowManyShown" hidden>Displayed: <span id="StringHowManyShown_Number"></span></kbd><br>
-<textarea readonly id="Output_Plaintext" hidden cols="100" rows="30"></textarea>
+<textarea readonly id="Output_Plaintext" hidden cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea>
 <span id="Output_table"></span>
 </body>
 <script>

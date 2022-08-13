@@ -31,7 +31,7 @@ OriginalURL	YES/NO	WBMURL</pre></td></tr></table>
 </p>
 <input type="checkbox" onchange="AutoUpdateCode()" id="AutoUpdate" checked><label for="AutoUpdate">Auto update (note: may be laggy on large number of URLs!)</label><br>
 
-<textarea id="InputList" cols="100" rows="30" oninput="AutoUpdateCode()"></textarea><br>
+<textarea id="InputList" cols="100" rows="30" oninput="AutoUpdateCode()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
 Filter:<br>
 <ul>
 	<li>Availability: <button onclick="CheckAllFilters()">Check All</button><button onclick="UncheckAllFilters()">Uncheck all</button><button onclick="InvertFilters()">Invert</button><br>
@@ -52,7 +52,7 @@ Sort:<input type="checkbox" onchange="AutoUpdateCode()" id="SortReverse"><label 
 <hr>
 <span id="Output_Statistics"></span><br>
 <kbd hidden id="Output_NumberOfResultsText">Number of results found: <span id="Output_NumberOfResultsNumber"></span></kbd><br>
-<textarea readonly id="Output_List" cols="100" rows="30"></textarea><br>
+<textarea readonly id="Output_List" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
 <span id="Output_Table"></span>
 </body>
 <script>
