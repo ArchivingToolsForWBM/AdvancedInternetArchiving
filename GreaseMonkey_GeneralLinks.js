@@ -37,7 +37,7 @@
 	
 	function FormatURL(String) {
 		let IsStringValid = true
-		if (String=="javascript:void(0);"||String=="none"||String=="") {
+		if ((/^\s*javascript:.*$/.test(String))||String=="none"||String=="") {
 			IsStringValid = false
 		}
 		if (IsStringValid) {
