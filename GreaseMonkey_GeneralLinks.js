@@ -14,7 +14,12 @@
 //--- devtools.hud.loglimit (this is the console log limit for the console.log per-tab)
 //--- devtools.hud.loglimit.console (same as above but for firefox's browser console: https://firefox-source-docs.mozilla.org/devtools-user/browser_console/index.html )
 //   And set them to a number: 2147483647 else the log may DELETE entries to make more room.
+
 (function() {
+	//Settings
+		const Interval_captureLinks = true //Capture based on intervals (run this code perodically), false = no, true = yes.
+		const CaptureLinksInterval = 100 //Time (milliseconds) between each execution of code to extract links, used when Interval_captureLinks = true.
+
 	//"all" is a set that contains only unique items, the console.log however isn't necessarily a set so that COULD have duplicate items in it.
 	//The [(!all.has(URLString[0])] code makes it so that if something is already on the set, then don't add the duplicate. However,
 	//Because "all" is per-tab, and also resets when going to a different pages, duplicates may appear on the console log when the console.log's
@@ -68,11 +73,18 @@
 	window.addEventListener('load', (event) => {
 		let CurrentDocument = document
 		window.addEventListener('scroll',getLink.bind(null, CurrentDocument)); //Get links on the main window when scrolling (when page loads as you scroll; infinute scroll)
+		window.addEventListener('load',getLink.bind(null, CurrentDocument));
+		if (Interval_captureLinks) {
+			const CaptureLinksIntervalID = setInterval(getLink, CaptureLinksInterval, CurrentDocument)
+		}
 		if (window.frames.length) { //Loop through every window and extract their links too (NOTE: will not extract recursively)
 			for (let i=0;i<window.frames.length;i++) {
 				CurrentDocument = window.frames[i].document
 				CurrentDocument.addEventListener('scroll',getLink.bind(null, CurrentDocument));
 				CurrentDocument.addEventListener('load',getLink.bind(null, CurrentDocument));
+				if (Interval_captureLinks) {
+					const CaptureLinksIntervalID = setInterval(getLink, CaptureLinksInterval, CurrentDocument)
+				}
 			}
 		}
 	})
