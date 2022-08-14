@@ -14,6 +14,8 @@
 //--- devtools.hud.loglimit (this is the console log limit for the console.log per-tab)
 //--- devtools.hud.loglimit.console (same as above but for firefox's browser console: https://firefox-source-docs.mozilla.org/devtools-user/browser_console/index.html )
 //   And set them to a number: 2147483647 else the log may DELETE entries to make more room.
+//- Make sure you have "Persist Logs"/"Preserve log" enabled. Loading a different page on the main window or if the page have "console.clear()" in its code will
+//  delete your console.log
 
 (function() {
 	//Settings
