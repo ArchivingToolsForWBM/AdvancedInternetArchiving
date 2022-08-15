@@ -31,7 +31,7 @@
 		let List = document.getElementById("ListOfURLs").value.split("\n").map(function(ArrayElement){
 			let Converted = ""
 			if (document.getElementById("PercentEncode_Encode").checked) {
-				Converted = encodeURI(ArrayElement)
+				Converted = encodeURI(ArrayElement).replaceAll("(", "%28").replaceAll(")", "%29")
 			} else if (document.getElementById("PercentEncode_Decode").checked) {
 				Converted = decodeURI(ArrayElement)
 			}
