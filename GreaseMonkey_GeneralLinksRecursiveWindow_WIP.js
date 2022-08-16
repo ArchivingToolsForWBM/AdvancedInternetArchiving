@@ -66,29 +66,19 @@
 		}
 		return [String, IsStringValid]
 	};
-	
-	//Code that executes when the MAIN WINDOW loads the page
-	//Please note that this does not reflect the loading of subwindows when you open links in a way that does not reload the main window
-	//Since this executes ONCE when the main window loads.
-
-		window.addEventListener('load',getLink.bind(null, document)); //Get links on the main window when page finishes loading
-		window.addEventListener('load', (event) => {
-		let CurrentDocument = document
-		window.addEventListener('scroll',getLink.bind(null, CurrentDocument)); //Get links on the main window when scrolling (when page loads as you scroll; infinute scroll)
-		window.addEventListener('load',getLink.bind(null, CurrentDocument));
-		if (Interval_captureLinks) {
-			const CaptureLinksIntervalID = setInterval(getLink, CaptureLinksInterval, CurrentDocument)
-		}
-		if (window.frames.length) { //Loop through every window and extract their links too (NOTE: will not extract recursively)
-			for (let i=0;i<window.frames.length;i++) {
-				CurrentDocument = window.frames[i].document
-				CurrentDocument.addEventListener('scroll',getLink.bind(null, CurrentDocument));
-				CurrentDocument.addEventListener('load',getLink.bind(null, CurrentDocument));
-				if (Interval_captureLinks) {
-					const CaptureLinksIntervalID = setInterval(getLink, CaptureLinksInterval, CurrentDocument)
-				}
+	function addEventListenersToPages(Input_Window) {
+		let a = 0
+		Input_Window.addEventListener('scroll',getLink.bind(null, Input_Window.document));
+		Input_Window.addEventListener('load',getLink.bind(null, Input_Window.document));
+		if (Input_Window.frames.length) {
+			for (let i=0; i<Input_Window.frames.length;i++) {
+				addEventListenersToPages(Input_Window.frames[i])
 			}
 		}
-	})
+	}
+	
+	
+	window.addEventListener('scroll',addEventListenersToPages.bind(null, window));
+	window.addEventListener('load',addEventListenersToPages.bind(null, window));
 
 })();
