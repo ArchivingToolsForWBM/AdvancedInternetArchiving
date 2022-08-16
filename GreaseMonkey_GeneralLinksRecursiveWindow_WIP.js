@@ -7,6 +7,9 @@
 // @grant        none
 // ==/UserScript==
 
+//Credit goes to hacker09 on GreasyFork: https://greasyfork.org/en/discussions/requests/65921-feature-request-extract-links-as-the-user-scroll-down-general-purpose-any-site
+//for hints on how to set up a code to read the document to obtain links.
+//
 //Notes:
 //- This was tested on firefox.
 //- If you are extracting a large number of links, make sure:
@@ -15,7 +18,7 @@
 //--- devtools.hud.loglimit.console (same as above but for firefox's browser console: https://firefox-source-docs.mozilla.org/devtools-user/browser_console/index.html )
 //   And set them to a number: 2147483647 else the log may DELETE entries to make more room.
 //- Make sure you have "Persist Logs"/"Preserve log" enabled. Loading a different page on the main window or if the page have "console.clear()" in its code will
-//  delete your console.log
+//  delete your console.log. At the time of writing this (2022-08-14), I've discovered that firefox doesn't have the ability to disobey console.clear(): https://bugzilla.mozilla.org/show_bug.cgi?id=1267856
 
 (function() {
 	//Settings
@@ -24,7 +27,7 @@
 		const IframeMaxRecursion = 50
 			//^When there is an iframe and multiple windows, this is the max recusion before cutting off further innser windows (failsafe to stop potential infinute loops/stack size exceeds)
 	//Don't touch
-		let IframeRecursionCount = 0 //Tracks how many recursive iframe to scan into.
+		let IframeRecursionCount = 0 //Tracks how many levels deep sub-window frames to scan into.
 
 	//"all" is a set that contains only unique items, the console.log however isn't necessarily a set so that COULD have duplicate items in it.
 	//The [(!all.has(URLString[0])] code makes it so that if something is already on the set, then don't add the duplicate. However,
@@ -32,7 +35,7 @@
 	//"Persist Log" (gear icon on the top-right of the devtool UI).
 	'use strict';
 	const all = window.allLink = new Set();
-	function getLink(PageDocument) {
+	function ExtractLinksFromPage(PageDocument) {
 		Array.from(PageDocument.getElementsByTagName('a')).forEach(link=>{ //"a href" links
 			let URLString = FormatURL(link.href)
 			if(!all.has(URLString[0])&&URLString[1]) {
@@ -71,21 +74,33 @@
 		return [String, IsStringValid]
 	};
 	function addEventListenersToPages(Input_Window) {
-		Input_Window.addEventListener('scroll',getLink.bind(null, Input_Window.document));
-		Input_Window.addEventListener('load',getLink.bind(null, Input_Window.document));
-		if (Interval_captureLinks) {
-			const IntervalID_GrabLinks = setInterval(getLink, CaptureLinksInterval, Input_Window.document)
+		//This adds even listeners to each window when the main windiw is first loaded, then if there are
+		Input_Window.addEventListener('scroll',ExtractLinksFromPage.bind(null, Input_Window.document));
+		Input_Window.addEventListener('load',ExtractLinksFromPage.bind(null, Input_Window.document));
+		for (let i=0; ((i<Input_Window.frames.length)&&(IframeRecursionCount<IframeMaxRecursion));i++) {
+			IframeRecursionCount++
+			addEventListenersToPages(Input_Window.frames[i])
+			IframeRecursionCount-- //Don't count as total number of function calls, just how many levels deep.
 		}
-		if (Input_Window.frames.length) {
-			for (let i=0; ((i<Input_Window.frames.length)&&(IframeRecursionCount<IframeMaxRecursion));i++) {
-				IframeRecursionCount++
-				addEventListenersToPages(Input_Window.frames[i])
-			}
+	}
+	
+	function ExtractLinksOnWindow(Input_Window) {
+		//This extracts links in the current window, then searches for any subwindow, calls itself recursively
+		//to extract its links and across multiple windows (multiple windows that aren't inside of another). Best used
+		//when the subwindows loaded a different document but the main window didn't, by calling this function again.
+		ExtractLinksFromPage(Input_Window.document)
+		for (let i=0; ((i<Input_Window.frames.length)&&(IframeRecursionCount<IframeMaxRecursion));i++) {
+			IframeRecursionCount++
+			ExtractLinksOnWindow(Input_Window.frames[i])
+			IframeRecursionCount-- //Don't count as total number of function calls, just how many levels deep.
 		}
 	}
 	
 	
 	window.addEventListener('scroll',addEventListenersToPages.bind(null, window));
 	window.addEventListener('load',addEventListenersToPages.bind(null, window));
+	if (Interval_captureLinks) {
+		const IntervalID = setInterval(ExtractLinksOnWindow, CaptureLinksInterval, window)
+	}
 
 })();
