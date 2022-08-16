@@ -21,6 +21,10 @@
 	//Settings
 		const Interval_captureLinks = true //Capture based on intervals (run this code perodically), false = no, true = yes.
 		const CaptureLinksInterval = 100 //Time (milliseconds) between each execution of code to extract links, used when Interval_captureLinks = true.
+		const IframeMaxRecursion = 50
+			//^When there is an iframe and multiple windows, this is the max recusion before cutting off further innser windows (failsafe to stop potential infinute loops/stack size exceeds)
+	//Don't touch
+		let IframeRecursionCount = 0 //Tracks how many recursive iframe to scan into.
 
 	//"all" is a set that contains only unique items, the console.log however isn't necessarily a set so that COULD have duplicate items in it.
 	//The [(!all.has(URLString[0])] code makes it so that if something is already on the set, then don't add the duplicate. However,
@@ -67,11 +71,14 @@
 		return [String, IsStringValid]
 	};
 	function addEventListenersToPages(Input_Window) {
-		let a = 0
 		Input_Window.addEventListener('scroll',getLink.bind(null, Input_Window.document));
 		Input_Window.addEventListener('load',getLink.bind(null, Input_Window.document));
+		if (Interval_captureLinks) {
+			const IntervalID_GrabLinks = setInterval(getLink, CaptureLinksInterval, Input_Window.document)
+		}
 		if (Input_Window.frames.length) {
-			for (let i=0; i<Input_Window.frames.length;i++) {
+			for (let i=0; ((i<Input_Window.frames.length)&&(IframeRecursionCount<IframeMaxRecursion));i++) {
+				IframeRecursionCount++
 				addEventListenersToPages(Input_Window.frames[i])
 			}
 		}
