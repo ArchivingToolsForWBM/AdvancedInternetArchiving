@@ -48,6 +48,7 @@ GM.registerMenuCommand("Reset URL auto-surf URL count", ResetURLCount, "R");
 		} else {
 			alert("Done!")
 			localStorage.setItem("Sequential_URL_Visitor_URLCount", 0)
+			localStorage.setItem("Sequential_URL_Visitor_OnOff", "Off")
 		}
 	}
 })();
