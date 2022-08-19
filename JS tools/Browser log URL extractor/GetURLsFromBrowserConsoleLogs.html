@@ -43,7 +43,7 @@ Number of URLs listed: <span id="NumberOfURLsListed">0</span><br>
 		}
 	}
 	function GetURLsFromText() {
-		let ListOfURLs = document.getElementById("TextInput").value.match(/ttp(s)?\:\/\/[^\s\"\']+/g)
+		let ListOfURLs = document.getElementById("TextInput").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"\']+/g)
 		ListOfURLs = ListOfURLs.map((ArrayElement) => [ArrayElement, "", false])
 			//ListOfURLs[Index][0] = URL
 			//ListOfURLs[Index][1] = Duplicate Status
