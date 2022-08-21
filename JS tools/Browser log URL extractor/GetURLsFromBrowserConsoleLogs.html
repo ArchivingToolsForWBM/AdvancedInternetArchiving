@@ -20,22 +20,59 @@
 <body>
 <p>This tool will search on a plaintext data to find URLs in them. NOTE: Will find any text that begins with <kbd>ttp://</kbd> instead of checking <kbd>http://</kbd> or <kbd>https://</kbd> as from what I tested from firefox, truncates
 URLs by removing the substring in the middle of the URL. So when extracting URLs, make sure you remove that <kbd>h</kbd> at the start of the URL to avoid truncation and so this script will obtain the links.</p>
+<p>NOTE: This only works on firefox because it has a <a href="https://firefox-source-docs.mozilla.org/devtools-user/browser_console/index.html">Browser console feature</a> and the ability to set your log limit to really large size (Go to the address bar, enter <kbd>about:config</kbd>, accept the risk and continue, then search for
+<kbd>HUD</kbd>, and set <kbd>devtools.hud.loglimit</kbd> and <kbd>devtools.hud.loglimit.console</kbd> to <kbd>2147483647</kbd>).</p>
+
 <label><input type="checkbox" id="Option_AutoUpdate" oninput="AutoUpdate()" checked>Auto Update</label><br>
 <textarea id="TextInput" cols="100" rows="30" oninput="AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br><br>
 
-Filter:
-<ul>
-<li><label><input type="checkbox" id="Option_RemoveDup" onchange="AutoUpdate()" checked>Remove duplicates</label></li>
-<li><label><input type="checkbox" id="Option_RemoveFirefoxTruncation" onchange="AutoUpdate()" checked>Remove URLs that were truncated and have the ellepses chacater (&ldquo;…&rdquo;) in the truncated part of the URL.</label></li>
-</ul>
-Sort:
-<ul>
-	<li><label><input type="radio" id="Option_Sort_None" name="SortSetting" onchange="AutoUpdate()" checked>No sort</label></li>
-	<li><label><input type="radio" id="Option_Sort_Alphabetically" name="SortSetting" onchange="AutoUpdate()">Sort Alphabetically</label> (<label><input type="radio" id="Option_Sort_Alphabetically_Reverse" name="SortSetting" onchange="AutoUpdate()">Reverse</label>)</li>
-</ul>
 <hr>
-Number of URLs listed: <span id="NumberOfURLsListed">0</span><br>
-<textarea id="OutputURLs" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"readonly></textarea><br>
+<table>
+	<tr>
+		<th>
+			URLs found
+		</th>
+		<th>
+			URLs that errored
+		</th>
+	</tr>
+	<tr>
+		<td>
+			Filter:
+			<ul>
+				<li><label><input type="checkbox" id="Option_RemoveDup" onchange="AutoUpdate()" checked>Remove duplicates</label></li>
+				<li><label><input type="checkbox" id="Option_RemoveFirefoxTruncation" onchange="AutoUpdate()" checked>Remove URLs that were truncated and have the ellepses chacater (&ldquo;…&rdquo;) in the truncated part of the URL. Does not apply to error URLs</label></li>
+			</ul>
+			Sort:
+			<ul>
+				<li><label><input type="radio" id="Option_Sort_None" name="SortSetting" onchange="AutoUpdate()" checked>No sort</label></li>
+				<li><label><input type="radio" id="Option_Sort_Alphabetically" name="SortSetting" onchange="AutoUpdate()">Sort Alphabetically</label> (<label><input type="radio" id="Option_Sort_Alphabetically_Reverse" name="SortSetting" onchange="AutoUpdate()">Reverse</label>)</li>
+			</ul>
+			Number of URLs listed: <span id="NumberOfURLsListed">0</span><br>
+			<textarea id="OutputURLs" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"readonly></textarea>
+		</td>
+		<td>
+			Filter:
+			<ul>
+				<li><label><input type="checkbox" id="Option_RemoveDup_ErrorURLs" onchange="AutoUpdate()" checked>Remove duplicates</label></li>
+				<li><label><input type="checkbox" id="Option_FilterHTTPStatus_ErrorURLs_4XX" class="Filter_ErrorStatus" onchange="AutoUpdate()">Show 4XX errors</label></li>
+				<li><label><input type="checkbox" id="Option_FilterHTTPStatus_ErrorURLs_5XX" class="Filter_ErrorStatus" onchange="AutoUpdate()" checked>Show 5XX errors</label></li>
+			</ul>
+			Sort:
+			<ul>
+				<li><label><input type="radio" id="Option_SortErrorURLs_None" name="SortSetting_ErrorURLs" onchange="AutoUpdate()">No sort</label></li>
+				<li><label><input type="radio" id="Option_SortErrorURLs_Alphabetically" name="SortSetting_ErrorURLs" onchange="AutoUpdate()">Sort Alphabetically</label> (<label><input type="radio" id="Option_SortErrorURLs_Alphabetically_Reverse" name="SortSetting_ErrorURLs" onchange="AutoUpdate()">Reverse</label>)</li>
+				<li><label><input type="radio" id="Option_SortErrorURLs_ErrorStatus" name="SortSetting_ErrorURLs" onchange="AutoUpdate()" checked>Sort by error status</label> (<label><input type="radio" id="Option_SortErrorURLs_ErrorStatus_Reverse" name="SortSetting_ErrorURLs" onchange="AutoUpdate()">Reverse</label>)</li>
+			</ul>
+			Misc:
+			<ul>
+				<li><label><input type="checkbox" id="Option_DisplayErrorStatus" onchange="AutoUpdate()">Display Error status at end of URLs</label></li>
+			</ul>
+			Number of URLs that errored: <span id="NumberOfErrorURLsListed">0</span><br>
+			<textarea id="OutputErrorURLs" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"readonly></textarea>
+		</td>
+	</tr>
+</table>
 <script>
 	function AutoUpdate() {
 		if (document.getElementById("Option_AutoUpdate").checked) {
@@ -44,6 +81,20 @@ Number of URLs listed: <span id="NumberOfURLsListed">0</span><br>
 	}
 	function GetURLsFromText() {
 		let ListOfURLs = document.getElementById("TextInput").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"\']+/g)
+		let ListOfErrorURLs = document.getElementById("TextInput").value.match(/GEThttp(s)?\:\/\/(?!data:)[^\s\"\']+\/?\n\[HTTP\/\d (4|5)\d\d.+\]/g)
+			//currently (2022-08-20) firefox is the only browser as far as I know have a "browser console" and has the option to have huge log limit sizes.
+			if (ListOfErrorURLs==null) {
+				ListOfErrorURLs = []
+			}
+			ListOfErrorURLs = ListOfErrorURLs.map((ArrayElement) => {
+				let URL = ArrayElement.replace(/^GET/, "").replace(/\n.+/, "")
+				let ErrorStatus = ArrayElement.replace(/GEThttp(s)?\:\/\/(?!data:)[^\s\"\']+\/?\n\[HTTP\/\d /, "").replace(/(?<=(4|5)\d\d) .+\]/, "")
+				return [URL, ErrorStatus, "", false]
+			})
+			//ListOfErrorURLs[Index][0] = URL
+			//ListOfErrorURLs[Index][1] = Error HTTP status
+			//ListOfErrorURLs[Index][2] = Duplicate status
+			//ListOfErrorURLs[Index][3] = Duplicate Rerun flag
 		ListOfURLs = ListOfURLs.map((ArrayElement) => [ArrayElement, "", false])
 			//ListOfURLs[Index][0] = URL
 			//ListOfURLs[Index][1] = Duplicate Status
@@ -72,37 +123,115 @@ Number of URLs listed: <span id="NumberOfURLsListed">0</span><br>
 				}
 				ListOfURLs = ListOfURLs.filter((ArrayElement) => (ArrayElement[1] == ""))
 			}
-		//Sort
-			if (document.getElementById("Option_Sort_Alphabetically").checked) {
-				ListOfURLs.sort(function CompareURLs(a, b) {
-					if (a[0] === b[0]) {
-						return 0;
-					} else {
-						return (a[0] < b[0]) ? -1 : 1;
+			if (document.getElementById("Option_RemoveDup_ErrorURLs").checked) {
+				for (let Index = 0; Index < ListOfErrorURLs.length; Index++) {
+					if (ListOfErrorURLs[Index][3] == false) {
+						for (let Index2 = Index+1; Index2 < ListOfErrorURLs.length; Index2++) {
+							if (ListOfErrorURLs[Index2][3] == false) {
+								if ((ListOfErrorURLs[Index][0]==ListOfErrorURLs[Index2][0])&&(ListOfErrorURLs[Index][1]==ListOfErrorURLs[Index2][1])) {
+									ListOfErrorURLs[Index2][2] = "Duplicate"
+									ListOfErrorURLs[Index2][3] = true
+								}
+							}
+						}
 					}
-				})
-			} else if (document.getElementById("Option_Sort_Alphabetically_Reverse").checked) {
-				ListOfURLs.sort(function CompareURLsReverse(a, b) {
-					if (a[0] === b[0]) {
-						return 0;
-					} else {
-						return (a[0] < b[0]) ? 1 : -1;
-					}
-				})
+				}
+				ListOfErrorURLs = ListOfErrorURLs.filter((ArrayElement) => (ArrayElement[2] == ""))
 			}
+		//Show 4XX/5XX error URLs
+			ListOfErrorURLs = ListOfErrorURLs.filter(function(ArrayElement) {
+				let DidElementPasses = false
+				if (/(4\d\d)/.test(ArrayElement[1])&&document.getElementById("Option_FilterHTTPStatus_ErrorURLs_4XX").checked) {
+					DidElementPasses = true
+				} else if (/(5\d\d)/.test(ArrayElement[1])&&document.getElementById("Option_FilterHTTPStatus_ErrorURLs_5XX").checked) {
+					DidElementPasses = true
+				}
+				return DidElementPasses
+			})
+		//Sort
+			//Sort URLs
+				if (document.getElementById("Option_Sort_Alphabetically").checked) {
+					ListOfURLs.sort(function CompareURLs(a, b) {
+						if (a[0] === b[0]) {
+							return 0;
+						} else {
+							return (a[0] < b[0]) ? -1 : 1;
+						}
+					})
+				} else if (document.getElementById("Option_Sort_Alphabetically_Reverse").checked) {
+					ListOfURLs.sort(function CompareURLsReverse(a, b) {
+						if (a[0] === b[0]) {
+							return 0;
+						} else {
+							return (a[0] < b[0]) ? 1 : -1;
+						}
+					})
+				}
+			//Sort error URLs
+				if (document.getElementById("Option_SortErrorURLs_Alphabetically").checked) {
+					ListOfErrorURLs.sort(function CompareErrorURLs(a, b) {
+						if (a[0] === b[0]) {
+							return 0;
+						} else {
+							return (a[0] < b[0]) ? -1 : 1;
+						}
+					})
+				} else if (document.getElementById("Option_SortErrorURLs_Alphabetically_Reverse").checked) {
+					ListOfErrorURLs.sort(function CompareErrorURLsReverse(a, b) {
+						if (a[0] === b[0]) {
+							return 0;
+						} else {
+							return (a[0] < b[0]) ? 1 : -1;
+						}
+					})
+				} else if (document.getElementById("Option_SortErrorURLs_ErrorStatus").checked) {
+					ListOfErrorURLs.sort(function CompareErrorURLsReverse(a, b) {
+						if (a[1] === b[1]) {
+							return 0;
+						} else {
+							return (a[1] < b[1]) ? 1 : -1;
+						}
+					})
+				} else if (document.getElementById("Option_SortErrorURLs_ErrorStatus_Reverse").checked) {
+					ListOfErrorURLs.sort(function CompareErrorURLsReverse(a, b) {
+						if (a[1] === b[1]) {
+							return 0;
+						} else {
+							return (a[1] < b[1]) ? -1 : 1;
+						}
+					})
+				}
 		//Output
-			let OutputString = ""
-			document.getElementById("NumberOfURLsListed").innerHTML = BigInt(ListOfURLs.length).toString(10) //BigInt so that it won't display e-notation
-			if (ListOfURLs.length > 0) {
-				for (let Index = 0; Index < ListOfURLs.length; Index++) {
-					OutputString += ListOfURLs[Index][0]
-					if (Index != ListOfURLs.length-1) {
-						OutputString += "\n"
+			//URLs extracted
+				let OutputString = ""
+				document.getElementById("NumberOfURLsListed").innerHTML = BigInt(ListOfURLs.length).toString(10) //BigInt so that it won't display e-notation
+				if (ListOfURLs.length > 0) {
+					for (let Index = 0; Index < ListOfURLs.length; Index++) {
+						OutputString += ListOfURLs[Index][0]
+						if (Index != ListOfURLs.length-1) {
+							OutputString += "\n"
+						}
+						document.getElementById("OutputURLs").value = OutputString
 					}
+				} else {
 					document.getElementById("OutputURLs").value = OutputString
 				}
-			} else {
-				document.getElementById("OutputURLs").value = OutputString
-			}
+			//Error URLs
+				let OutputString_ErrorURLs = ""
+				document.getElementById("NumberOfErrorURLsListed").innerHTML = BigInt(ListOfErrorURLs.length).toString(10)
+				if (ListOfErrorURLs.length > 0) {
+					for (let Index = 0; Index < ListOfErrorURLs.length; Index++) {
+						OutputString_ErrorURLs += ListOfErrorURLs[Index][0]
+						if (document.getElementById("Option_DisplayErrorStatus").checked) {
+							OutputString_ErrorURLs += "\t" + ListOfErrorURLs[Index][1]
+						}
+						if (Index != ListOfErrorURLs.length-1) {
+							OutputString_ErrorURLs += "\n"
+						}
+						document.getElementById("OutputErrorURLs").value = OutputString_ErrorURLs
+					}
+				} else {
+					document.getElementById("OutputErrorURLs").value = OutputString_ErrorURLs
+				}
 	}
 </script>
