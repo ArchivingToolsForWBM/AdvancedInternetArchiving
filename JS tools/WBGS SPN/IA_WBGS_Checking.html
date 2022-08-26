@@ -77,7 +77,8 @@ URL order numbering (this adjust the display of numbers indicating the position 
 <hr>
 <span id="Output_Statistics"></span>
 <kbd id="StringHowManyShown" hidden>Displayed: <span id="StringHowManyShown_Number"></span></kbd><br>
-<textarea readonly id="Output_Plaintext" hidden cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea>
+<textarea readonly id="Output_Plaintext" hidden cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
+<button onclick="CopyOutputTest()">Copy to clipboard</button>
 <span id="Output_table"></span>
 </body>
 <script>
@@ -681,5 +682,10 @@ URL order numbering (this adjust the display of numbers indicating the position 
 				num = 0
 			}
 			return num <= min ? min : num >= max ? max : num;
+	}
+	function CopyOutputTest() {
+		let copyText = document.getElementById("Output_Plaintext")
+		copyText.select();
+		document.execCommand("copy");
 	}
 </script>
