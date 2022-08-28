@@ -78,7 +78,7 @@ URL order numbering (this adjust the display of numbers indicating the position 
 <span id="Output_Statistics"></span>
 <kbd id="StringHowManyShown" hidden>Displayed: <span id="StringHowManyShown_Number"></span></kbd><br>
 <textarea readonly id="Output_Plaintext" hidden cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
-<button onclick="CopyOutputTest()">Copy to clipboard</button>
+<button onclick="CopyOutputTest()" id="Button_CopyOutput" hidden>Copy to clipboard</button>
 <span id="Output_table"></span>
 </body>
 <script>
@@ -131,6 +131,7 @@ URL order numbering (this adjust the display of numbers indicating the position 
 			document.getElementById("Output_Statistics").innerHTML = ""
 			document.getElementById("StringHowManyShown").hidden = true
 			document.getElementById("Output_Plaintext").hidden = true
+			document.getElementById("Button_CopyOutput").hidden = true
 		
 		let Output = ""
 		let InputList = (document.getElementById("GsheetInput").value).split(/(?:\n)(?=(?:[^"]|"[^"]*")*$)/).map((ArrayElement, Index) => [ArrayElement, Index]).filter(RemoveInvalidData)
@@ -351,6 +352,7 @@ URL order numbering (this adjust the display of numbers indicating the position 
 						}
 						document.getElementById("StringHowManyShown").hidden = false
 						document.getElementById("Output_Plaintext").hidden = false
+						document.getElementById("Button_CopyOutput").hidden = false
 						document.getElementById("Output_Plaintext").value = Output
 					} else {
 						Output += "No items found"
@@ -403,6 +405,7 @@ URL order numbering (this adjust the display of numbers indicating the position 
 		document.getElementById("Output_Statistics").innerHTML = ""
 		document.getElementById("StringHowManyShown").hidden = true
 		document.getElementById("Output_Plaintext").hidden = true
+		document.getElementById("Button_CopyOutput").hidden = true
 		document.getElementById("Output_table").innerHTML = ""
 		document.getElementById("PositionNumbering_GSRow").checked = true
 	}
