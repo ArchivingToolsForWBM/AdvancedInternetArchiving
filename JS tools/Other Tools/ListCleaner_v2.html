@@ -39,6 +39,7 @@ Sort:
 <button onclick="MainFunction()">Submit</button><button onclick="Reset()">Reset</button>
 <hr>
 <textarea id="TextOutput"cols="100" rows="30" readonly></textarea><br>
+<button onclick="CopyOutputText()">Copy to clipboard</button>
 <table>
 <tr><th colspan="2">Statistics</th></tr>
 <tr><td><kbd>Total number of lines:</kbd></td><td><kbd><span id="HTML_LineCount"></span></kbd></td></tr>
@@ -380,5 +381,10 @@ Sort:
 					let DecimalPart = OutputString.substring(OutputString.length - NumberOfDigitsAfterDec)
 			return WholeNumberPart + "." + DecimalPart + "%"
 		}
+	}
+	function CopyOutputText() {
+		let copyText = document.getElementById("TextOutput")
+		copyText.select();
+		document.execCommand("copy");
 	}
 </script>

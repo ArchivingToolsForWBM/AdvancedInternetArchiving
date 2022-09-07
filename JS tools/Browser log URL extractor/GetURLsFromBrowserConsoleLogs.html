@@ -49,7 +49,8 @@ URLs by removing the substring in the middle of the URL. So when extracting URLs
 				<li><label><input type="radio" id="Option_Sort_Alphabetically" name="SortSetting" onchange="AutoUpdate()">Sort Alphabetically</label> (<label><input type="radio" id="Option_Sort_Alphabetically_Reverse" name="SortSetting" onchange="AutoUpdate()">Reverse</label>)</li>
 			</ul>
 			Number of URLs listed: <span id="NumberOfURLsListed">0</span><br>
-			<textarea id="OutputURLs" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"readonly></textarea>
+			<textarea id="OutputURLs" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"readonly></textarea><br>
+			<button onclick="CopyOutputText('OutputURLs')" id="Button_CopyOutput">Copy to clipboard</button>
 		</td>
 		<td>
 			Filter:
@@ -69,7 +70,8 @@ URLs by removing the substring in the middle of the URL. So when extracting URLs
 				<li><label><input type="checkbox" id="Option_DisplayErrorStatus" onchange="AutoUpdate()">Display Error status at end of URLs</label></li>
 			</ul>
 			Number of URLs that errored: <span id="NumberOfErrorURLsListed">0</span><br>
-			<textarea id="OutputErrorURLs" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"readonly></textarea>
+			<textarea id="OutputErrorURLs" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"readonly></textarea><br>
+			<button onclick="CopyOutputText('OutputErrorURLs')" id="Button_CopyOutput">Copy to clipboard</button>
 		</td>
 	</tr>
 </table>
@@ -233,5 +235,10 @@ URLs by removing the substring in the middle of the URL. So when extracting URLs
 				} else {
 					document.getElementById("OutputErrorURLs").value = OutputString_ErrorURLs
 				}
+	}
+	function CopyOutputText(ElementID) {
+		let copyText = document.getElementById(ElementID)
+		copyText.select();
+		document.execCommand("copy");
 	}
 </script>
