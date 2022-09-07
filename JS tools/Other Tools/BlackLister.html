@@ -38,7 +38,8 @@
 <tr><td>Number of unique URLs that were removed:</td><td><kbd><span id="NumberOfRemovedUrls">0</span><span id="PercentageOfURLsRemoved"></span></kbd></td></tr>
 <tr><td>Number of unique URLs remaining:</td><td><kbd><span id="NumberOfRemainingUrls">0</span><span id="PercentageOfURLsRemain"></span></kbd></td></tr>
 </table><br>
-<textarea cols="200" rows="12" id="CleanedList" readonly></textarea>
+<textarea cols="200" rows="12" id="CleanedList" readonly></textarea><br>
+<button onclick="CopyOutputText()">Copy to clipboard</button>
 <script>
 	function Main() {
 		let ListToFilter = RemoveBlankOrSpacesEntry(RemoveItemsInTableFlaggedAsDuplicates(ConvertURLListToTableFlaggingDuplicates((document.getElementById("ListToFilter").value).split('\n'))))
@@ -220,5 +221,10 @@
 					let DecimalPart = OutputString.substring(OutputString.length - NumberOfDigitsAfterDec)
 			return WholeNumberPart + "." + DecimalPart + "%"
 		}
+	}
+	function CopyOutputText() {
+		let copyText = document.getElementById("CleanedList")
+		copyText.select();
+		document.execCommand("copy");
 	}
 </script>
