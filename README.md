@@ -1,7 +1,7 @@
 # AdvancedInternetArchiving
 
 # Introduction
-This is a tool/tutorial I made for saving URLs to the wayback machine using their [SPN2](https://blog.archive.org/2019/10/23/the-wayback-machines-save-page-now-is-new-and-improved/) automated system. It will extract or search URLs of the saved results to see which URLs you sent have issue(s). 
+This is a tool/tutorial I made for saving URLs in bulk to the wayback machine using their [SPN2](https://blog.archive.org/2019/10/23/the-wayback-machines-save-page-now-is-new-and-improved/) automated system. It will extract or search URLs of the saved results to see which URLs you sent have issue(s). 
 
 Most of the easy-to-use tools is in the folder “JS tools” where you can run the HTMLs in your browser (and make sure you have JS enabled). All other stuff besides that are outdated and likely not useful.
 
