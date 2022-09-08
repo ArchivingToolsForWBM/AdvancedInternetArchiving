@@ -60,8 +60,9 @@ Paste your google sheet result here:<br><br>
 </ul>
 Sort:<br>
 <ul>
-<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_UserSentURLOrder" name="Sort_Output" checked>Same order of URLs you set (not sorting at all)</label></li>
-<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse" name="Sort_Output">Based on the status message (sort by column D). Note: Any results displaying the URL versions are ordered <abbr title="It is because the URL starts with &ldquo;https://web.archive.org/web/YYYYMMDDhhmmss/[...]&rdquo; and &ldquo;YYYYMMDDhhmmss&rdquo; is the timestamp.">chronologically</abbr></label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse_Reverse" name="Sort_Output">Reverse</label>)</li>
+<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_UserSentURLOrder" name="Sort_Output">Same order of URLs you set (not sorting at all)</label></li>
+<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse" name="Sort_Output" checked>Based on the status message (sort by column D). Note: Any results displaying the URL versions are ordered <abbr title="It is because the URL starts with &ldquo;https://web.archive.org/web/YYYYMMDDhhmmss/[...]&rdquo; and &ldquo;YYYYMMDDhhmmss&rdquo; is the timestamp.">chronologically</abbr></label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse_Reverse" name="Sort_Output">Reverse</label>)</li>
+<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SubmittedURLsABC" name="Sort_Output">By URLs you sent, alphabetically</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SubmittedURLsABC_Reverse" name="Sort_Output">Reverse</label>)</li>
 <li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusType" name="Sort_Output">Based on the status <abbr title="Missing data, missing URLs, errors, redirects, and successes.">type</abbr> identified from the save results</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusType_Reverse" name="Sort_Output">Reverse</label>)</li>
 <li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_HTTPStatus" name="Sort_Output">Based on the HTTP status code (column C)</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_HTTPStatus_Reverse" name="Sort_Output">Reverse</label>)</li>
 <li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_OutlinksCount" name="Sort_Output">Out links count (column E)</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_OutlinksCount_Reverse" name="Sort_Output">Reverse</label>)</li>
@@ -263,6 +264,10 @@ URL order numbering (this adjust the display of numbers indicating the position 
 					FilteredListForDisplay = FilteredListForDisplay.sort(CompareSaveStatusResponse)
 				} else if (document.getElementById("Sort_Output_SaveStatusResponse_Reverse").checked) {
 					FilteredListForDisplay = FilteredListForDisplay.sort(CompareSaveStatusResponseReverse)
+				} else if (document.getElementById("Sort_Output_SubmittedURLsABC").checked) {
+					FilteredListForDisplay = FilteredListForDisplay.sort(CompareSentUrls)
+				} else if (document.getElementById("Sort_Output_SubmittedURLsABC_Reverse").checked) {
+					FilteredListForDisplay = FilteredListForDisplay.sort(CompareSentUrlsReverse)
 				} else if (document.getElementById("Sort_Output_SaveStatusType").checked) {
 					FilteredListForDisplay = FilteredListForDisplay.sort(CompareStatusIndicator)
 				} else if (document.getElementById("Sort_Output_SaveStatusType_Reverse").checked) {
@@ -509,64 +514,80 @@ URL order numbering (this adjust the display of numbers indicating the position 
 			}
 		return IsArrayElementPassesArchiveStatus
 	}
-	//Compare the flagged status based on this JS checking the URL
-		function CompareStatusIndicator(a, b) {
-			if (a[1][0] === b[1][0]) {
-				return 0;
-			} else {
-				return (a[1][0] < b[1][0]) ? -1 : 1;
+	//Sort functions
+		//Compare Column D's (IA's save status response)
+			function CompareSaveStatusResponse(a, b) {
+				if (a[0][3] === b[0][3]) {
+					return 0;
+				} else {
+					return (a[0][3] < b[0][3]) ? -1 : 1;
+				}
 			}
-		}
-		function CompareStatusIndicatorReverse(a, b) {
-			if (a[1][0] === b[1][0]) {
-				return 0;
-			} else {
-				return (a[1][0] < b[1][0]) ? 1 : -1;
+			function CompareSaveStatusResponseReverse(a, b) {
+				if (a[0][3] === b[0][3]) {
+					return 0;
+				} else {
+					return (a[0][3] < b[0][3]) ? 1 : -1;
+				}
 			}
-		}
-	//Compare Column D's (IA's save status response)
-		function CompareSaveStatusResponse(a, b) {
-			if (a[0][3] === b[0][3]) {
-				return 0;
-			} else {
-				return (a[0][3] < b[0][3]) ? -1 : 1;
+		//Compare URLs user sent
+			function CompareSentUrls(a, b) {
+				if (a[0][0] === b[0][0]) {
+					return 0;
+				} else {
+					return (a[0][0] < b[0][0]) ? -1 : 1;
+				}
 			}
-		}
-		function CompareSaveStatusResponseReverse(a, b) {
-			if (a[0][3] === b[0][3]) {
-				return 0;
-			} else {
-				return (a[0][3] < b[0][3]) ? 1 : -1;
+			function CompareSentUrlsReverse(a, b) {
+				if (a[0][0] === b[0][0]) {
+					return 0;
+				} else {
+					return (a[0][0] < b[0][0]) ? 1 : -1;
+				}
 			}
-		}
-	//Compare HTTP status
-		function CompareHTTPStatus(a, b) {
-			if (a[0][2] === b[0][2]) {
-				return 0;
-			} else {
-				return (a[0][2] < b[0][2]) ? -1 : 1;
+		//Compare the flagged status based on this JS checking the URL
+			function CompareStatusIndicator(a, b) {
+				if (a[1][0] === b[1][0]) {
+					return 0;
+				} else {
+					return (a[1][0] < b[1][0]) ? -1 : 1;
+				}
 			}
-		}
-		function CompareHTTPStatusReverse(a, b) {
-			if (a[0][2] === b[0][2]) {
-				return 0;
-			} else {
-				return (a[0][2] < b[0][2]) ? 1 : -1;
+			function CompareStatusIndicatorReverse(a, b) {
+				if (a[1][0] === b[1][0]) {
+					return 0;
+				} else {
+					return (a[1][0] < b[1][0]) ? 1 : -1;
+				}
 			}
-		}
-	//Compare number of outlinks
-		function CompareOutlinksCount(a, b) {
-			let NumberOfOutlinks_a = BigInt((a[0][4]).replaceAll(/[\.\.,]/g, "").replace(" outlinks captured", ""))
-			let NumberOfOutlinks_b = BigInt((b[0][4]).replaceAll(/[\.\.,]/g, "").replace(" outlinks captured", ""))
-			
-			return Number(NumberOfOutlinks_a - NumberOfOutlinks_b) //again, do subtraction first, then convert to a double-float (which rounds here) to prevent potential issues if 2 large numbers are close to one another.
-		}
-		function CompareOutlinksCountReverse(a, b) {
-			let NumberOfOutlinks_a = BigInt((a[0][4]).replaceAll(/[\.\.,]/g, "").replace(" outlinks captured", ""))
-			let NumberOfOutlinks_b = BigInt((b[0][4]).replaceAll(/[\.\.,]/g, "").replace(" outlinks captured", ""))
-			
-			return Number(NumberOfOutlinks_b - NumberOfOutlinks_a) //again, do subtraction first, then convert to a double-float (which rounds here) to prevent potential issues if 2 large numbers are close to one another.
-		}
+		//Compare HTTP status
+			function CompareHTTPStatus(a, b) {
+				if (a[0][2] === b[0][2]) {
+					return 0;
+				} else {
+					return (a[0][2] < b[0][2]) ? -1 : 1;
+				}
+			}
+			function CompareHTTPStatusReverse(a, b) {
+				if (a[0][2] === b[0][2]) {
+					return 0;
+				} else {
+					return (a[0][2] < b[0][2]) ? 1 : -1;
+				}
+			}
+		//Compare number of outlinks
+			function CompareOutlinksCount(a, b) {
+				let NumberOfOutlinks_a = BigInt((a[0][4]).replaceAll(/[\.\.,]/g, "").replace(" outlinks captured", ""))
+				let NumberOfOutlinks_b = BigInt((b[0][4]).replaceAll(/[\.\.,]/g, "").replace(" outlinks captured", ""))
+				
+				return Number(NumberOfOutlinks_a - NumberOfOutlinks_b) //again, do subtraction first, then convert to a double-float (which rounds here) to prevent potential issues if 2 large numbers are close to one another.
+			}
+			function CompareOutlinksCountReverse(a, b) {
+				let NumberOfOutlinks_a = BigInt((a[0][4]).replaceAll(/[\.\.,]/g, "").replace(" outlinks captured", ""))
+				let NumberOfOutlinks_b = BigInt((b[0][4]).replaceAll(/[\.\.,]/g, "").replace(" outlinks captured", ""))
+				
+				return Number(NumberOfOutlinks_b - NumberOfOutlinks_a) //again, do subtraction first, then convert to a double-float (which rounds here) to prevent potential issues if 2 large numbers are close to one another.
+			}
 	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec) {
 		//This function calculates a percentage of a value (must be bigint), and returns a
 		//string representing a percentage using fixed-point arithmetic (https://en.wikipedia.org/wiki/Fixed-point_arithmetic ).
