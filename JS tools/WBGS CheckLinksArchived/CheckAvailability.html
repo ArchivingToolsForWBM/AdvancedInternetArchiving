@@ -53,6 +53,7 @@ Sort:<input type="checkbox" onchange="AutoUpdateCode()" id="SortReverse"><label 
 <span id="Output_Statistics"></span><br>
 <kbd hidden id="Output_NumberOfResultsText">Number of results found: <span id="Output_NumberOfResultsNumber"></span></kbd><br>
 <textarea readonly id="Output_List" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
+<button onclick="CopyOutputString()">Copy to clipboard</button><br>
 <span id="Output_Table"></span>
 </body>
 <script>
@@ -465,5 +466,10 @@ Sort:<input type="checkbox" onchange="AutoUpdateCode()" id="SortReverse"><label 
 				num = 0
 			}
 			return num <= min ? min : num >= max ? max : num;
+	}
+	function CopyOutputString() {
+		let copyText = document.getElementById("Output_List")
+		copyText.select();
+		document.execCommand("copy");
 	}
 </script>

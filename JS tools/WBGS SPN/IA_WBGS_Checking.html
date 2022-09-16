@@ -42,20 +42,20 @@ issues not caught by the system, things like redirects (twitter), blank cell (co
 Paste your google sheet result here:<br><br>
 <input type="checkbox" id="AutoUpdate" checked onchange="AutoUpdate()"><label for="AutoUpdate">Auto update</label><br>
 <textarea id="GsheetInput" cols="100" rows="30" oninput="AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
-	Search URLs based on their flagged status: <button onclick="CheckAllFilters('IASaveStatus'); AutoUpdate()">Check All</button><button onclick="UnCheckAllFilters('IASaveStatus'); AutoUpdate()">Uncheck All</button><button onclick="InvertFilters('IASaveStatus'); AutoUpdate()">Invert</button><br>
+	Search URLs based on their flagged status: <button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 2); AutoUpdate()">Invert</button><br>
 <ul>
-	<li>Sure saved:</li>
+	<li>Sure saved: <button onclick="ChangeFilterSettings('SureSaved', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('SureSaved', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('SureSaved', 2); AutoUpdate()">Invert</button></li>
 	<ul>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_SavedBefore" class="FilterSettings_ArchiveStatus" data-status_list_name="Success_SavedBefore"><label for="Filter_Success_SavedBefore">Success (have saved before (green))</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_FirstArchive" class="FilterSettings_ArchiveStatus" data-status_list_name="Success_FirstArchive"><label for="Filter_Success_FirstArchive">Success (&ldquo;First Archive&rdquo; (light green)) </label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_SavedBefore" class="FilterSettings_ArchiveStatus SureSaved" data-status_list_name="Success_SavedBefore"><label for="Filter_Success_SavedBefore">Success (have saved before (green))</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_FirstArchive" class="FilterSettings_ArchiveStatus SureSaved" data-status_list_name="Success_FirstArchive"><label for="Filter_Success_FirstArchive">Success (&ldquo;First Archive&rdquo; (light green)) </label></li>
 	</ul>
-	<li>Unsure saved:</li>
+	<li>Unsure saved: <button onclick="ChangeFilterSettings('UnsureSaved', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('UnsureSaved', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('UnsureSaved', 2); AutoUpdate()">Invert</button></li>
 	<ul>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_NoIAResult" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Unsure_NoIAResult"><label for="Filter_Unsure_NoIAResult">No results (grey)</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_BlankColumnD" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Unsure_BlankColumnD"><label for="Filter_Unsure_BlankColumnD">Result but column D is blank (light red)</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Redirected" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Unsure_Redirected"><label for="Filter_Unsure_Redirected">Redirects (yellow)</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Errors" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Unsure_Error"><label for="Filter_Unsure_Errors">Errors (red)</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_SavedA4XX" checked class="FilterSettings_ArchiveStatus" data-status_list_name="Unsure_SavedANon2XX"><label for="Filter_SavedA4XX">Saved but isn't a 2XX (3XX/4XX/5XX) (orange)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_NoIAResult" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_NoIAResult"><label for="Filter_Unsure_NoIAResult">No results (grey)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_BlankColumnD" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_BlankColumnD"><label for="Filter_Unsure_BlankColumnD">Result but column D is blank (light red)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Redirected" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_Redirected"><label for="Filter_Unsure_Redirected">Redirects (yellow)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Errors" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_Error"><label for="Filter_Unsure_Errors">Errors (red)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_SavedA4XX" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_SavedANon2XX"><label for="Filter_SavedA4XX">Saved but isn't a 2XX (3XX/4XX/5XX) (orange)</label></li>
 	</ul>
 </ul>
 Sort:<br>
@@ -88,30 +88,6 @@ URL order numbering (this adjust the display of numbers indicating the position 
 			CheckURLs()
 		}
 	}
-	function CheckAllFilters(WhatSetOfCheckBoxes) {
-		let HTMLTag_class = ""
-		if (WhatSetOfCheckBoxes == "IASaveStatus") {
-			HTMLTag_class = "FilterSettings_ArchiveStatus"
-		} else if (WhatSetOfCheckBoxes == "HTTPStatus") {
-			HTMLTag_class = "FilterSettings_HTTPStatus"
-		}
-		let FilterListSettings = document.getElementsByClassName(HTMLTag_class)
-		for (let Index = 0; Index < FilterListSettings.length; Index++) {
-			FilterListSettings[Index].checked = true
-		}
-	}
-	function UnCheckAllFilters(WhatSetOfCheckBoxes) {
-		let HTMLTag_class = ""
-		if (WhatSetOfCheckBoxes == "IASaveStatus") {
-			HTMLTag_class = "FilterSettings_ArchiveStatus"
-		} else if (WhatSetOfCheckBoxes == "HTTPStatus") {
-			HTMLTag_class = "FilterSettings_HTTPStatus"
-		}
-		let FilterListSettings = document.getElementsByClassName(HTMLTag_class)
-		for (let Index = 0; Index < FilterListSettings.length; Index++) {
-			FilterListSettings[Index].checked = false
-		}
-	}
 	function InvertFilters(WhatSetOfCheckBoxes) {
 		let HTMLTag_class = ""
 		if (WhatSetOfCheckBoxes == "IASaveStatus") {
@@ -124,6 +100,24 @@ URL order numbering (this adjust the display of numbers indicating the position 
 			FilterListSettings[Index].checked = (FilterListSettings[Index].checked ^ 1)
 		}
 	}
+
+	function ChangeFilterSettings(ElementClass, Setting) {
+		//ElementClass: the element class to be affected by this function
+		//Setting:
+		//0 = uncheck
+		//1 = check
+		//2+ = invert
+		if (Setting < 2) {
+			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
+				document.getElementsByClassName(ElementClass)[i].checked = Setting
+			}
+		} else {
+			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
+				document.getElementsByClassName(ElementClass)[i].checked = document.getElementsByClassName(ElementClass)[i].checked ^ 1
+			}
+		}
+	}
+
 	function CheckURLs() {
 		const regex_IA_URLPart = /^https:\/\/web\.archive\.org\/web\/\d*\//
 		const regex_IAURLExtractMainSiteURL_Start = /(?<=https:\/\/web\.archive\.org\/web\/\d*\/)/

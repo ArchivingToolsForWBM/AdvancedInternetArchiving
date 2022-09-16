@@ -22,8 +22,8 @@
 
 <textarea id="ListOfURLs" oninput="Main()" cols="100" rows="30"></textarea>
 <hr>
-<textarea id="OutputURLs" cols="100" rows="30" readonly></textarea>
-
+<textarea id="OutputURLs" cols="100" rows="30" readonly></textarea><br>
+<button onclick="CopyOutputString()">Copy to clipboard</button><br>
 <script>
 	function Main() {
 		document.getElementById("OutputURLs").value = ""
@@ -38,5 +38,10 @@
 			}
 		}
 		document.getElementById("OutputURLs").value += OutputString
+	}
+	function CopyOutputString() {
+		let copyText = document.getElementById("OutputURLs")
+		copyText.select();
+		document.execCommand("copy");
 	}
 </script>
