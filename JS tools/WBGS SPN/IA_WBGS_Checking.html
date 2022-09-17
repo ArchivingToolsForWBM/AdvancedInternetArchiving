@@ -67,8 +67,12 @@ Sort:<br>
 <li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_HTTPStatus" name="Sort_Output">Based on the HTTP status code (column C)</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_HTTPStatus_Reverse" name="Sort_Output">Reverse</label>)</li>
 <li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_OutlinksCount" name="Sort_Output">Out links count (column E)</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_OutlinksCount_Reverse" name="Sort_Output">Reverse</label>)</li>
 </ul>
+Text display settings<br>
+	<ul>
+		<li><label><input type="checkbox" onchange="AutoUpdate()" id="PlainText_DisplayInfo" checked>Display WBGS result info in the plaintext</label></li>
+	</ul>
 
-URL order numbering (this adjust the display of numbers indicating the position in the list):<br>
+URL table order numbering (this adjust the display of numbers indicating the position in the list):<br>
 <ul>
 <li><label><input type="radio" onchange="AutoUpdate()" id="PositionNumbering_GSRow" name="ItemNumbering" checked>Google sheet rows</label></li>
 <li><label><input type="radio" onchange="AutoUpdate()" id="PositionNumbering_ValidEntries" name="ItemNumbering">Count only valid entries</label></li>
@@ -159,7 +163,7 @@ URL order numbering (this adjust the display of numbers indicating the position 
 				} else if (document.getElementById("PositionNumbering_DisplayedHere").checked) {
 					PositionNumbering = 0
 				}
-				return [ArrayElement[0].split('\t'), ["", "", PositionNumbering]]
+				return [ArrayElement[0].split('\t'), ["", "", PositionNumbering, -1]]
 			})
 		//Note to self on what sub-array it contains:
 		//InputList[Index][0] = Gsheet sub-array:
@@ -173,6 +177,7 @@ URL order numbering (this adjust the display of numbers indicating the position 
 		//InputList[Index][1][0] = This javascript status indicator (Unsure_NoIAResult, Unsure_BlankColumnD, Success_SavedBefore, Success_FirstArchive, Unsure_Redirected, Unsure_Error, Unsure_SavedANon2XX).
 		//InputList[Index][1][1] = HTTP indicator (class)
 		//InputList[Index][1][2] = Line position in google sheet/valid URL position number (if "PositionNumbering_DisplayedHere") is ticked, then it would the GS line number except it won't be used.
+		//InputList[Index][1][3] = Outlinks count (better performance when sorting based on outlinks)
 		//
 		//Verify URLs
 		//Note to self:
@@ -181,6 +186,9 @@ URL order numbering (this adjust the display of numbers indicating the position 
 		//-If ArchiveURL/Error contains a description instead of the IA part (like "Cannot get status of spn2-<code>"), then it is an error.
 		//-If ArchiveURL/Error contains blank instead of the IA part (like "Cannot get status of spn2-<code>"), then it is an error by the system failing to print it, it may be marked as a success or fail.
 			for (Index = 0; Index < InputList.length; Index++) {
+				if (InputList[Index][0][4].match(/\d+/) != null) {
+					InputList[Index][1][3] = parseInt(InputList[Index][0][4].match(/\d+/)[0], 10)
+				}
 				//Check the type of saves
 					if (JSON.stringify(InputList[Index][0]) == JSON.stringify([InputList[Index][0][0], "", "", "", "", ""])) {
 						//Although I could do this:
@@ -275,7 +283,7 @@ URL order numbering (this adjust the display of numbers indicating the position 
 				} else if (document.getElementById("Sort_Output_OutlinksCount_Reverse").checked) {
 					FilteredListForDisplay = FilteredListForDisplay.sort(CompareOutlinksCountReverse)
 				}
-		//Output in HTML
+		//Output data
 			if (InputList.length != 0) {
 				//statistics (bar graph)
 					//Show statistics table, I use Bigint to prevent potential E notation.
@@ -343,10 +351,19 @@ URL order numbering (this adjust the display of numbers indicating the position 
 					Output = ""
 					if (FilteredListForDisplay.length != 0) {
 						document.getElementById("StringHowManyShown_Number").innerHTML = BigInt(FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(FilteredListForDisplay.length, InputList.length, 2) + " of all URLs submitted), " + BigInt(InputList.length - FilteredListForDisplay.length).toString(10) + " filtered out."
-						for (Index = 0; Index < FilteredListForDisplay.length; Index++) {
-							Output += FilteredListForDisplay[Index][0][0]
-							if (Index != FilteredListForDisplay.length - 1) {
-								Output += "\n"
+						if (document.getElementById("PlainText_DisplayInfo").checked == false) { //For better performance on the text mode to display, have the if statement OUTSIDE the loop so it doesn't get repeatedly executed
+							for (Index = 0; Index < FilteredListForDisplay.length; Index++) {
+								Output += FilteredListForDisplay[Index][0][0]
+								if (Index != FilteredListForDisplay.length - 1) {
+									Output += "\n"
+								}
+							}
+						} else {
+							for (Index = 0; Index < FilteredListForDisplay.length; Index++) {
+								Output += FilteredListForDisplay[Index][0][0] + "\t" + FilteredListForDisplay[Index][0][1] + "\t" + FilteredListForDisplay[Index][0][2] + "\t" + FilteredListForDisplay[Index][0][3] + "\t" + FilteredListForDisplay[Index][0][4] + "\t" + FilteredListForDisplay[Index][0][5]
+								if (Index != FilteredListForDisplay.length - 1) {
+									Output += "\n"
+								}
 							}
 						}
 						document.getElementById("StringHowManyShown").hidden = false
@@ -354,6 +371,7 @@ URL order numbering (this adjust the display of numbers indicating the position 
 						document.getElementById("Button_CopyOutput").hidden = false
 						document.getElementById("Output_Plaintext").value = Output
 					} else {
+						document.getElementById("StringHowManyShown_Number").innerHTML = "0"
 						Output += "No items found"
 					}
 				//Display filtered list using HTML table. Shows the URLs, the color indicator, and the WBM response.
@@ -571,16 +589,10 @@ URL order numbering (this adjust the display of numbers indicating the position 
 			}
 		//Compare number of outlinks
 			function CompareOutlinksCount(a, b) {
-				let NumberOfOutlinks_a = BigInt((a[0][4]).replaceAll(/[\.\.,]/g, "").replace(" outlinks captured", ""))
-				let NumberOfOutlinks_b = BigInt((b[0][4]).replaceAll(/[\.\.,]/g, "").replace(" outlinks captured", ""))
-				
-				return Number(NumberOfOutlinks_a - NumberOfOutlinks_b) //again, do subtraction first, then convert to a double-float (which rounds here) to prevent potential issues if 2 large numbers are close to one another.
+				return Number(a[1][3] - b[1][3]) //if this was bigint, do subtraction first, then convert to a double-float (which rounds here) to prevent potential issues if 2 large numbers are close to one another.
 			}
 			function CompareOutlinksCountReverse(a, b) {
-				let NumberOfOutlinks_a = BigInt((a[0][4]).replaceAll(/[\.\.,]/g, "").replace(" outlinks captured", ""))
-				let NumberOfOutlinks_b = BigInt((b[0][4]).replaceAll(/[\.\.,]/g, "").replace(" outlinks captured", ""))
-				
-				return Number(NumberOfOutlinks_b - NumberOfOutlinks_a) //again, do subtraction first, then convert to a double-float (which rounds here) to prevent potential issues if 2 large numbers are close to one another.
+				return Number(b[1][3] - a[1][3])
 			}
 	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec) {
 		//This function calculates a percentage of a value (must be bigint), and returns a
