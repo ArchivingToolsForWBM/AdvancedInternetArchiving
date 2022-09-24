@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Nitter - Auto next page
 // @version       1
-// @description   Automatically clicks on "Load more", for AFK extracting links
+// @description   Automatically clicks on "Load more", for AFK extracting links to tweets and media
 // @include       https://nitter.net/*
 // @grant         none
 // ==/UserScript==

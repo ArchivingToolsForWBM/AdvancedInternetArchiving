@@ -1,0 +1,503 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+			input[type='text'] { font-family: monospace;}
+			input[type='number'] { font-family: monospace;}
+		</style>
+	</head>
+<body>
+<h1 style="text-align: center">Twitter URL converter</h1>
+<p>This JS tool takes a given list of twitter URLs to convert them to and from the old format, with some modification (such as generating a full resolution image).</p>
+<p>This tool is to be used with <a href="https://greasyfork.org/en/discussions/requests/57590-extract-links-to-tweet-and-media-on-twitter-as-you-scroll-down">this
+greasemonkey script</a> to extract twitter URLs (user's homepage, images, videos (that are on twitter's servers, not an external).).</p>
+
+<input type="checkbox" id="AutoUpdate" onchange="AutoUpdateCode()" checked><label for="AutoUpdate">Auto update</label><br>
+<p>Enter the list of twitter URLs (1 URL per line, with no whitespace anywhere), be it a link to a tweet, an image, video, etc.</p>
+<textarea id="TwitterURLInput" type="text" cols="100" rows="30" oninput="AutoUpdateCode()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
+Sort:<br>
+<ul>
+	<li><label><input type="radio" name="SortSettings" onchange="AutoUpdateCode()" id="SortSetting_ABC" checked>Based on URL (alphabetically/lexicographically)</label> (<label><input type="radio" name="SortSettings" onchange="AutoUpdateCode()" id="SortSetting_ABC_Reverse">Reverse</label>)</li>
+	<li><label><input type="radio" name="SortSettings" onchange="AutoUpdateCode()" id="SortSetting_URLType">Type</label> (<label><input type="radio" name="SortSettings" onchange="AutoUpdateCode()" id="SortSetting_URLType_Reverse">Reverse</label>)</li>
+	<li><label><input type="radio" name="SortSettings" onchange="AutoUpdateCode()" id="SortSetting_TweetID">Tweet ID (non-tweets are considered &ldquo;-1&rdquo;)</label> (<label><input type="radio" name="SortSettings" onchange="AutoUpdateCode()" id="SortSetting_TweetID_Reverse">Reverse</label>)</li>
+</ul>
+Filter:<br>
+<button onclick="ChangeFilterSettings('TwitterURLFilter', 1); AutoUpdateCode()">Check All</button><button onclick="ChangeFilterSettings('TwitterURLFilter', 0); AutoUpdateCode()">Uncheck All</button><button onclick="ChangeFilterSettings('TwitterURLFilter', 2); AutoUpdateCode()">Invert</button>
+<ul>
+	<li>Twitter pages <button onclick="ChangeFilterSettings('TwitterPages', 1); AutoUpdateCode()">Check All</button><button onclick="ChangeFilterSettings('TwitterPages', 0); AutoUpdateCode()">Uncheck All</button><button onclick="ChangeFilterSettings('TwitterPages', 2); AutoUpdateCode()">Invert</button></li>
+	<ul>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_UserMainPage" id="FilterSetting_TwitterPage_UserMainPage" checked>User Homepage</label>|<label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage" id="FilterSetting_NitterPage_UserMainPage" checked>Nitter Homepage</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_Tweet" id="FilterSetting_TwitterPage_Tweet" checked>Tweets</label>|<label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_Tweet" id="FilterSetting_NitterPage_Tweet" checked>Nitter Tweets</label></li>
+		<li>Nitter user's tab pages (cannot save twitter user's tabs due to login wall)</li>
+		<ul>
+			<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage_WithReplies" id="FilterSetting_NitterPage_UserMainPage_WithReplies" checked>Nitter Replies</label></li>
+			<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage_Media" id="FilterSetting_NitterPage_UserMainPage_Media" checked>Nitter Media</label></li>
+		</ul>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_Ievents" id="FilterSetting_TwitterPage_Ievents" checked>Events</label></li>
+	</ul>
+	<li>Tweet Images <button onclick="ChangeFilterSettings('TwitterImages', 1); AutoUpdateCode()">Check All</button><button onclick="ChangeFilterSettings('TwitterImages', 0); AutoUpdateCode()">Uncheck All</button><button onclick="ChangeFilterSettings('TwitterImages', 2); AutoUpdateCode()">Invert</button></li>
+	<ul>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterImages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimg_" id="FilterSetting_TwitterMedia_PbsTwimg_">Old Images (default resolution, <kbd>https://pbs.twimg.com/media/&lt;base_64_string&gt;.&lt;file_type&gt;</kbd>)</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterImages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimg_Orig" id="FilterSetting_TwitterMedia_PbsTwimg_Orig">Old Images (original resolution, <kbd>https://pbs.twimg.com/media/&lt;base_64_string&gt;.&lt;file_type&gt;:orig</kbd>)</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterImages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgModern" id="FilterSetting_TwitterMedia_PbsTwimgModern" checked>Modern Images (default resolution <kbd>https://pbs.twimg.com/media/&lt;base_64_string&gt;?format=&lt;file_type&gt;&name=&lt;resolution_name&gt;</kbd>)</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterImages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgModern_Orig" id="FilterSetting_TwitterMedia_PbsTwimgModern_Orig" checked>Modern Images (original resolution, <kbd>https://pbs.twimg.com/media/&lt;base_64_string&gt;?format=&lt;file_type&gt;&name=orig</kbd>)</label></li>
+	</ul>
+	<li>Profile images</li>
+	<ul>
+		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgProfileImages_" id="FilterSetting_TwitterMedia_PbsTwimgProfileImages_" checked>&ldquo;<kbd>Default</kbd>&rdquo; resolution</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgProfileImages_Normal" id="FilterSetting_TwitterMedia_PbsTwimgProfileImages_Normal" checked>&ldquo;<kbd>normal</kbd>&rdquo; resolution</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgProfileImages_400x400" id="FilterSetting_TwitterMedia_PbsTwimgProfileImages_400x400" checked>400x400 (max)</label></li>
+	</ul>
+	<li>Profile banners</li>
+	<ul>
+		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgProfileBanner_600x200" id="FilterSetting_TwitterMedia_PbsTwimgProfileBanner_600x200" checked>600x200</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgProfileBanner_1500x500" id="FilterSetting_TwitterMedia_PbsTwimgProfileBanner_1500x500" checked>1500x500 (max resolution?)</label></li>
+	</ul>
+	<li>Card images</li>
+	<ul>
+		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgCardImg_" id="FilterSetting_TwitterMedia_PbsTwimgCardImg_">[404] Card images (default resolution) (results 404 because a resolution parameter is required)</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgCardImg_Orig" id="FilterSetting_TwitterMedia_PbsTwimgCardImg_Orig" checked>Card images (full resolution)</label></li>
+	</ul>
+	<li>Videos <button onclick="ChangeFilterSettings('TwitterVideos', 1); AutoUpdateCode()">Check All</button><button onclick="ChangeFilterSettings('TwitterVideos', 0); AutoUpdateCode()">Uncheck All</button><button onclick="ChangeFilterSettings('TwitterVideos', 2); AutoUpdateCode()">Invert</button></li>
+	<ul>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimg_Video" id="FilterSetting_TwitterMedia_PbsTwimg_Video" checked>Video (<kbd>https://pbs.twimg.com/tweet_video/[video_id].mp4</kbd>)</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_VideoTwimg" id="FilterSetting_TwitterMedia_VideoTwimg" checked>Video (legacy URL? <kbd>https://video.twimg.com/tweet_video/[video_id].mp4</kbd>)</label></li>
+		<li>Thumbnails:<button onclick="ChangeFilterSettings('TwitterVideosThumb', 1); AutoUpdateCode()">Check All</button><button onclick="ChangeFilterSettings('TwitterVideosThumb', 0); AutoUpdateCode()">Uncheck All</button><button onclick="ChangeFilterSettings('TwitterVideosThumb', 2); AutoUpdateCode()">Invert</button></li>
+		<ul>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimg_Video_Thumb" id="FilterSetting_TwitterMedia_PbsTwimg_Video_Thumb" checked>Video thumbnail (old and still used, <kbd>https://pbs.twimg.com/tweet_video_thumb/[video_id].[image_file_type]</kbd>)</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimg_Video_Thumb_Orig" id="FilterSetting_TwitterMedia_PbsTwimg_Video_Thumb_Orig" checked>Video thumbnail, original (old and still used, <kbd>https://pbs.twimg.com/tweet_video_thumb/[video_id].[image_file_type]:orig</kbd>)</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgModern_Video_Thumb_DefaultResolution" id="FilterSetting_TwitterMedia_PbsTwimgModern_Video_Thumb_DefaultResolution">[404] Modern video thumbnail (default resolution, <kbd>https://pbs.twimg.com/tweet_video_thumb/[video_id]?format=[image_file_type]</kbd>) Note that this goes 404, so a <kbd>&name=<resolution></kbd> must be specified.</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgModern_Video_Thumb_Orig" id="FilterSetting_TwitterMedia_PbsTwimgModern_Video_Thumb_Orig" checked>Modern video thumbnail (original resolution, <kbd>https://pbs.twimg.com/tweet_video_thumb/[video_id]?format=[image_file_type]&name=orig</kbd>)</label></li>
+		</ul>
+	</ul>
+	<li>Other</li>
+	<ul>
+		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="Twitter_Other" id="FilterSetting_Twitter_Other" >Other twitter</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="OtherSites" id="FilterSetting_OtherSites" >Other sites</label></li>
+	</ul>
+</ul>
+Misc:
+<ul>
+	<li><label><input type="checkbox" id="DisplayTypeAndID"  onchange="AutoUpdateCode()" >Display type and tweet ID in textarea</label></li>
+</ul>
+<button onclick="ProcessURLs()">Submit</button>
+<hr>
+<kbd>Number of items (including variations): <span id="NumberOfItems">0</span></kbd><br>
+<textarea type='text' cols='100' rows='30' id="Output" readonly style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
+<button onclick="CopyOutputString()">Copy to clipboard</button><br><br>
+
+<span id="OutputTable"></span>
+<script>
+	//issues to fix: https://nitter.net/pic/pbs.twimg.com%2Fprofile_images%2F1518405903900286976%2FDRjDUx-Y.jpg
+	const Twitter_NotAUserNameList = [
+		"TOS",
+		"about",
+		"i",
+		"login",
+		"null",
+		"search",
+		"search-advanced",
+		"tos"
+	]
+	const Nitter_NotAUserNameList = [
+		"about",
+		"logo.png",
+		"pic",
+		"search"
+	]
+	function ChangeFilterSettings(ElementClass, Setting) {
+		if (Setting < 2) {
+			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
+				document.getElementsByClassName(ElementClass)[i].checked = Setting
+			}
+		} else {
+			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
+				document.getElementsByClassName(ElementClass)[i].checked = document.getElementsByClassName(ElementClass)[i].checked ^ 1
+			}
+		}
+	}
+	function AutoUpdateCode() {
+		if (document.getElementById("AutoUpdate").checked) {
+			ProcessURLs()
+		}
+	}
+	function ProcessURLs() {
+		let ListOfURLs = document.getElementById("TwitterURLInput").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"\']+/g)
+		if (ListOfURLs==null) {
+			ListOfURLs = []
+		}
+		ListOfURLs = ListOfURLs.filter((ArrayElement) => (!(/^.+….+$/.test(ArrayElement)))) //Rid truncated URLs
+		ListOfURLs = ListOfURLs.map((ArrayElement) => { //Rid erroneous URLs that have a period at the end (console log) as well as the fragment identifier.
+			return ArrayElement.replace(/[\.]$/, "").replace(/#.*$/, "")
+		});
+		ListOfURLs = ListOfURLs.map((ArrayElement) => { //Convert nitter and mobile.twitter URLs to twitter
+			let ArrayElement2 = "h" + ArrayElement //Convert ttps to https, again to avoid firefox's URL truncation
+			if (/^http(s)?\:\/\/(twitter\.com|pbs\.twimg\.com)/.test(ArrayElement2)) { //Already converted
+				return ArrayElement2
+			} else if (/^http(s)?\:\/\/mobile\.twitter\.com/.test(ArrayElement2)) { //Mobile version
+				return ArrayElement2.replace("mobile.twitter.com", "twitter.com")
+			} else if (/^http(s)?\:\/\/nitter\.net\/(?!pic)[^\/]+/.test(ArrayElement2)) { //Nitter user and tweets
+				let PotentialUsername = ArrayElement2.replace(/http(s)?\:\/\/nitter\.net\//, "").match(/[^\/]+/)[0]
+				let IsValidUsername = true
+				for (let i = 0; (i < Nitter_NotAUserNameList.length && IsValidUsername); i++) {
+					if (Nitter_NotAUserNameList[i] == PotentialUsername) {
+						IsValidUsername = false
+					}
+				}
+				if (IsValidUsername) {
+					if (ArrayElement2.match(/(?<=\/status\/)\d+/) != null) {
+						let TweetID = ArrayElement2.match(/(?<=\/status\/)\d+/)[0]
+						return ArrayElement2.replace("nitter.net", "twitter.com")
+					} else {
+						return "https://twitter.com/" + PotentialUsername
+					}
+				} else {
+					return ArrayElement2
+				}
+			} else if (/^http(s)?\:\/\/nitter\.net\/pic\/(orig\/)?media/.test(ArrayElement2)) { //Images
+				//Nitter images
+				//https://nitter.net/pic/orig/media%2F<Base64String>.<extension>
+				//https://nitter.net/pic/media%2F<Base64String>.<extension>
+				//
+				//https://pbs.twimg.com/media/<Base64String>?format=<extension>&name=<size>
+				let ImageName = ArrayElement2.replace(/http(s)?\:\/\/nitter\.net\/pic\/(orig\/)?media%2F/, "").replace(/\.[a-zA-Z0-9]+$/, "")
+				let ImageExtension = ArrayElement2.match(/[a-zA-Z0-9]+$/)[0]
+				return "https://pbs.twimg.com/media/" + ImageName + "?format=" + ImageExtension
+			} else if (/^https\:\/\/nitter\.net\/pic\/(pbs\.twimg.com%2Fprofile_images%2F|profile_images%2F)/.test(ArrayElement2)) { //profile images
+				//Nitter profile images
+				//https://nitter.net/pic/profile_images%2F840393405612015616%2FzPovL4tt_bigger.jpg
+				//https://nitter.net/pic/pbs.twimg.com%2Fprofile_images%2F840393405612015616%2FzPovL4tt_400x400.jpg
+				let String = ArrayElement2.match(/(?<=profile_images%2F).+$/)[0].replaceAll(/%2(F|f)/g, "/")
+				return "https://pbs.twimg.com/profile_images/" + String
+			} else if (/https\:\/\/nitter\.net\/pic\/https%3A%2F%2Fpbs\.twimg\.com%2Fprofile_banners%2F/.test(ArrayElement2)) { //Nitter profile banners
+				//https://nitter.net/pic/https%3A%2F%2Fpbs.twimg.com%2Fprofile_banners%2F1258610530559782912%2F1588925459%2F1500x500
+				let String = ArrayElement2.match(/(?<=profile_banners%2F).+$/)[0].replaceAll(/%2(F|f)/g, "/")
+				return "https://pbs.twimg.com/profile_banners/" + String
+			} else if (/^http(s)?\:\/\/nitter\.net\/pic\/(tweet_video_thumb|video\.twimg\.com)/.test(ArrayElement2)) { //Videos (gif?)
+				//Nitter gifs
+				//https://nitter.net/pic/tweet_video_thumb%2F<Base64String>.jpg%3Fname%3Dsmall
+				//https://nitter.net/pic/video.twimg.com%2Ftweet_video%2F<Base64String>.mp4
+				//
+				//https://pbs.twimg.com/tweet_video_thumb/<Base64String>.jpg
+				//https://video.twimg.com/tweet_video/<Base64String>.mp4
+				let VideoName = ArrayElement2.replace(/http(s)?\:\/\/nitter\.net\/pic\/(tweet_video_thumb%2F|video\.twimg\.com%2Ftweet_video%2F)/, "").replace(/\..*$/, "")
+				return "https://pbs.twimg.com/tweet_video_thumb/" + VideoName + ".jpg"
+			} else {
+				return ArrayElement2
+			}
+		});
+		let UniqueListOfURLs = new Set()
+		let UniqueArray = new Array()
+		for (let i = 0; i < ListOfURLs.length; i++) {
+			if (/^http(s)?\:\/\/(www\.)?twitter\.com\/(?!i\/events)/.test(ListOfURLs[i])) {
+				//Array/Set data format:
+				// UniqueListOfURLs[i][0] = URL
+				// UniqueListOfURLs[i][1] = type
+				// UniqueListOfURLs[i][2] = tweet ID (-1n if not a tweet)
+				//
+				//Username page and posts
+				// https://twitter.com/Username123
+				// https://twitter.com/Username123/with_replies
+				// https://twitter.com/Username123/media
+				// https://twitter.com/Username123/likes
+				// https://twitter.com/Username123/status/123456789012345
+				//
+				//Images
+				// Old: https://pbs.twimg.com/media/<base_64_string>.<file_type>[:<resolution>]
+				// New: https://pbs.twimg.com/media/<base_64_string>?format=<file_type>[&name=<resolution>]
+				//
+				//Videos:
+				// https://pbs.twimg.com/tweet_video_thumb/<thumbnail_id>.<file_type>
+				// https://pbs.twimg.com/tweet_video_thumb/<thumbnail_id>?format=<file_type>&name=<resolution>
+				// https://pbs.twimg.com/tweet_video/<video_id>.mp4
+				// https://video.twimg.com/tweet_video/<video_id>.mp4
+				//
+				//Side note: JSON.stringify does not work with bigint.
+				let PotentialUsername = ListOfURLs[i].replace(/^http(s)?\:\/\/twitter\.com\//, "").replace(/\/.*$/, "")
+				let PotentialUsername_isValid = true
+				let TweetID = -1n
+				if (/http(s)?\:\/\/twitter\.com\/[A-Za-z0-9_\.]+\/status\/\d+/.test(ListOfURLs[i])) {
+					TweetID = BigInt(ListOfURLs[i].replace(/http(s)?\:\/\/twitter\.com\/[A-Za-z0-9_\.]+\/status\//, "").replace(/[^0-9].*$/, ""))
+				}
+				for (let i2 = 0; i2 < Twitter_NotAUserNameList.length && PotentialUsername_isValid == true; i2++) {
+					if (PotentialUsername == Twitter_NotAUserNameList[i2]) {
+						PotentialUsername_isValid = false
+					}
+				}
+				if (PotentialUsername_isValid && /^http(s)?\:\/\/twitter\.com\/[A-Za-z0-9_\.]+($|\/with_replies$|\/media$|\/status\/\d+)/.test(ListOfURLs[i])) {
+					//User home page
+						if (document.getElementById("FilterSetting_TwitterPage_UserMainPage").checked) {
+							if (/^https:\/\/twitter\.com\/[A-Za-z0-9_\.]+/.test(ListOfURLs[i])) {
+								UniqueListOfURLs.add(JSON.stringify(["https://twitter.com/" + PotentialUsername, "TwitterPage_UserMainPage", "-1"]))
+							}
+						}
+						if (document.getElementById("FilterSetting_NitterPage_UserMainPage").checked) {
+							if (/^https:\/\/twitter\.com\/[A-Za-z0-9_\.]+/.test(ListOfURLs[i])) {
+								UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/" + PotentialUsername, "NitterPage_UserMainPage", "-1"]))
+							}
+						}
+					//Tweets
+						if (document.getElementById("FilterSetting_TwitterPage_Tweet").checked && TweetID != -1n) {
+							UniqueListOfURLs.add(JSON.stringify(["https://twitter.com/" + PotentialUsername + "/status/" + TweetID.toString(10), "TwitterPage_Tweet", TweetID.toString(10)]))
+						}
+						if (document.getElementById("FilterSetting_NitterPage_Tweet").checked && TweetID != -1n) {
+							UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/" + PotentialUsername + "/status/" + TweetID.toString(10), "NitterPage_Tweet", TweetID.toString(10)]))
+						}
+					//Nitter tabs
+						if (/^https:\/\/twitter\.com\/[A-Za-z0-9_\.]+/.test(ListOfURLs[i])) {
+							if (document.getElementById("FilterSetting_NitterPage_UserMainPage_WithReplies").checked) {
+								UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/" + PotentialUsername + "/with_replies", "NitterPage_UserMainPage_WithReplies", "-1"]))
+							}
+							if (document.getElementById("FilterSetting_NitterPage_UserMainPage_Media").checked) {
+								UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/" + PotentialUsername + "/media", "NitterPage_UserMainPage_Media", "-1"]))
+							}
+						}
+				} else {
+					if (document.getElementById("FilterSetting_Twitter_Other").checked) {//Awkward username?
+						UniqueListOfURLs.add(JSON.stringify([ListOfURLs[i], "Twitter_Other", "-1"]))
+					}
+				}
+			} else if (/^http(s)?\:\/\/pbs\.twimg\.com\/media\/[A-Za-z0-9]+/.test(ListOfURLs[i])) {
+				//Tweet images
+					let StringToLook = ListOfURLs[i].replace(/https\:\/\/pbs\.twimg\.com\/media\//, "")
+					let ImageFileNameItself = StringToLook.replace(/(\.|\?).*$/, "")
+					let FileExtensionItself = StringToLook.match(/(?<=\.|\?format=)[A-Za-z0-9]+/)[0]
+					if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimg_").checked) {
+						UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/media/" + ImageFileNameItself + "." + FileExtensionItself, "TwitterMedia_PbsTwimg_", "-1"]))
+					}
+					if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimg_Orig").checked) {
+						UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/media/" + ImageFileNameItself + "." + FileExtensionItself + ":orig", "TwitterMedia_PbsTwimg_Orig", "-1"]))
+					}
+					if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimgModern").checked) {
+						UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/media/" + ImageFileNameItself + "?format=" + FileExtensionItself, "TwitterMedia_PbsTwimgModern", "-1"]))
+					}
+					if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimgModern_Orig").checked) {
+						UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/media/" + ImageFileNameItself + "?format=" + FileExtensionItself + "&name=orig", "TwitterMedia_PbsTwimgModern_Orig", "-1"]))
+					}
+			} else if (/http(s)?\:\/\/pbs\.twimg\.com\/profile_images\//.test(ListOfURLs[i])) {
+				//Profile images
+				//https://pbs.twimg.com/profile_images/840393405612015616/zPovL4tt.jpg
+				//https://pbs.twimg.com/profile_images/840393405612015616/zPovL4tt_400x400.jpg
+				//https://pbs.twimg.com/profile_images/840393405612015616/zPovL4tt_normal.jpg
+				//https://pbs.twimg.com/profile_images/840393405612015616/zPovL4tt_bigger.jpg
+				//https://pbs.twimg.com/profile_images/840393405612015616/zPovL4tt_reasonably_small.jpg
+				//https://pbs.twimg.com/profile_images/840393405612015616/zPovL4tt_mini.jpg
+				//
+				//Note: The name part of the image may contain an underscore "_" and a hyphen "-", like these:
+				// https://pbs.twimg.com/profile_images/1759638070/Picture_4_normal.png
+				// https://pbs.twimg.com/profile_images/1565103745633062913/S-DwlSKa.jpg
+				//Therefore twitter adds the name of resolution at the end of the actual name of the image.
+				//
+					let ProfileNumber = ListOfURLs[i].replace(/http(s)?\:\/\/pbs\.twimg\.com\/profile_images\//, "").replace(/\/.*$/, "")
+					//Get the name itself. Now because the name itself can contain an underscore as well as resolution names (if it starts with such a name),
+					//we first need to check if the entire name is just the resolution name immidiately followed by an extension
+						let ProfileImageName = ListOfURLs[i].replace(/http(s)?:\/\/pbs\.twimg\.com\/profile_images\/\d+\//, "") //We now have the name, and the potential resolution name after it.
+						if (/^_(\d+x\d+|normal|bigger|reasonably_small|mini)\.[a-zA-Z0-9_\-]+$/.test(ProfileImageName)) {
+							ProfileImageName = ProfileImageName.replace(/\.[a-zA-Z0-9]+$/, "") //Replace just the extension if the ending part just contains the name pretending to be a resolution name
+						} else if (/[a-zA-Z0-9_\-]+_(\d+x\d+|normal|bigger|reasonably_small|mini)/.test(ProfileImageName)) {
+							ProfileImageName = ProfileImageName.replace(/_(\d+x\d+|normal|bigger|reasonably_small|mini)\.[a-zA-Z0-9]+$/, "")
+						} else {
+							ProfileImageName = ProfileImageName.replace(/\.[a-zA-Z0-9_]+$/, "") //odd cases
+						}
+					let ProfileImageExtension = ListOfURLs[i].match(/[A-Za-z0-9]+$/)[0]
+					if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimgProfileImages_").checked) {
+						UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/profile_images/" + ProfileNumber + "/" + ProfileImageName + "." + ProfileImageExtension, "TwitterMedia_PbsTwimgProfileImages_", "-1"]))
+					}
+					if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimgProfileImages_Normal").checked) {
+						UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/profile_images/" + ProfileNumber + "/" + ProfileImageName + "_normal." + ProfileImageExtension, "TwitterMedia_PbsTwimgProfileImages_Normal", "-1"]))
+					}
+					if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimgProfileImages_400x400").checked) {
+						UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/profile_images/" + ProfileNumber + "/" + ProfileImageName + "_400x400." + ProfileImageExtension, "TwitterMedia_PbsTwimgProfileImages_400x400", "-1"]))
+					}
+			} else if (/http(s)?\:\/\/pbs\.twimg\.com\/card_img\//.test(ListOfURLs[i])) {
+				//Card images
+				//https://pbs.twimg.com/card_img/1560189516840726529/htlTM16b?format=jpg&name=240x240
+					let StringToLook = ListOfURLs[i].replace(/http(s)?\:\/\/pbs\.twimg\.com\/card_img\//, "")
+					let NumberBeforeName = StringToLook.split("/")[0]
+					let FileName = StringToLook.split("/")[1].replace(/\?format=.*$/, "")
+					let Extension = StringToLook.split("/")[1].match(/(?<=\?format\=)[A-Za-z0-9]+/, "")[0]
+					if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimgCardImg_").checked) {
+						UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/card_img/" + NumberBeforeName + "/" + FileName + "?format=" + Extension, "TwitterMedia_PbsTwimgCardImg_", "-1"]))
+					}
+					if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimgCardImg_Orig").checked) {
+						UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/card_img/" + NumberBeforeName + "/" + FileName + "?format=" + Extension + "&name=orig", "TwitterMedia_PbsTwimgCardImg_Orig", "-1"]))
+					}
+			} else if (/http(s)?\:\/\/pbs\.twimg\.com\/profile_banners\//.test(ListOfURLs[i])) {
+				//Banner images
+					//https://pbs.twimg.com/profile_banners/1258610530559782912/1588925459/600x200
+					let ProfileNumber = (ListOfURLs[i].replace(/http(s)?\:\/\/pbs\.twimg\.com\/profile_banners\//, "")).match(/[^\/]+/g)[0]
+					let ProfileNumber2 = (ListOfURLs[i].replace(/http(s)?\:\/\/pbs\.twimg\.com\/profile_banners\//, "")).match(/[^\/]+/g)[1]
+					let Resolution = (ListOfURLs[i].replace(/http(s)?\:\/\/pbs\.twimg\.com\/profile_banners\//, "")).match(/[^\/]+/g)[2]
+					if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimgProfileBanner_600x200").checked) {
+						UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/profile_banners/" + ProfileNumber + "/" + ProfileNumber2 + "/600x200", "TwitterMedia_PbsTwimgProfileBanner_600x200", "-1"]))
+					}
+					if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimgProfileBanner_1500x500").checked) {
+						UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/profile_banners/" + ProfileNumber + "/" + ProfileNumber2 + "/1500x500", "TwitterMedia_PbsTwimgProfileBanner_1500x500", "-1"]))
+					}
+			} else if (/^http(s)?\:\/\/(pbs|video)\.twimg\.com\/tweet_video(_thumb)?\/[A-Za-z0-9]+/.test(ListOfURLs[i])) {
+				//Videos (gif?). Videos are always .mp4 on the extensions. 
+					let StringToLook = ListOfURLs[i].replace(/http(s):\/\/(pbs|video)\.twimg.com\/tweet_video(_thumb)?\//, "")
+					let VideoFileName = ListOfURLs[i].replace(/http(s)?\:\/\/(pbs|video)\.twimg\.com\/tweet_video(_thumb)?\//, "").replace(/(\.|\?).+/, "")
+					let VideoFileExtension = StringToLook.match(/(?<=(\.|\?format=))[A-Za-z0-9]+/)[0]
+					//Video
+						if (document.getElementById("FilterSetting_TwitterMedia_VideoTwimg").checked) {
+							//https://video.twimg.com/tweet_video/Fa1yZ6zX0AEPcET.mp4
+							UniqueListOfURLs.add(JSON.stringify(["https://video.twimg.com/tweet_video/" + VideoFileName + ".mp4", "TwitterMedia_VideoTwimg", "-1"]))
+						}
+						if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimg_Video").checked) {
+							//https://pbs.twimg.com/tweet_video/Fa1yZ6zX0AEPcET.mp4
+							UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/tweet_video/" + VideoFileName + ".mp4", "TwitterMedia_PbsTwimg_Video", "-1"]))
+						}
+					//Thumbnail image
+						if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimg_Video_Thumb").checked) {
+							//https://pbs.twimg.com/tweet_video_thumb/Fa1yZ6zX0AEPcET.jpg
+							if (VideoFileExtension != "mp4") {
+								UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/tweet_video_thumb/" + VideoFileName + "." + VideoFileExtension, "TwitterMedia_PbsTwimg_Video_Thumb", "-1"]))
+							}
+						}
+						if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimg_Video_Thumb_Orig").checked) {
+							//https://pbs.twimg.com/tweet_video_thumb/Fa1yZ6zX0AEPcET.jpg
+							if (VideoFileExtension != "mp4") {
+								UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/tweet_video_thumb/" + VideoFileName + "." + VideoFileExtension + ":orig", "TwitterMedia_PbsTwimg_Video_Thumb_Orig", "-1"]))
+							}
+						}
+						if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimgModern_Video_Thumb_Orig").checked) {
+							if (VideoFileExtension != "mp4") {
+								UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/tweet_video_thumb/" + VideoFileName + "?format=" + VideoFileExtension + "&name=orig", "TwitterMedia_PbsTwimgModern_Video_Thumb_Orig", "-1"]))
+							}
+						}
+			} else if (/http(s)?\:\/\/twitter\.com\/i\/events\//.test(ListOfURLs[i])) {
+				if (document.getElementById("FilterSetting_TwitterPage_Ievents").checked) {
+					UniqueListOfURLs.add(JSON.stringify([ListOfURLs[i], "TwitterPage_Ievents", "-1"]))
+				}
+			} else if (/(http(s)?\:\/\/twitter\.com|http(s)?\:\/\/pbs\.twimg\.com|http(s)?\:\/\/video\.twimg\.com\/)/.test(ListOfURLs[i])){ //Other twitter pages, after all above conditions not met, also in case if it isn't related to username.
+				if (document.getElementById("FilterSetting_Twitter_Other").checked) {
+					UniqueListOfURLs.add(JSON.stringify([ListOfURLs[i], "Twitter_Other", "-1"]))
+				}
+			} else {
+				if (document.getElementById("FilterSetting_OtherSites").checked) {
+					UniqueListOfURLs.add(JSON.stringify([ListOfURLs[i], "OtherSites", "-1"]))
+				}
+			}
+		}
+		//Reformat the list
+			UniqueArray = Array.from(UniqueListOfURLs, (Element) => {return JSON.parse(Element)}) //Filtering, sorting requires them to be an array.
+		//Filter
+			UniqueArray = UniqueArray.filter((ArrayElement) => {
+				let DidElementPasses = false
+				let ListOfAcceptedTypes = new Array()
+				for (let i = 0; i < document.getElementsByClassName("TwitterURLFilter").length; i++) {
+					if (document.getElementsByClassName("TwitterURLFilter")[i].checked) {
+						ListOfAcceptedTypes.push(document.getElementsByClassName("TwitterURLFilter")[i].dataset.js_url_filter)
+					}
+				}
+				for (let i = 0; i < ListOfAcceptedTypes.length && DidElementPasses == false; i++) {
+					if (ArrayElement[1] == ListOfAcceptedTypes[i]) {
+						DidElementPasses = true
+					}
+				}
+				return DidElementPasses
+			})
+		//Sort
+			if (document.getElementById("SortSetting_ABC").checked) {
+				UniqueArray.sort((a, b) => {
+					if (a[0] === b[0]) {
+						return 0;
+					} else {
+						return (a[0] < b[0]) ? -1 : 1;
+					}
+				})
+			} else if (document.getElementById("SortSetting_ABC_Reverse").checked) {
+				UniqueArray.sort((a, b) => {
+					if (a[0] === b[0]) {
+						return 0;
+					} else {
+						return (a[0] < b[0]) ? 1 : -1;
+					}
+				})
+			} else if (document.getElementById("SortSetting_URLType").checked) {
+				UniqueArray.sort((a, b) => {
+					if (a[1] === b[1]) {
+						return 0;
+					} else {
+						return (a[1] < b[1]) ? -1 : 1;
+					}
+				})
+			} else if (document.getElementById("SortSetting_URLType_Reverse").checked) {
+				UniqueArray.sort((a, b) => {
+					if (a[1] === b[1]) {
+						return 0;
+					} else {
+						return (a[1] < b[1]) ? 1 : -1;
+					}
+				})
+			} else if (document.getElementById("SortSetting_TweetID").checked) {
+				UniqueArray.sort((a, b) => { return Number(a[2] - b[2]) })
+			} else if (document.getElementById("SortSetting_TweetID_Reverse").checked) {
+				UniqueArray.sort((a, b) => { return Number(b[2] - a[2]) })
+			}
+		//Output
+			//Textarea
+				document.getElementById("NumberOfItems").innerHTML = BigInt(UniqueArray.length).toString(10)
+				let OutputString = ""
+				for (let i = 0; i < UniqueArray.length; i++) {
+					OutputString += UniqueArray[i][0]
+					if (document.getElementById("DisplayTypeAndID").checked) {
+						OutputString += "\tType: " + UniqueArray[i][1]
+						if (UniqueArray[i][2] != -1n) {
+							OutputString += "\tTweetID: " + UniqueArray[i][2].toString(10)
+						}
+					}
+					if (i != UniqueArray.length - 1) {
+						OutputString += "\n"
+					}
+				}
+				document.getElementById("Output").value = OutputString
+			//HTML table
+				let HTML_TableString = ""
+				HTML_TableString += "<table>"
+				HTML_TableString += "<tr><th>Line</th><th>URL</th><th>Type</th><th>Tweet ID</th>"
+				for (let i = 0; i < UniqueArray.length; i++) {
+					HTML_TableString += "<tr>"
+					HTML_TableString += "<td style='text-align: center;'><kbd>" + BigInt(i+1).toString(10) + "</kbd></td>"
+					HTML_TableString += "<td><kbd>" + escapeHTMLChars(UniqueArray[i][0]) + "</kbd></td>"
+					HTML_TableString += "<td><kbd>" + UniqueArray[i][1] + "</kbd></td>"
+					HTML_TableString += "<td style='text-align: end;'><kbd>"
+					if (UniqueArray[i][2] != -1n) {
+						HTML_TableString += UniqueArray[i][2].toString(10)
+					} else {
+						HTML_TableString += "N/A"
+					}
+					HTML_TableString += "</kbd></td>"
+					HTML_TableString += "</tr>"
+				}
+				HTML_TableString += "</table>"
+				
+				document.getElementById("OutputTable").innerHTML = HTML_TableString
+	}
+	function CopyOutputString() {
+		let copyText = document.getElementById("Output")
+		copyText.select();
+		document.execCommand("copy");
+	}
+	function escapeHTMLChars(string) {
+		//Should the user's input contains "<", ">", and "&", prevent the innerHTML from treating these as HTML tags/escapes
+			string = string.replaceAll("&", "&amp;") //This must be done first, to avoid replacing already-replaced symbol's ampersand character.
+			string = string.replaceAll("<", "&lt;")
+			string = string.replaceAll(">", "&gt;")
+			return string
+	}
+</script>

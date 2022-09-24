@@ -8,6 +8,16 @@
 // ==/UserScript==
 'use strict';
 
+//Notes:
+// -Anytime you edit this script and save, make sure you refresh the page so the loaded JS code reflect the changes.
+// -Also, every time you start this script, ALWAYS reset this by going onto the Greasemonkey script menu on
+//  "User Script Commands..." and click on "Stop and reset URL sequence" just in case the script bugs out and start
+//  on whatever position last set.
+// -Beware of anything that would pause your browser, such as a download prompts and any popup box that you cannot
+//  focus on your browser.
+// -Sometimes, pages may error out temporally (like error 503). Make sure you have a script that sends info to the
+//  web console containing a URL and some string of text that you can find it (e.g ThisURLFailedToLoad:
+//  https://example.com) so you can then extract those and retry extracting them.
 
 (async () => {
 //-----------------------------------------------------------
