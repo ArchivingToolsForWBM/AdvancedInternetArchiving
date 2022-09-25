@@ -39,7 +39,7 @@
 <tr><td>Number of unique URLs remaining:</td><td><kbd><span id="NumberOfRemainingUrls">0</span><span id="PercentageOfURLsRemain"></span></kbd></td></tr>
 </table><br>
 <textarea cols="200" rows="12" id="CleanedList" readonly></textarea><br>
-<button onclick="CopyOutputText()">Copy to clipboard</button>
+<button onclick="setClipboard(document.getElementById('CleanedList').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
 <script>
 	function Main() {
 		let ListToFilter = RemoveBlankOrSpacesEntry(RemoveItemsInTableFlaggedAsDuplicates(ConvertURLListToTableFlaggingDuplicates((document.getElementById("ListToFilter").value).split('\n'))))
@@ -222,9 +222,27 @@
 			return WholeNumberPart + "." + DecimalPart + "%"
 		}
 	}
-	function CopyOutputText() {
-		let copyText = document.getElementById("CleanedList")
-		copyText.select();
-		document.execCommand("copy");
-	}
+	//Copy text from textarea
+		function setClipboard(String) {
+			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
+			const type = "text/plain";
+			const blob = new Blob([String], { type });
+			const data = [new ClipboardItem({ [type]: blob })];
+	
+			navigator.clipboard.write(data).then(
+				() => {
+				/* success */
+					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #00FF00;'>Copied!</span>"
+					setTimeout(DeleteCopyMessage, 1500)
+				},
+				() => {
+				/* failure */
+					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #FF0000;'>Copy failed!</span>"
+					setTimeout(DeleteCopyMessage, 1500)
+				}
+			);
+		}
+		function DeleteCopyMessage() {
+			document.getElementById("CopiedTextMessage").innerHTML = ""
+		}
 </script>

@@ -50,7 +50,7 @@ URLs by removing the substring in the middle of the URL. So when extracting URLs
 			</ul>
 			Number of URLs listed: <span id="NumberOfURLsListed">0</span><br>
 			<textarea id="OutputURLs" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"readonly></textarea><br>
-			<button onclick="CopyOutputText('OutputURLs')" id="Button_CopyOutput">Copy to clipboard</button>
+			<button onclick="setClipboard(document.getElementById('OutputURLs').value, 'CopiedTextMessage')" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
 		</td>
 		<td>
 			Filter:
@@ -71,7 +71,7 @@ URLs by removing the substring in the middle of the URL. So when extracting URLs
 			</ul>
 			Number of URLs that errored: <span id="NumberOfErrorURLsListed">0</span><br>
 			<textarea id="OutputErrorURLs" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"readonly></textarea><br>
-			<button onclick="CopyOutputText('OutputErrorURLs')" id="Button_CopyOutput">Copy to clipboard</button>
+			<button onclick="setClipboard(document.getElementById('OutputErrorURLs').value, 'CopiedTextMessage2')" id="Button_CopyOutput2">Copy to clipboard</button><span id="CopiedTextMessage2"></span>
 		</td>
 	</tr>
 </table>
@@ -105,7 +105,7 @@ URLs by removing the substring in the middle of the URL. So when extracting URLs
 			for (let Index = 0; Index < ListOfURLs.length; Index++) {
 				ListOfURLs[Index][0] = "h" + ListOfURLs[Index][0].replace(/\.$/, "").replace(/#.*$/, "")
 			}
-		//Remove the truncation character caused by firefox's ellepses ("…") on long URLs.
+		//Remove the URL that have been truncated (ellepses ("…")) on long URLs.
 			if (document.getElementById("Option_RemoveFirefoxTruncation").checked) {
 				ListOfURLs = ListOfURLs.filter((ArrayElement) => (!(/^.+….+$/.test(ArrayElement[0]))))
 			}
@@ -236,9 +236,27 @@ URLs by removing the substring in the middle of the URL. So when extracting URLs
 					document.getElementById("OutputErrorURLs").value = OutputString_ErrorURLs
 				}
 	}
-	function CopyOutputText(ElementID) {
-		let copyText = document.getElementById(ElementID)
-		copyText.select();
-		document.execCommand("copy");
-	}
+	//Copy text from textarea
+		function setClipboard(String, CopyMessageID) {
+			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
+			const type = "text/plain";
+			const blob = new Blob([String], { type });
+			const data = [new ClipboardItem({ [type]: blob })];
+	
+			navigator.clipboard.write(data).then(
+				() => {
+				/* success */
+					document.getElementById(CopyMessageID).innerHTML = " <span style='color: #00FF00;'>Copied!</span>"
+					setTimeout(DeleteCopyMessage.bind(null, CopyMessageID), 1500)
+				},
+				() => {
+				/* failure */
+					document.getElementById(CopyMessageID).innerHTML = " <span style='color: #FF0000;'>Copy failed!</span>"
+					setTimeout(DeleteCopyMessage.bind(null, CopyMessageID), 1500)
+				}
+			);
+		}
+		function DeleteCopyMessage(CopyMessageID) {
+			document.getElementById(CopyMessageID).innerHTML = ""
+		}
 </script>

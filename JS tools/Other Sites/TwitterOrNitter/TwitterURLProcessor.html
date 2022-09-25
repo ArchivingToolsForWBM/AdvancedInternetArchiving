@@ -97,7 +97,7 @@ Misc:
 <hr>
 <kbd>Number of items (including variations): <span id="NumberOfItems">0</span></kbd><br>
 <textarea type='text' cols='100' rows='30' id="Output" readonly style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
-<button onclick="CopyOutputString()">Copy to clipboard</button><br><br>
+<button onclick="setClipboard(document.getElementById('Output').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br>
 
 <span id="OutputTable"></span>
 <script>
@@ -488,11 +488,29 @@ Misc:
 				
 				document.getElementById("OutputTable").innerHTML = HTML_TableString
 	}
-	function CopyOutputString() {
-		let copyText = document.getElementById("Output")
-		copyText.select();
-		document.execCommand("copy");
-	}
+	//Copy text from textarea
+		function setClipboard(String) {
+			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
+			const type = "text/plain";
+			const blob = new Blob([String], { type });
+			const data = [new ClipboardItem({ [type]: blob })];
+	
+			navigator.clipboard.write(data).then(
+				() => {
+				/* success */
+					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #00FF00;'>Copied!</span>"
+					setTimeout(DeleteCopyMessage, 1500)
+				},
+				() => {
+				/* failure */
+					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #FF0000;'>Copy failed!</span>"
+					setTimeout(DeleteCopyMessage, 1500)
+				}
+			);
+		}
+		function DeleteCopyMessage() {
+			document.getElementById("CopiedTextMessage").innerHTML = ""
+		}
 	function escapeHTMLChars(string) {
 		//Should the user's input contains "<", ">", and "&", prevent the innerHTML from treating these as HTML tags/escapes
 			string = string.replaceAll("&", "&amp;") //This must be done first, to avoid replacing already-replaced symbol's ampersand character.

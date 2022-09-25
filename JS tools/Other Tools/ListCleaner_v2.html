@@ -39,7 +39,7 @@ Sort:
 <button onclick="MainFunction()">Submit</button><button onclick="Reset()">Reset</button>
 <hr>
 <textarea id="TextOutput"cols="100" rows="30" readonly></textarea><br>
-<button onclick="CopyOutputText()">Copy to clipboard</button>
+<button onclick="setClipboard(document.getElementById('TextOutput').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
 <table>
 <tr><th colspan="2">Statistics</th></tr>
 <tr><td><kbd>Total number of lines:</kbd></td><td><kbd><span id="HTML_LineCount"></span></kbd></td></tr>
@@ -382,9 +382,27 @@ Sort:
 			return WholeNumberPart + "." + DecimalPart + "%"
 		}
 	}
-	function CopyOutputText() {
-		let copyText = document.getElementById("TextOutput")
-		copyText.select();
-		document.execCommand("copy");
-	}
+	//Copy text from textarea
+		function setClipboard(String) {
+			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
+			const type = "text/plain";
+			const blob = new Blob([String], { type });
+			const data = [new ClipboardItem({ [type]: blob })];
+	
+			navigator.clipboard.write(data).then(
+				() => {
+				/* success */
+					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #00FF00;'>Copied!</span>"
+					setTimeout(DeleteCopyMessage, 1500)
+				},
+				() => {
+				/* failure */
+					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #FF0000;'>Copy failed!</span>"
+					setTimeout(DeleteCopyMessage, 1500)
+				}
+			);
+		}
+		function DeleteCopyMessage() {
+			document.getElementById("CopiedTextMessage").innerHTML = ""
+		}
 </script>

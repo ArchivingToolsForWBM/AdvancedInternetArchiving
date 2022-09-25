@@ -24,7 +24,7 @@
 <textarea id="ListOfURLs" oninput="Main()" cols="100" rows="30"></textarea>
 <hr>
 <textarea id="OutputURLs" cols="100" rows="30" readonly></textarea><br>
-<button onclick="CopyOutputString()">Copy to clipboard</button><br>
+<button onclick="setClipboard(document.getElementById('OutputURLs').value)">Copy to clipboard</button><span id="CopiedTextMessage"></span><br>
 
 <script>
 	function Main() {
@@ -49,9 +49,27 @@
 		}
 		document.getElementById("OutputURLs").value += OutputString
 	}
-	function CopyOutputString() {
-		let copyText = document.getElementById("OutputURLs")
-		copyText.select();
-		document.execCommand("copy");
-	}
+	//Copy text from textarea
+		function setClipboard(String) {
+			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
+			const type = "text/plain";
+			const blob = new Blob([String], { type });
+			const data = [new ClipboardItem({ [type]: blob })];
+	
+			navigator.clipboard.write(data).then(
+				() => {
+				/* success */
+					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #00FF00;'>Copied!</span>"
+					setTimeout(DeleteCopyMessage, 1500)
+				},
+				() => {
+				/* failure */
+					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #FF0000;'>Copy failed!</span>"
+					setTimeout(DeleteCopyMessage, 1500)
+				}
+			);
+		}
+		function DeleteCopyMessage() {
+			document.getElementById("CopiedTextMessage").innerHTML = ""
+		}
 </script>
