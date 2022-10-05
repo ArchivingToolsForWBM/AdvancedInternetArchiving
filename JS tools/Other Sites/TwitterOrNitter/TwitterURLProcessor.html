@@ -17,6 +17,12 @@
 			}
 			input[type='text'] { font-family: monospace;}
 			input[type='number'] { font-family: monospace;}
+			
+			td label {   /* thanks to Patrick McElhaney - https://stackoverflow.com/questions/9739259/tick-a-checkbox-in-a-table-cell-by-clicking-anywhere-in-the-table-cell , causes table cells with labels inside them to focus onto whats inside a label */
+				display: block;
+				text-align: center;
+			}
+			
 		</style>
 	</head>
 <body>
@@ -39,8 +45,28 @@ Filter:<br>
 <ul>
 	<li>Twitter pages <button onclick="ChangeFilterSettings('TwitterPages', 1); AutoUpdateCode()">Check All</button><button onclick="ChangeFilterSettings('TwitterPages', 0); AutoUpdateCode()">Uncheck All</button><button onclick="ChangeFilterSettings('TwitterPages', 2); AutoUpdateCode()">Invert</button></li>
 	<ul>
-		<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_UserMainPage" id="FilterSetting_TwitterPage_UserMainPage" checked>User Homepage</label>|<label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage" id="FilterSetting_NitterPage_UserMainPage" checked>Nitter Homepage</label></li>
-		<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_Tweet" id="FilterSetting_TwitterPage_Tweet" checked>Tweets</label>|<label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_Tweet" id="FilterSetting_NitterPage_Tweet" checked>Nitter Tweets</label></li>
+		<li>
+			<table>
+				<tr>
+					<th></th>
+					<th>Main twitter</th>
+					<th>mobile.twitter.com</th>
+					<th>nitter</th>
+				</tr>
+				<tr>
+					<th>User homepage</th>
+					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_UserMainPage" id="FilterSetting_TwitterPage_UserMainPage" checked></label></td>
+					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="MobileTwitterPage_UserMainPage" id="FilterSetting_MobileTwitterPage_UserMainPage" checked></label></td>
+					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage" id="FilterSetting_NitterPage_UserMainPage" checked></label></td>
+				</tr>
+				<tr>
+					<th>Tweets</th>
+					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_Tweet" id="FilterSetting_TwitterPage_Tweet" checked></label></td>
+					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="MobileTwitterPage_Tweet" id="FilterSetting_MobileTwitterPage_Tweet" checked></label></td>
+					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_Tweet" id="FilterSetting_NitterPage_Tweet" checked></label></td>
+				</tr>
+			</table>
+		</li>
 		<li>Nitter user's tab pages (cannot save twitter user's tabs due to login wall)</li>
 		<ul>
 			<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage_WithReplies" id="FilterSetting_NitterPage_UserMainPage_WithReplies" checked>Nitter Replies</label></li>
@@ -232,6 +258,7 @@ Misc:
 				if (/http(s)?\:\/\/twitter\.com\/[A-Za-z0-9_\.]+\/status\/\d+/.test(ListOfURLs[i])) {
 					TweetID = BigInt(ListOfURLs[i].replace(/http(s)?\:\/\/twitter\.com\/[A-Za-z0-9_\.]+\/status\//, "").replace(/[^0-9].*$/, ""))
 				}
+					//^not a tweet if TweetID == -1n.
 				for (let i2 = 0; i2 < Twitter_NotAUserNameList.length && PotentialUsername_isValid == true; i2++) {
 					if (PotentialUsername == Twitter_NotAUserNameList[i2]) {
 						PotentialUsername_isValid = false
@@ -239,22 +266,28 @@ Misc:
 				}
 				if (PotentialUsername_isValid && /^http(s)?\:\/\/twitter\.com\/[A-Za-z0-9_\.]+($|\/with_replies$|\/media$|\/status\/\d+)/.test(ListOfURLs[i])) {
 					//User home page
-						if (document.getElementById("FilterSetting_TwitterPage_UserMainPage").checked) {
-							if (/^https:\/\/twitter\.com\/[A-Za-z0-9_\.]+/.test(ListOfURLs[i])) {
+						if (/^https:\/\/twitter\.com\/[A-Za-z0-9_\.]+/.test(ListOfURLs[i])) {
+							if (document.getElementById("FilterSetting_TwitterPage_UserMainPage").checked) {
 								UniqueListOfURLs.add(JSON.stringify(["https://twitter.com/" + PotentialUsername, "TwitterPage_UserMainPage", "-1"]))
 							}
-						}
-						if (document.getElementById("FilterSetting_NitterPage_UserMainPage").checked) {
-							if (/^https:\/\/twitter\.com\/[A-Za-z0-9_\.]+/.test(ListOfURLs[i])) {
+							if (document.getElementById("FilterSetting_MobileTwitterPage_UserMainPage").checked) {
+								UniqueListOfURLs.add(JSON.stringify(["https://mobile.twitter.com/" + PotentialUsername, "MobileTwitterPage_UserMainPage", "-1"]))
+							}
+							if (document.getElementById("FilterSetting_NitterPage_UserMainPage").checked) {
 								UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/" + PotentialUsername, "NitterPage_UserMainPage", "-1"]))
 							}
 						}
 					//Tweets
-						if (document.getElementById("FilterSetting_TwitterPage_Tweet").checked && TweetID != -1n) {
-							UniqueListOfURLs.add(JSON.stringify(["https://twitter.com/" + PotentialUsername + "/status/" + TweetID.toString(10), "TwitterPage_Tweet", TweetID.toString(10)]))
-						}
-						if (document.getElementById("FilterSetting_NitterPage_Tweet").checked && TweetID != -1n) {
-							UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/" + PotentialUsername + "/status/" + TweetID.toString(10), "NitterPage_Tweet", TweetID.toString(10)]))
+						if (TweetID != -1n) {
+							if (document.getElementById("FilterSetting_TwitterPage_Tweet").checked) {
+								UniqueListOfURLs.add(JSON.stringify(["https://twitter.com/" + PotentialUsername + "/status/" + TweetID.toString(10), "TwitterPage_Tweet", TweetID.toString(10)]))
+							}
+							if (document.getElementById("FilterSetting_MobileTwitterPage_Tweet").checked) {
+								UniqueListOfURLs.add(JSON.stringify(["https://mobile.twitter.com/" + PotentialUsername + "/status/" + TweetID.toString(10), "MobileTwitterPage_Tweet", TweetID.toString(10)]))
+							}
+							if (document.getElementById("FilterSetting_NitterPage_Tweet").checked) {
+								UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/" + PotentialUsername + "/status/" + TweetID.toString(10), "NitterPage_Tweet", TweetID.toString(10)]))
+							}
 						}
 					//Nitter tabs
 						if (/^https:\/\/twitter\.com\/[A-Za-z0-9_\.]+/.test(ListOfURLs[i])) {
