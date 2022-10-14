@@ -21,11 +21,25 @@
 <h1 style="text-align: center;">List cleaner</h1>
 <p>This HTML javascript takes a given list (each item is each line in the text) and identify them if there are duplicates, empty lines, or lines with just spaces. Useful to remove unwanted data. Along with this, it also can display various other information</p>
 <label><input type="checkbox" id="Option_AutoUpdate" onchange="AutoUpdate()" checked>Auto update</label><br>
-<textarea id="TextInput" cols="100" rows="30" oninput="AutoUpdate()"></textarea><br>
+<table>
+	<tr>
+		<th>Insert your list here</th>
+		<th>Insert your list of items to remove</th>
+	</tr>
+	<tr>
+		<td><textarea id="TextInput" cols="100" rows="30" oninput="AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea></td>
+		<td>
+			<textarea id="TextInput_Blacklist" cols="100" rows="30" oninput="AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
+			<kbd>Number of unique blacklisted items: <span id="UniqueBlacklistCount">0</span></kbd>
+		</td>
+	</tr>
+</table>
 Filter: <button onclick="ChangeFilterSettings('Filters', 1); AutoUpdate()">Check All</button><button onclick="ChangeFilterSettings('Filters', 0); AutoUpdate()">Uncheck All</button><button onclick="ChangeFilterSettings('Filters', 2); AutoUpdate()">Invert</button>
 <ul>
-<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_OriginalItem" data-js_list_filter="OriginalItem" checked>Only by the first item that have 0 or more copies exist (<kbd>OriginalItem</kbd>)</label></li>
-<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_Duplicates" data-js_list_filter="Duplicate">Lines that are duplicates (<kbd>Duplicate</kbd>)</label></li>
+<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_OriginalItem" data-js_list_filter="OriginalItem" checked>Only by the first item(s) that have 0 or more copies exist that aren't blacklisted (<kbd>OriginalItem</kbd>)</label></li>
+<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_Duplicates" data-js_list_filter="Duplicate">Lines that are duplicates and not blacklisted (<kbd>Duplicate</kbd>)</label></li>
+<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_Blacklisted" data-js_list_filter="Blacklisted">Lines that are blacklisted (<kbd>Blacklisted</kbd>)</label></li>
+<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_DuplicateBlacklisted" data-js_list_filter="DuplicateBlacklisted">Lines that are both blacklisted AND duplicate (<kbd>DuplicateBlacklisted</kbd>)</label></li>
 <li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_EmptyLines" data-js_list_filter="EmptyLine">Just empty lines (<kbd>EmptyLine</kbd>)</label></li>
 <li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_Spaces" data-js_list_filter="JustSpace">Lines containing nothing but spaces (<kbd>JustSpace</kbd>)</label></li>
 </ul>
@@ -38,16 +52,21 @@ Sort:
 </ul>
 <button onclick="MainFunction()">Submit</button><button onclick="Reset()">Reset</button>
 <hr>
-<textarea id="TextOutput"cols="100" rows="30" readonly></textarea><br>
+<textarea id="TextOutput"cols="100" rows="30" readonly style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
 <button onclick="setClipboard(document.getElementById('TextOutput').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
 <table>
 <tr><th colspan="2">Statistics</th></tr>
 <tr><td><kbd>Total number of lines:</kbd></td><td><kbd><span id="HTML_LineCount"></span></kbd></td></tr>
+<tr><th colspan="2">What's displayed</th></tr>
 <tr><td><kbd>How many after filtering:</kbd></td><td><kbd><span id="HTML_HowManyAfterFilter"></span></kbd></td></tr>
 <tr><td><kbd>How many removed after filtering:</kbd></td><td><kbd><span id="HTML_HowManyRemovedAfterFilter"></span></kbd></td></tr>
-<tr><td><kbd>Total number of duplicates:</kbd></td><td><kbd><span id="HTML_DupeCount"></span></kbd></td></tr>
+<tr><th colspan="2">Classification stats</th></tr>
+<tr><td><kbd>Total number of any items that are <kbd>OriginalItem</kbd> and are not duplicates:</kbd></td><td><kbd><span id="HTML_OriginalItemCount"></span></kbd></td></tr>
+<tr><td><kbd>Total number of duplicates (not blacklisted):</kbd></td><td><kbd><span id="HTML_DupeCount"></span></kbd></td></tr>
 <tr><td><kbd>Total number of empty lines:</kbd></td><td><kbd><span id="HTML_EmptyCount"></span></kbd></td></tr>
 <tr><td><kbd>Total number of lines only having space characters:</kbd></td><td><kbd><span id="HTML_SpaceCount"></span></td></tr>
+<tr><td><kbd>Total number of items that got blacklisted (ignoring duplicates):</kbd></td><td><kbd><span id="HTML_BlacklistCount"></span></td></tr>
+<tr><td><kbd>Total number of items that got blacklisted and are duplicates:</kbd></td><td><kbd><span id="HTML_DuplicateBlacklistCount"></span></td></tr>
 </table><br>
 
 <span id="OutputTable"></span>
@@ -78,7 +97,7 @@ Sort:
 		document.getElementById("OutputTable").innerHTML = ""
 		document.getElementById("TextOutput").value = ""
 		
-		let StatisticsArray = ["HTML_LineCount", "HTML_HowManyAfterFilter", "HTML_HowManyRemovedAfterFilter", "HTML_DupeCount", "HTML_EmptyCount", "HTML_SpaceCount"]
+		let StatisticsArray = ["HTML_LineCount", "HTML_OriginalItemCount", "HTML_HowManyAfterFilter", "HTML_HowManyRemovedAfterFilter", "HTML_DupeCount", "HTML_EmptyCount", "HTML_SpaceCount", "HTML_BlacklistCount", "HTML_DuplicateBlacklistCount"]
 		for (let Index = 0; Index < StatisticsArray.length; Index++) {
 			document.getElementById(StatisticsArray[Index]).innerHTML = ""
 		}
@@ -89,15 +108,29 @@ Sort:
 		//InputList[Index]: Contains info for each line
 		//InputList[Index][0]: The line of text
 		//InputList[Index][1]: Line number (0 based)
-		//InputList[Index][2]: (Written later) Status ("OriginalItem" (first item of 0 or more copies), "Duplicate" (if this line is the 2nd+ copy of the original),
-		// "EmptyLine" (a line with no characters of any kind, including space), "JustSpace" (a line with just any whitespace character))
+		//InputList[Index][2]: (Written later) Status:
+		// -"OriginalItem" = first item of 0 or more copies
+		// -"Duplicate" = if this line is the 2nd+ copy of the original
+		// -"Blacklisted" = If the item in the list matches with blacklist
+		// -"DuplicateBlacklisted" = Same as above and also a duplicate
+		// -"EmptyLine" (a line with no characters of any kind, including space), "JustSpace" (a line with just any whitespace character)
 		//InputList[Index][3]: (Written later) Duplicate count (0 means no dups were found). Written on both the original and all duplicates.
 		//InputList[Index][4]: (Written later) Duplicate-have-been-run flag, as inner-loop (second item we check in the array via "InputList[Index2]") checks and flag each item,
 		// The outer loop ("InputList[Index]") doesn't need to re-check currently known duplicates, therefore optimizing the loop. Also used to prevent 2nd and beyond identical
 		// lines from being labeled as "OriginalItem"
 		//InputList[Index][5]: (Written later) Index number representing the original copy.
+		//
+		//Now, please note: Unique = [new Set(InputList)] is a better way of removing duplicates, but the problem is what if the user wants to MERELY detect duplicates and
+		//have them displayed? Therefore using loops and flagging them is a more viable option.
+		
+		let InputBlacklist = [...new Set(((document.getElementById("TextInput_Blacklist").value).split('\n')))]
+		InputBlacklist = InputBlacklist.filter((ArrayElement) => {return !(/^\s*$/.test(ArrayElement))})
+		document.getElementById("UniqueBlacklistCount").innerHTML = BigInt(InputBlacklist.length).toString(10)
 		let Count_Lines = InputList.length
+		let Count_OriginalItem = 0
 		let Count_Duplicates = 0
+		let Count_Blacklisted = 0
+		let Count_DuplicateBlacklisted = 0
 		let Count_EmptyLines = 0
 		let Count_LinesWithJustSpace = 0
 		for (let Index = 0; Index < InputList.length; Index++) {
@@ -112,7 +145,7 @@ Sort:
 					Count_LinesWithJustSpace++
 				}
 			//Find duplicates
-				if (InputList[Index][4] == false) { //Skip if the outer loop runs into a duplicate that is already processed by inner loop.
+				if (InputList[Index][4] == false) { //Skip if the outer loop runs into a duplicate that is already processed by inner loop (which also avoids double-counting).
 					for (let Index2 = Index+1; Index2 < InputList.length; Index2++) {
 						if (InputList[Index2][4] == false) {
 							if (InputList[Index][0] === InputList[Index2][0]) {
@@ -120,9 +153,7 @@ Sort:
 									InputList[Index2][2] = "Duplicate"
 								//Increase duplicate count
 									InputList[Index][3]++
-								//Count total duplicate of entire list
-									Count_Duplicates++
-								//Flag second and beyond copies so it doesn't get processed multiple times, which is uncessary.
+								//Flag second and beyond copies so it doesn't get processed multiple times, which is uncessary and incorrectly double-counts.
 									InputList[Index2][4] = true
 								//Duplicate of first item on list
 									InputList[Index2][5] = Index
@@ -136,6 +167,31 @@ Sort:
 							InputList[Index2][3] = InputList[Index][3]
 						}
 					}
+			//Label items that match with blacklist as "Blacklisted"
+			if (InputList[Index][2] != "EmptyLine") {
+				let HasFoundBlacklisted = false //If any item matches, quit looping.
+				for (let Index2 = 0; Index2 < InputBlacklist.length && HasFoundBlacklisted == false; Index2++) {
+					if (InputList[Index][0] == InputBlacklist[Index2]) {//If matches with blacklisted items
+						if (InputList[Index][2] != "Duplicate") {
+							InputList[Index][2] = "Blacklisted"
+							Count_Blacklisted++
+						} else {
+							InputList[Index][2] = "DuplicateBlacklisted"
+						}
+						HasFoundBlacklisted = true
+					}
+				}
+			}
+			//Count blacklisted and duplicates
+				if (InputList[Index][2] == "Duplicate") {
+					Count_Duplicates++
+				} else if (InputList[Index][2] == "DuplicateBlacklisted") {
+					Count_DuplicateBlacklisted++
+				}
+			//Count how many first items that they themselves not duplicates and aren't blacklisted
+				if (InputList[Index][2] == "OriginalItem") {
+					Count_OriginalItem++
+				}
 		}
 		//Filter
 			InputList = InputList.filter(FilterItemType)
@@ -186,13 +242,16 @@ Sort:
 				})
 			}
 		//Output
-			//Statistics
+			//Statistics. Had to use "BigInt(Number).toString(10)" to avoid potential E notation.
 				document.getElementById("HTML_LineCount").innerHTML = BigInt(Count_Lines).toString(10)
 				document.getElementById("HTML_HowManyAfterFilter").innerHTML = BigInt(InputList.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length, Count_Lines, 2) + ")"
 				document.getElementById("HTML_HowManyRemovedAfterFilter").innerHTML = BigInt(Count_Lines - InputList.length).toString(10) + " (" + BetterPercentageUsingInts(Count_Lines - InputList.length, Count_Lines, 2) + ")"
+				document.getElementById("HTML_OriginalItemCount").innerHTML = BigInt(Count_OriginalItem).toString(10)
 				document.getElementById("HTML_DupeCount").innerHTML = BigInt(Count_Duplicates).toString(10)
 				document.getElementById("HTML_EmptyCount").innerHTML = BigInt(Count_EmptyLines).toString(10)
 				document.getElementById("HTML_SpaceCount").innerHTML = BigInt(Count_LinesWithJustSpace).toString(10)
+				document.getElementById("HTML_BlacklistCount").innerHTML = BigInt(Count_Blacklisted).toString(10)
+				document.getElementById("HTML_DuplicateBlacklistCount").innerHTML = BigInt(Count_DuplicateBlacklisted).toString(10)
 			//Plaintext
 				let OutputTextArea = ""
 				for (let Index = 0; Index < InputList.length; Index++) {
@@ -250,6 +309,12 @@ Sort:
 				break
 			case "Duplicate":
 				ColorIndicator = "#800000"
+				break
+			case "Blacklisted":
+				ColorIndicator = "#ff6699"
+				break
+			case "DuplicateBlacklisted":
+				ColorIndicator = "#ff6666"
 				break
 			case "EmptyLine":
 				ColorIndicator = "#808080"
