@@ -58,15 +58,15 @@ Sort:
 <tr><th colspan="2">Statistics</th></tr>
 <tr><td><kbd>Total number of lines:</kbd></td><td><kbd><span id="HTML_LineCount"></span></kbd></td></tr>
 <tr><th colspan="2">What's displayed</th></tr>
-<tr><td><kbd>How many after filtering:</kbd></td><td><kbd><span id="HTML_HowManyAfterFilter"></span></kbd></td></tr>
-<tr><td><kbd>How many removed after filtering:</kbd></td><td><kbd><span id="HTML_HowManyRemovedAfterFilter"></span></kbd></td></tr>
+<tr><td><kbd>How many after filtering:</kbd></td><td id="HTML_BarGraph_HowManyAfterFilter"><kbd><span id="HTML_HowManyAfterFilter"></span></kbd></td></tr>
+<tr><td><kbd>How many removed after filtering:</kbd></td><td id="HTML_BarGraph_HowManyRemovedAfterFilter"><kbd><span id="HTML_HowManyRemovedAfterFilter"></span></kbd></td></tr>
 <tr><th colspan="2">Classification stats</th></tr>
-<tr><td><kbd>Total number of any items that are <kbd>OriginalItem</kbd> and are not duplicates:</kbd></td><td><kbd><span id="HTML_OriginalItemCount"></span></kbd></td></tr>
-<tr><td><kbd>Total number of duplicates (not blacklisted):</kbd></td><td><kbd><span id="HTML_DupeCount"></span></kbd></td></tr>
-<tr><td><kbd>Total number of empty lines:</kbd></td><td><kbd><span id="HTML_EmptyCount"></span></kbd></td></tr>
-<tr><td><kbd>Total number of lines only having space characters:</kbd></td><td><kbd><span id="HTML_SpaceCount"></span></td></tr>
-<tr><td><kbd>Total number of items that got blacklisted (ignoring duplicates):</kbd></td><td><kbd><span id="HTML_BlacklistCount"></span></td></tr>
-<tr><td><kbd>Total number of items that got blacklisted and are duplicates:</kbd></td><td><kbd><span id="HTML_DuplicateBlacklistCount"></span></td></tr>
+<tr><td><kbd>Total number of any items that are <kbd>OriginalItem</kbd> and are not duplicates:</kbd></td><td id="HTML_BarGraph_OriginalItemCount"><kbd><span id="HTML_OriginalItemCount"></span></kbd></td></tr>
+<tr><td><kbd>Total number of duplicates (not blacklisted):</kbd></td><td id="HTML_BarGraph_DupeCount"><kbd><span id="HTML_DupeCount"></span></kbd></td></tr>
+<tr><td><kbd>Total number of empty lines:</kbd></td><td id="HTML_BarGraph_EmptyCount"><kbd><span id="HTML_EmptyCount"></span></kbd></td></tr>
+<tr><td><kbd>Total number of lines only having space characters:</kbd></td><td id="HTML_BarGraph_SpaceCount"><kbd><span id="HTML_SpaceCount"></span></td></tr>
+<tr><td><kbd>Total number of items that got blacklisted (ignoring duplicates):</kbd></td><td id="HTML_BarGraph_BlacklistCount"><kbd><span id="HTML_BlacklistCount"></span></td></tr>
+<tr><td><kbd>Total number of items that got blacklisted and are duplicates:</kbd></td><td id="HTML_BarGraph_DuplicateBlacklistCount"><kbd><span id="HTML_DuplicateBlacklistCount"></span></td></tr>
 </table><br>
 
 <span id="OutputTable"></span>
@@ -168,20 +168,20 @@ Sort:
 						}
 					}
 			//Label items that match with blacklist as "Blacklisted"
-			if (InputList[Index][2] != "EmptyLine") {
-				let HasFoundBlacklisted = false //If any item matches, quit looping.
-				for (let Index2 = 0; Index2 < InputBlacklist.length && HasFoundBlacklisted == false; Index2++) {
-					if (InputList[Index][0] == InputBlacklist[Index2]) {//If matches with blacklisted items
-						if (InputList[Index][2] != "Duplicate") {
-							InputList[Index][2] = "Blacklisted"
-							Count_Blacklisted++
-						} else {
-							InputList[Index][2] = "DuplicateBlacklisted"
+				if (InputList[Index][2] != "EmptyLine") {
+					let HasFoundBlacklisted = false //If any item matches, quit looping.
+					for (let Index2 = 0; Index2 < InputBlacklist.length && HasFoundBlacklisted == false; Index2++) {
+						if (InputList[Index][0] == InputBlacklist[Index2]) {//If matches with blacklisted items
+							if (InputList[Index][2] != "Duplicate") {
+								InputList[Index][2] = "Blacklisted"
+								Count_Blacklisted++
+							} else {
+								InputList[Index][2] = "DuplicateBlacklisted"
+							}
+							HasFoundBlacklisted = true
 						}
-						HasFoundBlacklisted = true
 					}
 				}
-			}
 			//Count blacklisted and duplicates
 				if (InputList[Index][2] == "Duplicate") {
 					Count_Duplicates++
@@ -244,14 +244,30 @@ Sort:
 		//Output
 			//Statistics. Had to use "BigInt(Number).toString(10)" to avoid potential E notation.
 				document.getElementById("HTML_LineCount").innerHTML = BigInt(Count_Lines).toString(10)
-				document.getElementById("HTML_HowManyAfterFilter").innerHTML = BigInt(InputList.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length, Count_Lines, 2) + ")"
-				document.getElementById("HTML_HowManyRemovedAfterFilter").innerHTML = BigInt(Count_Lines - InputList.length).toString(10) + " (" + BetterPercentageUsingInts(Count_Lines - InputList.length, Count_Lines, 2) + ")"
-				document.getElementById("HTML_OriginalItemCount").innerHTML = BigInt(Count_OriginalItem).toString(10)
-				document.getElementById("HTML_DupeCount").innerHTML = BigInt(Count_Duplicates).toString(10)
-				document.getElementById("HTML_EmptyCount").innerHTML = BigInt(Count_EmptyLines).toString(10)
-				document.getElementById("HTML_SpaceCount").innerHTML = BigInt(Count_LinesWithJustSpace).toString(10)
-				document.getElementById("HTML_BlacklistCount").innerHTML = BigInt(Count_Blacklisted).toString(10)
-				document.getElementById("HTML_DuplicateBlacklistCount").innerHTML = BigInt(Count_DuplicateBlacklisted).toString(10)
+				//How many after filtering
+					document.getElementById("HTML_BarGraph_HowManyAfterFilter").style = "background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(InputList.length, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(InputList.length, Count_Lines) + " 100%)"
+					document.getElementById("HTML_HowManyAfterFilter").innerHTML = BigInt(InputList.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length, Count_Lines, 2) + ")"
+				//How many removed after filtering
+					document.getElementById("HTML_BarGraph_HowManyRemovedAfterFilter").style = "background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(Count_Lines - InputList.length, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Lines - InputList.length, Count_Lines) + " 100%)"
+					document.getElementById("HTML_HowManyRemovedAfterFilter").innerHTML = BigInt(Count_Lines - InputList.length).toString(10) + " (" + BetterPercentageUsingInts(Count_Lines - InputList.length, Count_Lines, 2) + ")"
+				//Originals
+					document.getElementById("HTML_BarGraph_OriginalItemCount").style = "background-image: linear-gradient(to right, #008000, " + BetterPercentageUsingFloatsForBarGraphs(Count_OriginalItem, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_OriginalItem, Count_Lines) + " 100%)"
+					document.getElementById("HTML_OriginalItemCount").innerHTML = BigInt(Count_OriginalItem).toString(10) + " (" + BetterPercentageUsingInts(Count_OriginalItem, Count_Lines, 2) + ")"
+				//Duplicates
+					document.getElementById("HTML_BarGraph_DupeCount").style = "background-image: linear-gradient(to right, #800000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Duplicates, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Duplicates, Count_Lines) + " 100%)"
+					document.getElementById("HTML_DupeCount").innerHTML = BigInt(Count_Duplicates).toString(10) + " (" + BetterPercentageUsingInts(Count_Duplicates, Count_Lines, 2) + ")"
+				//Empty lines
+					document.getElementById("HTML_BarGraph_EmptyCount").style = "background-image: linear-gradient(to right, #808080, " + BetterPercentageUsingFloatsForBarGraphs(Count_EmptyLines, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_EmptyLines, Count_Lines) + " 100%)"
+					document.getElementById("HTML_EmptyCount").innerHTML = BigInt(Count_EmptyLines).toString(10) + " (" + BetterPercentageUsingInts(Count_EmptyLines, Count_Lines, 2) + ")"
+				//Just space
+					document.getElementById("HTML_BarGraph_SpaceCount").style = "background-image: linear-gradient(to right, #A08080, " + BetterPercentageUsingFloatsForBarGraphs(Count_LinesWithJustSpace, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_LinesWithJustSpace, Count_Lines) + " 100%)"
+					document.getElementById("HTML_SpaceCount").innerHTML = BigInt(Count_LinesWithJustSpace).toString(10) + " (" + BetterPercentageUsingInts(Count_LinesWithJustSpace, Count_Lines, 2) + ")"
+				//Blacklist
+					document.getElementById("HTML_BarGraph_BlacklistCount").style = "background-image: linear-gradient(to right, #ff6699, " + BetterPercentageUsingFloatsForBarGraphs(Count_Blacklisted, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Blacklisted, Count_Lines) + " 100%)"
+					document.getElementById("HTML_BlacklistCount").innerHTML = BigInt(Count_Blacklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_Blacklisted, Count_Lines, 2) + ")"
+				//Dupe and blacklist
+					document.getElementById("HTML_BarGraph_DuplicateBlacklistCount").style = "background-image: linear-gradient(to right, #ff6666, " + BetterPercentageUsingFloatsForBarGraphs(Count_DuplicateBlacklisted, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_DuplicateBlacklisted, Count_Lines) + " 100%)"
+					document.getElementById("HTML_DuplicateBlacklistCount").innerHTML = BigInt(Count_DuplicateBlacklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_DuplicateBlacklisted, Count_Lines, 2) + ")"
 			//Plaintext
 				let OutputTextArea = ""
 				for (let Index = 0; Index < InputList.length; Index++) {
@@ -446,6 +462,24 @@ Sort:
 					let DecimalPart = OutputString.substring(OutputString.length - NumberOfDigitsAfterDec)
 			return WholeNumberPart + "." + DecimalPart + "%"
 		}
+	}
+	function BetterPercentageUsingFloatsForBarGraphs(Quantity, MaxQuantity) {
+		//This one is made for bar graphs, specifically used for CSS
+		//linear gradients. If division by zero occurred, returns 0,
+		//Otherwise it return a string representing values 0-100%
+		//(clamped to 0-100).
+		if (MaxQuantity == 0) {
+			return "0%"
+		} else {
+			return clamp((Quantity * 100 / MaxQuantity), 0, 100).toString(10) + "%" //I find it more exact to multiply by 100 first and then divide so that most of the rounding errors happen on the final step.
+		}
+	}
+	function clamp(num, min, max) {
+		//Restrict a number within a specified range.
+			if (isNaN(num) == true) {
+				num = 0
+			}
+			return num <= min ? min : num >= max ? max : num;
 	}
 	//Copy text from textarea
 		function setClipboard(String) {
