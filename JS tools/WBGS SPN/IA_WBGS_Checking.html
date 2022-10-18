@@ -291,7 +291,7 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 						//Successful saves
 							Output += "<tr>"
 							Output += "<td rowspan='7'>" +  BigInt(InputList.length).toString(10) + " (100.00%) total URL(s) found</td>"
-							Output += "<td rowspan='2'>" + BigInt(Count_Success).toString(10) + " (" + BetterPercentageUsingInts(Count_Success, InputList.length, 2) + ") successful saves</td>"
+							Output += "<td rowspan='2' style='background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(Count_Success, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Success, InputList.length) + " 100%)'>" + BigInt(Count_Success).toString(10) + " (" + BetterPercentageUsingInts(Count_Success, InputList.length, 2) + ") successful saves</td>"
 							//Saved before
 								Output += "<td style='background-image: linear-gradient(to right, #008000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_SavedBefore, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_SavedBefore, InputList.length) + " 100%)'>" + BigInt(Count_Success_SavedBefore) + " (" + BetterPercentageUsingInts(Count_Success_SavedBefore, InputList.length, 2) + " of all URLs"
 								if (Count_Success != 0) {
@@ -308,7 +308,7 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 								Output += ") first archive(s)</td>"
 						//Unsures
 							Output += "<tr>"
-							Output += "<td rowspan='5'>" + BigInt(Count_Unsures).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsures, InputList.length, 2) + ") not sure saved</td>"
+							Output += "<td rowspan='5' style='background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsures, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsures, InputList.length) + " 100%)'>" + BigInt(Count_Unsures).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsures, InputList.length, 2) + ") not sure saved</td>"
 							//No results
 								Output += "<td style='background-image: linear-gradient(to right, #808080, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_NoIAResult, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_NoIAResult, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_NoIAResult).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_NoIAResult, InputList.length, 2) + " of all URLs"
 								if (Count_Unsures != 0) {
