@@ -80,6 +80,7 @@ Filter:<br>
 		<li><label><input type="checkbox" class="TwitterURLFilter TwitterImages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimg_Orig" id="FilterSetting_TwitterMedia_PbsTwimg_Orig">Old Images (original resolution, <kbd>https://pbs.twimg.com/media/&lt;base_64_string&gt;.&lt;file_type&gt;:orig</kbd>)</label></li>
 		<li><label><input type="checkbox" class="TwitterURLFilter TwitterImages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgModern" id="FilterSetting_TwitterMedia_PbsTwimgModern" checked>Modern Images (default resolution <kbd>https://pbs.twimg.com/media/&lt;base_64_string&gt;?format=&lt;file_type&gt;&name=&lt;resolution_name&gt;</kbd>)</label></li>
 		<li><label><input type="checkbox" class="TwitterURLFilter TwitterImages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgModern_Orig" id="FilterSetting_TwitterMedia_PbsTwimgModern_Orig" checked>Modern Images (original resolution, <kbd>https://pbs.twimg.com/media/&lt;base_64_string&gt;?format=&lt;file_type&gt;&name=orig</kbd>)</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterImages" onchange="AutoUpdateCode()" data-js_url_filter="NitterMedia_PbsTwimg_Orig" id="FilterSetting_NitterMedia_PbsTwimg_Orig" checked>Nitter images (full resolution), <kbd>https://nitter.net/pic/orig/media%2F&lt;base_64_string&gt;.jpg</kbd>)</label></li>
 	</ul>
 	<li>Profile images</li>
 	<ul>
@@ -91,6 +92,7 @@ Filter:<br>
 	<ul>
 		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgProfileBanner_600x200" id="FilterSetting_TwitterMedia_PbsTwimgProfileBanner_600x200" checked>600x200</label></li>
 		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgProfileBanner_1500x500" id="FilterSetting_TwitterMedia_PbsTwimgProfileBanner_1500x500" checked>1500x500 (max resolution?)</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="NitterMedia_PbsTwimgProfileBanner_1500x500" id="FilterSetting_NitterMedia_PbsTwimgProfileBanner_1500x500" checked>Nitter 1500x500 (max resolution?)</label></li>
 	</ul>
 	<li>Card images</li>
 	<ul>
@@ -101,12 +103,15 @@ Filter:<br>
 	<ul>
 		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimg_Video" id="FilterSetting_TwitterMedia_PbsTwimg_Video" checked>Video (<kbd>https://pbs.twimg.com/tweet_video/[video_id].mp4</kbd>)</label></li>
 		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_VideoTwimg" id="FilterSetting_TwitterMedia_VideoTwimg" checked>Video (legacy URL? <kbd>https://video.twimg.com/tweet_video/[video_id].mp4</kbd>)</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos" onchange="AutoUpdateCode()" data-js_url_filter="NitterMedia_VideoTwimg" id="FilterSetting_NitterMedia_VideoTwimg" checked>Nitter Video (legacy URL? <kbd>https://nitter.net/pic/video.twimg.com%2Ftweet_video%2F[video_id].mp4</kbd>)</label></li>
 		<li>Thumbnails:<button onclick="ChangeFilterSettings('TwitterVideosThumb', 1); AutoUpdateCode()">Check All</button><button onclick="ChangeFilterSettings('TwitterVideosThumb', 0); AutoUpdateCode()">Uncheck All</button><button onclick="ChangeFilterSettings('TwitterVideosThumb', 2); AutoUpdateCode()">Invert</button></li>
 		<ul>
 		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimg_Video_Thumb" id="FilterSetting_TwitterMedia_PbsTwimg_Video_Thumb" checked>Video thumbnail (old and still used, <kbd>https://pbs.twimg.com/tweet_video_thumb/[video_id].[image_file_type]</kbd>)</label></li>
 		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimg_Video_Thumb_Orig" id="FilterSetting_TwitterMedia_PbsTwimg_Video_Thumb_Orig" checked>Video thumbnail, original (old and still used, <kbd>https://pbs.twimg.com/tweet_video_thumb/[video_id].[image_file_type]:orig</kbd>)</label></li>
 		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgModern_Video_Thumb_DefaultResolution" id="FilterSetting_TwitterMedia_PbsTwimgModern_Video_Thumb_DefaultResolution">[404] Modern video thumbnail (default resolution, <kbd>https://pbs.twimg.com/tweet_video_thumb/[video_id]?format=[image_file_type]</kbd>) Note that this goes 404, so a <kbd>&name=<resolution></kbd> must be specified.</label></li>
-		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgModern_Video_Thumb_Orig" id="FilterSetting_TwitterMedia_PbsTwimgModern_Video_Thumb_Orig" checked>Modern video thumbnail (original resolution, <kbd>https://pbs.twimg.com/tweet_video_thumb/[video_id]?format=[image_file_type]&name=orig</kbd>)</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgModern_Video_Thumb" id="FilterSetting_TwitterMedia_PbsTwimgModern_Video_Thumb_Orig" checked>Modern video thumbnail (original resolution, <kbd>https://pbs.twimg.com/tweet_video_thumb/[video_id]?format=[image_file_type]&name=orig</kbd>)</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="NitterMedia_PbsTwimgModern_Video_Thumb" id="FilterSetting_NitterMedia_PbsTwimgModern_Video_Thumb" checked>Nitter video thumbnail (&ldquo;small&rdquo; resolution, <kbd>https://nitter.net/pic/tweet_video_thumb%2F[video_id].[image_file_type]%3Fname%3Dsmall</kbd>)</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="NitterMedia_PbsTwimgModern_Video_Thumb_Orig" id="FilterSetting_NitterMedia_PbsTwimgModern_Video_Thumb_Orig" checked>Nitter video thumbnail (original resolution, <kbd>https://nitter.net/pic/tweet_video_thumb%2F[video_id].[image_file_type]%3Fname%3Dorig</kbd>)</label></li>
 		</ul>
 	</ul>
 	<li>Other</li>
@@ -320,6 +325,9 @@ Misc:
 					if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimgModern_Orig").checked) {
 						UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/media/" + ImageFileNameItself + "?format=" + FileExtensionItself + "&name=orig", "TwitterMedia_PbsTwimgModern_Orig", "-1"]))
 					}
+					if (document.getElementById("FilterSetting_NitterMedia_PbsTwimg_Orig").checked) {
+						UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/pic/orig/media%2F" + ImageFileNameItself + "." + FileExtensionItself, "NitterMedia_PbsTwimg_Orig", "-1"]))
+					}
 			} else if (/http(s)?\:\/\/pbs\.twimg\.com\/profile_images\//.test(ListOfURLs[i])) {
 				//Profile images
 				//https://pbs.twimg.com/profile_images/840393405612015616/zPovL4tt.jpg
@@ -380,6 +388,9 @@ Misc:
 					if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimgProfileBanner_1500x500").checked) {
 						UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/profile_banners/" + ProfileNumber + "/" + ProfileNumber2 + "/1500x500", "TwitterMedia_PbsTwimgProfileBanner_1500x500", "-1"]))
 					}
+					if (document.getElementById("FilterSetting_NitterMedia_PbsTwimgProfileBanner_1500x500").checked) {
+						UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/pic/https%3A%2F%2Fpbs.twimg.com%2Fprofile_banners%2F" + ProfileNumber + "%2F" + ProfileNumber2 + "%2F1500x500", "NitterMedia_PbsTwimgProfileBanner_1500x500", "-1"]))
+					}
 			} else if (/^http(s)?\:\/\/(pbs|video)\.twimg\.com\/tweet_video(_thumb)?\/[A-Za-z0-9]+/.test(ListOfURLs[i])) {
 				//Videos (gif?). Videos are always .mp4 on the extensions. 
 					let StringToLook = ListOfURLs[i].replace(/http(s):\/\/(pbs|video)\.twimg.com\/tweet_video(_thumb)?\//, "")
@@ -393,6 +404,10 @@ Misc:
 						if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimg_Video").checked) {
 							//https://pbs.twimg.com/tweet_video/Fa1yZ6zX0AEPcET.mp4
 							UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/tweet_video/" + VideoFileName + ".mp4", "TwitterMedia_PbsTwimg_Video", "-1"]))
+						}
+						if (document.getElementById("FilterSetting_NitterMedia_VideoTwimg").checked) {
+							//https://nitter.net/pic/video.twimg.com%2Ftweet_video%2F[video_id].mp4
+							UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/pic/video.twimg.com%2Ftweet_video%2F" + VideoFileName + ".mp4", "NitterMedia_VideoTwimg", "-1"]))
 						}
 					//Thumbnail image
 						if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimg_Video_Thumb").checked) {
@@ -410,6 +425,19 @@ Misc:
 						if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimgModern_Video_Thumb_Orig").checked) {
 							if (VideoFileExtension != "mp4") {
 								UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/tweet_video_thumb/" + VideoFileName + "?format=" + VideoFileExtension + "&name=orig", "TwitterMedia_PbsTwimgModern_Video_Thumb_Orig", "-1"]))
+							}
+						}
+						
+						if (document.getElementById("FilterSetting_NitterMedia_PbsTwimgModern_Video_Thumb").checked) {
+							//https://nitter.net/pic/tweet_video_thumb%2FFesgS6naMAAWW0j.jpg%3Fname%3Dsmall
+							if (VideoFileExtension != "mp4") {
+								UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/pic/tweet_video_thumb%2F" + VideoFileName + "." + VideoFileExtension + "%3Fname%3Dsmall", "NitterMedia_PbsTwimgModern_Video_Thumb", "-1"]))
+							}
+						}
+						if (document.getElementById("FilterSetting_NitterMedia_PbsTwimgModern_Video_Thumb_Orig").checked) {
+							//https://nitter.net/pic/tweet_video_thumb%2FFesgS6naMAAWW0j.jpg%3Fname%3Dorig
+							if (VideoFileExtension != "mp4") {
+								UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/pic/tweet_video_thumb%2F" + VideoFileName + "." + VideoFileExtension + "%3Fname%3Dorig", "NitterMedia_PbsTwimgModern_Video_Thumb_Orig", "-1"]))
 							}
 						}
 			} else if (/http(s)?\:\/\/twitter\.com\/i\/events\//.test(ListOfURLs[i])) {
