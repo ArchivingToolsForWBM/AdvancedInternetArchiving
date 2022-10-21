@@ -124,8 +124,8 @@ Sort:
 		//have them displayed? Therefore using loops and flagging them is a more viable option.
 		
 		let InputBlacklist = [...new Set(((document.getElementById("TextInput_Blacklist").value).split('\n')))]
-		InputBlacklist = InputBlacklist.filter((ArrayElement) => {return !(/^\s*$/.test(ArrayElement))})
-		document.getElementById("UniqueBlacklistCount").innerHTML = BigInt(InputBlacklist.length).toString(10)
+		InputBlacklist = new Set(InputBlacklist.filter((ArrayElement) => {return !(/^\s*$/.test(ArrayElement))}))
+		document.getElementById("UniqueBlacklistCount").innerHTML = BigInt(InputBlacklist.size).toString(10)
 		let Count_Lines = InputList.length
 		let Count_OriginalItem = 0
 		let Count_Duplicates = 0
@@ -169,16 +169,12 @@ Sort:
 					}
 			//Label items that match with blacklist as "Blacklisted"
 				if (InputList[Index][2] != "EmptyLine") {
-					let HasFoundBlacklisted = false //If any item matches, quit looping.
-					for (let Index2 = 0; Index2 < InputBlacklist.length && HasFoundBlacklisted == false; Index2++) {
-						if (InputList[Index][0] == InputBlacklist[Index2]) {//If matches with blacklisted items
-							if (InputList[Index][2] != "Duplicate") {
-								InputList[Index][2] = "Blacklisted"
-								Count_Blacklisted++
-							} else {
-								InputList[Index][2] = "DuplicateBlacklisted"
-							}
-							HasFoundBlacklisted = true
+					if (InputBlacklist.has(InputList[Index][0])) {
+						if (InputList[Index][2] != "Duplicate") {
+							InputList[Index][2] = "Blacklisted"
+							Count_Blacklisted++
+						} else {
+							InputList[Index][2] = "DuplicateBlacklisted"
 						}
 					}
 				}
