@@ -13,7 +13,7 @@
 //
 //Usage notes:
 //-When editing "ListOfURLs", and after you save, refresh the page using this script so that the change is applied and loads the first URL correctly.
-//-This script also works on any page with infinute loading.
+//-This script also works on any page with infinite loading, if you edit the code in "GetTwitterLinks" to not filter certain URLs.
 //--However, if you have the page loads longer than the number of seconds in "LoadWaitTime" here, you will miss extracting links from the content that haven't been loaded yet.
 //
 //How to use:
@@ -26,7 +26,9 @@
 //4.      Open the dev tools and on console, so you'll see if the script is working or not.
 //5.      Open the monkey menu and click on "TwitCrawl - Start" to start crawling. It will open each URL in "ListOfURLs" in the same order as the text.
 //7.      If you get an alert box, then there is something wrong with the browser storage (I never ran into these issues during testing, I would assume
-//        either due to memory corruption, out of memory or something...)
+//        either due to memory corruption, out of memory or something...). Fix whatever issue you have and reset this script ("TwitCrawl - Stop and reset.")
+//8.      Once all the URLs have been traversed and get the alert box saying it is done, open the monkey menu and click on "Print twitter URL extraction to console log"
+//        The console log will now have the list (without duplicates) displayed for you to copy.
 
 (async () => {
 	//Settings
@@ -89,7 +91,7 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 				}
 			}
 			
-			console.log("Twitter crawler - List of URLs:\n" + StringOfList)
+			console.log("TwitCrawl - List of URLs:\n" + StringOfList)
 		}
 		GM.registerMenuCommand("Print twitter URL extraction to console log", PrintOutList, "C");
 	//Get storage values
@@ -130,7 +132,7 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 			}
 		});
 		//Console log how many items were added
-			console.log("Twitter crawler - Extraction count: " + BigInt(TwitterURLSet.size).toString(10));
+			console.log("TwitCrawl - Extraction count: " + BigInt(TwitterURLSet.size).toString(10));
 		//Save it to a storage
 			await GM.setValue("TwitterURLsSet", TwitterURLSet).then(
 				() => {},
@@ -180,7 +182,7 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 					}
 					
 					if (IsPageLoaded == false) { //If tweets not loaded yet
-						console.log("Twitter crawler - Page not loaded yet")
+						console.log("TwitCrawl - Page not loaded yet")
 					} else { //If page are loaded
 							PreviousYScrollPosition = window.scrollY //Previous position to see if the page has been scrolled.
 						//Autoscroll
@@ -191,9 +193,9 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 								HowManySecondsOfNoScroll = clamp(HowManySecondsOfNoScroll, 0, LoadWaitTime) //Clamp the seconds counter to avoid negative number display
 								
 								if (ScrollingDirection == -1) {
-									console.log("Twitter crawler - Scroll top reached. Seconds left before changing switching to scroll down: " + (LoadWaitTime - HowManySecondsOfNoScroll).toString(10))
+									console.log("TwitCrawl - Scroll top reached. Seconds left before changing switching to scroll down: " + (LoadWaitTime - HowManySecondsOfNoScroll).toString(10))
 								} else {
-									console.log("Twitter crawler - Scroll bottom reached. Seconds left before loading next URL: " + (LoadWaitTime - HowManySecondsOfNoScroll).toString(10))
+									console.log("TwitCrawl - Scroll bottom reached. Seconds left before loading next URL: " + (LoadWaitTime - HowManySecondsOfNoScroll).toString(10))
 								}
 								if (HowManySecondsOfNoScroll >= LoadWaitTime) {
 									if (ScrollingDirection == -1) {
@@ -205,9 +207,9 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 							} else { //Scrolling occured
 								HowManySecondsOfNoScroll = 0 //reset the counter
 								if (ScrollingDirection == -1) {
-									console.log("Twitter crawler - Scrolling upward...")
+									console.log("TwitCrawl - Scrolling upward...")
 								} else {
-									console.log("Twitter crawler - Scrolling downward...")
+									console.log("TwitCrawl - Scrolling downward...")
 								}
 							}
 							PreviousYScrollPosition = window.scrollY
@@ -224,7 +226,7 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 		() => {
 			//Success
 				if (URL_index < ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length&&URL_index>=0) {
-					console.log("Twitter crawler - Sequence URL progress: " + BigInt(URL_index+1).toString(10) + "/" + BigInt(ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length).toString(10) + " (" + clamp(((URL_index+1)*100)/ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length).toFixed(2) + "%, " + BigInt(ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length-URL_index-1).toString(10) + " remaining, Visiting: " + ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g)[URL_index] + " )")
+					console.log("TwitCrawl - Sequence URL progress: " + BigInt(URL_index+1).toString(10) + "/" + BigInt(ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length).toString(10) + " (" + clamp(((URL_index+1)*100)/ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length).toFixed(2) + "%, " + BigInt(ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length-URL_index-1).toString(10) + " remaining, Visiting: " + ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g)[URL_index] + " )")
 					location.href = ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g)[URL_index] //Code stops executing after this executes.
 				} else {
 					alert("Done!")
