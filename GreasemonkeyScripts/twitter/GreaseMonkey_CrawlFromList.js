@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name	Extract Twitter links, videos (internal) and images, crawler edition
+// @name	Crawl Twitter links, videos (internal) and images.
 // @namespace	twitter.com
 // @version	0.1
 // @description	Extracts URLs and have them stored in a set (browser storage)
@@ -15,6 +15,18 @@
 //-When editing "ListOfURLs", and after you save, refresh the page using this script so that the change is applied and loads the first URL correctly.
 //-This script also works on any page with infinute loading.
 //--However, if you have the page loads longer than the number of seconds in "LoadWaitTime" here, you will miss extracting links from the content that haven't been loaded yet.
+//
+//How to use:
+//1.      Edit this script on ListOfURLs, a list of twitter URLs. Works best if the URL contains multiple tweets, such as replies
+//        or searches.
+//1.1     Make any necessary changes in "Settings" (below). For example, if you have slow internet connection, I recommend setting "LoadWaitTime" to a higher number.
+//2.      Save. Any currently opened tab using this script needs to be refreshed to reflect the changes.
+//3.      Open the monkey menu and on user script commands (assuming you are using greasemonkey):
+//3.1     Clear the list ("TwitCrawl - clear URL list") so you can get rid of potentially unwanted URLs
+//4.      Open the dev tools and on console, so you'll see if the script is working or not.
+//5.      Open the monkey menu and click on "TwitCrawl - Start" to start crawling. It will open each URL in "ListOfURLs" in the same order as the text.
+//7.      If you get an alert box, then there is something wrong with the browser storage (I never ran into these issues during testing, I would assume
+//        either due to memory corruption, out of memory or something...)
 
 (async () => {
 	//Settings
@@ -41,13 +53,13 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 			await GM.setValue("TwitterURLIndex", -2); //TwitterURLIndex == -2 so that when starting a process will automatically load the first URL
 			await GM.setValue("TwitterURLSequence_Enabled", false);
 		}
-		GM.registerMenuCommand("Stop and reset URL sequence crawler", Reset, "R");
+		GM.registerMenuCommand("TwitCrawl - Stop and reset.", Reset, "R");
 		
 		async function Start() {
 			await GM.setValue("TwitterURLIndex", -2)
 			await GM.setValue("TwitterURLSequence_Enabled", true);
 		}
-		GM.registerMenuCommand("Start URL sequence crawler", Start, "R");
+		GM.registerMenuCommand("TwitCrawl - Start", Start, "R");
 		
 		
 		async function ClearTwitterSetList() {
@@ -62,7 +74,7 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 				}
 			);
 		}
-		GM.registerMenuCommand("Clear twitter URL extraction set", ClearTwitterSetList, "R");
+		GM.registerMenuCommand("TwitCrawl - clear URL list", ClearTwitterSetList, "R");
 		
 		async function PrintOutList() {
 			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
@@ -140,6 +152,9 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 		for (let i = 0; i < document.getElementsByTagName("SPAN").length; i++) {
 			if (document.getElementsByTagName("SPAN")[i].innerText == "Show replies") {
 				document.getElementsByTagName("SPAN")[i].click()
+			}
+			if (document.getElementsByTagName("SPAN")[i].innerText == "Show additional replies, including those that may contain offensive content") {
+				document.getElementsByTagName("SPAN")[i].childNodes[0].click()
 			}
 		}
 	}
