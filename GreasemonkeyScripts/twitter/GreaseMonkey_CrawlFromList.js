@@ -29,6 +29,8 @@
 //        either due to memory corruption, out of memory or something...). Fix whatever issue you have and reset this script ("TwitCrawl - Stop and reset.")
 //8.      Once all the URLs have been traversed and get the alert box saying it is done, open the monkey menu and click on "Print twitter URL extraction to console log"
 //        The console log will now have the list (without duplicates) displayed for you to copy.
+//
+//The list contains all the extracted URLs, including ones detected to have "Show replies" if you wanted to extract additional tweets from a tweet.
 
 (async () => {
 	//Settings
@@ -105,32 +107,42 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 	
 	
 	async function GetTwitterLinks() {
-		Array.from(document.querySelectorAll('a[href*="/"]')).forEach(link=>{
-			if(!TwitterURLSet.has(link.href)&&Boolean(link.href.match(/twitter\.com\/(?!privacy|notifications|messages|home|explore|search-advanced|tos)[^\\?&\\.\\/\\:]+$/))) {
-				AddTo_TwitterURLSet(link.href);
-			}
-		});
-		Array.from(document.querySelectorAll('a[href*="/status/"]')).forEach(link=>{
-			let TweetURL = link.href.match(/https:\/\/twitter\.com\/[a-zA-Z0-9_]+\/status\/\d+/)[0]
-			if(!TwitterURLSet.has(TweetURL)&&link.href.match(/twitter\.com\/.+?\/status\/\d+/)) {
-				AddTo_TwitterURLSet(TweetURL);
-			}
-		});
-		Array.from(document.querySelectorAll('a[href*="/i/events/"]')).forEach(link=>{
-			if(!TwitterURLSet.has(link.href)&&link.href.match(/twitter\.com\/i\/events\/\d+/)) {
-				AddTo_TwitterURLSet(link.href);
-			}
-		});
-		Array.from(document.querySelectorAll('[src*="pbs.twimg.com"]')).forEach(link=>{
-			if(!TwitterURLSet.has(link.src)) {
-				AddTo_TwitterURLSet(link.src);
-			}
-		});
-		Array.from(document.querySelectorAll('[src*="video.twimg.com/"]')).forEach(link=>{
-			if(!TwitterURLSet.has(link.src)) {
-				AddTo_TwitterURLSet(link.src);
-			}
-		});
+		//URLs and media
+			Array.from(document.querySelectorAll('a[href*="/"]')).forEach(link=>{
+				if(!TwitterURLSet.has(link.href)&&Boolean(link.href.match(/twitter\.com\/(?!privacy|notifications|messages|home|explore|search-advanced|tos)[^\\?&\\.\\/\\:]+$/))) {
+					AddTo_TwitterURLSet(link.href);
+				}
+			});
+			Array.from(document.querySelectorAll('a[href*="/status/"]')).forEach(link=>{
+				let TweetURL = link.href.match(/https:\/\/twitter\.com\/[a-zA-Z0-9_]+\/status\/\d+/)[0]
+				if(!TwitterURLSet.has(TweetURL)&&link.href.match(/twitter\.com\/.+?\/status\/\d+/)) {
+					AddTo_TwitterURLSet(TweetURL);
+				}
+			});
+			Array.from(document.querySelectorAll('a[href*="/i/events/"]')).forEach(link=>{
+				if(!TwitterURLSet.has(link.href)&&link.href.match(/twitter\.com\/i\/events\/\d+/)) {
+					AddTo_TwitterURLSet(link.href);
+				}
+			});
+			Array.from(document.querySelectorAll('[src*="pbs.twimg.com"]')).forEach(link=>{
+				if(!TwitterURLSet.has(link.src)) {
+					AddTo_TwitterURLSet(link.src);
+				}
+			});
+			Array.from(document.querySelectorAll('[src*="video.twimg.com/"]')).forEach(link=>{
+				if(!TwitterURLSet.has(link.src)) {
+					AddTo_TwitterURLSet(link.src);
+				}
+			});
+		//Get tweets that have "Show this thread"
+			Array.from(document.getElementsByTagName("a")).forEach((link, i)=>{
+				if(document.getElementsByTagName("a")[i].innerText == "Show this thread" && document.getElementsByTagName("a")[i].hasAttribute("href")) {
+					let Item = link + " (Show this thread)"
+					if(!TwitterURLSet.has(Item)) {
+						AddTo_TwitterURLSet(Item)
+					}
+				}
+			});
 		//Console log how many items were added
 			console.log("TwitCrawl - Extraction count: " + BigInt(TwitterURLSet.size).toString(10));
 		//Save it to a storage
