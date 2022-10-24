@@ -155,8 +155,10 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 			if (document.getElementsByTagName("SPAN")[i].innerText == "Show replies") {
 				document.getElementsByTagName("SPAN")[i].click()
 			}
-			if (document.getElementsByTagName("SPAN")[i].innerText == "Show additional replies, including those that may contain offensive content") {
-				document.getElementsByTagName("SPAN")[i].childNodes[0].click()
+		}
+		for (let i = 0; i < document.getElementsByTagName("DIV").length; i++) { //"Show additional replies, including those that may contain offensive content"
+			if (document.getElementsByTagName("DIV")[i].innerText == "Show") {
+				document.getElementsByTagName("DIV")[i].click()
 			}
 		}
 	}
