@@ -232,9 +232,13 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 					} else { //If page are loaded
 							PreviousYScrollPosition = window.scrollY //Previous position to see if the page has been scrolled.
 						//Autoscroll
+							//First check if this is a search (because a twitter search ALWAYS starts the scroll position at the top of the page and NEVER loads as you scroll up, unlike tweets that have other tweets before it in a thread)
+								if (/http(s)?\:\/\/(mobile\.)?twitter\.com\/search\?q=/.test(window.location.href)) {
+									ScrollingDirection = 1
+								}
 							window.scrollTo(0, window.scrollY+(ScrollDistancePerSecond * ScrollingDirection)); //Try to scroll the page
 						//Check if bottom has reached resulting in scrolling stops. If no scrolling for consecutive LoadWaitTime , load next URL.
-							if (PreviousYScrollPosition == window.scrollY) { //If no scrolling occured
+							if (PreviousYScrollPosition == window.scrollY) { //If no scrolling occurred
 								HowManySecondsOfNoScroll++ //Increment the number of seconds of no scroll
 								HowManySecondsOfNoScroll = clamp(HowManySecondsOfNoScroll, 0, LoadWaitTime) //Clamp the seconds counter to avoid negative number display
 								
@@ -250,7 +254,7 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 										NextURL(URL_index)
 									}
 								}
-							} else { //Scrolling occured
+							} else { //Scrolling occurred
 								HowManySecondsOfNoScroll = 0 //reset the counter
 								if (ScrollingDirection == -1) {
 									console.log("TwitCrawl - Scrolling upward...")
