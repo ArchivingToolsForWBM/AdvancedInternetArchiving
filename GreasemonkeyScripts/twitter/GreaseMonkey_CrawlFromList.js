@@ -7,18 +7,49 @@
 // @grant	GM.setValue
 // @grant	GM.getValue
 // @grant	GM.registerMenuCommand
+// @grant	GM.setClipboard
 // ==/UserScript==
 //NOTE: include had to be any site so that you can start the process on any page, so that it goes to a twitter page on the first URL on "ListOfURLs".
 //
 //
 //Usage notes:
 //-When editing "ListOfURLs", and after you save, refresh the page using this script so that the change is applied and loads the first URL correctly.
-//-This script also works on any page with infinite loading, if you edit the code in "GetTwitterLinks" to not filter certain URLs.
-//--However, if you have the page loads longer than the number of seconds in "LoadWaitTime" here, you will miss extracting links from the content that haven't been loaded yet.
+//-This script also works on any page with infinite loading, if you edit:
+//--the code in "GetTwitterLinks" to not filter certain URLs.
+//--remove the code between [Get tweets that have "Show this thread"] and the comment below it
+//-If you have the page loads longer than the number of seconds in "LoadWaitTime" here, you will miss extracting links from the content that haven't been loaded yet.
+//-The output will includes URLs of tweets, images, media, and a tweet URL of a tweet that have "Show Replies".
+//-Make sure ONLY 1 tab is running this. Each tab running this causes concurrent writes to browser storage (getValue and setValue) and could replace each other rather
+// than combining them. The index number pointing to which URL to load could increment by more than 1, skipping it entirely. Plus it is very slow and could trigger twitter's rate limits.
 //
 //How to use:
 //1.      Edit this script on ListOfURLs, a list of twitter URLs. Works best if the URL contains multiple tweets, such as replies
-//        or searches.
+//        or twitter search. Do note that on search and timelines, some tweets that do match may not appear due to indexing limitations, as twitter said in its help page:
+//        https://help.twitter.com/en/using-twitter/missing-tweets under "Tweets on my profile are cut off after a specific date".
+//
+//        To get around this, my real advice is that you use the search bar and search using restrictive filters, and break them into multiple searches. For example, by date, if you
+//        want (virtually) all tweets within 2020-01-01 to 2020-01-31, don't do this:
+//
+//          Example_search since:2020-01-01 until:2020-01-31
+//
+//        Instead break this up into multiple searches, be it roughly every 7 days, or each day (if the tweets you are searching happens to have tons of tweets per day):
+//
+//          Example_search since:2020-01-01 until:2020-01-02
+//          Example_search since:2020-01-03 until:2020-01-04
+//
+//
+//        I would assume this happens by freeing up the search index capacity since a "broad" search will have "too many results" that some tweets won't show up due to others
+//        taking over, while specific searches will limit many tweets, making it easier for tweets that meet the search criteria to show up.
+//
+//        The URL format of twitter search is this: https://twitter.com/search?q=(SearchBarContent)&src=typed_query&f=top[&f=TabFilter] Note that certain characters may be
+//        percent-encoded: https://en.wikipedia.org/wiki/Percent-encoding .
+//          (SearchBarContent) = The text you entered in the search bar
+//          [&f=TabFilter] = (optional) Search type, if this entirely omitted, would be "Top", otherwise if "TabFilter" is:
+//          live = "Latest" tab
+//          user = "People" tab
+//          image = "Photos" tab
+//          video = "Videos" tab
+//
 //1.1     Make any necessary changes in "Settings" (below). For example, if you have slow internet connection, I recommend setting "LoadWaitTime" to a higher number.
 //2.      Save. Any currently opened tab using this script needs to be refreshed to reflect the changes.
 //3.      Open the monkey menu and on user script commands (assuming you are using greasemonkey):
@@ -27,7 +58,7 @@
 //5.      Open the monkey menu and click on "TwitCrawl - Start" to start crawling. It will open each URL in "ListOfURLs" in the same order as the text.
 //7.      If you get an alert box, then there is something wrong with the browser storage (I never ran into these issues during testing, I would assume
 //        either due to memory corruption, out of memory or something...). Fix whatever issue you have and reset this script ("TwitCrawl - Stop and reset.")
-//8.      Once all the URLs have been traversed and get the alert box saying it is done, open the monkey menu and click on "Print twitter URL extraction to console log"
+//8.      Once all the URLs have been traversed and get the alert box saying it is done, open the monkey menu and click on "Print twitter URL extraction to clipboard"
 //        The console log will now have the list (without duplicates) displayed for you to copy.
 //
 //The list contains all the extracted URLs, including ones detected to have "Show replies" if you wanted to extract additional tweets from a tweet.
@@ -93,9 +124,10 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 				}
 			}
 			
-			console.log("TwitCrawl - List of URLs:\n" + StringOfList)
+			GM.setClipboard("TwitCrawl - List of URLs:\n" + StringOfList);
+			window.alert("List copied into clipboard.");
 		}
-		GM.registerMenuCommand("Print twitter URL extraction to console log", PrintOutList, "C");
+		GM.registerMenuCommand("Print twitter URL extraction to clipboard", PrintOutList, "C");
 	//Get storage values
 		var TwitterURLSet = await GM.getValue("TwitterURLsSet", new Set()).catch(function(reason) {
 			window.alert("Loading URL set failed!")
