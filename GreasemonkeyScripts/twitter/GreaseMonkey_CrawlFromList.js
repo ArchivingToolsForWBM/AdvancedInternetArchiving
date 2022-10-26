@@ -65,14 +65,14 @@
 
 (async () => {
 	//Settings
-		const ScrollDistancePerSecond = 840 //How many, in pixels scrolled, per second
-		const LoadWaitTime = 10 //How many seconds after detecting a scroll stop before loading next URL (this is so that it waits to load more tweets)
+		const ScrollDistancePerSecond = 1000 //How many, in pixels scrolled, per second
+		const LoadWaitTime = 2 //How many seconds after detecting a scroll stop before loading next URL (this is so that it waits to load more tweets)
 		//failsafe if too many items in the set could cause memory issues
 			const MaxSetSize = 100000
 	//Don't Touch
 		var PreviousYScrollPosition = 0
 		var HowManySecondsOfNoScroll = 0
-		let IsPageLoaded = false
+		let IsPageInitallyLoaded = false
 		var ScrollingDirection = -1
 			//^This makes it so the page starts scrolling upwards (long tweet threads that is above the tweet you are on and you scroll up causes the page's origin to "shift upwards"),
 			// which sets your scroll position and the entire page to a lower position.
@@ -175,6 +175,14 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 					}
 				}
 			});
+		//Get twitter URLs the browser is on that have potentially missed URLs, such as "Something went wrong. Try reloading."
+			let SomethingWentWrong = false
+			for (let i = 0; i < document.getElementsByTagName("SPAN").length && SomethingWentWrong == false; i++ ) {
+				if(document.getElementsByTagName("SPAN")[i].innerText == "Something went wrong. Try reloading."||document.getElementsByTagName("SPAN")[i].innerText == "Looks like you lost your connection. Please check it and try again.") {
+					AddTo_TwitterURLSet(window.location.href + "(May contain missed URLs)")
+					SomethingWentWrong = true
+				}
+			}
 		//Console log how many items were added
 			console.log("TwitCrawl - Extraction count: " + BigInt(TwitterURLSet.size).toString(10));
 		//Save it to a storage
@@ -219,15 +227,18 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 		if (TwitterURLSequenceEnabled) {
 			if (URL_index >= -1) {
 				//First, wait until page is loaded
-					for (let i = 0; i < (document.getElementsByTagName("input").length) && (IsPageLoaded == false); i++) {
-						if (document.getElementsByTagName("input")[i].hasAttribute("type")) { //Failsafe if attribute missing
-							if (document.getElementsByTagName("input")[i].type="text") {
-								IsPageLoaded = true
-							}
-						}
+					//for (let i = 0; i < (document.getElementsByTagName("input").length) && (IsPageInitallyLoaded == false); i++) {
+					//	if (document.getElementsByTagName("input")[i].hasAttribute("type")) { //Failsafe if attribute missing
+					//		if (document.getElementsByTagName("input")[i].type="text") {
+					//			IsPageInitallyLoaded = true
+					//		}
+					//	}
+					//}
+					if (document.getElementsByTagName("circle").length == 0) {
+						IsPageInitallyLoaded = true
 					}
 					
-					if (IsPageLoaded == false) { //If tweets not loaded yet
+					if (IsPageInitallyLoaded == false) { //If tweets not loaded yet
 						console.log("TwitCrawl - Page not loaded yet")
 					} else { //If page are loaded
 							PreviousYScrollPosition = window.scrollY //Previous position to see if the page has been scrolled.
@@ -238,7 +249,7 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 								}
 							window.scrollTo(0, window.scrollY+(ScrollDistancePerSecond * ScrollingDirection)); //Try to scroll the page
 						//Check if bottom has reached resulting in scrolling stops. If no scrolling for consecutive LoadWaitTime , load next URL.
-							if (PreviousYScrollPosition == window.scrollY) { //If no scrolling occurred
+							if (PreviousYScrollPosition == window.scrollY && (document.getElementsByTagName("circle").length == 0)) { //If no scrolling occurred
 								HowManySecondsOfNoScroll++ //Increment the number of seconds of no scroll
 								HowManySecondsOfNoScroll = clamp(HowManySecondsOfNoScroll, 0, LoadWaitTime) //Clamp the seconds counter to avoid negative number display
 								
