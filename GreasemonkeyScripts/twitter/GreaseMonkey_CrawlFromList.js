@@ -94,22 +94,25 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 			await GM.setValue("TwitterURLIndex", -2)
 			await GM.setValue("TwitterURLSequence_Enabled", true);
 		}
-		GM.registerMenuCommand("TwitCrawl - Start", Start, "R");
+		GM.registerMenuCommand("TwitCrawl - Start", Start, "S");
 		
 		
 		async function ClearTwitterSetList() {
-			await GM.setValue("TwitterURLsSet", new Set()).then(
-				() => {
-				/* success */
-					window.alert("Set list is cleared.");
-				},
-				() => {
-				/* failure */
-					window.alert("Set list fail to clear.");
-				}
-			);
+			if (confirm("Are you sure you want to clear the extraction list?")) {
+				await GM.setValue("TwitterURLsSet", new Set()).then(
+					() => {
+					/* success */
+						TwitterURLSet = new Set()
+						console.log("TwitCrawl - Set list is cleared.");
+					},
+					() => {
+					/* failure */
+						console.log("TwitCrawl - Set list fail to clear.");
+					}
+				);
+			}
 		}
-		GM.registerMenuCommand("TwitCrawl - clear URL list", ClearTwitterSetList, "R");
+		GM.registerMenuCommand("TwitCrawl - clear URL list", ClearTwitterSetList, "C");
 		
 		async function PrintOutList() {
 			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
@@ -203,8 +206,8 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 	}
 	
 	function AutoClickShowReplies() {
-		for (let i = 0; i < document.getElementsByTagName("SPAN").length; i++) {
-			if (document.getElementsByTagName("SPAN")[i].innerText == "Show replies") {
+		for (let i = 0; i < document.getElementsByTagName("SPAN").length; i++) { //In long threads some tweets are "collapsed".
+			if (document.getElementsByTagName("SPAN")[i].innerText == "Show replies"||document.getElementsByTagName("SPAN")[i].innerText == "Show more replies") {
 				document.getElementsByTagName("SPAN")[i].click()
 			}
 		}
@@ -213,8 +216,10 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 				document.getElementsByTagName("DIV")[i].click()
 			}
 		}
+		
 	}
 	async function MainLoop() {
+		GetTwitterLinks() //Just in case if no scrolling occured and misses extracting links.
 		let URL_index = await GM.getValue("TwitterURLIndex", -1).catch(function(reason) {
 			window.alert("Loading URL index failed!")
 			Reset()
@@ -224,16 +229,15 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 			window.alert("Loading sequence enabled status failed!")
 			Reset()
 		})
+		//Loading content besides the whole screen is loading i.e tweets, clicking on "Show". Unlike "IsPageInitallyLoaded",
+		//which remains true after page initially loads without user input, "IsPageCurrentlyLoadingSubContent" can be false again.
+			let IsPageCurrentlyLoadingSubContent = false
+			if (document.getElementsByTagName("circle").length != 0) {
+				IsPageCurrentlyLoadingSubContent = true
+			}
 		if (TwitterURLSequenceEnabled) {
 			if (URL_index >= -1) {
 				//First, wait until page is loaded
-					//for (let i = 0; i < (document.getElementsByTagName("input").length) && (IsPageInitallyLoaded == false); i++) {
-					//	if (document.getElementsByTagName("input")[i].hasAttribute("type")) { //Failsafe if attribute missing
-					//		if (document.getElementsByTagName("input")[i].type="text") {
-					//			IsPageInitallyLoaded = true
-					//		}
-					//	}
-					//}
 					if (document.getElementsByTagName("circle").length == 0) {
 						IsPageInitallyLoaded = true
 					}
@@ -247,9 +251,12 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 								if (/http(s)?\:\/\/(mobile\.)?twitter\.com\/search\?q=/.test(window.location.href)) {
 									ScrollingDirection = 1
 								}
-							window.scrollTo(0, window.scrollY+(ScrollDistancePerSecond * ScrollingDirection)); //Try to scroll the page
+							//Don't skip over "Show" content (collapsed tweets)
+								if (IsPageCurrentlyLoadingSubContent == false) {
+									window.scrollTo(0, window.scrollY+(ScrollDistancePerSecond * ScrollingDirection)); //Try to scroll the page
+								}
 						//Check if bottom has reached resulting in scrolling stops. If no scrolling for consecutive LoadWaitTime , load next URL.
-							if (PreviousYScrollPosition == window.scrollY && (document.getElementsByTagName("circle").length == 0)) { //If no scrolling occurred
+							if ((PreviousYScrollPosition == window.scrollY) && (IsPageCurrentlyLoadingSubContent == false)) { //If no scrolling occurred
 								HowManySecondsOfNoScroll++ //Increment the number of seconds of no scroll
 								HowManySecondsOfNoScroll = clamp(HowManySecondsOfNoScroll, 0, LoadWaitTime) //Clamp the seconds counter to avoid negative number display
 								
@@ -268,9 +275,9 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 							} else { //Scrolling occurred
 								HowManySecondsOfNoScroll = 0 //reset the counter
 								if (ScrollingDirection == -1) {
-									console.log("TwitCrawl - Scrolling upward...")
+									console.log("TwitCrawl - Scrolling/loading upward...")
 								} else {
-									console.log("TwitCrawl - Scrolling downward...")
+									console.log("TwitCrawl - Scrolling/loading downward...")
 								}
 							}
 							PreviousYScrollPosition = window.scrollY
