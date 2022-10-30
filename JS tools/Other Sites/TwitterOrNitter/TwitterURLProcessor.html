@@ -204,7 +204,7 @@ Misc:
 				//https://nitter.net/pic/media%2F<Base64String>.<extension>
 				//
 				//https://pbs.twimg.com/media/<Base64String>?format=<extension>&name=<size>
-				let ImageName = ArrayElement2.replace(/http(s)?\:\/\/nitter\.net\/pic\/(orig\/)?media%2F/, "").replace(/\.[a-zA-Z0-9]+$/, "")
+				let ImageName = ArrayElement2.replace(/http(s)?\:\/\/nitter\.net\/pic\/(orig\/)?media(%2F|\/)/, "").replace(/\.[a-zA-Z0-9]+$/, "")
 				let ImageExtension = ArrayElement2.match(/[a-zA-Z0-9]+$/)[0]
 				return "https://pbs.twimg.com/media/" + ImageName + "?format=" + ImageExtension
 			} else if (/^https\:\/\/nitter\.net\/pic\/(pbs\.twimg.com%2Fprofile_images%2F|profile_images%2F)/.test(ArrayElement2)) { //profile images
