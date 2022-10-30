@@ -1,0 +1,170 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+		</style>
+	</head>
+<body>
+	<p>This tool generates dates of each day between the start and end dates specified. Give credit to <a href="https://bobbyhadz.com/blog/javascript-get-all-dates-between-two-dates">https://bobbyhadz.com/blog/javascript-get-all-dates-between-two-dates</a></p>
+	<p>Please note that the output for start and end dates are not exact, due to timezone differences, meaning the dates may be off by 1-2 days.</p>
+	<p>Enter start date: <input type="date" onchange="CheckValidRange(); AutoUpdate()" id="Start"></p>
+	<p>Enter end date: <input type="date" onchange="CheckValidRange(); AutoUpdate()" id="End"></p>
+	<p><button onclick="SwapStartEnd(); AutoUpdate()" id="SwapButton" disabled>Swap dates</button></p>
+	<p>Direction: <label><input type="radio" name="Direction" id="Direction_Forwards" onchange="AutoUpdate()" checked>Forwards</label> <label><input type="radio" name="Direction" id="Direction_Backwards" id="AutoUpdate()" onchange="AutoUpdate()">Backwards</label></p>
+	<p><label><input type="checkbox" id="Option_AutoUpdate" onchange="AutoUpdate()">Auto update</label></p>
+	<p><button onclick="GetDays()" id="SubmitButton">Submit</button></p>
+	<hr>
+Number of days generated: <span id="DateCount">0</span><br>
+<textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
+<button onclick="setClipboard(document.getElementById('Output_Plaintext').value)">Copy output</button><span id="CopiedTextMessage"></span>
+<script>
+	function AutoUpdate() {
+		if (document.getElementById("Option_AutoUpdate").checked) {
+			document.getElementById("SubmitButton").disabled = true
+			GetDays()
+		} else {
+			document.getElementById("SubmitButton").disabled = false
+		}
+	}
+	function GetDays() {
+		if (document.getElementById("Start").value != ""&& document.getElementById("End").value != "") {
+			let OutputString = ""
+			if (document.getElementById("End").value >= document.getElementById("Start").value) {
+				let Start = new Date(document.getElementById("Start").value)
+				let End = new Date(document.getElementById("End").value)
+				let IsDateRangeTooBig = false
+				//Failsafe to prevent processing huge amount of days that would lag
+					{
+						let StartYear = parseInt(document.getElementById("Start").value.match(/^\d+/)[0])
+						let EndYear = parseInt(document.getElementById("End").value.match(/^\d+/)[0])
+						if (EndYear - StartYear >= 25) {
+							IsDateRangeTooBig = true
+						}
+					}
+					let UserConfirm = true
+					if (IsDateRangeTooBig) {
+						UserConfirm = window.confirm("Warning: This date range appears very large, which may cause lag and unresponsive browser. Continue?")
+					}
+					if (UserConfirm) {
+						let ListOfDays = getDatesInRange(Start, End)
+						if (document.getElementById("Direction_Backwards").checked) {
+							ListOfDays.reverse()
+						}
+						document.getElementById("DateCount").innerHTML = BigInt(ListOfDays.length).toString(10) //Again, I don't like potential e notation.
+						for (let i = 0; i < ListOfDays.length; i++) {
+							//DayName MonthName DayNumber YearNumber HH:NN:SS <timezone>
+							let String = ListOfDays[i].toString()
+							let Year = String.replace(/[A-Za-z0-9]+ [A-Za-z0-9]+ [A-Za-z0-9]+ /, "").replace(/ .*/,"")
+							let MonthNumber = MonthNameToNumber(String.replace(/[A-Za-z0-9]+ /, "").replace(/ .*$/, ""))
+							let DayNumber = String.replace(/[A-Za-z0-9]+ [A-Za-z0-9]+ /,"").replace(/ .*/,"")
+							OutputString += Year + "-" + MonthNumber + "-" + DayNumber
+							if (i != ListOfDays.length-1) {
+								OutputString+= "\n"
+							}
+						}
+					} else {
+						document.getElementById("DateCount").innerHTML = "0"
+						OutputString = "Aborted generating dates."
+					}
+			} else {
+				document.getElementById("DateCount").innerHTML = "0"
+				OutputString = "Error: End date occurs before start date."
+			}
+			document.getElementById("Output_Plaintext").value = OutputString
+		}
+	}
+	
+	function SwapStartEnd() {
+		//thanks https://dmitripavlutin.com/swap-variables-javascript/
+		if (!(document.getElementById("End").value >= document.getElementById("Start").value)) { //failsafe
+			[document.getElementById("Start").value, document.getElementById("End").value] = [document.getElementById("End").value, document.getElementById("Start").value]
+			document.getElementById("SwapButton").disabled = true
+		}
+	}
+	
+	function CheckValidRange() {
+		if (document.getElementById("End").value >= document.getElementById("Start").value||(document.getElementById("Start").value == ""|| document.getElementById("End").value == "")) {
+			document.getElementById("SwapButton").disabled = true
+		} else {
+			document.getElementById("SwapButton").disabled = false
+		}
+	}
+
+//Credit: https://bobbyhadz.com/blog/javascript-get-all-dates-between-two-dates
+	function getDatesInRange(startDate, endDate) {
+		const date = new Date(startDate.getTime());
+	
+		const dates = [];
+	
+		while (date <= endDate) {
+			dates.push(new Date(date));
+			date.setDate(date.getDate() + 1);
+		}
+	
+		return dates;
+	}
+
+	function MonthNameToNumber(MonthName) {
+		if (MonthName=="Jan") {
+			return "01"
+		} else if (MonthName=="Feb") {
+			return "02"
+		} else if (MonthName=="Mar") {
+			return "03"
+		} else if (MonthName=="Apr") {
+			return "04"
+		} else if (MonthName=="May") {
+			return "05"
+		} else if (MonthName=="Jun") {
+			return "06"
+		} else if (MonthName=="Jul") {
+			return "07"
+		} else if (MonthName=="Aug") {
+			return "08"
+		} else if (MonthName=="Sep") {
+			return "09"
+		} else if (MonthName=="Oct") {
+			return "10"
+		} else if (MonthName=="Nov") {
+			return "11"
+		} else if (MonthName=="Dec") {
+			return "12"
+		}
+	}
+	//Copy text from textarea
+		function setClipboard(String) {
+			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
+			const type = "text/plain";
+			const blob = new Blob([String], { type });
+			const data = [new ClipboardItem({ [type]: blob })];
+	
+			navigator.clipboard.write(data).then(
+				() => {
+				/* success */
+					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #00FF00;'>Copied!</span>"
+					setTimeout(DeleteCopyMessage, 1500)
+				},
+				() => {
+				/* failure */
+					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #FF0000;'>Copy failed!</span>"
+					setTimeout(DeleteCopyMessage, 1500)
+				}
+			);
+		}
+		function DeleteCopyMessage() {
+			document.getElementById("CopiedTextMessage").innerHTML = ""
+		}
+</script>
