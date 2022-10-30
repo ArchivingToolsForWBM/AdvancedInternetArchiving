@@ -20,6 +20,8 @@
 //  https://example.com) so you can then extract those and retry extracting them.
 
 (async () => {
+//Settings
+	const TimeBeforeLoadingNextURL = 5000 //How many milliseconds after the page fully loads before loading the next URL.
 //-----------------------------------------------------------
 	const ListOfURLs = `
 https://google.com
@@ -42,7 +44,7 @@ https://wikipedia.org
 	window.addEventListener('load', LoadURLAfterTimer)
 	
 	function LoadURLAfterTimer() {
-		setTimeout(LoadAnotherPage, 2000)
+		setTimeout(LoadAnotherPage, TimeBeforeLoadingNextURL)
 	}
 	
 	
