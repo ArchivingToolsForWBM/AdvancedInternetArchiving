@@ -19,8 +19,8 @@
 	</head>
 <body>
 
-Displays the images of a given list of image URLs. Please be careful not to have tons of images loaded at once.
-Scale: <input type="range" id="Setting_Scale" min="0", max="200" step="1" value="100" oninput="PercentageDisplay(); GenerateImageDisplay()"><span id="ScalePercentageDisplay">100%</span><br>
+Displays the images of a given list of image URLs. Please be careful not to have tons of images loaded at once.<br>
+Scale: <input type="range" id="Setting_Scale" min="0", max="200" step="1" value="100" oninput="PercentageDisplay(); GenerateImageDisplay()" style="width: 400px;"><span id="ScalePercentageDisplay">100%</span><br>
 <button onclick="ResetScale()">Reset scale to 100%</button><br>
 <textarea id="ListOfImgUrls" cols="100" rows="25" oninput="GenerateImageDisplay()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
 <button onclick="ResetAll()">Reset All</button>
