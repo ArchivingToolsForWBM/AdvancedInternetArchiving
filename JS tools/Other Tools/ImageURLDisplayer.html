@@ -1,0 +1,63 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+		</style>
+	</head>
+<body>
+
+Displays the images of a given list of image URLs. Please be careful not to have tons of images loaded at once.
+Scale: <input type="range" id="Setting_Scale" min="0", max="200" step="1" value="100" oninput="PercentageDisplay(); GenerateImageDisplay()"><span id="ScalePercentageDisplay">100%</span><br>
+<button onclick="ResetScale()">Reset scale to 100%</button><br>
+<textarea id="ListOfImgUrls" cols="100" rows="25" oninput="GenerateImageDisplay()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
+<button onclick="ResetAll()">Reset All</button>
+Number of images: <span id="NumberOfURLs">0</span><br>
+<span id="Output"></span>
+<script>
+	function GenerateImageDisplay() {
+		let Output = ""
+		//Convert entered list to array without dupes
+			let UserEnteredURLlist = Array(...new Set(document.getElementById("ListOfImgUrls").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"]+/g))) //ttp instead of http to avoid truncation
+			UserEnteredURLlist = UserEnteredURLlist.map((ArrayElement) => {return ArrayElement.replace(/^ttp/, "http")})
+			document.getElementById("NumberOfURLs").innerHTML = BigInt(UserEnteredURLlist.length).toString(10) //Bigint to avoid E notation
+		//Array done, now generate HTML to display imgs
+			UserEnteredURLlist.forEach((ArrayElement) => {
+				Output += '<a href="' + escapeHTMLChars(ArrayElement) + '" target="_blank"><img style="width='+ document.getElementById("Setting_Scale").value +'%"; height="'+document.getElementById("Setting_Scale").value+'%" src="' + escapeHTMLChars(ArrayElement) + '"></a>'
+			});
+		document.getElementById("Output").innerHTML = Output
+	}
+	function escapeHTMLChars(string) {
+		//Should the user's input contains "<", ">", and "&", prevent the innerHTML from treating these as HTML tags/escapes
+			string = string.replaceAll("&", "&amp;") //This must be done first, to avoid replacing already-replaced symbol's ampersand character.
+			string = string.replaceAll("<", "&lt;")
+			string = string.replaceAll(">", "&gt;")
+			string = string.replaceAll("\"", "&quot;")
+			string = string.replaceAll("'", "&apos;")
+			return string
+	}
+	function PercentageDisplay() {
+		document.getElementById("ScalePercentageDisplay").innerHTML = document.getElementById("Setting_Scale").value + "%"
+	}
+	function ResetScale() {
+		document.getElementById("Setting_Scale").value = 100
+		document.getElementById("Setting_Scale").oninput()
+	}
+	function ResetAll() {
+		document.getElementById("ListOfImgUrls").value = ""
+		ResetScale()
+		document.getElementById("NumberOfURLs").innerHTML = "0"
+	}
+</script>
