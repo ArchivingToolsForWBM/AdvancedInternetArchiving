@@ -41,7 +41,7 @@ issues not caught by the system, things like redirects (twitter), blank cell (co
 
 Paste your google sheet result here:<br><br>
 <input type="checkbox" id="AutoUpdate" checked onchange="AutoUpdate()"><label for="AutoUpdate">Auto update</label><br>
-<textarea id="GsheetInput" cols="100" rows="30" oninput="AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
+<textarea id="GsheetInput" cols="100" rows="30" oninput="UpdatedTextAreaList(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
 	Search URLs based on their flagged status: <button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 2); AutoUpdate()">Invert</button><br>
 <ul>
 	<li>Sure saved: <button onclick="ChangeFilterSettings('SureSaved', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('SureSaved', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('SureSaved', 2); AutoUpdate()">Invert</button></li>
@@ -87,22 +87,27 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 <span id="Output_table"></span>
 </body>
 <script>
+	var IsInputTextareaChanged = false
+	var SavedList = []
+	
+	var Count_Success = 0
+	var Count_Success_SavedBefore = 0
+	var Count_Success_FirstArchive = 0
+	var Count_Unsures = 0
+	var Count_Unsure_NoIAResult = 0
+	var Count_Unsure_BlankColumnD = 0
+	var Count_Unsure_Redirected = 0
+	var Count_Unsure_Error = 0
+	var Count_Unsure_SavedANon2XX = 0
+	
 	function AutoUpdate() {
 		if (document.getElementById("AutoUpdate").checked) {
 			CheckURLs()
 		}
 	}
-	function InvertFilters(WhatSetOfCheckBoxes) {
-		let HTMLTag_class = ""
-		if (WhatSetOfCheckBoxes == "IASaveStatus") {
-			HTMLTag_class = "FilterSettings_ArchiveStatus"
-		} else if (WhatSetOfCheckBoxes == "HTTPStatus") {
-			HTMLTag_class = "FilterSettings_HTTPStatus"
-		}
-		let FilterListSettings = document.getElementsByClassName(HTMLTag_class)
-		for (let Index = 0; Index < FilterListSettings.length; Index++) {
-			FilterListSettings[Index].checked = (FilterListSettings[Index].checked ^ 1)
-		}
+	
+	function UpdatedTextAreaList() {
+		IsInputTextareaChanged = true
 	}
 
 	function ChangeFilterSettings(ElementClass, Setting) {
@@ -126,6 +131,7 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 		const regex_IA_URLPart = /^https:\/\/web\.archive\.org\/web\/\d*\//
 		const regex_IAURLExtractMainSiteURL_Start = /(?<=https:\/\/web\.archive\.org\/web\/\d*\/)/
 		const regex_IAURLExtractMainSiteURL_End = /$/
+		
 		//Clear out the output area.
 			document.getElementById("Output_Statistics").innerHTML = ""
 			document.getElementById("StringHowManyShown").hidden = true
@@ -133,156 +139,225 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 			document.getElementById("Button_CopyOutput").hidden = true
 		
 		let Output = ""
-		let InputList = (document.getElementById("GsheetInput").value).split(/(?:\n)(?=(?:[^"]|"[^"]*")*$)/).map((ArrayElement, Index) => [ArrayElement, Index]).filter(RemoveInvalidData)
-		//Contains:
-		//InputList[Index][0] = google sheet row.
-		//InputList[Index][1] = String line number (ignoring linebreaks within a cell).
+		let InputList = []
 		
-		//Credit goes to MarkusQ : https://stackoverflow.com/questions/632475/regex-to-pick-characters-outside-of-pair-of-quotes
-		//If you have spreadsheet reserved characters such as newline in a cell (ALT+ENTER), they're escaped by wrapping the entire string in quotes
-		//when converted to plaintext, much line windows command prompt when dealing with file path containing spaces.
-		//
-		//I use that instead of '\n' because of a rare chance in the future should the WBGS ever enters data in a cell that uses newline.
-		
-		let Index = 0
-		let Count_Success = 0
-		let Count_Success_SavedBefore = 0
-		let Count_Success_FirstArchive = 0
-		let Count_Unsures = 0
-		let Count_Unsure_NoIAResult = 0
-		let Count_Unsure_BlankColumnD = 0
-		let Count_Unsure_Redirected = 0
-		let Count_Unsure_Error = 0
-		let Count_Unsure_SavedANon2XX = 0
-		//Create a table
-			//InputList = InputList.map((ArrayElement) => [ArrayElement[0].split('\t'), ["", "", ArrayElement[1]]])
-			InputList = InputList.map(function(ArrayElement, Index) {
-				let PositionNumbering = ArrayElement[1]
-				if (document.getElementById("PositionNumbering_ValidEntries").checked) {
-					PositionNumbering = Index
-				} else if (document.getElementById("PositionNumbering_DisplayedHere").checked) {
-					PositionNumbering = 0
-				}
-				return [ArrayElement[0].split('\t'), ["", "", PositionNumbering, -1]]
-			})
-		//Note to self on what sub-array it contains:
-		//InputList[Index][0] = Gsheet sub-array:
-		//InputList[Index][0][0] = (Google sheets' column A) SentURL
-		//InputList[Index][0][1] = (Google sheets' column B) YES/NO (it is now the status indicating if it had saved before)
-		//InputList[Index][0][2] = (Google sheets' column C) HTTPStatus
-		//InputList[Index][0][3] = (Google sheets' column D) ArchiveURL/Error
-		//InputList[Index][0][4] = (Google sheets' column E) Number (it's now the number of outlinks saved)
-		//InputList[Index][0][5] = (Google sheets' column F) FirstArchive
-		//InputList[Index][1] = Javascript sub-array:
-		//InputList[Index][1][0] = This javascript status indicator (Unsure_NoIAResult, Unsure_BlankColumnD, Success_SavedBefore, Success_FirstArchive, Unsure_Redirected, Unsure_Error, Unsure_SavedANon2XX).
-		//InputList[Index][1][1] = HTTP indicator (class)
-		//InputList[Index][1][2] = Line position in google sheet/valid URL position number (if "PositionNumbering_DisplayedHere") is ticked, then it would the GS line number except it won't be used.
-		//InputList[Index][1][3] = Outlinks count (better performance when sorting based on outlinks)
-		//
-		//Verify URLs
-		//Note to self:
-		//-If ArchiveURL/Error has the https://web.archive.org/web/YYYYMMDDhhmmss/ part of the URL it is marked as a "success", but may be a redirect
-		//--If the website part of the IA URL matches, then it is a true success and not a redirect, otherwise if the string is different, then flag it as a redirect.
-		//-If ArchiveURL/Error contains a description instead of the IA part (like "Cannot get status of spn2-<code>"), then it is an error.
-		//-If ArchiveURL/Error contains blank instead of the IA part (like "Cannot get status of spn2-<code>"), then it is an error by the system failing to print it, it may be marked as a success or fail.
-			for (Index = 0; Index < InputList.length; Index++) {
-				if (InputList[Index][0][4].match(/\d+/) != null) {
-					InputList[Index][1][3] = parseInt(InputList[Index][0][4].match(/\d+/)[0], 10)
-				}
-				//Check the type of saves
-					if (JSON.stringify(InputList[Index][0]) == JSON.stringify([InputList[Index][0][0], "", "", "", "", ""])) {
-						//Although I could do this:
-						// (InputList[Index][0] == Array(InputList[Index][0][0], "", "", "", "", ""))
-						//but it doesn't work if you compare an array with another array, that it ALWAYS
-						//returns false, even when all the elements in the two are the identical!
-						//https://stackoverflow.com/questions/7837456/how-to-compare-arrays-in-javascript
-						//
-						//A workaround is by performing "stringify", converting the entire object (in this case, an array) into a string.
-						//
-						//This checks if the entire result is blank.
-							InputList[Index][1][0] = "Unsure_NoIAResult"
-							
-							Count_Unsure_NoIAResult++
-							Count_Unsures++
-					} else if (InputList[Index][0][3] == "") {
-						//If there is blank on the spot where it shows the IA version of the URL or error.
-							InputList[Index][1][0] = "Unsure_BlankColumnD"
-							
-							Count_Unsure_BlankColumnD++
-							Count_Unsures++
-					} else if (regex_IA_URLPart.test(InputList[Index][0][3])) {
-						//Page saved successfully, but did it got Redirected?
-							if (InputList[Index][0][0] == InputList[Index][0][3].substring((InputList[Index][0][3]).search(regex_IAURLExtractMainSiteURL_Start), (InputList[Index][0][3]).search(regex_IAURLExtractMainSiteURL_End))) {
-								//Saved without redirects, but did it saved an error page?
-								if ((/^(3|4|5)\d\d/).test(InputList[Index][0][2]) == false) {
-									//Saved the page without issues
-									if (InputList[Index][0][5] != "First Archive") {
-										InputList[Index][1][0] = "Success_SavedBefore"
-										Count_Success_SavedBefore++
+		if (IsInputTextareaChanged == true) { //if changed, reset the output.
+			Count_Success = 0
+			Count_Success_SavedBefore = 0
+			Count_Success_FirstArchive = 0
+			Count_Unsures = 0
+			Count_Unsure_NoIAResult = 0
+			Count_Unsure_BlankColumnD = 0
+			Count_Unsure_Redirected = 0
+			Count_Unsure_Error = 0
+			Count_Unsure_SavedANon2XX = 0
+			
+			InputList = (document.getElementById("GsheetInput").value).split(/(?:\n)(?=(?:[^"]|"[^"]*")*$)/).map((ArrayElement, Index) => [ArrayElement, Index]).filter(RemoveInvalidData) //split by each row on google sheets, map it so it has its gsheet row number, then remove invalid data.
+			//Contains:
+			//InputList[Index][0] = google sheet row.
+			//InputList[Index][1] = String line number (ignoring linebreaks within a cell).
+			
+			//Credit goes to MarkusQ : https://stackoverflow.com/questions/632475/regex-to-pick-characters-outside-of-pair-of-quotes
+			//If you have spreadsheet reserved characters such as newline in a cell (ALT+ENTER), they're escaped by wrapping the entire string in quotes
+			//when converted to plaintext, much line windows command prompt when dealing with file path containing spaces.
+			//
+			//I use that instead of '\n' because of a rare chance in the future should the WBGS ever enters data in a cell that uses newline.
+			//Create a table
+				InputList = InputList.map(function(ArrayElement, Index) {
+					let PositionNumbering = ArrayElement[1]
+					if (document.getElementById("PositionNumbering_ValidEntries").checked) {
+						PositionNumbering = Index
+					} else if (document.getElementById("PositionNumbering_DisplayedHere").checked) {
+						PositionNumbering = 0
+					}
+					return [ArrayElement[0].split('\t'), ["", "", PositionNumbering, -1]]
+				})
+			//Note to self on what sub-array it contains:
+			//InputList[Index][0] = Gsheet sub-array:
+			//InputList[Index][0][0] = (Google sheets' column A) SentURL
+			//InputList[Index][0][1] = (Google sheets' column B) YES/NO (it is now the status indicating if it had saved before)
+			//InputList[Index][0][2] = (Google sheets' column C) HTTPStatus
+			//InputList[Index][0][3] = (Google sheets' column D) ArchiveURL/Error
+			//InputList[Index][0][4] = (Google sheets' column E) Number (it's now the number of outlinks saved)
+			//InputList[Index][0][5] = (Google sheets' column F) FirstArchive
+			//InputList[Index][1] = Javascript sub-array:
+			//InputList[Index][1][0] = This javascript status indicator (Unsure_NoIAResult, Unsure_BlankColumnD, Success_SavedBefore, Success_FirstArchive, Unsure_Redirected, Unsure_Error, Unsure_SavedANon2XX).
+			//InputList[Index][1][1] = HTTP indicator (class)
+			//InputList[Index][1][2] = Line position in google sheet/valid URL position number (if "PositionNumbering_DisplayedHere") is ticked, then it would the GS line number except it won't be used.
+			//InputList[Index][1][3] = Outlinks count (better performance when sorting based on outlinks)
+			//
+			//Verify URLs
+			//Note to self:
+			//-If ArchiveURL/Error has the https://web.archive.org/web/YYYYMMDDhhmmss/ part of the URL it is marked as a "success", but may be a redirect
+			//--If the website part of the IA URL matches, then it is a true success and not a redirect, otherwise if the string is different, then flag it as a redirect.
+			//-If ArchiveURL/Error contains a description instead of the IA part (like "Cannot get status of spn2-<code>"), then it is an error.
+			//-If ArchiveURL/Error contains blank instead of the IA part (like "Cannot get status of spn2-<code>"), then it is an error by the system failing to print it, it may be marked as a success or fail.
+				for (let Index = 0; Index < InputList.length; Index++) {
+					if (InputList[Index][0][4].match(/\d+/) != null) {
+						InputList[Index][1][3] = parseInt(InputList[Index][0][4].match(/\d+/)[0], 10)
+					}
+					//Check the type of saves
+						if (JSON.stringify(InputList[Index][0]) == JSON.stringify([InputList[Index][0][0], "", "", "", "", ""])) {
+							//Although I could do this:
+							// (InputList[Index][0] == Array(InputList[Index][0][0], "", "", "", "", ""))
+							//but it doesn't work if you compare an array with another array, that it ALWAYS
+							//returns false, even when all the elements in the two are the identical!
+							//https://stackoverflow.com/questions/7837456/how-to-compare-arrays-in-javascript
+							//
+							//A workaround is by performing "stringify", converting the entire object (in this case, an array) into a string.
+							//
+							//This checks if the entire result is blank.
+								InputList[Index][1][0] = "Unsure_NoIAResult"
+								
+								Count_Unsure_NoIAResult++
+								Count_Unsures++
+						} else if (InputList[Index][0][3] == "") {
+							//If there is blank on the spot where it shows the IA version of the URL or error.
+								InputList[Index][1][0] = "Unsure_BlankColumnD"
+								
+								Count_Unsure_BlankColumnD++
+								Count_Unsures++
+						} else if (regex_IA_URLPart.test(InputList[Index][0][3])) {
+							//Page saved successfully, but did it got Redirected?
+								if (InputList[Index][0][0] == InputList[Index][0][3].substring((InputList[Index][0][3]).search(regex_IAURLExtractMainSiteURL_Start), (InputList[Index][0][3]).search(regex_IAURLExtractMainSiteURL_End))) {
+									//Saved without redirects, but did it saved an error page?
+									if ((/^(3|4|5)\d\d/).test(InputList[Index][0][2]) == false) {
+										//Saved the page without issues
+										if (InputList[Index][0][5] != "First Archive") {
+											InputList[Index][1][0] = "Success_SavedBefore"
+											Count_Success_SavedBefore++
+										} else {
+											InputList[Index][1][0] = "Success_FirstArchive"
+											Count_Success_FirstArchive++
+										}
+										Count_Success++
 									} else {
-										InputList[Index][1][0] = "Success_FirstArchive"
-										Count_Success_FirstArchive++
+										//Saved a page with HTTP status of 4XX
+										InputList[Index][1][0] = "Unsure_SavedANon2XX"
+										
+										Count_Unsure_SavedANon2XX++
+										Count_Unsures++
 									}
-									Count_Success++
 								} else {
-									//Saved a page with HTTP status of 4XX
-									InputList[Index][1][0] = "Unsure_SavedANon2XX"
-									
-									Count_Unsure_SavedANon2XX++
-									Count_Unsures++
+									//Redirected and saved
+										InputList[Index][1][0] = "Unsure_Redirected"
+										
+										Count_Unsure_Redirected++
+										Count_Unsures++
 								}
-							} else {
-								//Redirected and saved
-									InputList[Index][1][0] = "Unsure_Redirected"
-									
-									Count_Unsure_Redirected++
-									Count_Unsures++
-							}
-					} else {
-						//Page failed/errored (shows error message instead of the IA version of the link)
-							InputList[Index][1][0] = "Unsure_Error"
-							
-							Count_Unsure_Error++
-							Count_Unsures++
-					}
-				//HTTP status flags
-					if ((/2\d\d/).test(InputList[Index][0][2])) {
-						InputList[Index][1][1] = "HTTPStatus_2XX"
-					} else if ((/3\d\d/).test(InputList[Index][0][2])) {
-						InputList[Index][1][1] = "HTTPStatus_3XX"
-					} else if ((/4\d\d/).test(InputList[Index][0][2])) {
-						InputList[Index][1][1] = "HTTPStatus_4XX"
-					} else if ((/5\d\d/).test(InputList[Index][0][2])) {
-						InputList[Index][1][1] = "HTTPStatus_5XX"
-					} else {
-						InputList[Index][1][1] = "HTTPStatus_Other"
-					}
-				//Next
-			}
-			//Filter
-				let FilteredListForDisplay = InputList.filter(FilterUrls)
-			//Sort the filtered data. NOTE: array.reverse() is unstable, meaning the order of same keys will be reversed.
-				if (document.getElementById("Sort_Output_SaveStatusResponse").checked) {
-					FilteredListForDisplay = FilteredListForDisplay.sort(CompareSaveStatusResponse)
-				} else if (document.getElementById("Sort_Output_SaveStatusResponse_Reverse").checked) {
-					FilteredListForDisplay = FilteredListForDisplay.sort(CompareSaveStatusResponseReverse)
-				} else if (document.getElementById("Sort_Output_SubmittedURLsABC").checked) {
-					FilteredListForDisplay = FilteredListForDisplay.sort(CompareSentUrls)
-				} else if (document.getElementById("Sort_Output_SubmittedURLsABC_Reverse").checked) {
-					FilteredListForDisplay = FilteredListForDisplay.sort(CompareSentUrlsReverse)
-				} else if (document.getElementById("Sort_Output_SaveStatusType").checked) {
-					FilteredListForDisplay = FilteredListForDisplay.sort(CompareStatusIndicator)
-				} else if (document.getElementById("Sort_Output_SaveStatusType_Reverse").checked) {
-					FilteredListForDisplay = FilteredListForDisplay.sort(CompareStatusIndicatorReverse)
-				} else if (document.getElementById("Sort_Output_HTTPStatus").checked) {
-					FilteredListForDisplay = FilteredListForDisplay.sort(CompareHTTPStatus)
-				} else if (document.getElementById("Sort_Output_HTTPStatus_Reverse").checked) {
-					FilteredListForDisplay = FilteredListForDisplay.sort(CompareHTTPStatusReverse)
-				} else if (document.getElementById("Sort_Output_OutlinksCount").checked) {
-					FilteredListForDisplay = FilteredListForDisplay.sort(CompareOutlinksCount)
-				} else if (document.getElementById("Sort_Output_OutlinksCount_Reverse").checked) {
-					FilteredListForDisplay = FilteredListForDisplay.sort(CompareOutlinksCountReverse)
+						} else {
+							//Page failed/errored (shows error message instead of the IA version of the link)
+								InputList[Index][1][0] = "Unsure_Error"
+								
+								Count_Unsure_Error++
+								Count_Unsures++
+						}
+					//HTTP status flags
+						if ((/2\d\d/).test(InputList[Index][0][2])) {
+							InputList[Index][1][1] = "HTTPStatus_2XX"
+						} else if ((/3\d\d/).test(InputList[Index][0][2])) {
+							InputList[Index][1][1] = "HTTPStatus_3XX"
+						} else if ((/4\d\d/).test(InputList[Index][0][2])) {
+							InputList[Index][1][1] = "HTTPStatus_4XX"
+						} else if ((/5\d\d/).test(InputList[Index][0][2])) {
+							InputList[Index][1][1] = "HTTPStatus_5XX"
+						} else {
+							InputList[Index][1][1] = "HTTPStatus_Other"
+						}
+					//Next
 				}
+			//Save it to the list
+				SavedList = InputList
+		} else { //If no change, grab it from the save data, since we already have the data.
+			InputList = SavedList
+		}
+		IsInputTextareaChanged = false //Set it back to false if filter/sort settings were to be changed.
+		//Filter
+			let FilteredListForDisplay = InputList.filter(FilterUrls)
+		//Sort the filtered data. NOTE: array.reverse() is unstable, meaning the order of same keys will be reversed.
+			if (document.getElementById("Sort_Output_SaveStatusResponse").checked) {
+				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareSaveStatusResponse)
+				FilteredListForDisplay.sort((a, b) => {
+					if (a[0][3] === b[0][3]) {
+						return 0;
+					} else {
+						return (a[0][3] < b[0][3]) ? -1 : 1;
+					}
+				});
+			} else if (document.getElementById("Sort_Output_SaveStatusResponse_Reverse").checked) {
+				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareSaveStatusResponseReverse)
+				FilteredListForDisplay.sort((a, b) => {
+					if (a[0][3] === b[0][3]) {
+						return 0;
+					} else {
+						return (a[0][3] < b[0][3]) ? 1 : -1;
+					}
+				});
+			} else if (document.getElementById("Sort_Output_SubmittedURLsABC").checked) {
+				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareSentUrls)
+				FilteredListForDisplay.sort((a, b) => {
+					if (a[0][0] === b[0][0]) {
+						return 0;
+					} else {
+						return (a[0][0] < b[0][0]) ? -1 : 1;
+					}
+				});
+			} else if (document.getElementById("Sort_Output_SubmittedURLsABC_Reverse").checked) {
+				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareSentUrlsReverse)
+				FilteredListForDisplay.sort((a, b) => {
+					if (a[0][0] === b[0][0]) {
+						return 0;
+					} else {
+						return (a[0][0] < b[0][0]) ? 1 : -1;
+					}
+				});
+			} else if (document.getElementById("Sort_Output_SaveStatusType").checked) {
+				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareStatusIndicator)
+				FilteredListForDisplay.sort((a, b) => {
+					if (a[1][0] === b[1][0]) {
+						return 0;
+					} else {
+						return (a[1][0] < b[1][0]) ? -1 : 1;
+					}
+				});
+			} else if (document.getElementById("Sort_Output_SaveStatusType_Reverse").checked) {
+				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareStatusIndicatorReverse)
+				FilteredListForDisplay.sort((a, b) => {
+					if (a[1][0] === b[1][0]) {
+						return 0;
+					} else {
+						return (a[1][0] < b[1][0]) ? 1 : -1;
+					}
+				});
+			} else if (document.getElementById("Sort_Output_HTTPStatus").checked) {
+				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareHTTPStatus)
+				FilteredListForDisplay.sort((a, b) => {
+					if (a[0][2] === b[0][2]) {
+						return 0;
+					} else {
+						return (a[0][2] < b[0][2]) ? -1 : 1;
+					}
+				});
+			} else if (document.getElementById("Sort_Output_HTTPStatus_Reverse").checked) {
+				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareHTTPStatusReverse)
+				FilteredListForDisplay.sort((a, b) => {
+					if (a[0][2] === b[0][2]) {
+						return 0;
+					} else {
+						return (a[0][2] < b[0][2]) ? 1 : -1;
+					}
+				});
+			} else if (document.getElementById("Sort_Output_OutlinksCount").checked) {
+				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareOutlinksCount)
+				FilteredListForDisplay.sort((a, b) => {
+					return Number(a[1][3] - b[1][3]) //if this was bigint, do subtraction first, then convert to a double-float (which rounds here) to prevent potential issues if 2 large numbers are close to one another.
+				});
+			} else if (document.getElementById("Sort_Output_OutlinksCount_Reverse").checked) {
+				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareOutlinksCountReverse)
+				FilteredListForDisplay.sort((a, b) => {
+					return Number(b[1][3] - a[1][3]) //again...
+				});
+			}
 		//Output data
 			if (InputList.length != 0) {
 				//statistics (bar graph)
@@ -352,14 +427,14 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 					if (FilteredListForDisplay.length != 0) {
 						document.getElementById("StringHowManyShown_Number").innerHTML = BigInt(FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(FilteredListForDisplay.length, InputList.length, 2) + " of all URLs submitted), " + BigInt(InputList.length - FilteredListForDisplay.length).toString(10) + " filtered out."
 						if (document.getElementById("PlainText_DisplayInfo").checked == false) { //For better performance on the text mode to display, have the if statement OUTSIDE the loop so it doesn't get repeatedly executed
-							for (Index = 0; Index < FilteredListForDisplay.length; Index++) {
+							for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
 								Output += FilteredListForDisplay[Index][0][0]
 								if (Index != FilteredListForDisplay.length - 1) {
 									Output += "\n"
 								}
 							}
 						} else {
-							for (Index = 0; Index < FilteredListForDisplay.length; Index++) {
+							for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
 								Output += FilteredListForDisplay[Index][0][0] + "\t" + FilteredListForDisplay[Index][0][1] + "\t" + FilteredListForDisplay[Index][0][2] + "\t" + FilteredListForDisplay[Index][0][3] + "\t" + FilteredListForDisplay[Index][0][4] + "\t" + FilteredListForDisplay[Index][0][5]
 								if (Index != FilteredListForDisplay.length - 1) {
 									Output += "\n"
@@ -388,7 +463,7 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 						}
 						Output += "<th>URLs you&apos;ve sent</th><th>HTTP status</th><th>Save status of URLs or errors</th><th>Number of outlinks saved</th><th>Status type</th>"
 						Output += "</tr>"
-						for (Index = 0; Index < FilteredListForDisplay.length; Index++) {
+						for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
 							//Table
 								Output += "<tr>"
 								if (document.getElementById("PositionNumbering_DisplayedHere").checked != true){
@@ -526,74 +601,6 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 			}
 		return IsArrayElementPassesArchiveStatus
 	}
-	//Sort functions
-		//Compare Column D's (IA's save status response)
-			function CompareSaveStatusResponse(a, b) {
-				if (a[0][3] === b[0][3]) {
-					return 0;
-				} else {
-					return (a[0][3] < b[0][3]) ? -1 : 1;
-				}
-			}
-			function CompareSaveStatusResponseReverse(a, b) {
-				if (a[0][3] === b[0][3]) {
-					return 0;
-				} else {
-					return (a[0][3] < b[0][3]) ? 1 : -1;
-				}
-			}
-		//Compare URLs user sent
-			function CompareSentUrls(a, b) {
-				if (a[0][0] === b[0][0]) {
-					return 0;
-				} else {
-					return (a[0][0] < b[0][0]) ? -1 : 1;
-				}
-			}
-			function CompareSentUrlsReverse(a, b) {
-				if (a[0][0] === b[0][0]) {
-					return 0;
-				} else {
-					return (a[0][0] < b[0][0]) ? 1 : -1;
-				}
-			}
-		//Compare the flagged status based on this JS checking the URL
-			function CompareStatusIndicator(a, b) {
-				if (a[1][0] === b[1][0]) {
-					return 0;
-				} else {
-					return (a[1][0] < b[1][0]) ? -1 : 1;
-				}
-			}
-			function CompareStatusIndicatorReverse(a, b) {
-				if (a[1][0] === b[1][0]) {
-					return 0;
-				} else {
-					return (a[1][0] < b[1][0]) ? 1 : -1;
-				}
-			}
-		//Compare HTTP status
-			function CompareHTTPStatus(a, b) {
-				if (a[0][2] === b[0][2]) {
-					return 0;
-				} else {
-					return (a[0][2] < b[0][2]) ? -1 : 1;
-				}
-			}
-			function CompareHTTPStatusReverse(a, b) {
-				if (a[0][2] === b[0][2]) {
-					return 0;
-				} else {
-					return (a[0][2] < b[0][2]) ? 1 : -1;
-				}
-			}
-		//Compare number of outlinks
-			function CompareOutlinksCount(a, b) {
-				return Number(a[1][3] - b[1][3]) //if this was bigint, do subtraction first, then convert to a double-float (which rounds here) to prevent potential issues if 2 large numbers are close to one another.
-			}
-			function CompareOutlinksCountReverse(a, b) {
-				return Number(b[1][3] - a[1][3])
-			}
 	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec) {
 		//This function calculates a percentage of a value (must be bigint), and returns a
 		//string representing a percentage using fixed-point arithmetic (https://en.wikipedia.org/wiki/Fixed-point_arithmetic ).
