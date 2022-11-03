@@ -366,53 +366,53 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 						//Successful saves
 							Output += "<tr>"
 							Output += "<td rowspan='7'>" +  BigInt(InputList.length).toString(10) + " (100.00%) total URL(s) found</td>"
-							Output += "<td rowspan='2' style='background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(Count_Success, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Success, InputList.length) + " 100%)'>" + BigInt(Count_Success).toString(10) + " (" + BetterPercentageUsingInts(Count_Success, InputList.length, 2) + ") successful saves</td>"
+							Output += "<td rowspan='2' style='background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(Count_Success, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Success, InputList.length) + " 100%)'>" + BigInt(Count_Success).toString(10) + " (" + BetterPercentageUsingInts(Count_Success, InputList.length, 2, true) + ") successful saves</td>"
 							//Saved before
-								Output += "<td style='background-image: linear-gradient(to right, #008000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_SavedBefore, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_SavedBefore, InputList.length) + " 100%)'>" + BigInt(Count_Success_SavedBefore) + " (" + BetterPercentageUsingInts(Count_Success_SavedBefore, InputList.length, 2) + " of all URLs"
+								Output += "<td style='background-image: linear-gradient(to right, #008000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_SavedBefore, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_SavedBefore, InputList.length) + " 100%)'>" + BigInt(Count_Success_SavedBefore) + " (" + BetterPercentageUsingInts(Count_Success_SavedBefore, InputList.length, 2, true) + " of all URLs"
 								if (Count_Success != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_Success_SavedBefore, Count_Success, 2) + " of all successful saves"
+									Output += ", " + BetterPercentageUsingInts(Count_Success_SavedBefore, Count_Success, 2, true) + " of all successful saves"
 								}
 								Output += ") were saved before</td>"
 							Output += "</tr>"
 							Output += "<tr>"
 							//First archive
-								Output += "<td style='background-image: linear-gradient(to right, #00C000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_FirstArchive, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_FirstArchive, InputList.length) + " 100%)'>" + BigInt(Count_Success_FirstArchive) + " (" + BetterPercentageUsingInts(Count_Success_FirstArchive, InputList.length, 2) + " of all URLs"
+								Output += "<td style='background-image: linear-gradient(to right, #00C000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_FirstArchive, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_FirstArchive, InputList.length) + " 100%)'>" + BigInt(Count_Success_FirstArchive) + " (" + BetterPercentageUsingInts(Count_Success_FirstArchive, InputList.length, 2, true) + " of all URLs"
 								if (Count_Success != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_Success_FirstArchive, Count_Success, 2) + " of all successful saves"
+									Output += ", " + BetterPercentageUsingInts(Count_Success_FirstArchive, Count_Success, 2, true) + " of all successful saves"
 								}
 								Output += ") first archive(s)</td>"
 						//Unsures
 							Output += "<tr>"
-							Output += "<td rowspan='5' style='background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsures, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsures, InputList.length) + " 100%)'>" + BigInt(Count_Unsures).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsures, InputList.length, 2) + ") not sure saved</td>"
+							Output += "<td rowspan='5' style='background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsures, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsures, InputList.length) + " 100%)'>" + BigInt(Count_Unsures).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsures, InputList.length, 2, true) + ") not sure saved</td>"
 							//No results
-								Output += "<td style='background-image: linear-gradient(to right, #808080, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_NoIAResult, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_NoIAResult, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_NoIAResult).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_NoIAResult, InputList.length, 2) + " of all URLs"
+								Output += "<td style='background-image: linear-gradient(to right, #808080, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_NoIAResult, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_NoIAResult, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_NoIAResult).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_NoIAResult, InputList.length, 2, true) + " of all URLs"
 								if (Count_Unsures != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_Unsure_NoIAResult, Count_Unsures, 2) + " of unsures"
+									Output += ", " + BetterPercentageUsingInts(Count_Unsure_NoIAResult, Count_Unsures, 2, true) + " of unsures"
 								}
 								Output += ") have no results at all</td>"
 							Output += "</tr>"
 							//Blank column D
-								Output += "<tr><td style='background-image: linear-gradient(to right, #A08080, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_BlankColumnD, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_BlankColumnD, InputList.length) + "100%)'>" + BigInt(Count_Unsure_BlankColumnD).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_BlankColumnD, InputList.length, 2) + " of all URLs"
+								Output += "<tr><td style='background-image: linear-gradient(to right, #A08080, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_BlankColumnD, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_BlankColumnD, InputList.length) + "100%)'>" + BigInt(Count_Unsure_BlankColumnD).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_BlankColumnD, InputList.length, 2, true) + " of all URLs"
 								if (Count_Unsures != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_Unsure_BlankColumnD, Count_Unsures, 2) + " of unsures"
+									Output += ", " + BetterPercentageUsingInts(Count_Unsure_BlankColumnD, Count_Unsures, 2, true) + " of unsures"
 								}
 								Output += ") have only column D being blank</td></tr>"
 							//Redirect
-								Output += "<tr><td style='background-image: linear-gradient(to right, #808000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Redirected, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Redirected, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_Redirected).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Redirected, InputList.length, 2) + " of all URLs"
+								Output += "<tr><td style='background-image: linear-gradient(to right, #808000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Redirected, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Redirected, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_Redirected).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Redirected, InputList.length, 2,true) + " of all URLs"
 								if (Count_Unsures != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_Unsure_Redirected, Count_Unsures, 2) + " of unsures"
+									Output += ", " + BetterPercentageUsingInts(Count_Unsure_Redirected, Count_Unsures, 2, true) + " of unsures"
 								}
 								Output += ") got redirected</td></tr>"
 							//Error
-								Output += "<tr><td style='background-image: linear-gradient(to right, #800000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Error, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Error, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_Error).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Error, InputList.length, 2) + " of all URLs"
+								Output += "<tr><td style='background-image: linear-gradient(to right, #800000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Error, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Error, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_Error).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Error, InputList.length, 2, true) + " of all URLs"
 								if (Count_Unsures != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_Unsure_Error, Count_Unsures, 2) + " of unsures"
+									Output += ", " + BetterPercentageUsingInts(Count_Unsure_Error, Count_Unsures, 2, true) + " of unsures"
 								}
 								Output += ") errored</td></tr>"
 							//Saved a 4XX
-								Output += "<tr><td style='background-image: linear-gradient(to right, #FFA500, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_SavedANon2XX, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_SavedANon2XX, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_SavedANon2XX).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_SavedANon2XX, InputList.length, 2) + " of all URLs"
+								Output += "<tr><td style='background-image: linear-gradient(to right, #FFA500, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_SavedANon2XX, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_SavedANon2XX, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_SavedANon2XX).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_SavedANon2XX, InputList.length, 2, true) + " of all URLs"
 								if (Count_Unsures != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_Unsure_SavedANon2XX, Count_Unsures, 2) + " of unsures"
+									Output += ", " + BetterPercentageUsingInts(Count_Unsure_SavedANon2XX, Count_Unsures, 2, true) + " of unsures"
 								}
 								Output += ") saved a non 2XX"
 					Output += "</table></pre>"
@@ -425,7 +425,7 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 				//Retry list in plaintext
 					Output = ""
 					if (FilteredListForDisplay.length != 0) {
-						document.getElementById("StringHowManyShown_Number").innerHTML = BigInt(FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(FilteredListForDisplay.length, InputList.length, 2) + " of all URLs submitted), " + BigInt(InputList.length - FilteredListForDisplay.length).toString(10) + " filtered out."
+						document.getElementById("StringHowManyShown_Number").innerHTML = BigInt(FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(FilteredListForDisplay.length, InputList.length, 2, true) + " of all URLs submitted), " + BigInt(InputList.length - FilteredListForDisplay.length).toString(10) + " filtered out."
 						if (document.getElementById("PlainText_DisplayInfo").checked == false) { //For better performance on the text mode to display, have the if statement OUTSIDE the loop so it doesn't get repeatedly executed
 							for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
 								Output += FilteredListForDisplay[Index][0][0]
@@ -601,7 +601,10 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 			}
 		return IsArrayElementPassesArchiveStatus
 	}
-	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec) {
+	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec, Clamped) {
+		//Quantity = Amount in relation of MaxQuantity
+		//MaxQuantity = Total
+		//Clamped = (boolean): false = allow greater than 100%, true = only 0%-100% will display.
 		//This function calculates a percentage of a value (must be bigint), and returns a
 		//string representing a percentage using fixed-point arithmetic (https://en.wikipedia.org/wiki/Fixed-point_arithmetic ).
 		//Unlike a typical Quantity*100/MaxQuantity (or Quantity / MaxQuantity * 100)
@@ -638,6 +641,7 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 			//Round half-up
 				if (Modulo >= HalfwayPointOfMaxQuantity) { //round upwards
 					Percentage++
+					if (Clamped) {Percentage = BigintClamp(Percentage, 0n, 100n * 10n ** (NumberOfDigitsAfterDec_BigInt))}
 					//We rounded the number up (actually increased the value), but it can potentially be at 100%, lets check it and if it did, override it.
 					if (Percentage == 100n*10n**NumberOfDigitsAfterDec_BigInt) {
 						//Rounded to 100% detected
@@ -682,6 +686,7 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 					}
 				}
 				//Split the number separated by decimal point.
+					if (Clamped) {Percentage = BigintClamp(Percentage, 0n, 100n * 10n ** (NumberOfDigitsAfterDec_BigInt))}
 					let OutputString = Percentage.toString(10)
 					let WholeNumberPart = OutputString.substring(0, OutputString.length - NumberOfDigitsAfterDec)
 					if (WholeNumberPart == "") {
@@ -718,6 +723,10 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 			if (isNaN(num) == true) {
 				num = 0
 			}
+			return num <= min ? min : num >= max ? max : num;
+	}
+	function BigintClamp(num, min, max) {
+		//Restrict a number within a specified range, bigInt edition (since NaN cannot be represented in bigint).
 			return num <= min ? min : num >= max ? max : num;
 	}
 	//Copy text from textarea

@@ -265,28 +265,28 @@ Sort:
 				document.getElementById("HTML_LineCount").innerHTML = BigInt(Count_Lines).toString(10)
 				//How many after filtering
 					document.getElementById("HTML_BarGraph_HowManyAfterFilter").style = "background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(InputList.length, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(InputList.length, Count_Lines) + " 100%)"
-					document.getElementById("HTML_HowManyAfterFilter").innerHTML = BigInt(InputList.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length, Count_Lines, 2) + ")"
+					document.getElementById("HTML_HowManyAfterFilter").innerHTML = BigInt(InputList.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length, Count_Lines, 2, true) + ")"
 				//How many removed after filtering
 					document.getElementById("HTML_BarGraph_HowManyRemovedAfterFilter").style = "background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(Count_Lines - InputList.length, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Lines - InputList.length, Count_Lines) + " 100%)"
-					document.getElementById("HTML_HowManyRemovedAfterFilter").innerHTML = BigInt(Count_Lines - InputList.length).toString(10) + " (" + BetterPercentageUsingInts(Count_Lines - InputList.length, Count_Lines, 2) + ")"
+					document.getElementById("HTML_HowManyRemovedAfterFilter").innerHTML = BigInt(Count_Lines - InputList.length).toString(10) + " (" + BetterPercentageUsingInts(Count_Lines - InputList.length, Count_Lines, 2, true) + ")"
 				//Originals
 					document.getElementById("HTML_BarGraph_OriginalItemCount").style = "background-image: linear-gradient(to right, #008000, " + BetterPercentageUsingFloatsForBarGraphs(Count_OriginalItem, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_OriginalItem, Count_Lines) + " 100%)"
-					document.getElementById("HTML_OriginalItemCount").innerHTML = BigInt(Count_OriginalItem).toString(10) + " (" + BetterPercentageUsingInts(Count_OriginalItem, Count_Lines, 2) + ")"
+					document.getElementById("HTML_OriginalItemCount").innerHTML = BigInt(Count_OriginalItem).toString(10) + " (" + BetterPercentageUsingInts(Count_OriginalItem, Count_Lines, 2, true) + ")"
 				//Duplicates
 					document.getElementById("HTML_BarGraph_DupeCount").style = "background-image: linear-gradient(to right, #800000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Duplicates, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Duplicates, Count_Lines) + " 100%)"
-					document.getElementById("HTML_DupeCount").innerHTML = BigInt(Count_Duplicates).toString(10) + " (" + BetterPercentageUsingInts(Count_Duplicates, Count_Lines, 2) + ")"
+					document.getElementById("HTML_DupeCount").innerHTML = BigInt(Count_Duplicates).toString(10) + " (" + BetterPercentageUsingInts(Count_Duplicates, Count_Lines, 2, true) + ")"
 				//Empty lines
 					document.getElementById("HTML_BarGraph_EmptyCount").style = "background-image: linear-gradient(to right, #808080, " + BetterPercentageUsingFloatsForBarGraphs(Count_EmptyLines, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_EmptyLines, Count_Lines) + " 100%)"
-					document.getElementById("HTML_EmptyCount").innerHTML = BigInt(Count_EmptyLines).toString(10) + " (" + BetterPercentageUsingInts(Count_EmptyLines, Count_Lines, 2) + ")"
+					document.getElementById("HTML_EmptyCount").innerHTML = BigInt(Count_EmptyLines).toString(10) + " (" + BetterPercentageUsingInts(Count_EmptyLines, Count_Lines, 2, true) + ")"
 				//Just space
 					document.getElementById("HTML_BarGraph_SpaceCount").style = "background-image: linear-gradient(to right, #A08080, " + BetterPercentageUsingFloatsForBarGraphs(Count_LinesWithJustSpace, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_LinesWithJustSpace, Count_Lines) + " 100%)"
-					document.getElementById("HTML_SpaceCount").innerHTML = BigInt(Count_LinesWithJustSpace).toString(10) + " (" + BetterPercentageUsingInts(Count_LinesWithJustSpace, Count_Lines, 2) + ")"
+					document.getElementById("HTML_SpaceCount").innerHTML = BigInt(Count_LinesWithJustSpace).toString(10) + " (" + BetterPercentageUsingInts(Count_LinesWithJustSpace, Count_Lines, 2, true) + ")"
 				//Blacklist
 					document.getElementById("HTML_BarGraph_BlacklistCount").style = "background-image: linear-gradient(to right, #ff6699, " + BetterPercentageUsingFloatsForBarGraphs(Count_Blacklisted, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Blacklisted, Count_Lines) + " 100%)"
-					document.getElementById("HTML_BlacklistCount").innerHTML = BigInt(Count_Blacklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_Blacklisted, Count_Lines, 2) + ")"
+					document.getElementById("HTML_BlacklistCount").innerHTML = BigInt(Count_Blacklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_Blacklisted, Count_Lines, 2, true) + ")"
 				//Dupe and blacklist
 					document.getElementById("HTML_BarGraph_DuplicateBlacklistCount").style = "background-image: linear-gradient(to right, #ff6666, " + BetterPercentageUsingFloatsForBarGraphs(Count_DuplicateBlacklisted, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_DuplicateBlacklisted, Count_Lines) + " 100%)"
-					document.getElementById("HTML_DuplicateBlacklistCount").innerHTML = BigInt(Count_DuplicateBlacklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_DuplicateBlacklisted, Count_Lines, 2) + ")"
+					document.getElementById("HTML_DuplicateBlacklistCount").innerHTML = BigInt(Count_DuplicateBlacklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_DuplicateBlacklisted, Count_Lines, 2, true) + ")"
 			//Plaintext
 				let OutputTextArea = ""
 				for (let Index = 0; Index < InputList.length; Index++) {
@@ -381,7 +381,10 @@ Sort:
 			string = string.replaceAll(">", "&gt;")
 			return string
 	}
-	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec) {
+	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec, Clamped) {
+		//Quantity = Amount in relation of MaxQuantity
+		//MaxQuantity = Total
+		//Clamped = (boolean): false = allow greater than 100%, true = only 0%-100% will display.
 		//This function calculates a percentage of a value (must be bigint), and returns a
 		//string representing a percentage using fixed-point arithmetic (https://en.wikipedia.org/wiki/Fixed-point_arithmetic ).
 		//Unlike a typical Quantity*100/MaxQuantity (or Quantity / MaxQuantity * 100)
@@ -418,6 +421,7 @@ Sort:
 			//Round half-up
 				if (Modulo >= HalfwayPointOfMaxQuantity) { //round upwards
 					Percentage++
+					if (Clamped) {Percentage = BigintClamp(Percentage, 0n, 100n * 10n ** (NumberOfDigitsAfterDec_BigInt))}
 					//We rounded the number up (actually increased the value), but it can potentially be at 100%, lets check it and if it did, override it.
 					if (Percentage == 100n*10n**NumberOfDigitsAfterDec_BigInt) {
 						//Rounded to 100% detected
@@ -462,6 +466,7 @@ Sort:
 					}
 				}
 				//Split the number separated by decimal point.
+					if (Clamped) {Percentage = BigintClamp(Percentage, 0n, 100n * 10n ** (NumberOfDigitsAfterDec_BigInt))}
 					let OutputString = Percentage.toString(10)
 					let WholeNumberPart = OutputString.substring(0, OutputString.length - NumberOfDigitsAfterDec)
 					if (WholeNumberPart == "") {
@@ -498,6 +503,10 @@ Sort:
 			if (isNaN(num) == true) {
 				num = 0
 			}
+			return num <= min ? min : num >= max ? max : num;
+	}
+	function BigintClamp(num, min, max) {
+		//Restrict a number within a specified range, bigInt edition (since NaN cannot be represented in bigint).
 			return num <= min ? min : num >= max ? max : num;
 	}
 	//Copy text from textarea
