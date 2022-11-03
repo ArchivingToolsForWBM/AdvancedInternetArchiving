@@ -141,7 +141,7 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 		let Output = ""
 		let InputList = []
 		
-		if (IsInputTextareaChanged == true) { //if changed, reset the output.
+		if (IsInputTextareaChanged) { //if changed, reset the output.
 			Count_Success = 0
 			Count_Success_SavedBefore = 0
 			Count_Success_FirstArchive = 0
@@ -271,7 +271,7 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 		} else { //If no change, grab it from the save data, since we already have the data.
 			InputList = SavedList
 		}
-		IsInputTextareaChanged = false //Set it back to false if filter/sort settings were to be changed.
+		IsInputTextareaChanged = false //Set it back to false so that if the user updates the list again, and sort, does not rerun the code above.
 		//Filter
 			let FilteredListForDisplay = InputList.filter(FilterUrls)
 		//Sort the filtered data. NOTE: array.reverse() is unstable, meaning the order of same keys will be reversed.

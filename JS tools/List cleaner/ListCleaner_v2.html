@@ -27,9 +27,9 @@
 		<th>Insert your list of items to remove</th>
 	</tr>
 	<tr>
-		<td><textarea id="TextInput" cols="100" rows="30" oninput="AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea></td>
+		<td><textarea id="TextInput" cols="100" rows="30" oninput="AnyListUpdated(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea></td>
 		<td>
-			<textarea id="TextInput_Blacklist" cols="100" rows="30" oninput="AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
+			<textarea id="TextInput_Blacklist" cols="100" rows="30" oninput="AnyListUpdated(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
 			<kbd>Number of unique blacklisted items: <span id="UniqueBlacklistCount">0</span></kbd>
 		</td>
 	</tr>
@@ -73,6 +73,22 @@ Sort:
 
 </body>
 <script>
+	var IsAnyListUpdated = false
+	var InputList_save = []
+	var InputBlacklist
+	
+	var Count_Lines = 0
+	var Count_OriginalItem = 0
+	var Count_Duplicates = 0
+	var Count_Blacklisted = 0
+	var Count_DuplicateBlacklisted = 0
+	var Count_EmptyLines = 0
+	var Count_LinesWithJustSpace = 0
+	
+	function AnyListUpdated() {
+		IsAnyListUpdated = true
+	}
+
 	function ChangeFilterSettings(ElementClass, Setting) {
 		if (Setting < 2) {
 			for (i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
@@ -103,92 +119,99 @@ Sort:
 		}
 	}
 	function MainFunction() {
-		let InputList = ((document.getElementById("TextInput").value).split('\n'))
-		InputList = InputList.map((ArrayElement, Index) => [ArrayElement, Index, "OriginalItem", 0, false, -1])
-		//InputList[Index]: Contains info for each line
-		//InputList[Index][0]: The line of text
-		//InputList[Index][1]: Line number (0 based)
-		//InputList[Index][2]: (Written later) Status:
-		// -"OriginalItem" = first item of 0 or more copies
-		// -"Duplicate" = if this line is the 2nd+ copy of the original
-		// -"Blacklisted" = If the item in the list matches with blacklist
-		// -"DuplicateBlacklisted" = Same as above and also a duplicate
-		// -"EmptyLine" (a line with no characters of any kind, including space), "JustSpace" (a line with just any whitespace character)
-		//InputList[Index][3]: (Written later) Duplicate count (0 means no dups were found). Written on both the original and all duplicates.
-		//InputList[Index][4]: (Written later) Duplicate-have-been-run flag, as inner-loop (second item we check in the array via "InputList[Index2]") checks and flag each item,
-		// The outer loop ("InputList[Index]") doesn't need to re-check currently known duplicates, therefore optimizing the loop. Also used to prevent 2nd and beyond identical
-		// lines from being labeled as "OriginalItem"
-		//InputList[Index][5]: (Written later) Index number representing the original copy.
-		//
-		//Now, please note: Unique = [new Set(InputList)] is a better way of removing duplicates, but the problem is what if the user wants to MERELY detect duplicates and
-		//have them displayed? Therefore using loops and flagging them is a more viable option.
-		
-		let InputBlacklist = [...new Set(((document.getElementById("TextInput_Blacklist").value).split('\n')))]
-		InputBlacklist = new Set(InputBlacklist.filter((ArrayElement) => {return !(/^\s*$/.test(ArrayElement))}))
-		document.getElementById("UniqueBlacklistCount").innerHTML = BigInt(InputBlacklist.size).toString(10)
-		let Count_Lines = InputList.length
-		let Count_OriginalItem = 0
-		let Count_Duplicates = 0
-		let Count_Blacklisted = 0
-		let Count_DuplicateBlacklisted = 0
-		let Count_EmptyLines = 0
-		let Count_LinesWithJustSpace = 0
-		for (let Index = 0; Index < InputList.length; Index++) {
-			//Check for lines that are EmptyLine or just spaces
-				if (InputList[Index][0] == "") {
-					InputList[Index][2] = "EmptyLine"
-					InputList[Index][4] = true
-					Count_EmptyLines++
-				} else if (/^\s*$/.test(InputList[Index][0])) {
-					InputList[Index][2] = "JustSpace"
-					InputList[Index][4] = true
-					Count_LinesWithJustSpace++
-				}
-			//Find duplicates
-				if (InputList[Index][4] == false) { //Skip if the outer loop runs into a duplicate that is already processed by inner loop (which also avoids double-counting).
-					for (let Index2 = Index+1; Index2 < InputList.length; Index2++) {
-						if (InputList[Index2][4] == false) {
-							if (InputList[Index][0] === InputList[Index2][0]) {
-								//Flag second, and beyond items as duplicate
-									InputList[Index2][2] = "Duplicate"
-								//Increase duplicate count
-									InputList[Index][3]++
-								//Flag second and beyond copies so it doesn't get processed multiple times, which is uncessary and incorrectly double-counts.
-									InputList[Index2][4] = true
-								//Duplicate of first item on list
-									InputList[Index2][5] = Index
+		let InputList
+		if (IsAnyListUpdated) {
+			InputList = ((document.getElementById("TextInput").value).split('\n'))
+			InputList = InputList.map((ArrayElement, Index) => [ArrayElement, Index, "OriginalItem", 0, false, -1])
+			//InputList[Index]: Contains info for each line
+			//InputList[Index][0]: The line of text
+			//InputList[Index][1]: Line number (0 based)
+			//InputList[Index][2]: (Written later) Status:
+			// -"OriginalItem" = first item of 0 or more copies
+			// -"Duplicate" = if this line is the 2nd+ copy of the original
+			// -"Blacklisted" = If the item in the list matches with blacklist
+			// -"DuplicateBlacklisted" = Same as above and also a duplicate
+			// -"EmptyLine" (a line with no characters of any kind, including space), "JustSpace" (a line with just any whitespace character)
+			//InputList[Index][3]: (Written later) Duplicate count (0 means no dups were found). Written on both the original and all duplicates.
+			//InputList[Index][4]: (Written later) Duplicate-have-been-run flag, as inner-loop (second item we check in the array via "InputList[Index2]") checks and flag each item,
+			// The outer loop ("InputList[Index]") doesn't need to re-check currently known duplicates, therefore optimizing the loop. Also used to prevent 2nd and beyond identical
+			// lines from being labeled as "OriginalItem"
+			//InputList[Index][5]: (Written later) Index number representing the original copy.
+			//
+			//Now, please note: Unique = [new Set(InputList)] is a better way of removing duplicates, but the problem is what if the user wants to MERELY detect duplicates and
+			//have them displayed? Therefore using loops and flagging them is a more viable option.
+			
+			let InputBlacklist = [...new Set(((document.getElementById("TextInput_Blacklist").value).split('\n')))]
+			InputBlacklist = new Set(InputBlacklist.filter((ArrayElement) => {return !(/^\s*$/.test(ArrayElement))}))
+			document.getElementById("UniqueBlacklistCount").innerHTML = BigInt(InputBlacklist.size).toString(10)
+			Count_Lines = InputList.length
+			Count_OriginalItem = 0
+			Count_Duplicates = 0
+			Count_Blacklisted = 0
+			Count_DuplicateBlacklisted = 0
+			Count_EmptyLines = 0
+			Count_LinesWithJustSpace = 0
+			for (let Index = 0; Index < InputList.length; Index++) {
+				//Check for lines that are EmptyLine or just spaces
+					if (InputList[Index][0] == "") {
+						InputList[Index][2] = "EmptyLine"
+						InputList[Index][4] = true
+						Count_EmptyLines++
+					} else if (/^\s*$/.test(InputList[Index][0])) {
+						InputList[Index][2] = "JustSpace"
+						InputList[Index][4] = true
+						Count_LinesWithJustSpace++
+					}
+				//Find duplicates
+					if (InputList[Index][4] == false) { //Skip if the outer loop runs into a duplicate that is already processed by inner loop (which also avoids double-counting).
+						for (let Index2 = Index+1; Index2 < InputList.length; Index2++) {
+							if (InputList[Index2][4] == false) {
+								if (InputList[Index][0] === InputList[Index2][0]) {
+									//Flag second, and beyond items as duplicate
+										InputList[Index2][2] = "Duplicate"
+									//Increase duplicate count
+										InputList[Index][3]++
+									//Flag second and beyond copies so it doesn't get processed multiple times, which is uncessary and incorrectly double-counts.
+										InputList[Index2][4] = true
+									//Duplicate of first item on list
+										InputList[Index2][5] = Index
+								}
 							}
 						}
 					}
-				}
-				//Write number of duplicates on original and all copies of it
-					for (let Index2 = Index+1; Index2 < InputList.length; Index2++) {
-						if (InputList[Index][0] === InputList[Index2][0]) {
-							InputList[Index2][3] = InputList[Index][3]
+					//Write number of duplicates on original and all copies of it
+						for (let Index2 = Index+1; Index2 < InputList.length; Index2++) {
+							if (InputList[Index][0] === InputList[Index2][0]) {
+								InputList[Index2][3] = InputList[Index][3]
+							}
+						}
+				//Label items that match with blacklist as "Blacklisted"
+					if (InputList[Index][2] != "EmptyLine") {
+						if (InputBlacklist.has(InputList[Index][0])) {
+							if (InputList[Index][2] != "Duplicate") {
+								InputList[Index][2] = "Blacklisted"
+								Count_Blacklisted++
+							} else {
+								InputList[Index][2] = "DuplicateBlacklisted"
+							}
 						}
 					}
-			//Label items that match with blacklist as "Blacklisted"
-				if (InputList[Index][2] != "EmptyLine") {
-					if (InputBlacklist.has(InputList[Index][0])) {
-						if (InputList[Index][2] != "Duplicate") {
-							InputList[Index][2] = "Blacklisted"
-							Count_Blacklisted++
-						} else {
-							InputList[Index][2] = "DuplicateBlacklisted"
-						}
+				//Count blacklisted and duplicates
+					if (InputList[Index][2] == "Duplicate") {
+						Count_Duplicates++
+					} else if (InputList[Index][2] == "DuplicateBlacklisted") {
+						Count_DuplicateBlacklisted++
 					}
-				}
-			//Count blacklisted and duplicates
-				if (InputList[Index][2] == "Duplicate") {
-					Count_Duplicates++
-				} else if (InputList[Index][2] == "DuplicateBlacklisted") {
-					Count_DuplicateBlacklisted++
-				}
-			//Count how many first items that they themselves not duplicates and aren't blacklisted
-				if (InputList[Index][2] == "OriginalItem") {
-					Count_OriginalItem++
-				}
+				//Count how many first items that they themselves not duplicates and aren't blacklisted
+					if (InputList[Index][2] == "OriginalItem") {
+						Count_OriginalItem++
+					}
+			}
+			InputList_save = InputList
+		} else {
+			InputList = InputList_save
 		}
+		IsAnyListUpdated = false //Set it back to false so that if the user updates the list again, and sort, does not rerun the code above.
 		//Filter
 			InputList = InputList.filter(FilterItemType)
 		//Sort
