@@ -80,9 +80,52 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 </ul>
 <button onclick="CheckURLs()">Submit</button><button onclick="Reset()">Reset</button><br><br>
 <hr>
-<span id="Output_Statistics"></span>
+<table>
+	<tr><th colspan="2">Statistics</th></tr>
+	<tr>
+		<td>Total URLs found:</td>
+		<td><kbd><span id="Statistic_NumberOfItems_TotalURLs">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td>How many displayed after filtered:</td>
+		<td id="StatisticPercentage_NumberOfItems_RemainingAfterFilter"><kbd><span id="Statistic_NumberOfItems_RemainingAfterFilter">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td>How many were removed from filter:</td>
+		<td id="StatisticPercentage_NumberOfItems_RemovedAfterFilter"><kbd><span id="Statistic_NumberOfItems_RemovedAfterFilter">0</span></kbd></td>
+	</tr>
+	<tr><th colspan="2">Classification stats</th></tr>
+	<tr>
+		<td><kbd>Success_SavedBefore</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Success_SavedBefore"><kbd><span id="Statistic_NumberOfItems_Success_SavedBefore">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Success_FirstArchive</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Success_FirstArchive"><kbd><span id="Statistic_NumberOfItems_Success_FirstArchive">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Unsure_NoIAResult</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Unsure_NoIAResult"><kbd><span id="Statistic_NumberOfItems_Unsure_NoIAResult">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Unsure_BlankColumnD</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Unsure_BlankColumnD"><kbd><span id="Statistic_NumberOfItems_Unsure_BlankColumnD">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Unsure_Redirected</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Unsure_Redirected"><kbd><span id="Statistic_NumberOfItems_Unsure_Redirected">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Unsure_Error</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Unsure_Error"><kbd><span id="Statistic_NumberOfItems_Unsure_Error">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Unsure_SavedANon2XX</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Unsure_SavedANon2XX"><kbd><span id="Statistic_NumberOfItems_Unsure_SavedANon2XX">0</span></kbd></td>
+	</tr>
+</table>
 <kbd id="StringHowManyShown" hidden>Displayed: <span id="StringHowManyShown_Number"></span></kbd><br>
-<textarea readonly id="Output_Plaintext" hidden cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
+<textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
 <button onclick="setClipboard(document.getElementById('Output_Plaintext').value)" id="Button_CopyOutput" hidden>Copy to clipboard</button><span id="CopiedTextMessage"></span>
 <span id="Output_table"></span>
 </body>
@@ -131,12 +174,6 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 		const regex_IA_URLPart = /^https:\/\/web\.archive\.org\/web\/\d*\//
 		const regex_IAURLExtractMainSiteURL_Start = /(?<=https:\/\/web\.archive\.org\/web\/\d*\/)/
 		const regex_IAURLExtractMainSiteURL_End = /$/
-		
-		//Clear out the output area.
-			document.getElementById("Output_Statistics").innerHTML = ""
-			document.getElementById("StringHowManyShown").hidden = true
-			document.getElementById("Output_Plaintext").hidden = true
-			document.getElementById("Button_CopyOutput").hidden = true
 		
 		let Output = ""
 		let InputList = []
@@ -362,66 +399,35 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 			if (InputList.length != 0) {
 				//statistics (bar graph)
 					//Show statistics table, I use Bigint to prevent potential E notation.
-					Output += "<pre><table>"
-						//Successful saves
-							Output += "<tr>"
-							Output += "<td rowspan='7'>" +  BigInt(InputList.length).toString(10) + " (100.00%) total URL(s) found</td>"
-							Output += "<td rowspan='2' style='background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(Count_Success, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Success, InputList.length) + " 100%)'>" + BigInt(Count_Success).toString(10) + " (" + BetterPercentageUsingInts(Count_Success, InputList.length, 2, true) + ") successful saves</td>"
-							//Saved before
-								Output += "<td style='background-image: linear-gradient(to right, #008000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_SavedBefore, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_SavedBefore, InputList.length) + " 100%)'>" + BigInt(Count_Success_SavedBefore) + " (" + BetterPercentageUsingInts(Count_Success_SavedBefore, InputList.length, 2, true) + " of all URLs"
-								if (Count_Success != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_Success_SavedBefore, Count_Success, 2, true) + " of all successful saves"
-								}
-								Output += ") were saved before</td>"
-							Output += "</tr>"
-							Output += "<tr>"
-							//First archive
-								Output += "<td style='background-image: linear-gradient(to right, #00C000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_FirstArchive, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_FirstArchive, InputList.length) + " 100%)'>" + BigInt(Count_Success_FirstArchive) + " (" + BetterPercentageUsingInts(Count_Success_FirstArchive, InputList.length, 2, true) + " of all URLs"
-								if (Count_Success != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_Success_FirstArchive, Count_Success, 2, true) + " of all successful saves"
-								}
-								Output += ") first archive(s)</td>"
-						//Unsures
-							Output += "<tr>"
-							Output += "<td rowspan='5' style='background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsures, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsures, InputList.length) + " 100%)'>" + BigInt(Count_Unsures).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsures, InputList.length, 2, true) + ") not sure saved</td>"
-							//No results
-								Output += "<td style='background-image: linear-gradient(to right, #808080, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_NoIAResult, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_NoIAResult, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_NoIAResult).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_NoIAResult, InputList.length, 2, true) + " of all URLs"
-								if (Count_Unsures != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_Unsure_NoIAResult, Count_Unsures, 2, true) + " of unsures"
-								}
-								Output += ") have no results at all</td>"
-							Output += "</tr>"
-							//Blank column D
-								Output += "<tr><td style='background-image: linear-gradient(to right, #A08080, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_BlankColumnD, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_BlankColumnD, InputList.length) + "100%)'>" + BigInt(Count_Unsure_BlankColumnD).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_BlankColumnD, InputList.length, 2, true) + " of all URLs"
-								if (Count_Unsures != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_Unsure_BlankColumnD, Count_Unsures, 2, true) + " of unsures"
-								}
-								Output += ") have only column D being blank</td></tr>"
-							//Redirect
-								Output += "<tr><td style='background-image: linear-gradient(to right, #808000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Redirected, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Redirected, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_Redirected).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Redirected, InputList.length, 2,true) + " of all URLs"
-								if (Count_Unsures != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_Unsure_Redirected, Count_Unsures, 2, true) + " of unsures"
-								}
-								Output += ") got redirected</td></tr>"
-							//Error
-								Output += "<tr><td style='background-image: linear-gradient(to right, #800000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Error, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Error, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_Error).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Error, InputList.length, 2, true) + " of all URLs"
-								if (Count_Unsures != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_Unsure_Error, Count_Unsures, 2, true) + " of unsures"
-								}
-								Output += ") errored</td></tr>"
-							//Saved a 4XX
-								Output += "<tr><td style='background-image: linear-gradient(to right, #FFA500, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_SavedANon2XX, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_SavedANon2XX, InputList.length) + " 100%)'>" + BigInt(Count_Unsure_SavedANon2XX).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_SavedANon2XX, InputList.length, 2, true) + " of all URLs"
-								if (Count_Unsures != 0) {
-									Output += ", " + BetterPercentageUsingInts(Count_Unsure_SavedANon2XX, Count_Unsures, 2, true) + " of unsures"
-								}
-								Output += ") saved a non 2XX"
-					Output += "</table></pre>"
-					
-					if (Count_Success == InputList.length) {
-						Output += "<br><br><span style='color: #00ff00; font-size: xx-large'>All " + BigInt(InputList.length).toString(10) + " URL(s) are sure to be saved.</span><br><br>"
-					}
-					Output += "</pre>"
-					document.getElementById("Output_Statistics").innerHTML = Output
+						//Total
+							document.getElementById("Statistic_NumberOfItems_TotalURLs").innerHTML = BigInt(InputList.length).toString(10)
+						//Displayed
+							document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").innerHTML = BigInt(FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(FilteredListForDisplay.length, InputList.length, 2, true) +")"
+							document.getElementById("StatisticPercentage_NumberOfItems_RemainingAfterFilter").style = "background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(FilteredListForDisplay.length, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(FilteredListForDisplay.length, InputList.length) + ", #000000 100%);"
+						//How many removed
+							document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").innerHTML = BigInt(InputList.length - FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length - FilteredListForDisplay.length, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_RemovedAfterFilter").style = "background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(InputList.length - FilteredListForDisplay.length, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(InputList.length - FilteredListForDisplay.length, InputList.length) + ", #000000 100%);"
+						//Saved before
+							document.getElementById("Statistic_NumberOfItems_Success_SavedBefore").innerHTML = BigInt(Count_Success_SavedBefore).toString(10) + " (" + BetterPercentageUsingInts(Count_Success_SavedBefore, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Success_SavedBefore").style = "background-image: linear-gradient(to right, #008000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_SavedBefore, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_SavedBefore, InputList.length) + ", #000000 100%);"
+						//First archives
+							document.getElementById("Statistic_NumberOfItems_Success_FirstArchive").innerHTML = BigInt(Count_Success_FirstArchive).toString(10) + " (" + BetterPercentageUsingInts(Count_Success_FirstArchive, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Success_FirstArchive").style = "background-image: linear-gradient(to right, #00C000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_FirstArchive, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_FirstArchive, InputList.length) + ", #000000 100%);"
+						//No IA results
+							document.getElementById("Statistic_NumberOfItems_Unsure_NoIAResult").innerHTML = BigInt(Count_Unsure_NoIAResult).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_NoIAResult, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_NoIAResult").style = "background-image: linear-gradient(to right, #808080, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_NoIAResult, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_NoIAResult, InputList.length) + ", #000000 100%);"
+						//Blank column D
+							document.getElementById("Statistic_NumberOfItems_Unsure_BlankColumnD").innerHTML = BigInt(Count_Unsure_BlankColumnD).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_BlankColumnD, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_BlankColumnD").style = "background-image: linear-gradient(to right, #A08080, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_BlankColumnD, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_BlankColumnD, InputList.length) + ", #000000 100%);"
+						//Redirected
+							document.getElementById("Statistic_NumberOfItems_Unsure_Redirected").innerHTML = BigInt(Count_Unsure_Redirected).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Redirected, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Redirected").style = "background-image: linear-gradient(to right, #808000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Redirected, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Redirected, InputList.length) + ", #000000 100%);"
+						//Error
+							document.getElementById("Statistic_NumberOfItems_Unsure_Error").innerHTML = BigInt(Count_Unsure_Error).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Error, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Error").style = "background-image: linear-gradient(to right, #800000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Error, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Error, InputList.length) + ", #000000 100%);"
+						//Non 2XX
+							document.getElementById("Statistic_NumberOfItems_Unsure_SavedANon2XX").innerHTML = BigInt(Count_Unsure_SavedANon2XX).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_SavedANon2XX, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_SavedANon2XX").style = "background-image: linear-gradient(to right, #FFA500, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_SavedANon2XX, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_SavedANon2XX, InputList.length) + ", #000000 100%);"
 				//Retry list in plaintext
 					Output = ""
 					if (FilteredListForDisplay.length != 0) {
@@ -441,9 +447,6 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 								}
 							}
 						}
-						document.getElementById("StringHowManyShown").hidden = false
-						document.getElementById("Output_Plaintext").hidden = false
-						document.getElementById("Button_CopyOutput").hidden = false
 						document.getElementById("Output_Plaintext").value = Output
 					} else {
 						document.getElementById("StringHowManyShown_Number").innerHTML = "0"
@@ -494,10 +497,6 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 		document.getElementById("Filter_Success_SavedBefore").checked = false
 		document.getElementById("Filter_Success_FirstArchive").checked = false
 		document.getElementById("Sort_Output_UserSentURLOrder").checked = true
-		document.getElementById("Output_Statistics").innerHTML = ""
-		document.getElementById("StringHowManyShown").hidden = true
-		document.getElementById("Output_Plaintext").hidden = true
-		document.getElementById("Button_CopyOutput").hidden = true
 		document.getElementById("Output_table").innerHTML = ""
 		document.getElementById("PositionNumbering_GSRow").checked = true
 	}
