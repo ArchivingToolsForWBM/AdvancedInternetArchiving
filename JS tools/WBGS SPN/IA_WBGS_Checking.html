@@ -124,7 +124,6 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 		<td id="StatisticPercentage_NumberOfItems_Unsure_SavedANon2XX"><kbd><span id="Statistic_NumberOfItems_Unsure_SavedANon2XX">0</span></kbd></td>
 	</tr>
 </table>
-<kbd id="StringHowManyShown" hidden>Displayed: <span id="StringHowManyShown_Number"></span></kbd><br>
 <textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
 <button onclick="setClipboard(document.getElementById('Output_Plaintext').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
 <span id="Output_table"></span>
@@ -431,7 +430,6 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 				//Retry list in plaintext
 					Output = ""
 					if (FilteredListForDisplay.length != 0) {
-						document.getElementById("StringHowManyShown_Number").innerHTML = BigInt(FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(FilteredListForDisplay.length, InputList.length, 2, true) + " of all URLs submitted), " + BigInt(InputList.length - FilteredListForDisplay.length).toString(10) + " filtered out."
 						if (document.getElementById("PlainText_DisplayInfo").checked == false) { //For better performance on the text mode to display, have the if statement OUTSIDE the loop so it doesn't get repeatedly executed
 							for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
 								Output += FilteredListForDisplay[Index][0][0]
@@ -447,11 +445,11 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 								}
 							}
 						}
-						document.getElementById("Output_Plaintext").value = Output
+						
 					} else {
-						document.getElementById("StringHowManyShown_Number").innerHTML = "0"
-						Output += "No items found"
+						Output = "No results."
 					}
+					document.getElementById("Output_Plaintext").value = Output
 				//Display filtered list using HTML table. Shows the URLs, the color indicator, and the WBM response.
 					Output = ""
 					if (FilteredListForDisplay.length != 0) {
@@ -479,7 +477,7 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 						}
 						Output += "</table>"
 					} else {
-						Output += "<kbd>No items found</kbd>"
+						Output += "<br><kbd>No items found</kbd>"
 					}
 			} else {
 				Output += "<kbd>No URLs found</kbd>"
