@@ -264,28 +264,36 @@ Sort:
 			//Statistics. Had to use "BigInt(Number).toString(10)" to avoid potential E notation.
 				document.getElementById("HTML_LineCount").innerHTML = BigInt(Count_Lines).toString(10)
 				//How many after filtering
-					document.getElementById("HTML_BarGraph_HowManyAfterFilter").style = "background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(InputList.length, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(InputList.length, Count_Lines) + " 100%)"
+					//document.getElementById("HTML_BarGraph_HowManyAfterFilter").style = "background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(InputList.length, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(InputList.length, Count_Lines) + " 100%)"
+					document.getElementById("HTML_BarGraph_HowManyAfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(InputList.length, Count_Lines, "to right", "#0000ff", "#000000")
 					document.getElementById("HTML_HowManyAfterFilter").innerHTML = BigInt(InputList.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length, Count_Lines, 2, true) + ")"
 				//How many removed after filtering
-					document.getElementById("HTML_BarGraph_HowManyRemovedAfterFilter").style = "background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(Count_Lines - InputList.length, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Lines - InputList.length, Count_Lines) + " 100%)"
+					//document.getElementById("HTML_BarGraph_HowManyRemovedAfterFilter").style = "background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(Count_Lines - InputList.length, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Lines - InputList.length, Count_Lines) + " 100%)"
+					document.getElementById("HTML_BarGraph_HowManyRemovedAfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Lines - InputList.length, Count_Lines, "to right", "#0000ff", "#000000")
 					document.getElementById("HTML_HowManyRemovedAfterFilter").innerHTML = BigInt(Count_Lines - InputList.length).toString(10) + " (" + BetterPercentageUsingInts(Count_Lines - InputList.length, Count_Lines, 2, true) + ")"
 				//Originals
-					document.getElementById("HTML_BarGraph_OriginalItemCount").style = "background-image: linear-gradient(to right, #008000, " + BetterPercentageUsingFloatsForBarGraphs(Count_OriginalItem, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_OriginalItem, Count_Lines) + " 100%)"
+					//document.getElementById("HTML_BarGraph_OriginalItemCount").style = "background-image: linear-gradient(to right, #008000, " + BetterPercentageUsingFloatsForBarGraphs(Count_OriginalItem, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_OriginalItem, Count_Lines) + " 100%)"
+					document.getElementById("HTML_BarGraph_OriginalItemCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_OriginalItem, Count_Lines, "to right", "#008000", "#000000")
 					document.getElementById("HTML_OriginalItemCount").innerHTML = BigInt(Count_OriginalItem).toString(10) + " (" + BetterPercentageUsingInts(Count_OriginalItem, Count_Lines, 2, true) + ")"
 				//Duplicates
-					document.getElementById("HTML_BarGraph_DupeCount").style = "background-image: linear-gradient(to right, #800000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Duplicates, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Duplicates, Count_Lines) + " 100%)"
+					//document.getElementById("HTML_BarGraph_DupeCount").style = "background-image: linear-gradient(to right, #800000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Duplicates, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Duplicates, Count_Lines) + " 100%)"
+					document.getElementById("HTML_BarGraph_DupeCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Duplicates, Count_Lines, "to right", "#800000", "#000000")
 					document.getElementById("HTML_DupeCount").innerHTML = BigInt(Count_Duplicates).toString(10) + " (" + BetterPercentageUsingInts(Count_Duplicates, Count_Lines, 2, true) + ")"
 				//Empty lines
-					document.getElementById("HTML_BarGraph_EmptyCount").style = "background-image: linear-gradient(to right, #808080, " + BetterPercentageUsingFloatsForBarGraphs(Count_EmptyLines, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_EmptyLines, Count_Lines) + " 100%)"
+					//document.getElementById("HTML_BarGraph_EmptyCount").style = "background-image: linear-gradient(to right, #808080, " + BetterPercentageUsingFloatsForBarGraphs(Count_EmptyLines, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_EmptyLines, Count_Lines) + " 100%)"
+					document.getElementById("HTML_BarGraph_EmptyCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_EmptyLines, Count_Lines, "to right", "#808080", "#000000")
 					document.getElementById("HTML_EmptyCount").innerHTML = BigInt(Count_EmptyLines).toString(10) + " (" + BetterPercentageUsingInts(Count_EmptyLines, Count_Lines, 2, true) + ")"
 				//Just space
-					document.getElementById("HTML_BarGraph_SpaceCount").style = "background-image: linear-gradient(to right, #A08080, " + BetterPercentageUsingFloatsForBarGraphs(Count_LinesWithJustSpace, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_LinesWithJustSpace, Count_Lines) + " 100%)"
+					//document.getElementById("HTML_BarGraph_SpaceCount").style = "background-image: linear-gradient(to right, #A08080, " + BetterPercentageUsingFloatsForBarGraphs(Count_LinesWithJustSpace, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_LinesWithJustSpace, Count_Lines) + " 100%)"
+					document.getElementById("HTML_BarGraph_SpaceCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_LinesWithJustSpace, Count_Lines, "to right", "#A08080", "#000000")
 					document.getElementById("HTML_SpaceCount").innerHTML = BigInt(Count_LinesWithJustSpace).toString(10) + " (" + BetterPercentageUsingInts(Count_LinesWithJustSpace, Count_Lines, 2, true) + ")"
 				//Blacklist
-					document.getElementById("HTML_BarGraph_BlacklistCount").style = "background-image: linear-gradient(to right, #ff6699, " + BetterPercentageUsingFloatsForBarGraphs(Count_Blacklisted, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Blacklisted, Count_Lines) + " 100%)"
+					//document.getElementById("HTML_BarGraph_BlacklistCount").style = "background-image: linear-gradient(to right, #ff6699, " + BetterPercentageUsingFloatsForBarGraphs(Count_Blacklisted, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Blacklisted, Count_Lines) + " 100%)"
+					document.getElementById("HTML_BarGraph_BlacklistCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Blacklisted, Count_Lines, "to right", "#ff6699", "#000000")
 					document.getElementById("HTML_BlacklistCount").innerHTML = BigInt(Count_Blacklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_Blacklisted, Count_Lines, 2, true) + ")"
 				//Dupe and blacklist
-					document.getElementById("HTML_BarGraph_DuplicateBlacklistCount").style = "background-image: linear-gradient(to right, #ff6666, " + BetterPercentageUsingFloatsForBarGraphs(Count_DuplicateBlacklisted, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_DuplicateBlacklisted, Count_Lines) + " 100%)"
+					//document.getElementById("HTML_BarGraph_DuplicateBlacklistCount").style = "background-image: linear-gradient(to right, #ff6666, " + BetterPercentageUsingFloatsForBarGraphs(Count_DuplicateBlacklisted, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_DuplicateBlacklisted, Count_Lines) + " 100%)"
+					document.getElementById("HTML_BarGraph_DuplicateBlacklistCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_DuplicateBlacklisted, Count_Lines, "to right", "#ff6666", "#000000")
 					document.getElementById("HTML_DuplicateBlacklistCount").innerHTML = BigInt(Count_DuplicateBlacklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_DuplicateBlacklisted, Count_Lines, 2, true) + ")"
 			//Plaintext
 				let OutputTextArea = ""
@@ -487,16 +495,14 @@ Sort:
 			return WholeNumberPart + "." + DecimalPart + "%"
 		}
 	}
-	function BetterPercentageUsingFloatsForBarGraphs(Quantity, MaxQuantity) {
-		//This one is made for bar graphs, specifically used for CSS
-		//linear gradients. If division by zero occurred, returns 0,
-		//Otherwise it return a string representing values 0-100%
-		//(clamped to 0-100).
-		if (MaxQuantity == 0) {
-			return "0%"
-		} else {
-			return clamp((Quantity * 100 / MaxQuantity), 0, 100).toString(10) + "%" //I find it more exact to multiply by 100 first and then divide so that most of the rounding errors happen on the final step.
+	function CSSBackgroundImageLinearGradiantPercentageBarGraph(Quantity, MaxQuantity, Direction, Color_Full, Color_Empty) {
+		//Returns a percentage displayed as a background image representing a bar graph as CSS.
+		let Percentage = 0
+		if (MaxQuantity != 0) {
+			Percentage = Quantity * 100/MaxQuantity //Multiply first so that it only rounds at the last step, minimizing rounding errors.
 		}
+		Percentage = clamp(Percentage, 0, 100)
+		return "background-image: linear-gradient("+Direction+", "+Color_Full+" "+Percentage+"%, "+Color_Empty+" "+Percentage+"% 100%);"
 	}
 	function clamp(num, min, max) {
 		//Restrict a number within a specified range.

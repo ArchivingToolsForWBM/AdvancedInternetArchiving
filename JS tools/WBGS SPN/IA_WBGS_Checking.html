@@ -123,6 +123,17 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 		<td><kbd>Unsure_SavedANon2XX</kbd></td>
 		<td id="StatisticPercentage_NumberOfItems_Unsure_SavedANon2XX"><kbd><span id="Statistic_NumberOfItems_Unsure_SavedANon2XX">0</span></kbd></td>
 	</tr>
+	<tr>
+		<th colspan="2">Classification totals</th>
+	</tr>
+	<tr>
+		<td><kbd>Success</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Success_Total"><kbd><span id="Statistic_NumberOfItems_Success_Total">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Unsure</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Unsure_Total"><kbd><span id="Statistic_NumberOfItems_Unsure_Total">0</span></kbd></td>
+	</tr>
 </table>
 <textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
 <button onclick="setClipboard(document.getElementById('Output_Plaintext').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
@@ -402,31 +413,37 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 							document.getElementById("Statistic_NumberOfItems_TotalURLs").innerHTML = BigInt(InputList.length).toString(10)
 						//Displayed
 							document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").innerHTML = BigInt(FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(FilteredListForDisplay.length, InputList.length, 2, true) +")"
-							document.getElementById("StatisticPercentage_NumberOfItems_RemainingAfterFilter").style = "background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(FilteredListForDisplay.length, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(FilteredListForDisplay.length, InputList.length) + ", #000000 100%);"
+							document.getElementById("StatisticPercentage_NumberOfItems_RemainingAfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(FilteredListForDisplay.length, InputList.length, "to right", "#0000ff", "#000000")
 						//How many removed
 							document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").innerHTML = BigInt(InputList.length - FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length - FilteredListForDisplay.length, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_RemovedAfterFilter").style = "background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(InputList.length - FilteredListForDisplay.length, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(InputList.length - FilteredListForDisplay.length, InputList.length) + ", #000000 100%);"
+							document.getElementById("StatisticPercentage_NumberOfItems_RemovedAfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(InputList.length - FilteredListForDisplay.length, InputList.length, "to right", "#0000ff", "#000000")
 						//Saved before
 							document.getElementById("Statistic_NumberOfItems_Success_SavedBefore").innerHTML = BigInt(Count_Success_SavedBefore).toString(10) + " (" + BetterPercentageUsingInts(Count_Success_SavedBefore, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Success_SavedBefore").style = "background-image: linear-gradient(to right, #008000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_SavedBefore, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_SavedBefore, InputList.length) + ", #000000 100%);"
+							document.getElementById("StatisticPercentage_NumberOfItems_Success_SavedBefore").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_SavedBefore, InputList.length, "to right", "#008000", "#000000")
 						//First archives
 							document.getElementById("Statistic_NumberOfItems_Success_FirstArchive").innerHTML = BigInt(Count_Success_FirstArchive).toString(10) + " (" + BetterPercentageUsingInts(Count_Success_FirstArchive, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Success_FirstArchive").style = "background-image: linear-gradient(to right, #00C000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_FirstArchive, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Success_FirstArchive, InputList.length) + ", #000000 100%);"
+							document.getElementById("StatisticPercentage_NumberOfItems_Success_FirstArchive").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_FirstArchive, InputList.length, "to right", "#00C000", "#000000")
 						//No IA results
 							document.getElementById("Statistic_NumberOfItems_Unsure_NoIAResult").innerHTML = BigInt(Count_Unsure_NoIAResult).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_NoIAResult, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_NoIAResult").style = "background-image: linear-gradient(to right, #808080, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_NoIAResult, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_NoIAResult, InputList.length) + ", #000000 100%);"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_NoIAResult").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_NoIAResult, InputList.length, "to right", "#808080", "#000000")
 						//Blank column D
 							document.getElementById("Statistic_NumberOfItems_Unsure_BlankColumnD").innerHTML = BigInt(Count_Unsure_BlankColumnD).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_BlankColumnD, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_BlankColumnD").style = "background-image: linear-gradient(to right, #A08080, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_BlankColumnD, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_BlankColumnD, InputList.length) + ", #000000 100%);"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_BlankColumnD").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_BlankColumnD, InputList.length, "to right", "#A08080", "#000000")
 						//Redirected
 							document.getElementById("Statistic_NumberOfItems_Unsure_Redirected").innerHTML = BigInt(Count_Unsure_Redirected).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Redirected, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Redirected").style = "background-image: linear-gradient(to right, #808000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Redirected, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Redirected, InputList.length) + ", #000000 100%);"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Redirected").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Redirected, InputList.length, "to right", "#808000", "#000000")
 						//Error
 							document.getElementById("Statistic_NumberOfItems_Unsure_Error").innerHTML = BigInt(Count_Unsure_Error).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Error, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Error").style = "background-image: linear-gradient(to right, #800000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Error, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_Error, InputList.length) + ", #000000 100%);"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Error").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Error, InputList.length, "to right", "#800000", "#000000")
 						//Non 2XX
 							document.getElementById("Statistic_NumberOfItems_Unsure_SavedANon2XX").innerHTML = BigInt(Count_Unsure_SavedANon2XX).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_SavedANon2XX, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_SavedANon2XX").style = "background-image: linear-gradient(to right, #FFA500, " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_SavedANon2XX, InputList.length) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Unsure_SavedANon2XX, InputList.length) + ", #000000 100%);"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_SavedANon2XX").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_SavedANon2XX, InputList.length, "to right", "#FFA500", "#000000")
+						//Total success and unsures
+							document.getElementById("Statistic_NumberOfItems_Success_Total").innerHTML = BigInt(Count_Success).toString(10) + " (" + BetterPercentageUsingInts(Count_Success, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success, InputList.length, "to right", "#0000ff", "#000000")
+							
+							document.getElementById("Statistic_NumberOfItems_Unsure_Total").innerHTML = BigInt(Count_Unsures).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsures, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsures, InputList.length, "to right", "#0000ff", "#000000")
 				//Retry list in plaintext
 					Output = ""
 					if (FilteredListForDisplay.length != 0) {
@@ -704,16 +721,14 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 			return WholeNumberPart + "." + DecimalPart + "%"
 		}
 	}
-	function BetterPercentageUsingFloatsForBarGraphs(Quantity, MaxQuantity) {
-		//This one is made for bar graphs, specifically used for CSS
-		//linear gradients. If division by zero occurred, returns 0,
-		//Otherwise it return a string representing values 0-100%
-		//(clamped to 0-100).
-		if (MaxQuantity == 0) {
-			return "0%"
-		} else {
-			return clamp((Quantity * 100 / MaxQuantity), 0, 100).toString(10) + "%" //I find it more exact to multiply by 100 first and then divide so that most of the rounding errors happen on the final step.
+	function CSSBackgroundImageLinearGradiantPercentageBarGraph(Quantity, MaxQuantity, Direction, Color_Full, Color_Empty) {
+		//Returns a percentage displayed as a background image representing a bar graph as CSS.
+		let Percentage = 0
+		if (MaxQuantity != 0) {
+			Percentage = Quantity * 100/MaxQuantity //Multiply first so that it only rounds at the last step, minimizing rounding errors.
 		}
+		Percentage = clamp(Percentage, 0, 100)
+		return "background-image: linear-gradient("+Direction+", "+Color_Full+" "+Percentage+"%, "+Color_Empty+" "+Percentage+"% 100%);"
 	}
 	function clamp(num, min, max) {
 		//Restrict a number within a specified range.
