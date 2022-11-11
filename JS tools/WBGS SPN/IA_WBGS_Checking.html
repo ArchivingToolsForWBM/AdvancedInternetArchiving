@@ -54,8 +54,8 @@ Paste your google sheet result here:<br><br>
 		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_NoIAResult" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_NoIAResult"><label for="Filter_Unsure_NoIAResult">No results (grey)</label></li>
 		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_BlankColumnD" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_BlankColumnD"><label for="Filter_Unsure_BlankColumnD">Result but column D is blank (light red)</label></li>
 		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Redirected" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_Redirected"><label for="Filter_Unsure_Redirected">Redirects (yellow)</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Errors" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_Error"><label for="Filter_Unsure_Errors">Errors (red)</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_SavedA4XX" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_SavedANon2XX"><label for="Filter_SavedA4XX">Saved but isn't a 2XX (3XX/4XX/5XX) (orange)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Error" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_Error"><label for="Filter_Unsure_Error">Errors (red)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_SavedANon2XX" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_SavedANon2XX"><label for="Filter_Unsure_SavedANon2XX">Saved but isn't a 2XX (3XX/4XX/5XX) (orange)</label></li>
 	</ul>
 </ul>
 Sort:<br>
@@ -320,7 +320,9 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 		}
 		IsInputTextareaChanged = false //Set it back to false so that if the user updates the list again, and sort, does not rerun the code above.
 		//Filter
-			let FilteredListForDisplay = InputList.filter(FilterUrls)
+			let FilteredListForDisplay = InputList.filter((ArrayElement) => {
+				return document.getElementById("Filter_" + ArrayElement[1][0]).checked
+			});
 		//Sort the filtered data. NOTE: array.reverse() is unstable, meaning the order of same keys will be reversed.
 			if (document.getElementById("Sort_Output_SaveStatusResponse").checked) {
 				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareSaveStatusResponse)
@@ -507,8 +509,8 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 		document.getElementById("Filter_Unsure_NoIAResult").checked = true
 		document.getElementById("Filter_Unsure_BlankColumnD").checked = true
 		document.getElementById("Filter_Unsure_Redirected").checked = true
-		document.getElementById("Filter_Unsure_Errors").checked = true
-		document.getElementById("Filter_SavedA4XX").checked = true
+		document.getElementById("Filter_Unsure_Error").checked = true
+		document.getElementById("Filter_Unsure_SavedANon2XX").checked = true
 		document.getElementById("Filter_Success_SavedBefore").checked = false
 		document.getElementById("Filter_Success_FirstArchive").checked = false
 		document.getElementById("Sort_Output_UserSentURLOrder").checked = true
@@ -597,23 +599,6 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 				ColorIndicator = "#FFA500"
 		}
 		return ColorIndicator
-	}
-	function FilterUrls(ArrayElement) {
-		let IsArrayElementPassesArchiveStatus = false
-		//Archive save status
-			let ListOfEnabledSaveStatus = new Array()
-			for (let Index = 0; Index < document.getElementsByClassName("FilterSettings_ArchiveStatus").length; Index++) {
-				if (document.getElementsByClassName("FilterSettings_ArchiveStatus")[Index].checked) {
-					ListOfEnabledSaveStatus.push(document.getElementsByClassName("FilterSettings_ArchiveStatus")[Index].dataset.status_list_name)
-				}
-			}
-			
-			for (let Index = 0; (Index < ListOfEnabledSaveStatus.length && IsArrayElementPassesArchiveStatus == false); Index++) {
-				if (ArrayElement[1][0] == ListOfEnabledSaveStatus[Index]) {
-					IsArrayElementPassesArchiveStatus = true
-				}
-			}
-		return IsArrayElementPassesArchiveStatus
 	}
 	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec, Clamped) {
 		//Quantity = Amount in relation of MaxQuantity

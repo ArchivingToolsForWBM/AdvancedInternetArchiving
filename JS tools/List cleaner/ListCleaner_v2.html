@@ -37,11 +37,11 @@
 Filter: <button onclick="ChangeFilterSettings('Filters', 1); AutoUpdate()">Check All</button><button onclick="ChangeFilterSettings('Filters', 0); AutoUpdate()">Uncheck All</button><button onclick="ChangeFilterSettings('Filters', 2); AutoUpdate()">Invert</button>
 <ul>
 <li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_OriginalItem" data-js_list_filter="OriginalItem" checked>Only by the first item(s) that have 0 or more copies exist that aren't blacklisted (<kbd>OriginalItem</kbd>)</label></li>
-<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_Duplicates" data-js_list_filter="Duplicate">Lines that are duplicates and not blacklisted (<kbd>Duplicate</kbd>)</label></li>
+<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_Duplicate" data-js_list_filter="Duplicate">Lines that are duplicates and not blacklisted (<kbd>Duplicate</kbd>)</label></li>
 <li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_Blacklisted" data-js_list_filter="Blacklisted">Lines that are blacklisted (<kbd>Blacklisted</kbd>)</label></li>
 <li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_DuplicateBlacklisted" data-js_list_filter="DuplicateBlacklisted">Lines that are both blacklisted AND duplicate (<kbd>DuplicateBlacklisted</kbd>)</label></li>
-<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_EmptyLines" data-js_list_filter="EmptyLine">Just empty lines (<kbd>EmptyLine</kbd>)</label></li>
-<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_Spaces" data-js_list_filter="JustSpace">Lines containing nothing but spaces (<kbd>JustSpace</kbd>)</label></li>
+<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_EmptyLine" data-js_list_filter="EmptyLine">Just empty lines (<kbd>EmptyLine</kbd>)</label></li>
+<li><label><input type="checkbox" class="Filters" onchange="AutoUpdate()" id="Filter_JustSpace" data-js_list_filter="JustSpace">Lines containing nothing but spaces (<kbd>JustSpace</kbd>)</label></li>
 </ul>
 Sort:
 <ul>
@@ -213,7 +213,9 @@ Sort:
 		}
 		IsAnyListUpdated = false //Set it back to false so that if the user updates the list again, and sort, does not rerun the code above.
 		//Filter
-			InputList = InputList.filter(FilterItemType)
+			InputList = InputList.filter((ArrayElement) => {
+				return document.getElementById("Filter_" + ArrayElement[2]).checked
+			})
 		//Sort
 			if (document.getElementById("Sort_Alphabetically").checked) {
 				InputList.sort(function CompareTextLines(a, b) {
@@ -366,21 +368,6 @@ Sort:
 				ColorIndicator = "#A08080"
 		}
 		return ColorIndicator
-	}
-	function FilterItemType(ArrayElement) {
-		let IsArrayElementPassesType = false
-		let ListOfAcceptedTypes = new Array()
-		for (let Index = 0; Index < document.getElementsByClassName("Filters").length; Index++) {
-			if (document.getElementsByClassName("Filters")[Index].checked) {
-				ListOfAcceptedTypes.push(document.getElementsByClassName("Filters")[Index].dataset.js_list_filter)
-			}
-		}
-		for (let Index = 0; (Index < ListOfAcceptedTypes.length && IsArrayElementPassesType == false); Index++) {
-			if (ArrayElement[2] == ListOfAcceptedTypes[Index]) {
-				IsArrayElementPassesType = true
-			}
-		}
-		return IsArrayElementPassesType
 	}
 	function escapeHTMLChars(string) {
 		//Should the user's input contains "<", ">", and "&", prevent the innerHTML from treating these as HTML tags/escapes
