@@ -1,0 +1,256 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+			input[type='text'] { font-family: monospace;}
+			input[type='number'] { font-family: monospace;}
+			
+			td label {   /* thanks to Patrick McElhaney - https://stackoverflow.com/questions/9739259/tick-a-checkbox-in-a-table-cell-by-clicking-anywhere-in-the-table-cell , causes table cells with labels inside them to focus onto whats inside a label */
+				display: block;
+				text-align: center;
+			}
+			
+		</style>
+	</head>
+<body>
+<p>This tool will take a collection of mastodon URLs, generate potential varations of them (such as images having the <kbd>medium</kbd> and <kbd>original</kbd> versions).</p>
+<p>Because the domain can be different, this may incorrectly assume some non-mastodon URLs as mastodon URLs</p>
+<label><input type="checkbox" onchange="AutoUpdateCode()" id="Option_AutoUpdate" checked>Auto update</label><br>
+<textarea id="MastodonLinks" type="text" cols="100" rows="30" oninput="TextareaUpdated(); AutoUpdateCode()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
+<p>
+	Filter settings:<button onclick="ChangeFilterSettings('AllFilters', 1); AutoUpdateCode()">Check all</button><button onclick="ChangeFilterSettings('AllFilters', 0); AutoUpdateCode()">Uncheck all</button><button onclick="ChangeFilterSettings('AllFilters', 2); AutoUpdateCode()">Invert</button>
+	<ul>
+		<li><label><input type="checkbox" checked id="Filter_FrontPage" class="AllFilters" onchange="AutoUpdateCode()">Front page</label></li>
+		<li><label><input type="checkbox" checked id="Filter_FrontPage_WithReplies" class="AllFilters" onchange="AutoUpdateCode()">Replies</label></li>
+		<li><label><input type="checkbox" checked id="Filter_FrontPage_Media" class="AllFilters" onchange="AutoUpdateCode()">media</label></li>
+		<li><label><input type="checkbox" checked id="Filter_Post" class="AllFilters" onchange="AutoUpdateCode()">Posts (toots)</label></li>
+		<li>Images: <button onclick="ChangeFilterSettings('Images', 1); AutoUpdateCode()">Check all</button><button onclick="ChangeFilterSettings('Images', 0); AutoUpdateCode()">Uncheck all</button><button onclick="ChangeFilterSettings('Images', 2); AutoUpdateCode()">Invert</button></li>
+		<ul>
+			<li><label><input type="checkbox" checked id="Filter_ImagePageAvailable" class="AllFilters Images" onchange="AutoUpdateCode()">Images, page-available resolution</label></li>
+			<li><label><input type="checkbox" checked id="Filter_ImageOriginal" class="AllFilters Images" onchange="AutoUpdateCode()">Images, original resolution</label></li>
+		</ul>
+		<li><label><input type="checkbox" checked id="Filter_Other" class="AllFilters" onchange="AutoUpdateCode()">Other</label></li>
+	</ul>
+	Sort:
+	<table>
+		<tr>
+			<th>Type</th><th>Ascending</th><th>Descending</th>
+		</tr>
+		<tr>
+			<td>Alphabetically</td>
+			<td><label><input type="radio" name="SortSetting" onchange="AutoUpdateCode()" id="Sort_Alphabetically" checked></label></td>
+			<td><label><input type="radio" name="SortSetting" onchange="AutoUpdateCode()" id="Sort_Alphabetically_Reverse"></label></td>
+		</tr>
+		<tr>
+			<td>Type</td>
+			<td><label><input type="radio" name="SortSetting" onchange="AutoUpdateCode()" id="Sort_ByType"></label></td>
+			<td><label><input type="radio" name="SortSetting" onchange="AutoUpdateCode()" id="Sort_ByType_Reverse"></label></td>
+		</tr>
+		<tr>
+			<td>By post ID</td>
+			<td><label><input type="radio" name="SortSetting" onchange="AutoUpdateCode()" id="Sort_PostID"></label></td>
+			<td><label><input type="radio" name="SortSetting" onchange="AutoUpdateCode()" id="Sort_PostID_Reverse"></label></td>
+		</tr>
+	</table>
+	<button onclick="GenerateURLs()">Submit</button>
+	<hr>
+	<textarea type='text' cols='100' rows='30' id="OutputPlainText" readonly style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
+	<button onclick="setClipboard(document.getElementById('OutputPlainText').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br>
+	<hr>
+	<span id="OutputTable"></span>
+</p>
+<script>
+	var SavedList = []
+	var IsTextareaUpdated = false
+	
+	function TextareaUpdated() {
+		IsTextareaUpdated = true
+	}
+	function ChangeFilterSettings(ElementClass, Setting) {
+		if (Setting < 2) {
+			Array.from(document.getElementsByClassName(ElementClass)).forEach((ArrayElement) => {
+				ArrayElement.checked = Setting
+			});
+		} else {
+			Array.from(document.getElementsByClassName(ElementClass)).forEach((ArrayElement) => {
+				ArrayElement.checked = ArrayElement.checked ^ 1
+			});
+		}
+	}
+	function AutoUpdateCode() {
+		if (document.getElementById("Option_AutoUpdate").checked) {
+			GenerateURLs()
+		}
+	}
+	function GenerateURLs() {
+		let OutputArray = []
+			if (IsTextareaUpdated) {
+				//Get URLs from input textarea
+					let ListOfURLs = document.getElementById("MastodonLinks").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"\']+/g)
+					if (ListOfURLs==null) { //Prevent error if no URL is found
+						ListOfURLs = []
+					}
+				//Corrections (ttp instead of https to avoid URL truncation (somwhere in the middle of the URL is replaced with "…") by browsers)
+					ListOfURLs = ListOfURLs.map((ArrayElement) => (ArrayElement.replace(/^ttp/, "http"))) //Revert them back to http/https
+					ListOfURLs = ListOfURLs.filter((ArrayElement) => (!(/^.+….+$/.test(ArrayElement)))) //Rid truncated URLs
+					ListOfURLs = ListOfURLs.map((ArrayElement) => { //Rid erroneous URLs that have a period at the end (console log) as well as the fragment identifier.
+						return ArrayElement.replace(/[\.]$/, "").replace(/#.*$/, "")
+					});
+					ListOfURLs = [... new Set(ListOfURLs)] //No dupes from input so that the following loop is faster.
+				//Generate URLs on a unique set
+					let GeneratedOutput = new Set() //No dupes that may occur during generating URLs (such as a post and a main page URL will result in 2 main page URLs)
+					//GeneratedOutput contains entries:
+					//Entry[0] = URL
+					//Entry[1] = type
+					//Entry[2] = Post ID number string (-1 if not a post URL)
+					//
+					//Had to be a set because comparing arrays and objects returns false since they are references, not the actual data.
+					//Since post ID numbers can be very large, using JS's "number" data type is not a good idea as it is a double-precision floating point, 2**53
+					//and above is when it cannot represent odd numbers, thus BigInt is more viable, and needs to be converted to a string because json cannot represent bigint.
+					ListOfURLs.forEach((ArrayElement) => {
+						if (/@[a-zA-Z0-9]+\/\d+$/.test(ArrayElement)) {//posts
+							//Post
+							GeneratedOutput.add(JSON.stringify([ArrayElement.replace(/\d+$/, ""), "FrontPage", "-1"])) //Front page
+							GeneratedOutput.add(JSON.stringify([ArrayElement.replace(/\d+$/, "with_replies"), "FrontPage_WithReplies", "-1"])) //With replies
+							GeneratedOutput.add(JSON.stringify([ArrayElement.replace(/\d+$/, "media"), "FrontPage_Media", "-1"])) //Media
+							GeneratedOutput.add(JSON.stringify([ArrayElement, "Post", ArrayElement.match(/\d+$/)[0]])) //Post
+						} else if (/media_attachments\/files\/(\d+\/)+[a-zA-Z0-9_]+\/[a-zA-Z0-9_]+\.[a-zA-Z0-9_]+$/.test(ArrayElement)) { //Images
+							//Example: https://files.mastodon.social/media_attachments/files/109/303/799/242/337/332/original/377d9d6160ccb23e.jpeg
+							//
+							//Unlike twitter, which ALWAYS generate each resolution types, mastodon does not always, this means that only downsized images that can be displayed on the page
+							//will be available (like if the page only have "small" and "original", "medium"'s URL results in 404). "Original" seems to always be available.
+							if (!(/original\/[a-zA-Z0-9_]+\.[a-zA-Z0-9_]+$/.test(ArrayElement))) {
+								GeneratedOutput.add(JSON.stringify([ArrayElement, "ImagePageAvailable", "-1"]))
+							}
+							GeneratedOutput.add(JSON.stringify([ArrayElement.replace(/[a-zA-Z0-9_]+(?=\/[a-zA-Z0-9_]+\.[a-zA-Z0-9_]+$)/, "original"), "ImageOriginal", "-1"]))
+						}
+					});
+					GeneratedOutput.forEach((Entry) => { //Convert json to string and into an array
+						OutputArray.push(JSON.parse(Entry))
+					});
+					GeneratedOutput = null //Save space just in case
+				//Handle post ID number
+					OutputArray = OutputArray.map((ArrayElement) => {//Convert post ID string into bigint
+						return [ArrayElement[0], ArrayElement[1], BigInt(ArrayElement[2])]
+					});
+				//Save it on the list
+					SavedList = OutputArray
+			} else {
+				OutputArray = SavedList //Just grab the saved array
+			}
+			IsTextareaUpdated = false
+		//Filter
+			OutputArray = OutputArray.filter((ArrayElement) => { //Filter before sort for 2 reasons: Makes sort faster with potentially fewer elements, and will not affect the original array due to creating a shallow copy.
+				return document.getElementById("Filter_" + ArrayElement[1]).checked
+			});
+		//Sort
+			if (document.getElementById("Sort_Alphabetically").checked) {
+				OutputArray.sort((a, b) => {
+					if (a[0] === b[0]) {
+						return 0;
+					} else {
+						return (a[0] < b[0]) ? -1 : 1;
+					}
+				});
+			} else if (document.getElementById("Sort_Alphabetically_Reverse").checked) {
+				OutputArray.sort((a, b) => {
+					if (a[0] === b[0]) {
+						return 0;
+					} else {
+						return (a[0] < b[0]) ? 1 : -1;
+					}
+				});
+			} else if (document.getElementById("Sort_ByType").checked) {
+				OutputArray.sort((a, b) => {
+					if (a[1] === b[1]) {
+						return 0;
+					} else {
+						return (a[1] < b[1]) ? -1 : 1;
+					}
+				});
+			} else if (document.getElementById("Sort_ByType_Reverse")) {
+				OutputArray.sort((a, b) => {
+					if (a[1] === b[1]) {
+						return 0;
+					} else {
+						return (a[1] < b[1]) ? 1 : -1;
+					}
+				});
+			} else if (document.getElementById("Sort_PostID").checked) {
+				OutputArray.sort((a, b) => {return Number(a[2] - b[2])}) //Subtract in BigInt, then convert to double-precision float, not the other way around to prevent potential rounding with 2 values close to another
+			} else if (document.getElementById("Sort_PostID_Reverse").checked) {
+				OutputArray.sort((a, b) => {return Number(b[2] - a[2])})
+			}
+		//Output text
+			let OutputString = ""
+			OutputArray.forEach((ArrayElement, Index, ArrayItself) => {
+				OutputString += ArrayElement[0]
+				if (Index != ArrayItself.length -1) {
+					OutputString += "\n"
+				}
+			});
+			document.getElementById("OutputPlainText").value = OutputString
+		//Output table
+			OutputString = ""
+			OutputString += "<table>"
+			OutputString += "<tr><td></td><th>URLs</th><th>Type</th><th>Post ID</th></tr>"
+			OutputArray.forEach((ArrayElement, Index) => {
+				OutputString += "<tr>"
+				OutputString += "<td>" + BigInt(Index+1).toString(10) + "</td>" //BigInt().toString renders it so no E-notation
+				OutputString += "<td>" + escapeHTMLChars(ArrayElement[0]) + "</td>"
+				OutputString += "<td>" + ArrayElement[1] + "</td>"
+				let PostIDString = "N/A"
+				if (ArrayElement[2] != -1n) {
+					PostIDString = ArrayElement[2].toString(10)
+				}
+				OutputString += "<td>" + PostIDString + "</td>"
+				OutputString += "</tr>"
+			});
+			OutputString += "</table>"
+			document.getElementById("OutputTable").innerHTML = OutputString
+	}
+	function escapeHTMLChars(string) {
+		//Should the user's input contains "<", ">", and "&", prevent the innerHTML from treating these as HTML tags/escapes
+			string = string.replaceAll("&", "&amp;") //This must be done first, to avoid replacing already-replaced symbol's ampersand character.
+			string = string.replaceAll("<", "&lt;")
+			string = string.replaceAll(">", "&gt;")
+			return string
+	}
+	
+	//Copy text from textarea
+		function setClipboard(String) {
+			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
+			const type = "text/plain";
+			const blob = new Blob([String], { type });
+			const data = [new ClipboardItem({ [type]: blob })];
+	
+			navigator.clipboard.write(data).then(
+				() => {
+				/* success */
+					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #00FF00;'>Copied!</span>"
+					setTimeout(DeleteCopyMessage, 1500)
+				},
+				() => {
+				/* failure */
+					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #FF0000;'>Copy failed!</span>"
+					setTimeout(DeleteCopyMessage, 1500)
+				}
+			);
+		}
+		function DeleteCopyMessage() {
+			document.getElementById("CopiedTextMessage").innerHTML = ""
+		}
+</script>
