@@ -33,10 +33,13 @@
 <p>
 	Filter settings:<button onclick="ChangeFilterSettings('AllFilters', 1); AutoUpdateCode()">Check all</button><button onclick="ChangeFilterSettings('AllFilters', 0); AutoUpdateCode()">Uncheck all</button><button onclick="ChangeFilterSettings('AllFilters', 2); AutoUpdateCode()">Invert</button>
 	<ul>
-		<li><label><input type="checkbox" checked id="Filter_FrontPage" class="AllFilters" onchange="AutoUpdateCode()">Front page</label></li>
-		<li><label><input type="checkbox" checked id="Filter_FrontPage_WithReplies" class="AllFilters" onchange="AutoUpdateCode()">Replies</label></li>
-		<li><label><input type="checkbox" checked id="Filter_FrontPage_Media" class="AllFilters" onchange="AutoUpdateCode()">media</label></li>
-		<li><label><input type="checkbox" checked id="Filter_Post" class="AllFilters" onchange="AutoUpdateCode()">Posts (toots)</label></li>
+		<li>Pages <button onclick="ChangeFilterSettings('Pages', 1); AutoUpdateCode()">Check all</button><button onclick="ChangeFilterSettings('Pages', 0); AutoUpdateCode()">Uncheck all</button><button onclick="ChangeFilterSettings('Pages', 2); AutoUpdateCode()">Invert</button></li>
+		<ul>
+			<li><label><input type="checkbox" checked id="Filter_FrontPage" class="AllFilters Pages" onchange="AutoUpdateCode()">Front page</label></li>
+			<li><label><input type="checkbox" checked id="Filter_FrontPage_WithReplies" class="AllFilters Pages" onchange="AutoUpdateCode()">Replies</label></li>
+			<li><label><input type="checkbox" checked id="Filter_FrontPage_Media" class="AllFilters Pages" onchange="AutoUpdateCode()">media</label></li>
+			<li><label><input type="checkbox" checked id="Filter_Post" class="AllFilters Pages" onchange="AutoUpdateCode()">Posts (toots)</label></li>
+		</ul>
 		<li>Images: <button onclick="ChangeFilterSettings('Images', 1); AutoUpdateCode()">Check all</button><button onclick="ChangeFilterSettings('Images', 0); AutoUpdateCode()">Uncheck all</button><button onclick="ChangeFilterSettings('Images', 2); AutoUpdateCode()">Invert</button></li>
 		<ul>
 			<li><label><input type="checkbox" checked id="Filter_ImagePageAvailable" class="AllFilters Images" onchange="AutoUpdateCode()">Images, page-available resolution</label></li>
@@ -67,6 +70,7 @@
 	</table>
 	<button onclick="GenerateURLs()">Submit</button>
 	<hr>
+	<kbd>Number of items: <span id="OutputItemCount">0</span></kbd><br>
 	<textarea type='text' cols='100' rows='30' id="OutputPlainText" readonly style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
 	<button onclick="setClipboard(document.getElementById('OutputPlainText').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br>
 	<hr>
@@ -121,12 +125,17 @@
 					//Since post ID numbers can be very large, using JS's "number" data type is not a good idea as it is a double-precision floating point, 2**53
 					//and above is when it cannot represent odd numbers, thus BigInt is more viable, and needs to be converted to a string because json cannot represent bigint.
 					ListOfURLs.forEach((ArrayElement) => {
-						if (/@[a-zA-Z0-9]+\/\d+$/.test(ArrayElement)) {//posts
+						if (/@[a-zA-Z0-9_]+\/\d+$/.test(ArrayElement)) {//posts
 							//Post
-							GeneratedOutput.add(JSON.stringify([ArrayElement.replace(/\d+$/, ""), "FrontPage", "-1"])) //Front page
-							GeneratedOutput.add(JSON.stringify([ArrayElement.replace(/\d+$/, "with_replies"), "FrontPage_WithReplies", "-1"])) //With replies
-							GeneratedOutput.add(JSON.stringify([ArrayElement.replace(/\d+$/, "media"), "FrontPage_Media", "-1"])) //Media
-							GeneratedOutput.add(JSON.stringify([ArrayElement, "Post", ArrayElement.match(/\d+$/)[0]])) //Post
+								GeneratedOutput.add(JSON.stringify([ArrayElement, "Post", ArrayElement.match(/\d+$/)[0]])) //Post
+								GeneratedOutput.add(JSON.stringify([ArrayElement.match(/^.*?@[a-zA-Z0-9_]+/)[0], "FrontPage", "-1"])) //Front page
+								GeneratedOutput.add(JSON.stringify([ArrayElement.match(/^.*?@[a-zA-Z0-9_]+/)[0] + "/with_replies", "FrontPage_WithReplies", "-1"])) //With replies
+								GeneratedOutput.add(JSON.stringify([ArrayElement.match(/^.*?@[a-zA-Z0-9_]+/)[0] + "/media", "FrontPage_Media", "-1"])) //Media
+						} else if (/@[a-zA-Z0-9_]+(\/|\/with_replies|\/media)?$/.test(ArrayElement)) {
+							//On user front page, replies, media...
+								GeneratedOutput.add(JSON.stringify([ArrayElement.match(/^.*?@[a-zA-Z0-9_]+/)[0], "FrontPage", "-1"])) //Front page
+								GeneratedOutput.add(JSON.stringify([ArrayElement.match(/^.*?@[a-zA-Z0-9_]+/)[0] + "/with_replies", "FrontPage_WithReplies", "-1"])) //With replies
+								GeneratedOutput.add(JSON.stringify([ArrayElement.match(/^.*?@[a-zA-Z0-9_]+/)[0] + "/media", "FrontPage_Media", "-1"])) //Media
 						} else if (/media_attachments\/files\/(\d+\/)+[a-zA-Z0-9_]+\/[a-zA-Z0-9_]+\.[a-zA-Z0-9_]+$/.test(ArrayElement)) { //Images
 							//Example: https://files.mastodon.social/media_attachments/files/109/303/799/242/337/332/original/377d9d6160ccb23e.jpeg
 							//
@@ -194,6 +203,8 @@
 			} else if (document.getElementById("Sort_PostID_Reverse").checked) {
 				OutputArray.sort((a, b) => {return Number(b[2] - a[2])})
 			}
+		//Item count
+			document.getElementById("OutputItemCount").innerHTML = BigInt(OutputArray.length).toString(10)
 		//Output text
 			let OutputString = ""
 			OutputArray.forEach((ArrayElement, Index, ArrayItself) => {
@@ -209,14 +220,14 @@
 			OutputString += "<tr><td></td><th>URLs</th><th>Type</th><th>Post ID</th></tr>"
 			OutputArray.forEach((ArrayElement, Index) => {
 				OutputString += "<tr>"
-				OutputString += "<td>" + BigInt(Index+1).toString(10) + "</td>" //BigInt().toString renders it so no E-notation
-				OutputString += "<td>" + escapeHTMLChars(ArrayElement[0]) + "</td>"
-				OutputString += "<td>" + ArrayElement[1] + "</td>"
+				OutputString += "<td><kbd>" + BigInt(Index+1).toString(10) + "</kbd></td>" //BigInt().toString renders it so no E-notation
+				OutputString += "<td><kbd>" + escapeHTMLChars(ArrayElement[0]) + "</kbd></td>"
+				OutputString += "<td><kbd>" + ArrayElement[1] + "</kbd></td>"
 				let PostIDString = "N/A"
 				if (ArrayElement[2] != -1n) {
 					PostIDString = ArrayElement[2].toString(10)
 				}
-				OutputString += "<td>" + PostIDString + "</td>"
+				OutputString += "<td><kbd>" + PostIDString + "</kbd></td>"
 				OutputString += "</tr>"
 			});
 			OutputString += "</table>"
