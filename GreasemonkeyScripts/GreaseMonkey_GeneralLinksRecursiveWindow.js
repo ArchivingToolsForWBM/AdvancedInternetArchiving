@@ -59,6 +59,13 @@
 				console.log((URLString[0]).replace(/^http/, "ttp"));
 			}
 		});
+		Array.from(PageDocument.getElementsByTagName('video')).forEach(link=>{ //video
+			let URLString = FormatURL(link.src)
+			if(!all.has(URLString[0])&&URLString[1]) {
+				all.add(URLString[0]);
+				console.log((URLString[0]).replace(/^http/, "ttp").replace(/#.*$/, ""));
+			}
+		});
 	}
 	
 	function FormatURL(String) {
