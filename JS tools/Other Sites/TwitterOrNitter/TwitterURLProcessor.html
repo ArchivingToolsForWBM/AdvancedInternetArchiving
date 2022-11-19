@@ -116,6 +116,7 @@ Filter:<br>
 	</ul>
 	<li>Other</li>
 	<ul>
+		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="Twitter_Tco" id="FilterSetting_Twitter_Tco" checked>t.co</label></li>
 		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="Twitter_Other" id="FilterSetting_Twitter_Other" >Other twitter</label></li>
 		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="OtherSites" id="FilterSetting_OtherSites" >Other sites</label></li>
 	</ul>
@@ -136,11 +137,14 @@ Misc:
 	const Twitter_NotAUserNameList = [
 		"TOS",
 		"about",
+		"explore",
+		"home",
 		"i",
 		"login",
 		"messages",
 		"notifications",
 		"null",
+		"privacy",
 		"search",
 		"search-advanced",
 		"tos"
@@ -235,30 +239,32 @@ Misc:
 		let UniqueListOfURLs = new Set()
 		let UniqueArray = new Array()
 		for (let i = 0; i < ListOfURLs.length; i++) {
+			//Array/Set data format:
+			// UniqueListOfURLs[i][0] = URL
+			// UniqueListOfURLs[i][1] = type
+			// UniqueListOfURLs[i][2] = tweet ID (-1n if not a tweet)
+			//
+			//Username page and posts
+			// https://twitter.com/Username123
+			// https://twitter.com/Username123/with_replies
+			// https://twitter.com/Username123/media
+			// https://twitter.com/Username123/likes
+			// https://twitter.com/Username123/status/123456789012345
+			//
+			//Images
+			// Old: https://pbs.twimg.com/media/<base_64_string>.<file_type>[:<resolution>]
+			// New: https://pbs.twimg.com/media/<base_64_string>?format=<file_type>[&name=<resolution>]
+			//
+			//Videos:
+			// https://pbs.twimg.com/tweet_video_thumb/<thumbnail_id>.<file_type>
+			// https://pbs.twimg.com/tweet_video_thumb/<thumbnail_id>?format=<file_type>&name=<resolution>
+			// https://pbs.twimg.com/tweet_video/<video_id>.mp4
+			// https://video.twimg.com/tweet_video/<video_id>.mp4
+			//
+			//T.co
+			// http://t.co/<ID>
+			//Side note: JSON.stringify does not work with bigint.
 			if (/^http(s)?\:\/\/(www\.)?twitter\.com\/(?!i\/events)/.test(ListOfURLs[i])) {
-				//Array/Set data format:
-				// UniqueListOfURLs[i][0] = URL
-				// UniqueListOfURLs[i][1] = type
-				// UniqueListOfURLs[i][2] = tweet ID (-1n if not a tweet)
-				//
-				//Username page and posts
-				// https://twitter.com/Username123
-				// https://twitter.com/Username123/with_replies
-				// https://twitter.com/Username123/media
-				// https://twitter.com/Username123/likes
-				// https://twitter.com/Username123/status/123456789012345
-				//
-				//Images
-				// Old: https://pbs.twimg.com/media/<base_64_string>.<file_type>[:<resolution>]
-				// New: https://pbs.twimg.com/media/<base_64_string>?format=<file_type>[&name=<resolution>]
-				//
-				//Videos:
-				// https://pbs.twimg.com/tweet_video_thumb/<thumbnail_id>.<file_type>
-				// https://pbs.twimg.com/tweet_video_thumb/<thumbnail_id>?format=<file_type>&name=<resolution>
-				// https://pbs.twimg.com/tweet_video/<video_id>.mp4
-				// https://video.twimg.com/tweet_video/<video_id>.mp4
-				//
-				//Side note: JSON.stringify does not work with bigint.
 				let PotentialUsername = ListOfURLs[i].replace(/^http(s)?\:\/\/twitter\.com\//, "").replace(/\/.*$/, "")
 				let PotentialUsername_isValid = true
 				let TweetID = -1n
@@ -450,6 +456,10 @@ Misc:
 				if (document.getElementById("FilterSetting_Twitter_Other").checked) {
 					UniqueListOfURLs.add(JSON.stringify([ListOfURLs[i], "Twitter_Other", "-1"]))
 				}
+			} else if (/http(s)?\:\/\/t\.co/.test(ListOfURLs[i])){
+				if (document.getElementById("FilterSetting_Twitter_Tco").checked) {
+					UniqueListOfURLs.add(JSON.stringify([ListOfURLs[i], "Twitter_Tco", "-1"]))
+				}
 			} else {
 				if (document.getElementById("FilterSetting_OtherSites").checked) {
 					UniqueListOfURLs.add(JSON.stringify([ListOfURLs[i], "OtherSites", "-1"]))
@@ -460,19 +470,20 @@ Misc:
 			UniqueArray = Array.from(UniqueListOfURLs, (Element) => {return JSON.parse(Element)}) //Filtering, sorting requires them to be an array.
 		//Filter
 			UniqueArray = UniqueArray.filter((ArrayElement) => {
-				let DidElementPasses = false
-				let ListOfAcceptedTypes = new Array()
-				for (let i = 0; i < document.getElementsByClassName("TwitterURLFilter").length; i++) {
-					if (document.getElementsByClassName("TwitterURLFilter")[i].checked) {
-						ListOfAcceptedTypes.push(document.getElementsByClassName("TwitterURLFilter")[i].dataset.js_url_filter)
-					}
-				}
-				for (let i = 0; i < ListOfAcceptedTypes.length && DidElementPasses == false; i++) {
-					if (ArrayElement[1] == ListOfAcceptedTypes[i]) {
-						DidElementPasses = true
-					}
-				}
-				return DidElementPasses
+				//let DidElementPasses = false
+				//let ListOfAcceptedTypes = new Array()
+				//for (let i = 0; i < document.getElementsByClassName("TwitterURLFilter").length; i++) {
+				//	if (document.getElementsByClassName("TwitterURLFilter")[i].checked) {
+				//		ListOfAcceptedTypes.push(document.getElementsByClassName("TwitterURLFilter")[i].dataset.js_url_filter)
+				//	}
+				//}
+				//for (let i = 0; i < ListOfAcceptedTypes.length && DidElementPasses == false; i++) {
+				//	if (ArrayElement[1] == ListOfAcceptedTypes[i]) {
+				//		DidElementPasses = true
+				//	}
+				//}
+				//return DidElementPasses
+				return document.getElementById("FilterSetting_" + ArrayElement[1]).checked
 			})
 		//Sort
 			if (document.getElementById("SortSetting_ABC").checked) {

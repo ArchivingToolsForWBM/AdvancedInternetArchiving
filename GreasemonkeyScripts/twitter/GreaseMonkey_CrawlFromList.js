@@ -169,6 +169,13 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 					AddTo_TwitterURLSet(link.src);
 				}
 			});
+			Array.from(document.getElementsByTagName("a")).forEach(link=>{ //for some reason, querySelectorAll('[src*="t.co/"]') does not work
+				if (link.hasAttribute("href")) {
+					if(!TwitterURLSet.has(link.href) && /^http(s)?:\/\/t\.co\/.*$/.test(link.href)) {
+						AddTo_TwitterURLSet(link.href);
+					}
+				}
+			});
 		//Get tweets that have "Show this thread"
 			Array.from(document.getElementsByTagName("a")).forEach((link, i)=>{
 				if(document.getElementsByTagName("a")[i].innerText == "Show this thread" && document.getElementsByTagName("a")[i].hasAttribute("href")) {
