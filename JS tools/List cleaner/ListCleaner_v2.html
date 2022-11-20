@@ -56,17 +56,17 @@ Sort:
 <button onclick="setClipboard(document.getElementById('TextOutput').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
 <table>
 <tr><th colspan="2">Statistics</th></tr>
-<tr><td><kbd>Total number of lines:</kbd></td><td><kbd><span id="HTML_LineCount"></span></kbd></td></tr>
+<tr><td><kbd>Total number of lines:</kbd></td><td><kbd><span id="HTML_LineCount">0</span></kbd></td></tr>
 <tr><th colspan="2">What's displayed</th></tr>
-<tr><td><kbd>How many after filtering:</kbd></td><td id="HTML_BarGraph_HowManyAfterFilter"><kbd><span id="HTML_HowManyAfterFilter"></span></kbd></td></tr>
-<tr><td><kbd>How many removed after filtering:</kbd></td><td id="HTML_BarGraph_HowManyRemovedAfterFilter"><kbd><span id="HTML_HowManyRemovedAfterFilter"></span></kbd></td></tr>
+<tr><td><kbd>How many after filtering:</kbd></td><td id="HTML_BarGraph_HowManyAfterFilter"><kbd><span id="HTML_HowManyAfterFilter">0</span></kbd></td></tr>
+<tr><td><kbd>How many removed after filtering:</kbd></td><td id="HTML_BarGraph_HowManyRemovedAfterFilter"><kbd><span id="HTML_HowManyRemovedAfterFilter">0</span></kbd></td></tr>
 <tr><th colspan="2">Classification stats</th></tr>
-<tr><td><kbd>Total number of any items that are <kbd>OriginalItem</kbd> and are not duplicates:</kbd></td><td id="HTML_BarGraph_OriginalItemCount"><kbd><span id="HTML_OriginalItemCount"></span></kbd></td></tr>
-<tr><td><kbd>Total number of duplicates (not blacklisted):</kbd></td><td id="HTML_BarGraph_DupeCount"><kbd><span id="HTML_DupeCount"></span></kbd></td></tr>
-<tr><td><kbd>Total number of empty lines:</kbd></td><td id="HTML_BarGraph_EmptyCount"><kbd><span id="HTML_EmptyCount"></span></kbd></td></tr>
-<tr><td><kbd>Total number of lines only having space characters:</kbd></td><td id="HTML_BarGraph_SpaceCount"><kbd><span id="HTML_SpaceCount"></span></td></tr>
-<tr><td><kbd>Total number of items that got blacklisted (ignoring duplicates):</kbd></td><td id="HTML_BarGraph_BlacklistCount"><kbd><span id="HTML_BlacklistCount"></span></td></tr>
-<tr><td><kbd>Total number of items that got blacklisted and are duplicates:</kbd></td><td id="HTML_BarGraph_DuplicateBlacklistCount"><kbd><span id="HTML_DuplicateBlacklistCount"></span></td></tr>
+<tr><td><kbd>Total number of any items that are <kbd>OriginalItem</kbd> and are not duplicates:</kbd></td><td id="HTML_BarGraph_OriginalItemCount"><kbd><span id="HTML_OriginalItemCount">0</span></kbd></td></tr>
+<tr><td><kbd>Total number of duplicates (not blacklisted):</kbd></td><td id="HTML_BarGraph_DupeCount"><kbd><span id="HTML_DupeCount">0</span></kbd></td></tr>
+<tr><td><kbd>Total number of empty lines:</kbd></td><td id="HTML_BarGraph_EmptyCount"><kbd><span id="HTML_EmptyCount">0</span></kbd></td></tr>
+<tr><td><kbd>Total number of lines only having space characters:</kbd></td><td id="HTML_BarGraph_SpaceCount"><kbd><span id="HTML_SpaceCount">0</span></td></tr>
+<tr><td><kbd>Total number of items that got blacklisted (ignoring duplicates):</kbd></td><td id="HTML_BarGraph_BlacklistCount"><kbd><span id="HTML_BlacklistCount">0</span></td></tr>
+<tr><td><kbd>Total number of items that got blacklisted and are duplicates:</kbd></td><td id="HTML_BarGraph_DuplicateBlacklistCount"><kbd><span id="HTML_DuplicateBlacklistCount">0</span></td></tr>
 </table><br>
 
 <span id="OutputTable"></span>
@@ -110,234 +110,254 @@ Sort:
 		document.getElementById("Filter_OriginalItem").checked = true
 		document.getElementById("Sort_SameOrderEntered").checked = true
 		document.getElementById("TextInput").value = ""
+		document.getElementById("TextInput_Blacklist").value = ""
+		ClearOutput()
+	}
+	function ClearOutput() {
 		document.getElementById("OutputTable").innerHTML = ""
+		document.getElementById("HTML_LineCount").innerHTML = "0"
+		//How many after filtering
+			document.getElementById("HTML_BarGraph_HowManyAfterFilter").style = ""
+			document.getElementById("HTML_HowManyAfterFilter").innerHTML = "0"
+		//How many removed after filtering
+			document.getElementById("HTML_BarGraph_HowManyRemovedAfterFilter").style = ""
+			document.getElementById("HTML_HowManyRemovedAfterFilter").innerHTML = "0"
+		//Originals
+			document.getElementById("HTML_BarGraph_OriginalItemCount").style = ""
+			document.getElementById("HTML_OriginalItemCount").innerHTML = "0"
+		//Duplicates
+			document.getElementById("HTML_BarGraph_DupeCount").style = ""
+			document.getElementById("HTML_DupeCount").innerHTML = "0"
+		//Empty lines
+			document.getElementById("HTML_BarGraph_EmptyCount").style = ""
+			document.getElementById("HTML_EmptyCount").innerHTML = "0"
+		//Just space
+			document.getElementById("HTML_BarGraph_SpaceCount").style = ""
+			document.getElementById("HTML_SpaceCount").innerHTML = "0"
+		//Blacklist
+			document.getElementById("HTML_BarGraph_BlacklistCount").style = ""
+			document.getElementById("HTML_BlacklistCount").innerHTML = "0"
+		//Dupe and blacklist
+			document.getElementById("HTML_BarGraph_DuplicateBlacklistCount").style = ""
+			document.getElementById("HTML_DuplicateBlacklistCount").innerHTML = "0"
 		document.getElementById("TextOutput").value = ""
-		
-		let StatisticsArray = ["HTML_LineCount", "HTML_OriginalItemCount", "HTML_HowManyAfterFilter", "HTML_HowManyRemovedAfterFilter", "HTML_DupeCount", "HTML_EmptyCount", "HTML_SpaceCount", "HTML_BlacklistCount", "HTML_DuplicateBlacklistCount"]
-		for (let Index = 0; Index < StatisticsArray.length; Index++) {
-			document.getElementById(StatisticsArray[Index]).innerHTML = ""
-		}
 	}
 	function MainFunction() {
 		let InputList
-		if (IsAnyListUpdated) {
-			InputList = ((document.getElementById("TextInput").value).split('\n'))
-			InputList = InputList.map((ArrayElement, Index) => [ArrayElement, Index, "OriginalItem", 0, false, -1])
-			//InputList[Index]: Contains info for each line
-			//InputList[Index][0]: The line of text
-			//InputList[Index][1]: Line number (0 based)
-			//InputList[Index][2]: (Written later) Status:
-			// -"OriginalItem" = first item of 0 or more copies
-			// -"Duplicate" = if this line is the 2nd+ copy of the original
-			// -"Blacklisted" = If the item in the list matches with blacklist
-			// -"DuplicateBlacklisted" = Same as above and also a duplicate
-			// -"EmptyLine" (a line with no characters of any kind, including space), "JustSpace" (a line with just any whitespace character)
-			//InputList[Index][3]: (Written later) Duplicate count (0 means no dups were found). Written on both the original and all duplicates.
-			//InputList[Index][4]: (Written later) Duplicate-have-been-run flag, as inner-loop (second item we check in the array via "InputList[Index2]") checks and flag each item,
-			// The outer loop ("InputList[Index]") doesn't need to re-check currently known duplicates, therefore optimizing the loop. Also used to prevent 2nd and beyond identical
-			// lines from being labeled as "OriginalItem"
-			//InputList[Index][5]: (Written later) Index number representing the original copy.
-			//
-			//Now, please note: Unique = [new Set(InputList)] is a better way of removing duplicates, but the problem is what if the user wants to MERELY detect duplicates and
-			//have them displayed? Therefore using loops and flagging them is a more viable option.
-			
-			let InputBlacklist = [...new Set(((document.getElementById("TextInput_Blacklist").value).split('\n')))]
-			InputBlacklist = new Set(InputBlacklist.filter((ArrayElement) => {return !(/^\s*$/.test(ArrayElement))}))
-			document.getElementById("UniqueBlacklistCount").innerHTML = BigInt(InputBlacklist.size).toString(10)
-			Count_Lines = InputList.length
-			Count_OriginalItem = 0
-			Count_Duplicates = 0
-			Count_Blacklisted = 0
-			Count_DuplicateBlacklisted = 0
-			Count_EmptyLines = 0
-			Count_LinesWithJustSpace = 0
-			for (let Index = 0; Index < InputList.length; Index++) {
-				//Check for lines that are EmptyLine or just spaces
-					if (InputList[Index][0] == "") {
-						InputList[Index][2] = "EmptyLine"
-						InputList[Index][4] = true
-						Count_EmptyLines++
-					} else if (/^\s*$/.test(InputList[Index][0])) {
-						InputList[Index][2] = "JustSpace"
-						InputList[Index][4] = true
-						Count_LinesWithJustSpace++
-					}
-				//Find duplicates
-					if (InputList[Index][4] == false) { //Skip if the outer loop runs into a duplicate that is already processed by inner loop (which also avoids double-counting).
-						for (let Index2 = Index+1; Index2 < InputList.length; Index2++) {
-							if (InputList[Index2][4] == false) {
-								if (InputList[Index][0] === InputList[Index2][0]) {
-									//Flag second, and beyond items as duplicate
-										InputList[Index2][2] = "Duplicate"
-									//Increase duplicate count
-										InputList[Index][3]++
-									//Flag second and beyond copies so it doesn't get processed multiple times, which is uncessary and incorrectly double-counts.
-										InputList[Index2][4] = true
-									//Duplicate of first item on list
-										InputList[Index2][5] = Index
+		if (document.getElementById("TextInput").value == "") {
+			ClearOutput()
+		} else {
+			if (IsAnyListUpdated) {
+				InputList = ((document.getElementById("TextInput").value).split('\n'))
+				InputList = InputList.map((ArrayElement, Index) => [ArrayElement, Index, "OriginalItem", 0, false, -1])
+				//InputList[Index]: Contains info for each line
+				//InputList[Index][0]: The line of text
+				//InputList[Index][1]: Line number (0 based)
+				//InputList[Index][2]: (Written later) Status:
+				// -"OriginalItem" = first item of 0 or more copies
+				// -"Duplicate" = if this line is the 2nd+ copy of the original
+				// -"Blacklisted" = If the item in the list matches with blacklist
+				// -"DuplicateBlacklisted" = Same as above and also a duplicate
+				// -"EmptyLine" (a line with no characters of any kind, including space), "JustSpace" (a line with just any whitespace character)
+				//InputList[Index][3]: (Written later) Duplicate count (0 means no dups were found). Written on both the original and all duplicates.
+				//InputList[Index][4]: (Written later) Duplicate-have-been-run flag, as inner-loop (second item we check in the array via "InputList[Index2]") checks and flag each item,
+				// The outer loop ("InputList[Index]") doesn't need to re-check currently known duplicates, therefore optimizing the loop. Also used to prevent 2nd and beyond identical
+				// lines from being labeled as "OriginalItem"
+				//InputList[Index][5]: (Written later) Index number representing the original copy.
+				//
+				//Now, please note: Unique = [new Set(InputList)] is a better way of removing duplicates, but the problem is what if the user wants to MERELY detect duplicates and
+				//have them displayed? Therefore using loops and flagging them is a more viable option.
+				
+				let InputBlacklist = [...new Set(((document.getElementById("TextInput_Blacklist").value).split('\n')))]
+				InputBlacklist = new Set(InputBlacklist.filter((ArrayElement) => {return !(/^\s*$/.test(ArrayElement))}))
+				document.getElementById("UniqueBlacklistCount").innerHTML = BigInt(InputBlacklist.size).toString(10)
+				Count_Lines = InputList.length
+				Count_OriginalItem = 0
+				Count_Duplicates = 0
+				Count_Blacklisted = 0
+				Count_DuplicateBlacklisted = 0
+				Count_EmptyLines = 0
+				Count_LinesWithJustSpace = 0
+				for (let Index = 0; Index < InputList.length; Index++) {
+					//Check for lines that are EmptyLine or just spaces
+						if (InputList[Index][0] == "") {
+							InputList[Index][2] = "EmptyLine"
+							InputList[Index][4] = true
+							Count_EmptyLines++
+						} else if (/^\s*$/.test(InputList[Index][0])) {
+							InputList[Index][2] = "JustSpace"
+							InputList[Index][4] = true
+							Count_LinesWithJustSpace++
+						}
+					//Find duplicates
+						if (InputList[Index][4] == false) { //Skip if the outer loop runs into a duplicate that is already processed by inner loop (which also avoids double-counting).
+							for (let Index2 = Index+1; Index2 < InputList.length; Index2++) {
+								if (InputList[Index2][4] == false) {
+									if (InputList[Index][0] === InputList[Index2][0]) {
+										//Flag second, and beyond items as duplicate
+											InputList[Index2][2] = "Duplicate"
+										//Increase duplicate count
+											InputList[Index][3]++
+										//Flag second and beyond copies so it doesn't get processed multiple times, which is uncessary and incorrectly double-counts.
+											InputList[Index2][4] = true
+										//Duplicate of first item on list
+											InputList[Index2][5] = Index
+									}
 								}
 							}
 						}
-					}
-					//Write number of duplicates on original and all copies of it
-						for (let Index2 = Index+1; Index2 < InputList.length; Index2++) {
-							if (InputList[Index][0] === InputList[Index2][0]) {
-								InputList[Index2][3] = InputList[Index][3]
+						//Write number of duplicates on original and all copies of it
+							for (let Index2 = Index+1; Index2 < InputList.length; Index2++) {
+								if (InputList[Index][0] === InputList[Index2][0]) {
+									InputList[Index2][3] = InputList[Index][3]
+								}
+							}
+					//Label items that match with blacklist as "Blacklisted"
+						if (InputList[Index][2] != "EmptyLine") {
+							if (InputBlacklist.has(InputList[Index][0])) {
+								if (InputList[Index][2] != "Duplicate") {
+									InputList[Index][2] = "Blacklisted"
+									Count_Blacklisted++
+								} else {
+									InputList[Index][2] = "DuplicateBlacklisted"
+								}
 							}
 						}
-				//Label items that match with blacklist as "Blacklisted"
-					if (InputList[Index][2] != "EmptyLine") {
-						if (InputBlacklist.has(InputList[Index][0])) {
-							if (InputList[Index][2] != "Duplicate") {
-								InputList[Index][2] = "Blacklisted"
-								Count_Blacklisted++
-							} else {
-								InputList[Index][2] = "DuplicateBlacklisted"
-							}
+					//Count blacklisted and duplicates
+						if (InputList[Index][2] == "Duplicate") {
+							Count_Duplicates++
+						} else if (InputList[Index][2] == "DuplicateBlacklisted") {
+							Count_DuplicateBlacklisted++
 						}
-					}
-				//Count blacklisted and duplicates
-					if (InputList[Index][2] == "Duplicate") {
-						Count_Duplicates++
-					} else if (InputList[Index][2] == "DuplicateBlacklisted") {
-						Count_DuplicateBlacklisted++
-					}
-				//Count how many first items that they themselves not duplicates and aren't blacklisted
-					if (InputList[Index][2] == "OriginalItem") {
-						Count_OriginalItem++
-					}
-			}
-			InputList_save = InputList
-		} else {
-			InputList = InputList_save
-		}
-		IsAnyListUpdated = false //Set it back to false so that if the user updates the list again, and sort, does not rerun the code above.
-		//Filter
-			InputList = InputList.filter((ArrayElement) => {
-				return document.getElementById("Filter_" + ArrayElement[2]).checked
-			})
-		//Sort
-			if (document.getElementById("Sort_Alphabetically").checked) {
-				InputList.sort(function CompareTextLines(a, b) {
-					if (a[0] === b[0]) {
-						return 0;
-					}
-					else {
-						return (a[0] < b[0]) ? -1 : 1;
-					}
-				})
-			} else if (document.getElementById("Sort_Alphabetically_Reverse").checked) {
-				InputList.sort(function CompareTextLines_Reverse(a, b) {
-					if (a[0] === b[0]) {
-						return 0;
-					}
-					else {
-						return (a[0] < b[0]) ? 1 : -1;
-					}
-				})
-			} else if (document.getElementById("Sort_DupeCount").checked) {
-				InputList.sort(function CompareDupeCount(a, b) {
-					return a[3] - b[3]
-				})
-			} else if (document.getElementById("Sort_DupeCount_Reverse").checked) {
-				InputList.sort(function CompareDupeCount_Reverse(a, b) {
-					return b[3] - a[3]
-				})
-			} else if (document.getElementById("Sort_Status").checked) {
-				InputList.sort(function CompareSortStatus(a, b) {
-					if (a[2] === b[2]) {
-						return 0;
-					}
-					else {
-						return (a[2] < b[2]) ? -1 : 1;
-					}
-				})
-			} else if (document.getElementById("Sort_Status_Reverse").checked) {
-				InputList.sort(function CompareSortStatus_Reverse(a, b) {
-					if (a[2] === b[2]) {
-						return 0;
-					}
-					else {
-						return (a[2] < b[2]) ? 1 : -1;
-					}
-				})
-			}
-		//Output
-			//Statistics. Had to use "BigInt(Number).toString(10)" to avoid potential E notation.
-				document.getElementById("HTML_LineCount").innerHTML = BigInt(Count_Lines).toString(10)
-				//How many after filtering
-					//document.getElementById("HTML_BarGraph_HowManyAfterFilter").style = "background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(InputList.length, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(InputList.length, Count_Lines) + " 100%)"
-					document.getElementById("HTML_BarGraph_HowManyAfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(InputList.length, Count_Lines, "to right", "#0000ff", "#000000")
-					document.getElementById("HTML_HowManyAfterFilter").innerHTML = BigInt(InputList.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length, Count_Lines, 2, true) + ")"
-				//How many removed after filtering
-					//document.getElementById("HTML_BarGraph_HowManyRemovedAfterFilter").style = "background-image: linear-gradient(to right, #0000ff, " + BetterPercentageUsingFloatsForBarGraphs(Count_Lines - InputList.length, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Lines - InputList.length, Count_Lines) + " 100%)"
-					document.getElementById("HTML_BarGraph_HowManyRemovedAfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Lines - InputList.length, Count_Lines, "to right", "#0000ff", "#000000")
-					document.getElementById("HTML_HowManyRemovedAfterFilter").innerHTML = BigInt(Count_Lines - InputList.length).toString(10) + " (" + BetterPercentageUsingInts(Count_Lines - InputList.length, Count_Lines, 2, true) + ")"
-				//Originals
-					//document.getElementById("HTML_BarGraph_OriginalItemCount").style = "background-image: linear-gradient(to right, #008000, " + BetterPercentageUsingFloatsForBarGraphs(Count_OriginalItem, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_OriginalItem, Count_Lines) + " 100%)"
-					document.getElementById("HTML_BarGraph_OriginalItemCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_OriginalItem, Count_Lines, "to right", "#008000", "#000000")
-					document.getElementById("HTML_OriginalItemCount").innerHTML = BigInt(Count_OriginalItem).toString(10) + " (" + BetterPercentageUsingInts(Count_OriginalItem, Count_Lines, 2, true) + ")"
-				//Duplicates
-					//document.getElementById("HTML_BarGraph_DupeCount").style = "background-image: linear-gradient(to right, #800000, " + BetterPercentageUsingFloatsForBarGraphs(Count_Duplicates, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Duplicates, Count_Lines) + " 100%)"
-					document.getElementById("HTML_BarGraph_DupeCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Duplicates, Count_Lines, "to right", "#800000", "#000000")
-					document.getElementById("HTML_DupeCount").innerHTML = BigInt(Count_Duplicates).toString(10) + " (" + BetterPercentageUsingInts(Count_Duplicates, Count_Lines, 2, true) + ")"
-				//Empty lines
-					//document.getElementById("HTML_BarGraph_EmptyCount").style = "background-image: linear-gradient(to right, #808080, " + BetterPercentageUsingFloatsForBarGraphs(Count_EmptyLines, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_EmptyLines, Count_Lines) + " 100%)"
-					document.getElementById("HTML_BarGraph_EmptyCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_EmptyLines, Count_Lines, "to right", "#808080", "#000000")
-					document.getElementById("HTML_EmptyCount").innerHTML = BigInt(Count_EmptyLines).toString(10) + " (" + BetterPercentageUsingInts(Count_EmptyLines, Count_Lines, 2, true) + ")"
-				//Just space
-					//document.getElementById("HTML_BarGraph_SpaceCount").style = "background-image: linear-gradient(to right, #A08080, " + BetterPercentageUsingFloatsForBarGraphs(Count_LinesWithJustSpace, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_LinesWithJustSpace, Count_Lines) + " 100%)"
-					document.getElementById("HTML_BarGraph_SpaceCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_LinesWithJustSpace, Count_Lines, "to right", "#A08080", "#000000")
-					document.getElementById("HTML_SpaceCount").innerHTML = BigInt(Count_LinesWithJustSpace).toString(10) + " (" + BetterPercentageUsingInts(Count_LinesWithJustSpace, Count_Lines, 2, true) + ")"
-				//Blacklist
-					//document.getElementById("HTML_BarGraph_BlacklistCount").style = "background-image: linear-gradient(to right, #ff6699, " + BetterPercentageUsingFloatsForBarGraphs(Count_Blacklisted, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_Blacklisted, Count_Lines) + " 100%)"
-					document.getElementById("HTML_BarGraph_BlacklistCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Blacklisted, Count_Lines, "to right", "#ff6699", "#000000")
-					document.getElementById("HTML_BlacklistCount").innerHTML = BigInt(Count_Blacklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_Blacklisted, Count_Lines, 2, true) + ")"
-				//Dupe and blacklist
-					//document.getElementById("HTML_BarGraph_DuplicateBlacklistCount").style = "background-image: linear-gradient(to right, #ff6666, " + BetterPercentageUsingFloatsForBarGraphs(Count_DuplicateBlacklisted, Count_Lines) + ", #000000 " + BetterPercentageUsingFloatsForBarGraphs(Count_DuplicateBlacklisted, Count_Lines) + " 100%)"
-					document.getElementById("HTML_BarGraph_DuplicateBlacklistCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_DuplicateBlacklisted, Count_Lines, "to right", "#ff6666", "#000000")
-					document.getElementById("HTML_DuplicateBlacklistCount").innerHTML = BigInt(Count_DuplicateBlacklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_DuplicateBlacklisted, Count_Lines, 2, true) + ")"
-			//Plaintext
-				let OutputTextArea = ""
-				for (let Index = 0; Index < InputList.length; Index++) {
-					OutputTextArea += InputList[Index][0]
-					if (Index != InputList.length - 1) {
-						OutputTextArea += "\n"
-					}
+					//Count how many first items that they themselves not duplicates and aren't blacklisted
+						if (InputList[Index][2] == "OriginalItem") {
+							Count_OriginalItem++
+						}
 				}
-				document.getElementById("TextOutput").value = OutputTextArea
-			//Table of statuses
-				let OutputHTMLText = ""
-				OutputHTMLText += "<table><th>Line number prior altering</th><th>Line number after altering</th><th>String</th><th>Status</th><th>Duplicate info</th>"
-				for (let Index = 0; Index < InputList.length; Index++) {
-					OutputHTMLText += "<tr>"
-					//Line number
-						OutputHTMLText += "<td style='background-color: " + ColorCodedAlteredLineNumber(InputList[Index][1], Index) + "; text-align: center;'><kbd>" + BigInt(InputList[Index][1] + 1).toString(10) + "</kbd></td>"
-					//Line number after altering
-						OutputHTMLText += "<td style='background-color: " + ColorCodedAlteredLineNumber(InputList[Index][1], Index) + "; text-align: center;'><kbd>" + BigInt(Index + 1).toString(10) + "</kbd></td>"
-					//Text (string)
-						OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>" + escapeHTMLChars(InputList[Index][0]) + "</kbd></td>"
-					//Status
-						OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>" + InputList[Index][2] + "</kbd></td>"
-					//Duplicate info
-						OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>"
-						if ((InputList[Index][3] != 0 && InputList[Index][2] != "OriginalItem")) {
-							OutputHTMLText += "Duplicate of: Line " + BigInt(InputList[Index][5] + 1).toString(10)
+				InputList_save = InputList
+			} else {
+				InputList = InputList_save
+			}
+			IsAnyListUpdated = false //Set it back to false so that if the user updates the list again, and sort, does not rerun the code above.
+			//Filter
+				InputList = InputList.filter((ArrayElement) => {
+					return document.getElementById("Filter_" + ArrayElement[2]).checked
+				})
+			//Sort
+				if (document.getElementById("Sort_Alphabetically").checked) {
+					InputList.sort(function CompareTextLines(a, b) {
+						if (a[0] === b[0]) {
+							return 0;
+						}
+						else {
+							return (a[0] < b[0]) ? -1 : 1;
+						}
+					})
+				} else if (document.getElementById("Sort_Alphabetically_Reverse").checked) {
+					InputList.sort(function CompareTextLines_Reverse(a, b) {
+						if (a[0] === b[0]) {
+							return 0;
+						}
+						else {
+							return (a[0] < b[0]) ? 1 : -1;
+						}
+					})
+				} else if (document.getElementById("Sort_DupeCount").checked) {
+					InputList.sort(function CompareDupeCount(a, b) {
+						return a[3] - b[3]
+					})
+				} else if (document.getElementById("Sort_DupeCount_Reverse").checked) {
+					InputList.sort(function CompareDupeCount_Reverse(a, b) {
+						return b[3] - a[3]
+					})
+				} else if (document.getElementById("Sort_Status").checked) {
+					InputList.sort(function CompareSortStatus(a, b) {
+						if (a[2] === b[2]) {
+							return 0;
+						}
+						else {
+							return (a[2] < b[2]) ? -1 : 1;
+						}
+					})
+				} else if (document.getElementById("Sort_Status_Reverse").checked) {
+					InputList.sort(function CompareSortStatus_Reverse(a, b) {
+						if (a[2] === b[2]) {
+							return 0;
+						}
+						else {
+							return (a[2] < b[2]) ? 1 : -1;
+						}
+					})
+				}
+			//Output
+				//Statistics. Had to use "BigInt(Number).toString(10)" to avoid potential E notation.
+					document.getElementById("HTML_LineCount").innerHTML = BigInt(Count_Lines).toString(10)
+					//How many after filtering
+						document.getElementById("HTML_BarGraph_HowManyAfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(InputList.length, Count_Lines, "to right", "#0000ff", "#000000")
+						document.getElementById("HTML_HowManyAfterFilter").innerHTML = BigInt(InputList.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length, Count_Lines, 2, true) + ")"
+					//How many removed after filtering
+						document.getElementById("HTML_BarGraph_HowManyRemovedAfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Lines - InputList.length, Count_Lines, "to right", "#0000ff", "#000000")
+						document.getElementById("HTML_HowManyRemovedAfterFilter").innerHTML = BigInt(Count_Lines - InputList.length).toString(10) + " (" + BetterPercentageUsingInts(Count_Lines - InputList.length, Count_Lines, 2, true) + ")"
+					//Originals
+						document.getElementById("HTML_BarGraph_OriginalItemCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_OriginalItem, Count_Lines, "to right", "#008000", "#000000")
+						document.getElementById("HTML_OriginalItemCount").innerHTML = BigInt(Count_OriginalItem).toString(10) + " (" + BetterPercentageUsingInts(Count_OriginalItem, Count_Lines, 2, true) + ")"
+					//Duplicates
+						document.getElementById("HTML_BarGraph_DupeCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Duplicates, Count_Lines, "to right", "#800000", "#000000")
+						document.getElementById("HTML_DupeCount").innerHTML = BigInt(Count_Duplicates).toString(10) + " (" + BetterPercentageUsingInts(Count_Duplicates, Count_Lines, 2, true) + ")"
+					//Empty lines
+						document.getElementById("HTML_BarGraph_EmptyCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_EmptyLines, Count_Lines, "to right", "#808080", "#000000")
+						document.getElementById("HTML_EmptyCount").innerHTML = BigInt(Count_EmptyLines).toString(10) + " (" + BetterPercentageUsingInts(Count_EmptyLines, Count_Lines, 2, true) + ")"
+					//Just space
+						document.getElementById("HTML_BarGraph_SpaceCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_LinesWithJustSpace, Count_Lines, "to right", "#A08080", "#000000")
+						document.getElementById("HTML_SpaceCount").innerHTML = BigInt(Count_LinesWithJustSpace).toString(10) + " (" + BetterPercentageUsingInts(Count_LinesWithJustSpace, Count_Lines, 2, true) + ")"
+					//Blacklist
+						document.getElementById("HTML_BarGraph_BlacklistCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Blacklisted, Count_Lines, "to right", "#ff6699", "#000000")
+						document.getElementById("HTML_BlacklistCount").innerHTML = BigInt(Count_Blacklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_Blacklisted, Count_Lines, 2, true) + ")"
+					//Dupe and blacklist
+						document.getElementById("HTML_BarGraph_DuplicateBlacklistCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_DuplicateBlacklisted, Count_Lines, "to right", "#ff6666", "#000000")
+						document.getElementById("HTML_DuplicateBlacklistCount").innerHTML = BigInt(Count_DuplicateBlacklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_DuplicateBlacklisted, Count_Lines, 2, true) + ")"
+				//Plaintext
+					let OutputTextArea = ""
+					for (let Index = 0; Index < InputList.length; Index++) {
+						OutputTextArea += InputList[Index][0]
+						if (Index != InputList.length - 1) {
+							OutputTextArea += "\n"
+						}
+					}
+					document.getElementById("TextOutput").value = OutputTextArea
+				//Table of statuses
+					let OutputHTMLText = ""
+					OutputHTMLText += "<table><th>Line number prior altering</th><th>Line number after altering</th><th>String</th><th>Status</th><th>Duplicate info</th>"
+					for (let Index = 0; Index < InputList.length; Index++) {
+						OutputHTMLText += "<tr>"
+						//Line number
+							OutputHTMLText += "<td style='background-color: " + ColorCodedAlteredLineNumber(InputList[Index][1], Index) + "; text-align: center;'><kbd>" + BigInt(InputList[Index][1] + 1).toString(10) + "</kbd></td>"
+						//Line number after altering
+							OutputHTMLText += "<td style='background-color: " + ColorCodedAlteredLineNumber(InputList[Index][1], Index) + "; text-align: center;'><kbd>" + BigInt(Index + 1).toString(10) + "</kbd></td>"
+						//Text (string)
+							OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>" + escapeHTMLChars(InputList[Index][0]) + "</kbd></td>"
+						//Status
+							OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>" + InputList[Index][2] + "</kbd></td>"
+						//Duplicate info
+							OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>"
+							if ((InputList[Index][3] != 0 && InputList[Index][2] != "OriginalItem")) {
+								OutputHTMLText += "Duplicate of: Line " + BigInt(InputList[Index][5] + 1).toString(10)
+								if (InputList[Index][3] != 0) {
+									OutputHTMLText += ", "
+								}
+							}
 							if (InputList[Index][3] != 0) {
-								OutputHTMLText += ", "
+								OutputHTMLText += "Number of copies: " + BigInt(InputList[Index][3]).toString(10)
+							} else if ((InputList[Index][2] == "EmptyLine" || InputList[Index][2] == "JustSpace") == false) {
+								OutputHTMLText += "No duplicate exists"
 							}
-						}
-						if (InputList[Index][3] != 0) {
-							OutputHTMLText += "Number of copies: " + BigInt(InputList[Index][3]).toString(10)
-						} else if ((InputList[Index][2] == "EmptyLine" || InputList[Index][2] == "JustSpace") == false) {
-							OutputHTMLText += "No duplicate exists"
-						}
-						OutputHTMLText += "</kbd></td>"
-					
-					OutputHTMLText += "</tr>"
-				}
-				OutputHTMLText += "</table>"
-				document.getElementById("OutputTable").innerHTML = OutputHTMLText
+							OutputHTMLText += "</kbd></td>"
+						
+						OutputHTMLText += "</tr>"
+					}
+					OutputHTMLText += "</table>"
+					document.getElementById("OutputTable").innerHTML = OutputHTMLText
+		}
 	}
 	function ColorCodedAlteredLineNumber(LinePriorAlter, LineAfterAlter) {
 		let ColorIndicator = "black"

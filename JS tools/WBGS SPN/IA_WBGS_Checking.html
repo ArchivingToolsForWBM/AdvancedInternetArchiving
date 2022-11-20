@@ -143,10 +143,8 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 	var IsInputTextareaChanged = false
 	var SavedList = []
 	
-	var Count_Success = 0
 	var Count_Success_SavedBefore = 0
 	var Count_Success_FirstArchive = 0
-	var Count_Unsures = 0
 	var Count_Unsure_NoIAResult = 0
 	var Count_Unsure_BlankColumnD = 0
 	var Count_Unsure_Redirected = 0
@@ -189,10 +187,8 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 		let InputList = []
 		
 		if (IsInputTextareaChanged) { //if changed, reset the output.
-			Count_Success = 0
 			Count_Success_SavedBefore = 0
 			Count_Success_FirstArchive = 0
-			Count_Unsures = 0
 			Count_Unsure_NoIAResult = 0
 			Count_Unsure_BlankColumnD = 0
 			Count_Unsure_Redirected = 0
@@ -257,13 +253,11 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 								InputList[Index][1][0] = "Unsure_NoIAResult"
 								
 								Count_Unsure_NoIAResult++
-								Count_Unsures++
 						} else if (InputList[Index][0][3] == "") {
 							//If there is blank on the spot where it shows the IA version of the URL or error.
 								InputList[Index][1][0] = "Unsure_BlankColumnD"
 								
 								Count_Unsure_BlankColumnD++
-								Count_Unsures++
 						} else if (regex_IA_URLPart.test(InputList[Index][0][3])) {
 							//Page saved successfully, but did it got Redirected?
 								if (InputList[Index][0][0] == InputList[Index][0][3].substring((InputList[Index][0][3]).search(regex_IAURLExtractMainSiteURL_Start), (InputList[Index][0][3]).search(regex_IAURLExtractMainSiteURL_End))) {
@@ -277,27 +271,23 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 											InputList[Index][1][0] = "Success_FirstArchive"
 											Count_Success_FirstArchive++
 										}
-										Count_Success++
 									} else {
 										//Saved a page with HTTP status of 4XX
 										InputList[Index][1][0] = "Unsure_SavedANon2XX"
 										
 										Count_Unsure_SavedANon2XX++
-										Count_Unsures++
 									}
 								} else {
 									//Redirected and saved
 										InputList[Index][1][0] = "Unsure_Redirected"
 										
 										Count_Unsure_Redirected++
-										Count_Unsures++
 								}
 						} else {
 							//Page failed/errored (shows error message instead of the IA version of the link)
 								InputList[Index][1][0] = "Unsure_Error"
 								
 								Count_Unsure_Error++
-								Count_Unsures++
 						}
 					//HTTP status flags
 						if ((/2\d\d/).test(InputList[Index][0][2])) {
@@ -441,9 +431,11 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 							document.getElementById("Statistic_NumberOfItems_Unsure_SavedANon2XX").innerHTML = BigInt(Count_Unsure_SavedANon2XX).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_SavedANon2XX, InputList.length, 2, true) + ")"
 							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_SavedANon2XX").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_SavedANon2XX, InputList.length, "to right", "#FFA500", "#000000")
 						//Total success and unsures
+							let Count_Success = Count_Success_SavedBefore + Count_Success_FirstArchive
 							document.getElementById("Statistic_NumberOfItems_Success_Total").innerHTML = BigInt(Count_Success).toString(10) + " (" + BetterPercentageUsingInts(Count_Success, InputList.length, 2, true) + ")"
 							document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success, InputList.length, "to right", "#0000ff", "#000000")
 							
+							let Count_Unsures = Count_Unsure_NoIAResult + Count_Unsure_BlankColumnD + Count_Unsure_Redirected + Count_Unsure_Error + Count_Unsure_SavedANon2XX
 							document.getElementById("Statistic_NumberOfItems_Unsure_Total").innerHTML = BigInt(Count_Unsures).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsures, InputList.length, 2, true) + ")"
 							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsures, InputList.length, "to right", "#0000ff", "#000000")
 				//Retry list in plaintext
@@ -498,70 +490,65 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 					} else {
 						Output += "<br><kbd>No items found</kbd>"
 					}
+					//Done
+						document.getElementById("Output_table").innerHTML = Output
 			} else {
-				Output += "<kbd>No URLs found</kbd>"
+				ClearOutputs()
 			}
-		//Done
-			document.getElementById("Output_table").innerHTML = Output
 	}
 	function Reset() {
 		document.getElementById("GsheetInput").value = ""
+		document.getElementById("Filter_Success_SavedBefore").checked = false
+		document.getElementById("Filter_Success_FirstArchive").checked = false
 		document.getElementById("Filter_Unsure_NoIAResult").checked = true
 		document.getElementById("Filter_Unsure_BlankColumnD").checked = true
 		document.getElementById("Filter_Unsure_Redirected").checked = true
 		document.getElementById("Filter_Unsure_Error").checked = true
 		document.getElementById("Filter_Unsure_SavedANon2XX").checked = true
-		document.getElementById("Filter_Success_SavedBefore").checked = false
-		document.getElementById("Filter_Success_FirstArchive").checked = false
-		document.getElementById("Sort_Output_UserSentURLOrder").checked = true
-		document.getElementById("Output_table").innerHTML = ""
+		
+		document.getElementById("Sort_Output_SaveStatusResponse").checked = true
 		document.getElementById("PositionNumbering_GSRow").checked = true
+		
+		ClearOutputs()
 	}
-	
-	function ConvertURLListToTableFlaggingDuplicates(ArrayList) {
-		//This returns a 2D array: [[URL, DuplicateFlag], [URL, DuplicateFlag]]
-		//-URL is the list of stuff (primarily URLs), assuming this do not have any sub-arrays within.
-		//-DuplicateFlag is flagged false when no duplicates exists, otherwise if the second
-		// or later items also exist, they themselves are flagged as true
-		let index1 = 0
-		let index2 = 0
-		let OutputTableDuplicateFlags = new Array(ArrayList.length)
-		for (index1 = 0; index1 < ArrayList.length; index1++) {
-			OutputTableDuplicateFlags[index1] = Array(ArrayList[index1], false)
-		}
-		for (index1 = 0; index1 < ArrayList.length; index1++) {
-			for (index2 = index1 + 1; index2 < ArrayList.length; index2++) {
-				if (ArrayList[index1] == ArrayList[index2]) {
-					OutputTableDuplicateFlags[index2][1] = true
-				}
-			}
-		}
-		return OutputTableDuplicateFlags
-	}
-	function RemoveItemsInTableFlaggedAsDuplicates(TableFlaggingDups) {
-		//Extracts whatever outputted by ConvertURLListToTableFlaggingDuplicates
-		//that aren't duplicates, without gaps.
-		let index1 = 0
-		let OutputArray = new Array()
-		for (index1 = 0; index1 < TableFlaggingDups.length; index1++) {
-			if (TableFlaggingDups[index1][1] == false) {
-				OutputArray.push(TableFlaggingDups[index1][0])
-			}
-		}
-		return OutputArray
-	}
-	function AddMatchIndexNumberToArrayInital(ArrayList) {
-		//Input: array[URL, URL, URL]
-		//This returns a 2D array: [[URL, MatchingID, SuccessOrFail, IAComment], [URL, MatchingID, SuccessOrFail, IAComment]]
-		//-URL is the list of stuff (primarily URLs), assuming this do not have any sub-arrays within.
-		//-MatchingID from this is -1 by default, but to be later use as a matching detector. If a match
-		// is found, MatchingID will be any non-negative number representing the index of the other array that matches.
-		let index1 = 0
-		let OutputArray = new Array()
-		for (index1 = 0; index1 < ArrayList.length; index1++) {
-			OutputArray[index1] = Array(ArrayList[index1], -1, "", "")
-		}
-		return OutputArray
+	function ClearOutputs() {
+		//Total
+			document.getElementById("Statistic_NumberOfItems_TotalURLs").innerHTML = "0"
+		//Displayed
+			document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_RemainingAfterFilter").style = ""
+		//How many removed
+			document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_RemovedAfterFilter").style = ""
+		//Saved before
+			document.getElementById("Statistic_NumberOfItems_Success_SavedBefore").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_Success_SavedBefore").style = ""
+		//First archives
+			document.getElementById("Statistic_NumberOfItems_Success_FirstArchive").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_Success_FirstArchive").style = ""
+		//No IA results
+			document.getElementById("Statistic_NumberOfItems_Unsure_NoIAResult").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_NoIAResult").style = ""
+		//Blank column D
+			document.getElementById("Statistic_NumberOfItems_Unsure_BlankColumnD").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_BlankColumnD").style = ""
+		//Redirected
+			document.getElementById("Statistic_NumberOfItems_Unsure_Redirected").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Redirected").style = ""
+		//Error
+			document.getElementById("Statistic_NumberOfItems_Unsure_Error").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Error").style = ""
+		//Non 2XX
+			document.getElementById("Statistic_NumberOfItems_Unsure_SavedANon2XX").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_SavedANon2XX").style = ""
+		//Total success and unsures
+			document.getElementById("Statistic_NumberOfItems_Success_Total").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style = ""
+			
+			document.getElementById("Statistic_NumberOfItems_Unsure_Total").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style = ""
+		document.getElementById("Output_Plaintext").value = ""
+		document.getElementById("Output_table").innerHTML = ""
 	}
 	function RemoveInvalidData(ArrayElement) {
 		return ((/^[^\t]+?\t[^\t]*?\t[^\t]*?\t[^\t]*?\t[^\t]*?\t[^\t]*?$/).test(ArrayElement[0]))
