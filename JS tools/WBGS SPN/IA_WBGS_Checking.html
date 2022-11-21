@@ -264,7 +264,7 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 									//Saved without redirects, but did it saved an error page?
 									if ((/^(3|4|5)\d\d/).test(InputList[Index][0][2]) == false) {
 										//Saved the page without issues
-										if (InputList[Index][0][5] != "First Archive") {
+										if (InputList[Index][0][1] != "New capture") {
 											InputList[Index][1][0] = "Success_SavedBefore"
 											Count_Success_SavedBefore++
 										} else {
