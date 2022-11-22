@@ -188,7 +188,7 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 		//Get twitter URLs the browser is on that have potentially missed URLs, such as "Something went wrong. Try reloading."
 			let SomethingWentWrong = false
 			for (let i = 0; i < document.getElementsByTagName("SPAN").length && SomethingWentWrong == false; i++ ) {
-				if(document.getElementsByTagName("SPAN")[i].innerText == "Something went wrong. Try reloading."||document.getElementsByTagName("SPAN")[i].innerText == "Looks like you lost your connection. Please check it and try again.") {
+				if(document.getElementsByTagName("SPAN")[i].innerText == "Something went wrong. Try reloading."||document.getElementsByTagName("SPAN")[i].innerText == "Looks like you lost your connection. Please check it and try again."||document.getElementsByTagName("SPAN")[i].innerText == "Something went wrong, but don’t fret — it’s not your fault.") {
 					AddTo_TwitterURLSet(window.location.href + " (May contain missed URLs)")
 					SomethingWentWrong = true
 				}
