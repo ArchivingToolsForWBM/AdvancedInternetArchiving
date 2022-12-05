@@ -21,6 +21,10 @@
 //-The output will includes URLs of tweets, images, media, and a tweet URL of a tweet that have "Show Replies".
 //-Make sure ONLY 1 tab is running this. Each tab running this causes concurrent writes to browser storage (getValue and setValue) and could replace each other rather
 // than combining them. The index number pointing to which URL to load could increment by more than 1, skipping it entirely. Plus it is very slow and could trigger twitter's rate limits.
+//-Make sure you check the entire log prior processing, during testing, I noticed that there is about 5% chance that it will load a URL, and then immediately loads the next URL, before the
+// first page the URL points to gets the chance to load, causing it to miss. When this happens, you'll see 2 "TwitCrawl - Sequence URL progress:"s on the console log being very close to
+// each other in terms of lines (as in, the rectangles of each log), no more than 5-10 lines apart (assuming you don't have other scripts running that also periodically console logs as well.)
+// If you see that, that means the 1st of the 2 being close to another missed.
 //
 //How to use:
 //1.      Edit this script on ListOfURLs, a list of twitter URLs. Works best if the URL contains multiple tweets, such as replies
