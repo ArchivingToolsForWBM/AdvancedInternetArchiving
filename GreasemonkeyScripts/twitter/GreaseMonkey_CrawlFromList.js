@@ -24,7 +24,8 @@
 //-Make sure you check the entire log prior processing, during testing, I noticed that there is about 5% chance that it will load a URL, and then immediately loads the next URL, before the
 // first page the URL points to gets the chance to load, causing it to miss. When this happens, you'll see 2 "TwitCrawl - Sequence URL progress:"s on the console log being very close to
 // each other in terms of lines (as in, the rectangles of each log), no more than 5-10 lines apart (assuming you don't have other scripts running that also periodically console logs as well.)
-// If you see that, that means the 1st of the 2 being close to another missed.
+// If you see that, that means the 1st of the 2 being close to another missed. I made this tool - AdvancedInternetArchiving/JS tools/Other Sites/TwitterOrNitter/GM_TwitCrawl_MissCheck.html
+// that will check this for you.
 //
 //How to use:
 //1.      Edit this script on ListOfURLs, a list of twitter URLs. Works best if the URL contains multiple tweets, such as replies
@@ -308,6 +309,7 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 					console.log("TwitCrawl - Sequence URL progress: " + BigInt(URL_index+1).toString(10) + "/" + BigInt(ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length).toString(10) + " (" + clamp(((URL_index+1)*100)/ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length).toFixed(2) + "%, " + BigInt(ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length-URL_index-1).toString(10) + " remaining, Visiting: " + ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g)[URL_index] + " )")
 					location.href = ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g)[URL_index] //Code stops executing after this executes.
 				} else {
+					console.log("TwitCrawl - Sequence URL progress: Done!")
 					alert("Done!")
 					Reset()
 				}

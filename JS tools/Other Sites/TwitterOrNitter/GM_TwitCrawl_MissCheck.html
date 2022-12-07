@@ -1,0 +1,100 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+			input[type='text'] { font-family: monospace;}
+			input[type='number'] { font-family: monospace;}
+			
+			td label {   /* thanks to Patrick McElhaney - https://stackoverflow.com/questions/9739259/tick-a-checkbox-in-a-table-cell-by-clicking-anywhere-in-the-table-cell , causes table cells with labels inside them to focus onto whats inside a label */
+				display: block;
+				text-align: center;
+			}
+			
+		</style>
+	</head>
+<body>
+
+<h1 style="text-align: center;">Twitter crawler missed-checker</h1>
+<p>This takes a given plaintext console log (make sure no log entry have text that spans multiple lines), and finds a given <a href="https://en.wikipedia.org/wiki/Crawl_frontier">URL frontier</a> that twitter crawler missed (if it immidiately loads the next URL), if the plaintext form of the console log
+have missing data in between that frontier URL and the next one (when there's two &ldquo;TwitCrawl - Sequence URL progress&rdquo;s right next to each other, the top one misses loading the data which results in missing extracting URLs).</p>
+
+<p>I strongly recommend using firefox, have the console log persist (gear icon &rightarrow; Persist Logs), and have the <kbd>about:config</kbd> on <kbd>devtools.hud.loglimit</kbd> (for browser console, it is <kbd>devtools.hud.loglimit.console</kbd>) set to <kbd>2147483647</kbd> to avoid old logs
+from disappearing. To further reduce the chance of old logs disappearing, make sure you disable other extension/user-scripts that logs data.</p>
+
+<p>Before you grab the console log in plaintext, I would strongly recommend filter that on the search bar by &ldquo;<kbd>TwitCrawl</kbd>&rdquo; so that this HTML JS does't incorrectly flag frontier URLs that have missed URLs as &ldquo;not missed&rdquo;.</p>
+
+Paste your console log, in plaintext, here:<br>
+<label><input type="checkbox" id="Setting_Autoupdate" onchange="AutoUpdate()" checked>Auto update</label><br>
+<textarea id="ConsoleLogInput" cols="100" rows="30" oninput="AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
+Line threshold (if between 2 &ldquo;TwitCrawl - Sequence URL progress&rdquo;s is less than this number of lines, flag it): <input type="number" step="1" min="1" value="10" id="MissedURLThreshold">
+<hr>
+Number of missed frontier URLs: <span id="Count_MissedURLs">0</span><br>
+<textarea id="MissedURLsOutput" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea>
+
+<script>
+	function AutoUpdate() {
+		if (document.getElementById("Setting_Autoupdate").checked) {
+			MainCode()
+		}
+	}
+	function MainCode() {
+		//Clear everything
+			document.getElementById("Count_MissedURLs").innerHTML = "0"
+			document.getElementById("MissedURLsOutput").value = ""
+		
+		let LogList = document.getElementById("ConsoleLogInput").value.split("\n")
+		let ListOfFrontierURLs = LogList.map((ArrayElement, ArrayIndex) => {
+			return [ArrayElement, ArrayIndex, 0]
+		});
+		ListOfFrontierURLs = ListOfFrontierURLs.filter((ArrayElement) => {
+			return (/^TwitCrawl - Sequence URL progress: /).test(ArrayElement)
+		});
+		//ListOfFrontierURLs:
+		//ListOfFrontierURLs[Index][0] = a text containing "TwitCrawl - Sequence URL progress: "
+		//ListOfFrontierURLs[Index][1] = line position (starting at 0 as the first line)
+		//ListOfFrontierURLs[Index][2] = How many lines before the next "TwitCrawl - Sequence URL progress: " or "TwitCrawl - Sequence URL progress: Done!"
+		//ListOfFrontierURLs[ArrayLength-1][0] = Last item in array is always "TwitCrawl - Sequence URL progress: Done!", will be
+		// used to check if the last URL also somehow glitches out and fails to load.
+		let StartingIndex = ListOfFrontierURLs.findIndex((ArrayElement) => {
+			return (/^TwitCrawl - Sequence URL progress: 1\//).test(ArrayElement[0])
+		});
+		
+		if (StartingIndex == 0) {
+			for (let i = 0; i < ListOfFrontierURLs.length - 1; i++) { //Get the number of lines before the next twitcrawl progress message
+				ListOfFrontierURLs[i][2] = ListOfFrontierURLs[i+1][1] - ListOfFrontierURLs[i][1] - 1
+			}
+			ListOfFrontierURLs.pop() //Remove "TwitCrawl - Sequence URL progress: Done!" since that isn't a URL
+			let ListOfFrontiersThatMissed = ListOfFrontierURLs.filter((ArrayElement) => { //Get progress message that have the next one that is "too close" on how many lines
+				return (ArrayElement[2] < parseInt(document.getElementById("MissedURLThreshold").value, 10))
+			});
+			document.getElementById("Count_MissedURLs").innerHTML = ListOfFrontiersThatMissed.length.toString(10)
+			let OutputString = ""
+			if (ListOfFrontiersThatMissed.length != 0) { //failsafe if the log starts with other than the first URL in the crawl list.
+				ListOfFrontiersThatMissed.forEach((ArrayElement, ArrayIndex, ArrayInQuestion) => {
+					OutputString += ArrayElement[0].match(/http(s)?:\/\/[^\s]+/)[0]
+					if (ArrayIndex != ArrayInQuestion.length - 1) {
+						OutputString += "\n"
+					}
+				});
+			} else {
+				OutputString = "No frontier URLs that have missed URLs were found."
+			}
+			document.getElementById("MissedURLsOutput").value = OutputString
+		} else if (document.getElementById("ConsoleLogInput").value != "") {
+			document.getElementById("MissedURLsOutput").value = "Error! First frontier URL is not the first in the extraction sequence, or no progress log is found."
+		}
+	}
+</script>
