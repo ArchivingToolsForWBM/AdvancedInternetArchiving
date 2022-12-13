@@ -94,7 +94,7 @@ Number of potentially missed frontier URLs: <span id="Count_FilteredURLs">0</spa
 						return false //failsafe
 				}
 			});
-			document.getElementById("Count_FilteredURLs").innerHTML = ListOfFrontiersThatMissed.length.toString(10)
+			document.getElementById("Count_FilteredURLs").innerHTML = BigInt(ListOfFrontiersThatMissed.length).toString(10)
 			let OutputString = ""
 			if (ListOfFrontiersThatMissed.length != 0) { //failsafe if the log starts with other than the first URL in the crawl list.
 				ListOfFrontiersThatMissed.forEach((ArrayElement, ArrayIndex, ArrayInQuestion) => {
