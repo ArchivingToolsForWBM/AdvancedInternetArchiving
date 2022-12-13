@@ -39,9 +39,14 @@ from disappearing. To further reduce the chance of old logs disappearing, make s
 Paste your console log, in plaintext, here:<br>
 <label><input type="checkbox" id="Setting_Autoupdate" onchange="AutoUpdate()" checked>Auto update</label><br>
 <textarea id="ConsoleLogInput" cols="100" rows="30" oninput="AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
-Line threshold (if between 2 &ldquo;TwitCrawl - Sequence URL progress&rdquo;s is less than this number of lines, flag it): <input type="number" step="1" min="1" value="10" id="MissedURLThreshold">
+Line threshold (if between 2 &ldquo;TwitCrawl - Sequence URL progress&rdquo;s is
+<select name="NumberOfLinesThreshold" id="ThresholdEquality" value="<" onchange="AutoUpdate()">
+	<option value="<">&lt;</option>
+	<option value="=">&equals;</option>
+	<option value=">">&gt;</option>
+</select> than/to this number of lines, flag it):<input type="number" onchange="AutoUpdate()" step="1" min="1" value="10" id="MissedURLThreshold">
 <hr>
-Number of missed frontier URLs: <span id="Count_MissedURLs">0</span><br>
+Number of potentially missed frontier URLs: <span id="Count_FilteredURLs">0</span><br>
 <textarea id="MissedURLsOutput" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea>
 
 <script>
@@ -52,7 +57,7 @@ Number of missed frontier URLs: <span id="Count_MissedURLs">0</span><br>
 	}
 	function MainCode() {
 		//Clear everything
-			document.getElementById("Count_MissedURLs").innerHTML = "0"
+			document.getElementById("Count_FilteredURLs").innerHTML = "0"
 			document.getElementById("MissedURLsOutput").value = ""
 		
 		let LogList = document.getElementById("ConsoleLogInput").value.split("\n")
@@ -78,9 +83,18 @@ Number of missed frontier URLs: <span id="Count_MissedURLs">0</span><br>
 			}
 			ListOfFrontierURLs.pop() //Remove "TwitCrawl - Sequence URL progress: Done!" since that isn't a URL
 			let ListOfFrontiersThatMissed = ListOfFrontierURLs.filter((ArrayElement) => { //Get progress message that have the next one that is "too close" on how many lines
-				return (ArrayElement[2] < parseInt(document.getElementById("MissedURLThreshold").value, 10))
+				switch (document.getElementById("ThresholdEquality").value) {
+					case "<":
+						return (ArrayElement[2] < parseInt(document.getElementById("MissedURLThreshold").value, 10))
+					case "=":
+						return (ArrayElement[2] == parseInt(document.getElementById("MissedURLThreshold").value, 10))
+					case ">":
+						return (ArrayElement[2] > parseInt(document.getElementById("MissedURLThreshold").value, 10))
+					default:
+						return false //failsafe
+				}
 			});
-			document.getElementById("Count_MissedURLs").innerHTML = ListOfFrontiersThatMissed.length.toString(10)
+			document.getElementById("Count_FilteredURLs").innerHTML = ListOfFrontiersThatMissed.length.toString(10)
 			let OutputString = ""
 			if (ListOfFrontiersThatMissed.length != 0) { //failsafe if the log starts with other than the first URL in the crawl list.
 				ListOfFrontiersThatMissed.forEach((ArrayElement, ArrayIndex, ArrayInQuestion) => {
