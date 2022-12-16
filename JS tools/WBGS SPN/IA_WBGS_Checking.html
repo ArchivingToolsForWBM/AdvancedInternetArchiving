@@ -41,9 +41,9 @@ issues not caught by the system, things like redirects (twitter), blank cell (co
 
 Paste your google sheet result here:<br><br>
 <input type="checkbox" id="AutoUpdate" checked onchange="AutoUpdate()"><label for="AutoUpdate">Auto update</label><br>
-<textarea id="GsheetInput" cols="100" rows="30" oninput="SaveStatusesChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
-	Search URLs based on their flagged status: <button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 2); AutoUpdate()">Invert</button><br><br>
-Filters:
+<textarea id="GsheetInput" cols="100" rows="30" oninput="SaveStatusesChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br><br>
+
+Filters:<button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 2); AutoUpdate()">Invert</button>
 <ul>
 	<li>Sure saved: <button onclick="ChangeFilterSettings('SureSaved', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('SureSaved', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('SureSaved', 2); AutoUpdate()">Invert</button></li>
 	<ul>
@@ -68,7 +68,7 @@ Sort:<br>
 <li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_HTTPStatus" name="Sort_Output">Based on the HTTP status code (column C)</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_HTTPStatus_Reverse" name="Sort_Output">Reverse</label>)</li>
 <li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_OutlinksCount" name="Sort_Output">Out links count (column E)</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_OutlinksCount_Reverse" name="Sort_Output">Reverse</label>)</li>
 </ul>
-Text display settings<br>
+Text display settings:<br>
 	<ul>
 		<li><label><input type="checkbox" onchange="AutoUpdate()" id="PlainText_DisplayInfo" checked>Display WBGS result info in the plaintext</label></li>
 	</ul>
@@ -139,9 +139,9 @@ Misc:
 		<td><kbd>Unsure</kbd></td>
 		<td id="StatisticPercentage_NumberOfItems_Unsure_Total"><kbd><span id="Statistic_NumberOfItems_Unsure_Total">0</span></kbd></td>
 	</tr>
-</table>
+</table><br>
 <textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
-<button onclick="setClipboard(document.getElementById('Output_Plaintext').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
+<button onclick="setClipboard(document.getElementById('Output_Plaintext').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br>
 <span id="Output_table"></span>
 </body>
 <script>
