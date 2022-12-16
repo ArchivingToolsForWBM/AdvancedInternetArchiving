@@ -41,8 +41,9 @@ issues not caught by the system, things like redirects (twitter), blank cell (co
 
 Paste your google sheet result here:<br><br>
 <input type="checkbox" id="AutoUpdate" checked onchange="AutoUpdate()"><label for="AutoUpdate">Auto update</label><br>
-<textarea id="GsheetInput" cols="100" rows="30" oninput="UpdatedTextAreaList(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
-	Search URLs based on their flagged status: <button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 2); AutoUpdate()">Invert</button><br>
+<textarea id="GsheetInput" cols="100" rows="30" oninput="SaveStatusesChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
+	Search URLs based on their flagged status: <button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 2); AutoUpdate()">Invert</button><br><br>
+Filters:
 <ul>
 	<li>Sure saved: <button onclick="ChangeFilterSettings('SureSaved', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('SureSaved', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('SureSaved', 2); AutoUpdate()">Invert</button></li>
 	<ul>
@@ -77,6 +78,10 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 <li><label><input type="radio" onchange="AutoUpdate()" id="PositionNumbering_GSRow" name="ItemNumbering" checked>Google sheet rows</label></li>
 <li><label><input type="radio" onchange="AutoUpdate()" id="PositionNumbering_ValidEntries" name="ItemNumbering">Count only valid entries</label></li>
 <li><label><input type="radio" onchange="AutoUpdate()" id="PositionNumbering_DisplayedHere" name="ItemNumbering">Count on what's displayed here (after filtering and sorting)</label></li>
+</ul>
+Misc:
+<ul>
+	<li><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" id="MiscSetting_IgnoreFragment" checked>Ignore </label><a href="https://en.wikipedia.org/wiki/URI_fragment">URI fragment</a><label for="MiscSetting_IgnoreFragment"> (the # and everything after it will be ignored when checking for a match)</label></li>
 </ul>
 <button onclick="CheckURLs()">Submit</button><button onclick="Reset()">Reset</button><br><br>
 <hr>
@@ -140,7 +145,7 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 <span id="Output_table"></span>
 </body>
 <script>
-	var IsInputTextareaChanged = false
+	var IsListChanged = false
 	var SavedList = []
 	
 	var Count_Success_SavedBefore = 0
@@ -157,8 +162,8 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 		}
 	}
 	
-	function UpdatedTextAreaList() {
-		IsInputTextareaChanged = true
+	function SaveStatusesChanged() {
+		IsListChanged = true //If you edit the textarea, changed the "ignore fragment identifier", those are considered a change to the list.
 	}
 
 	function ChangeFilterSettings(ElementClass, Setting) {
@@ -186,7 +191,7 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 		let Output = ""
 		let InputList = []
 		
-		if (IsInputTextareaChanged) { //if changed, reset the output.
+		if (IsListChanged) { //if changed, reset the output.
 			Count_Success_SavedBefore = 0
 			Count_Success_FirstArchive = 0
 			Count_Unsure_NoIAResult = 0
@@ -217,7 +222,7 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 				})
 			//Note to self on what sub-array it contains:
 			//InputList[Index][0] = Gsheet sub-array:
-			//InputList[Index][0][0] = (Google sheets' column A) SentURL
+			//InputList[Index][0][0] = (Google sheets' column A) SentURL (the URLs you entered)
 			//InputList[Index][0][1] = (Google sheets' column B) YES/NO (it is now the status indicating if it had saved before)
 			//InputList[Index][0][2] = (Google sheets' column C) HTTPStatus
 			//InputList[Index][0][3] = (Google sheets' column D) ArchiveURL/Error
@@ -260,7 +265,11 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 								Count_Unsure_BlankColumnD++
 						} else if (regex_IA_URLPart.test(InputList[Index][0][3])) {
 							//Page saved successfully, but did it got Redirected?
-								if (InputList[Index][0][0] == InputList[Index][0][3].substring((InputList[Index][0][3]).search(regex_IAURLExtractMainSiteURL_Start), (InputList[Index][0][3]).search(regex_IAURLExtractMainSiteURL_End))) {
+								let UserSentURL = InputList[Index][0][0]
+								if (document.getElementById("MiscSetting_IgnoreFragment").checked) {
+									UserSentURL = UserSentURL.replace(/#.*$/, "")
+								}
+								if (UserSentURL == InputList[Index][0][3].substring((InputList[Index][0][3]).search(regex_IAURLExtractMainSiteURL_Start), (InputList[Index][0][3]).search(regex_IAURLExtractMainSiteURL_End))) {
 									//Saved without redirects, but did it saved an error page?
 									if ((/^(3|4|5)\d\d/).test(InputList[Index][0][2]) == false) {
 										//Saved the page without issues
@@ -308,7 +317,7 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 		} else { //If no change, grab it from the save data, since we already have the data.
 			InputList = SavedList
 		}
-		IsInputTextareaChanged = false //Set it back to false so that if the user updates the list again, and sort, does not rerun the code above.
+		IsListChanged = false //Set it back to false so that if the user updates the list again, and sort, does not rerun the code above.
 		//Filter
 			let FilteredListForDisplay = InputList.filter((ArrayElement) => {
 				return document.getElementById("Filter_" + ArrayElement[1][0]).checked
