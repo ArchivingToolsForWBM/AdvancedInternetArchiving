@@ -82,6 +82,7 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 Misc:
 <ul>
 	<li><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" id="MiscSetting_IgnoreFragment" checked>Ignore </label><a href="https://en.wikipedia.org/wiki/URI_fragment">URI fragment</a><label for="MiscSetting_IgnoreFragment"> (the # and everything after it will be ignored when checking for a match)</label></li>
+	<li><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" id="MiscSetting_IgnoreHttpHttpsDifference" checked>Ignore difference between HTTP/HTTPS</label></li>
 </ul>
 <button onclick="CheckURLs()">Submit</button><button onclick="Reset()">Reset</button><br><br>
 <hr>
@@ -269,7 +270,14 @@ Misc:
 								if (document.getElementById("MiscSetting_IgnoreFragment").checked) {
 									UserSentURL = UserSentURL.replace(/#.*$/, "")
 								}
-								if (UserSentURL == InputList[Index][0][3].substring((InputList[Index][0][3]).search(regex_IAURLExtractMainSiteURL_Start), (InputList[Index][0][3]).search(regex_IAURLExtractMainSiteURL_End))) {
+								if (document.getElementById("MiscSetting_IgnoreHttpHttpsDifference").checked) {
+									UserSentURL = UserSentURL.replace(/^http:\/\//, "https://")
+								}
+								let IA_PageURLOnly = InputList[Index][0][3].replace(/^http(s)?\:\/\/web\.archive\.org\/web\/\d+\//, "")
+								if (document.getElementById("MiscSetting_IgnoreHttpHttpsDifference").checked) {
+									IA_PageURLOnly = IA_PageURLOnly.replace(/^http:\/\//, "https://")
+								}
+								if (UserSentURL == IA_PageURLOnly) {
 									//Saved without redirects, but did it saved an error page?
 									if ((/^(3|4|5)\d\d/).test(InputList[Index][0][2]) == false) {
 										//Saved the page without issues
