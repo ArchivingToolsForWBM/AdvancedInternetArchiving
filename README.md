@@ -15,16 +15,18 @@ I made this because when you sent a list of URLs and obtain the results back, it
 ## WBGS
 Sample save results (copy columns A-F), after the process have finished
 ```
-https://example.com	YES	-	https://web.archive.org/web/20210101000000/https://example.com	0	
-https://exampleFirstArchive.com	YES	-	https://web.archive.org/web/20210101000000/https://exampleFirstArchive.com	0	First Archive
-https://exampleRedirectFrom.com	YES	-	https://web.archive.org/web/20210101000000/https://exampleRedirectTo.com	0	
-https://exampleError.com	YES	-	Service Unavailable for https://exampleError.com (HTTP status=503)	0	
-https://exampleBlankColumnD.com	YES	-		0	
+https://example.com	Already captured	-	https://web.archive.org/web/20210101000000/https://example.com	0	
+https://exampleFirstArchive.com	New capture	-	https://web.archive.org/web/20210101000000/https://exampleFirstArchive.com	0	First Archive
+https://exampleRedirectFrom.com	Already captured	-	https://web.archive.org/web/20210101000000/https://exampleRedirectTo.com	0	
+https://exampleError.com	Already captured	-	Service Unavailable for https://exampleError.com (HTTP status=503)	0	
+https://exampleBlankColumnD.com	Already captured	-		0	
 https://exampleNoResultsAtAll.com					
-https://exampleSavedButHTTP4xx	YES	429	https://web.archive.org/web/20210101000000/https://exampleSavedButHTTP4xx	0	
+https://exampleSavedButHTTP4xx	Already captured	429	https://web.archive.org/web/20210101000000/https://exampleSavedButHTTP4xx	0	
 ```
-![alt text](https://user-images.githubusercontent.com/13095760/132143024-a6c6b7a5-c294-4a8a-88b3-702a1df7a35d.png)
-![alt text](https://user-images.githubusercontent.com/13095760/132142344-84d86405-8d4a-475d-86bf-0da1e6a2e299.png)
+![image](https://user-images.githubusercontent.com/89951208/208203542-55853962-a25b-47c9-a6c0-12f79efafc6e.png)
+![image](https://user-images.githubusercontent.com/89951208/208203561-034b85ab-23c5-4418-8017-360aea499a49.png)
+![image](https://user-images.githubusercontent.com/89951208/208203583-37878df0-c016-4c0e-afe3-f0b7a23413f5.png)
+
 # Email-based SPN
 
 URLs sent:
