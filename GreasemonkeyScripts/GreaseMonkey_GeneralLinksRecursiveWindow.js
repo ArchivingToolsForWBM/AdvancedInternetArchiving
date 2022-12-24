@@ -22,14 +22,17 @@
 
 (function() {
 	//Settings
-		const Interval_captureLinks = true //Capture based on intervals (run this code perodically), false = no, true = yes.
+		const Interval_captureLinks = true //Capture based on intervals (run this code periodically), false = no, true = yes.
 		const CaptureLinksInterval = 100 //Time (milliseconds) between each execution of code to extract links, used when Interval_captureLinks = true.
 		const IframeMaxRecursion = 50
-			//^When there is an iframe and multiple windows, this is the max recusion before cutting off further innser windows (failsafe to stop potential infinute loops/stack size exceeds)
+			//^When there is an iframe and multiple windows, this is the max recursion before cutting off further inner windows (failsafe to stop potential infinite loops/stack overload)
 	//Don't touch
 		let IframeRecursionCount = 0 //Tracks how many levels deep sub-window frames to scan into.
 
 	//"all" is a set that contains only unique items, the console.log however isn't necessarily a set so that COULD have duplicate items in it.
+	//By checking via [!all.has(string)] before adding to the set and console logging, this prevents dupes from entering the console log. Do note that
+	//this is per-window and per tab. So duplicates can happen if you refresh the page or use multiple tabs.
+	//
 	//The [(!all.has(URLString[0])] code makes it so that if something is already on the set, then don't add the duplicate. However,
 	//Because "all" is per-tab, and also resets when going to a different pages, duplicates may appear on the console log when the console.log's
 	//"Persist Log" (gear icon on the top-right of the devtool UI).
@@ -39,51 +42,43 @@
 		// if this gets reset via pagereload/load-to-another-page. Does not reset if only subwindows are refreshed/new-page-load.
 	function ExtractLinksFromPage(PageDocument) {
 		Array.from(PageDocument.getElementsByTagName('a')).forEach(link=>{ //"a href" links
-			let URLString = FormatURL(link.href)
-			if(!all.has(URLString[0])&&URLString[1]) {
-				all.add(URLString[0]);
-				console.log((URLString[0]).replace(/^http/, "ttp").replace(/#.*$/, ""));
-			}
+			//let URLString = FormatURL(link.href)
+			//if(!all.has(URLString[0])&&URLString[1]) {
+			//	all.add(URLString[0]);
+			//	console.log((URLString[0]).replace(/^http/, "ttp").replace(/#.*$/, ""));
+			//}
+			AddLinksToSetAndConsoleLog(link.href, "a tag")
 		});
 		Array.from(PageDocument.getElementsByTagName('img')).forEach(link=>{ //Images
-			let URLString = FormatURL(link.src)
-			if(!all.has(URLString[0])&&URLString[1]) {
-				all.add(URLString[0]);
-				console.log((URLString[0]).replace(/^http/, "ttp").replace(/#.*$/, ""));
-			}
+			AddLinksToSetAndConsoleLog(link.src, "img tag")
 		});
 		Array.from(PageDocument.getElementsByTagName('*')).forEach(link=>{ //Background images
-			let URLString = FormatURL(link.style.backgroundImage.slice(5, -2))
-			if(!all.has(URLString[0])&&URLString[1]) {
-				all.add(URLString[0]);
-				console.log((URLString[0]).replace(/^http/, "ttp"));
-			}
+			//let URLString = FormatURL(link.style.backgroundImage.slice(5, -2))
+			AddLinksToSetAndConsoleLog(link.style.backgroundImage.slice(5, -2), "background-image attribute")
 		});
 		Array.from(PageDocument.getElementsByTagName('video')).forEach(link=>{ //video
-			let URLString = FormatURL(link.src)
-			if(!all.has(URLString[0])&&URLString[1]) {
-				all.add(URLString[0]);
-				console.log((URLString[0]).replace(/^http/, "ttp").replace(/#.*$/, ""));
-			}
+			AddLinksToSetAndConsoleLog(link.src, "video tag")
 		});
 	}
-	
-	function FormatURL(String) {
-		let IsStringValid = true
-		if ((/^\s*javascript:.*$/.test(String))||String=="none"||String=="") {
-			IsStringValid = false
-		}
-		if (IsStringValid) {
-			if (/^\/+/.test(String)) {
-				String = String.replace(/^\/+/, "https://")
-			} else if (/^(?!http(s)?:\/\/)/.test(String)) {
-				String = String.replace(/^/, "https://")
+	function AddLinksToSetAndConsoleLog(String_URL, ObtainedFrom) {
+		if (typeof String_URL == "string") { //failsafe
+			if (!((/^\s*javascript:.*$/.test(String_URL))||String_URL=="none"||String_URL=="")){ //Accept only valid URLs
+				//If URLs starts with a slash, prepend it with a "//"
+					let CorrectedURL = String_URL.replace(/#.*$/, "") //get rid of fragment identifier (it's technically not an address), also prevents same URLs with different fragments from filling up the set.
+					if (/^\/+/.test(String_URL)) {
+						CorrectedURL = String_URL.replace(/^\/+/, "https://") // "/example.com" or "//example.com"
+					} else if (/^(?!http(s)?:\/\/)/.test(String_URL)) {
+						CorrectedURL = String_URL.replace(/^/, "https://") // "example.com" (note the missing "https://")
+					}
+				if (!all.has(CorrectedURL)) { //If URL already on the list, don't re-add them again
+					all.add(CorrectedURL)
+					console.log(CorrectedURL.replace(/^http/, "ttp") + " (First obtained from: [" + ObtainedFrom + "])") //remove the "h" in "http" because browsers may replace and truncate the middle sections of the URL with ellipses in console log.
+				}
 			}
 		}
-		return [String, IsStringValid]
-	};
+	}
 	function addEventListenersToPages(Input_Window) {
-		//This adds even listeners to each window when the main windiw is first loaded, then if there are
+		//This adds even listeners to each window when the main window is first loaded, then if there are subwindow, do this recursively on each.
 		Input_Window.addEventListener('scroll',ExtractLinksFromPage.bind(null, Input_Window.document));
 		Input_Window.addEventListener('load',ExtractLinksFromPage.bind(null, Input_Window.document));
 		for (let i=0; ((i<Input_Window.frames.length)&&(IframeRecursionCount<IframeMaxRecursion));i++) {
