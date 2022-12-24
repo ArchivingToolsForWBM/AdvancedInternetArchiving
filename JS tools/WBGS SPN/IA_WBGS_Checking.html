@@ -22,22 +22,30 @@
 <p>This tool will take a given <a href="https://en.wikipedia.org/wiki/Tab-separated_values">tab-seperated values (TSV)</a> table from google sheets of the archive results  (&ldquo;Archive URLs&rdquo;), and searches for any potential issues or anomalies.
 Note: this tool only judges based on the output data of the table, not the actual web-page content.</p>
 
-<p>It will output a list of URLs filtered by their statuses.</p>
-
-<p>Enter your data like this (same format as google sheets, can be easily copied from there):
-<table><tr><td><pre>SentURL1	YES/NO	HTTPStatus	ArchiveURL/Error	Number	FirstArchive
-SentURL2	YES/NO	HTTPStatus	ArchiveURL/Error	Number	FirstArchive
-SentURL3	YES/NO	HTTPStatus	ArchiveURL/Error	Number	FirstArchive
-...</pre></td></tr></table><br>
-Note, on 2022-05-24, I've discovered the output format has been changed:
+<h3>How to use</h3>
+<ol>
+	<li>Have a google account and go to google drive, create a spreadsheet anywhere you wish.</li>
+	<li>
+		Make sure you authorized WBGS the ability to edit that spreadsheet, else it will not be able to write the results. To do that, right-click the spreadsheet file (or the folder it is in) &rightarrow; Share &rightarrow; Under &ldquo;General Access&rdquo; set it to
+		&ldquo;Anyone with the link&rdquo; and the role (a dropdown list to the right) set to &ldquo;Editor&rdquo;.
+	</li>
+	<li>Open the spreadsheet, and have your list of URLs all on column A (the first column) where each row contains 1 URL. </li>
+	<li>Before you start a process and any subsequent process, make sure the spreadsheet is saved! This is especially for those with weak internet connection.</li>
+	<li>On Wayback Gsheets, make sure you are logged in (both the IA and google), and on the main menu, select &ldquo;Archive URLs&rdquo;, paste your URL of the google sheets containing the list of URLs. and press &ldquo;Archive&rdquo;.</li>
+	<li>
+		When URLs get a result, the spreadsheet should be in this format:
 <table><tr><td><pre>SentURL1	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	FirstArchive
 SentURL2	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	FirstArchive
 SentURL3	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	FirstArchive
-...</pre></td></tr></table><br>
-</p>
-^There must be EXACTLY 6 columns of data (including &ldquo;cells&rdquo; with blank data), that means each line
-MUST have exactly 5 tab characters between each data. This can be achieved by highlighting columns A-F on google sheets, and copying that (CTRL+C). Reason why this tool exists is to search for
-issues not caught by the system, things like redirects (twitter), blank cell (column D), and many other issues. 
+...</pre></td></tr></table>
+		We only need columns A-F (6 columns). Select columns A-F and copy (CTRL+C). Then on this HTML file, paste (CTRL+V) your list in the following textarea. The data should be converted into
+		<a href="https://en.wikipedia.org/wiki/Tab-separated_values">tab-seperated values</a>.
+	</li>
+	<li>
+		The info that appeared below the settings and textarea are URLs that have been extracted based on the filter settings. By default, it will get only URLs that are &ldquo;potentially not saved properly&rdquo;: errors, redirects, or strange things like column D being blank, etc..
+		From this point on, you can re-attempt to save these URLs again.
+	</li>
+</ol>
 
 Paste your google sheet result here:<br><br>
 <input type="checkbox" id="AutoUpdate" checked onchange="AutoUpdate()"><label for="AutoUpdate">Auto update</label><br>
@@ -82,7 +90,7 @@ URL table order numbering (this adjust the display of numbers indicating the pos
 Misc:
 <ul>
 	<li><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" id="MiscSetting_IgnoreFragment" checked>Ignore </label><a href="https://en.wikipedia.org/wiki/URI_fragment">URI fragment</a><label for="MiscSetting_IgnoreFragment"> (the # and everything after it will be ignored when checking for a match)</label></li>
-	<li><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" id="MiscSetting_IgnoreHttpHttpsDifference" checked>Ignore difference between HTTP/HTTPS</label></li>
+	<li><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" id="MiscSetting_IgnoreHttpHttpsDifference" checked>Ignore difference between HTTP/HTTPS versions.</label></li>
 </ul>
 <button onclick="CheckURLs()">Submit</button><button onclick="Reset()">Reset</button><br><br>
 <hr>
