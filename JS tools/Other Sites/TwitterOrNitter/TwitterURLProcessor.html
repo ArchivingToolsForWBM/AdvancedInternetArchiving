@@ -133,6 +133,12 @@ Misc:
 
 <span id="OutputTable"></span>
 <script>
+	const Nitter_Domain = "https://nitter.lacontrevoie.fr" //URL of nitter instance. Must:
+	//-Have a protocol ("http://" or "https://", latter recommended)
+	//-Have a hostname ("nitter.net")
+	//-No slash at the end (".net/" is invalid, use ".net")
+	//Change this if you find that the current instance have issues. See a list of nitter instances here: https://github.com/xnaas/nitter-instances
+	
 	//issues to fix: https://nitter.net/pic/pbs.twimg.com%2Fprofile_images%2F1518405903900286976%2FDRjDUx-Y.jpg
 	const Twitter_NotAUserNameList = [
 		"TOS",
@@ -287,7 +293,7 @@ Misc:
 								UniqueListOfURLs.add(JSON.stringify(["https://mobile.twitter.com/" + PotentialUsername, "MobileTwitterPage_UserMainPage", "-1"]))
 							}
 							if (document.getElementById("FilterSetting_NitterPage_UserMainPage").checked) {
-								UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/" + PotentialUsername, "NitterPage_UserMainPage", "-1"]))
+								UniqueListOfURLs.add(JSON.stringify([Nitter_Domain + "/" + PotentialUsername, "NitterPage_UserMainPage", "-1"]))
 							}
 						}
 					//Tweets
@@ -299,16 +305,16 @@ Misc:
 								UniqueListOfURLs.add(JSON.stringify(["https://mobile.twitter.com/" + PotentialUsername + "/status/" + TweetID.toString(10), "MobileTwitterPage_Tweet", TweetID.toString(10)]))
 							}
 							if (document.getElementById("FilterSetting_NitterPage_Tweet").checked) {
-								UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/" + PotentialUsername + "/status/" + TweetID.toString(10), "NitterPage_Tweet", TweetID.toString(10)]))
+								UniqueListOfURLs.add(JSON.stringify([Nitter_Domain + "/" + PotentialUsername + "/status/" + TweetID.toString(10), "NitterPage_Tweet", TweetID.toString(10)]))
 							}
 						}
 					//Nitter tabs
 						if (/^https:\/\/twitter\.com\/[A-Za-z0-9_\.]+/.test(ListOfURLs[i])) {
 							if (document.getElementById("FilterSetting_NitterPage_UserMainPage_WithReplies").checked) {
-								UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/" + PotentialUsername + "/with_replies", "NitterPage_UserMainPage_WithReplies", "-1"]))
+								UniqueListOfURLs.add(JSON.stringify([Nitter_Domain + "/" + PotentialUsername + "/with_replies", "NitterPage_UserMainPage_WithReplies", "-1"]))
 							}
 							if (document.getElementById("FilterSetting_NitterPage_UserMainPage_Media").checked) {
-								UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/" + PotentialUsername + "/media", "NitterPage_UserMainPage_Media", "-1"]))
+								UniqueListOfURLs.add(JSON.stringify([Nitter_Domain + "/" + PotentialUsername + "/media", "NitterPage_UserMainPage_Media", "-1"]))
 							}
 						}
 				} else {
@@ -334,7 +340,7 @@ Misc:
 						UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/media/" + ImageFileNameItself + "?format=" + FileExtensionItself + "&name=orig", "TwitterMedia_PbsTwimgModern_Orig", "-1"]))
 					}
 					if (document.getElementById("FilterSetting_NitterMedia_PbsTwimg_Orig").checked) {
-						UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/pic/orig/media%2F" + ImageFileNameItself + "." + FileExtensionItself, "NitterMedia_PbsTwimg_Orig", "-1"]))
+						UniqueListOfURLs.add(JSON.stringify([Nitter_Domain + "/pic/orig/media%2F" + ImageFileNameItself + "." + FileExtensionItself, "NitterMedia_PbsTwimg_Orig", "-1"]))
 					}
 			} else if (/http(s)?\:\/\/pbs\.twimg\.com\/profile_images\//.test(ListOfURLs[i])) {
 				//Profile images
@@ -397,7 +403,7 @@ Misc:
 						UniqueListOfURLs.add(JSON.stringify(["https://pbs.twimg.com/profile_banners/" + ProfileNumber + "/" + ProfileNumber2 + "/1500x500", "TwitterMedia_PbsTwimgProfileBanner_1500x500", "-1"]))
 					}
 					if (document.getElementById("FilterSetting_NitterMedia_PbsTwimgProfileBanner_1500x500").checked) {
-						UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/pic/https%3A%2F%2Fpbs.twimg.com%2Fprofile_banners%2F" + ProfileNumber + "%2F" + ProfileNumber2 + "%2F1500x500", "NitterMedia_PbsTwimgProfileBanner_1500x500", "-1"]))
+						UniqueListOfURLs.add(JSON.stringify([Nitter_Domain + "/pic/https%3A%2F%2Fpbs.twimg.com%2Fprofile_banners%2F" + ProfileNumber + "%2F" + ProfileNumber2 + "%2F1500x500", "NitterMedia_PbsTwimgProfileBanner_1500x500", "-1"]))
 					}
 			} else if (/^http(s)?\:\/\/(pbs|video)\.twimg\.com\/tweet_video(_thumb)?\/[A-Za-z0-9]+/.test(ListOfURLs[i])) {
 				//Videos (gif?). Videos are always .mp4 on the extensions. 
@@ -415,7 +421,7 @@ Misc:
 						}
 						if (document.getElementById("FilterSetting_NitterMedia_VideoTwimg").checked) {
 							//https://nitter.net/pic/video.twimg.com%2Ftweet_video%2F[video_id].mp4
-							UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/pic/video.twimg.com%2Ftweet_video%2F" + VideoFileName + ".mp4", "NitterMedia_VideoTwimg", "-1"]))
+							UniqueListOfURLs.add(JSON.stringify([Nitter_Domain + "/pic/video.twimg.com%2Ftweet_video%2F" + VideoFileName + ".mp4", "NitterMedia_VideoTwimg", "-1"]))
 						}
 					//Thumbnail image
 						if (document.getElementById("FilterSetting_TwitterMedia_PbsTwimg_Video_Thumb").checked) {
@@ -439,13 +445,13 @@ Misc:
 						if (document.getElementById("FilterSetting_NitterMedia_PbsTwimgModern_Video_Thumb").checked) {
 							//https://nitter.net/pic/tweet_video_thumb%2FFesgS6naMAAWW0j.jpg%3Fname%3Dsmall
 							if (VideoFileExtension != "mp4") {
-								UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/pic/tweet_video_thumb%2F" + VideoFileName + "." + VideoFileExtension + "%3Fname%3Dsmall", "NitterMedia_PbsTwimgModern_Video_Thumb", "-1"]))
+								UniqueListOfURLs.add(JSON.stringify([Nitter_Domain + "/pic/tweet_video_thumb%2F" + VideoFileName + "." + VideoFileExtension + "%3Fname%3Dsmall", "NitterMedia_PbsTwimgModern_Video_Thumb", "-1"]))
 							}
 						}
 						if (document.getElementById("FilterSetting_NitterMedia_PbsTwimgModern_Video_Thumb_Orig").checked) {
 							//https://nitter.net/pic/tweet_video_thumb%2FFesgS6naMAAWW0j.jpg%3Fname%3Dorig
 							if (VideoFileExtension != "mp4") {
-								UniqueListOfURLs.add(JSON.stringify(["https://nitter.net/pic/tweet_video_thumb%2F" + VideoFileName + "." + VideoFileExtension + "%3Fname%3Dorig", "NitterMedia_PbsTwimgModern_Video_Thumb_Orig", "-1"]))
+								UniqueListOfURLs.add(JSON.stringify([Nitter_Domain + "/pic/tweet_video_thumb%2F" + VideoFileName + "." + VideoFileExtension + "%3Fname%3Dorig", "NitterMedia_PbsTwimgModern_Video_Thumb_Orig", "-1"]))
 							}
 						}
 			} else if (/http(s)?\:\/\/twitter\.com\/i\/events\//.test(ListOfURLs[i])) {
