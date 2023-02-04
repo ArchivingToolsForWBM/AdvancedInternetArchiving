@@ -65,6 +65,7 @@ Filters:<button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 1)
 		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Redirected" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_Redirected"><label for="Filter_Unsure_Redirected">Redirects (yellow)</label></li>
 		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Error" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_Error"><label for="Filter_Unsure_Error">Errors (red)</label></li>
 		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_SavedANon2XX" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_SavedANon2XX"><label for="Filter_Unsure_SavedANon2XX">Saved but isn't a 2XX (3XX/4XX/5XX) (orange)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_BlockListed" class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_BlockListed"><label for="Filter_Unsure_BlockListed">&ldquo;This URL is in the Save Page Now service block list and cannot be captured.&rdquo; (dark red)</label></li>
 	</ul>
 </ul>
 Sort:<br>
@@ -138,6 +139,10 @@ Misc:
 		<td id="StatisticPercentage_NumberOfItems_Unsure_SavedANon2XX"><kbd><span id="Statistic_NumberOfItems_Unsure_SavedANon2XX">0</span></kbd></td>
 	</tr>
 	<tr>
+		<td><kbd>Unsure_BlockListed</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Unsure_BlockListed"><kbd><span id="Statistic_NumberOfItems_Unsure_BlockListed">0</span></kbd></td>
+	</tr>
+	<tr>
 		<th colspan="2">Classification totals</th>
 	</tr>
 	<tr>
@@ -164,6 +169,7 @@ Misc:
 	var Count_Unsure_Redirected = 0
 	var Count_Unsure_Error = 0
 	var Count_Unsure_SavedANon2XX = 0
+	var Count_Unsure_Blocklisted = 0
 	
 	function AutoUpdate() {
 		if (document.getElementById("AutoUpdate").checked) {
@@ -208,6 +214,7 @@ Misc:
 			Count_Unsure_Redirected = 0
 			Count_Unsure_Error = 0
 			Count_Unsure_SavedANon2XX = 0
+			Count_Unsure_Blocklisted = 0
 			
 			InputList = (document.getElementById("GsheetInput").value).split(/(?:\n)(?=(?:[^"]|"[^"]*")*$)/).map((ArrayElement, Index) => [ArrayElement, Index]).filter(RemoveInvalidData) //split by each row on google sheets, map it so it has its gsheet row number, then remove invalid data.
 			//Contains:
@@ -230,7 +237,7 @@ Misc:
 					return [ArrayElement[0].split('\t'), ["", "", PositionNumbering, -1]]
 				})
 			//Note to self on what sub-array it contains:
-			//InputList[Index][0] = Gsheet sub-array:
+			//InputList[Index][0] = Gsheet sub-array ("Index" specifies the row, the second index specifies the column), due to it being row-major:
 			//InputList[Index][0][0] = (Google sheets' column A) SentURL (the URLs you entered)
 			//InputList[Index][0][1] = (Google sheets' column B) YES/NO (it is now the status indicating if it had saved before)
 			//InputList[Index][0][2] = (Google sheets' column C) HTTPStatus
@@ -250,7 +257,7 @@ Misc:
 			//-If ArchiveURL/Error contains a description instead of the IA part (like "Cannot get status of spn2-<code>"), then it is an error.
 			//-If ArchiveURL/Error contains blank instead of the IA part (like "Cannot get status of spn2-<code>"), then it is an error by the system failing to print it, it may be marked as a success or fail.
 				for (let Index = 0; Index < InputList.length; Index++) {
-					if (InputList[Index][0][4].match(/\d+/) != null) {
+					if (InputList[Index][0][4].match(/\d+/) != null) { //Get outlinks count
 						InputList[Index][1][3] = parseInt(InputList[Index][0][4].match(/\d+/)[0], 10)
 					}
 					//Check the type of saves
@@ -308,6 +315,11 @@ Misc:
 										
 										Count_Unsure_Redirected++
 								}
+						} else if (/^This URL is in the Save Page Now service block list and cannot be captured/.test(InputList[Index][0][3])) {
+							//Saved a page that is on the block list, normally this happens if you saved a URL that is an advertisement.
+								InputList[Index][1][0] = "Unsure_BlockListed"
+								
+								Count_Unsure_Blocklisted++
 						} else {
 							//Page failed/errored (shows error message instead of the IA version of the link)
 								InputList[Index][1][0] = "Unsure_Error"
@@ -455,12 +467,15 @@ Misc:
 						//Non 2XX
 							document.getElementById("Statistic_NumberOfItems_Unsure_SavedANon2XX").innerHTML = BigInt(Count_Unsure_SavedANon2XX).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_SavedANon2XX, InputList.length, 2, true) + ")"
 							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_SavedANon2XX").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_SavedANon2XX, InputList.length, "to right", "#FFA500", "#000000")
+						//Blocklist
+							document.getElementById("Statistic_NumberOfItems_Unsure_BlockListed").innerHTML = BigInt(Count_Unsure_Blocklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Blocklisted, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_BlockListed").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Blocklisted, InputList.length, "to right", "#400000", "#000000")
 						//Total success and unsures
 							let Count_Success = Count_Success_SavedBefore + Count_Success_FirstArchive
 							document.getElementById("Statistic_NumberOfItems_Success_Total").innerHTML = BigInt(Count_Success).toString(10) + " (" + BetterPercentageUsingInts(Count_Success, InputList.length, 2, true) + ")"
 							document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success, InputList.length, "to right", "#0000ff", "#000000")
 							
-							let Count_Unsures = Count_Unsure_NoIAResult + Count_Unsure_BlankColumnD + Count_Unsure_Redirected + Count_Unsure_Error + Count_Unsure_SavedANon2XX
+							let Count_Unsures = Count_Unsure_NoIAResult + Count_Unsure_BlankColumnD + Count_Unsure_Redirected + Count_Unsure_Error + Count_Unsure_SavedANon2XX + Count_Unsure_Blocklisted
 							document.getElementById("Statistic_NumberOfItems_Unsure_Total").innerHTML = BigInt(Count_Unsures).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsures, InputList.length, 2, true) + ")"
 							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsures, InputList.length, "to right", "#0000ff", "#000000")
 				//Retry list in plaintext
@@ -609,6 +624,9 @@ Misc:
 				break
 			case "Unsure_SavedANon2XX":
 				ColorIndicator = "#FFA500"
+				break
+			case "Unsure_BlockListed":
+				ColorIndicator = "#400000"
 		}
 		return ColorIndicator
 	}
