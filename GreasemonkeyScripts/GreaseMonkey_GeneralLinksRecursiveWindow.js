@@ -61,19 +61,17 @@
 		});
 	}
 	function AddLinksToSetAndConsoleLog(String_URL, ObtainedFrom) {
-		if (isValidURL(String_URL)) {
-			if (!((/^\s*javascript:.*$/.test(String_URL))||String_URL=="none"||String_URL=="")){ //Accept only valid URLs
-				//If URLs starts with a slash, prepend it with a "//"
-					let CorrectedURL = String_URL.replace(/#.*$/, "") //get rid of fragment identifier (it's technically not an address), also prevents same URLs with different fragments from filling up the set.
-					if (/^\/+/.test(String_URL)) {
-						CorrectedURL = String_URL.replace(/^\/+/, "https://") // "/example.com" or "//example.com"
-					} else if (/^(?!http(s)?:\/\/)/.test(String_URL)) {
-						CorrectedURL = String_URL.replace(/^/, "https://") // "example.com" (note the missing "https://")
-					}
-				if (!all.has(CorrectedURL)) { //If URL already on the list, don't re-add them again
-					all.add(CorrectedURL)
-					console.log(CorrectedURL.replace(/^http/, "ttp") + " (First obtained from: [" + ObtainedFrom + "])") //remove the "h" in "http" because browsers may replace and truncate the middle sections of the URL with ellipses in console log.
+		if (!((/^\s*javascript:.*$/.test(String_URL))||String_URL=="none"||String_URL=="")){ //Accept only valid URLs
+			//If URLs starts with a slash, prepend it with a "//"
+				let CorrectedURL = String_URL.replace(/#.*$/, "") //get rid of fragment identifier (it's technically not an address), also prevents same URLs with different fragments from filling up the set.
+				if (/^\/+/.test(String_URL)) {
+					CorrectedURL = String_URL.replace(/^\/+/, "https://") // "/example.com" or "//example.com"
+				} else if (/^(?!http(s)?:\/\/)/.test(String_URL)) {
+					CorrectedURL = String_URL.replace(/^/, "https://") // "example.com" (note the missing "https://")
 				}
+			if (!all.has(CorrectedURL)) { //If URL already on the list, don't re-add them again
+				all.add(CorrectedURL)
+				console.log(CorrectedURL.replace(/^http/, "ttp") + " (First obtained from: [" + ObtainedFrom + "])") //remove the "h" in "http" because browsers may replace and truncate the middle sections of the URL with ellipses in console log.
 			}
 		}
 	}
@@ -97,20 +95,6 @@
 			IframeRecursionCount++
 			ExtractLinksOnWindow(Input_Window.frames[i])
 			IframeRecursionCount-- //Don't count as total number of function calls, just how many levels deep.
-		}
-	}
-	function isValidURL(str) { //Credit: https://stackoverflow.com/questions/5717093/check-if-a-javascript-string-is-a-url
-		var pattern = new RegExp('^((https?:)?\\/\\/)?'+ // protocol
-			'(?:\\S+(?::\\S*)?@)?' + // authentication
-			'((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
-			'((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
-			'(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
-			'(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
-			'(\\#[-a-z\\d_]*)?$','i'); // fragment locater
-		if (!pattern.test(str)) {
-			return false;
-		} else {
-			return true;
 		}
 	}
 	window.addEventListener('scroll',addEventListenersToPages.bind(null, window));

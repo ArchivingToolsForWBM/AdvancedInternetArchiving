@@ -16,7 +16,7 @@
 //   And set them to a number: 2147483647 else the log may DELETE entries to make more room.
 //- Make sure you have "Persist Logs"/"Preserve log" enabled. Loading a different page on the main window or if the page have "console.clear()" in its code will
 //  delete your console.log
-
+//-If a page uses iframe (multiple windows in a document), this script will ONLY grab links from the main window.
 (function() {
 	//Settings
 		const Interval_captureLinks = true //Capture based on intervals (run this code perodically), false = no, true = yes.
