@@ -61,7 +61,7 @@
 		});
 	}
 	function AddLinksToSetAndConsoleLog(String_URL, ObtainedFrom) {
-		if (!((/^\s*javascript:.*$/.test(String_URL))||String_URL=="none"||String_URL=="")){ //Accept only valid URLs
+		if (!((/^\s*javascript:.*$/.test(String_URL))||String_URL=="none"||/^r-gradient.*$/.test(String_URL))){ //Accept only valid URLs
 			//If URLs starts with a slash, prepend it with a "//"
 				let CorrectedURL = String_URL.replace(/#.*$/, "") //get rid of fragment identifier (it's technically not an address), also prevents same URLs with different fragments from filling up the set.
 				if (/^\/+/.test(String_URL)) {
