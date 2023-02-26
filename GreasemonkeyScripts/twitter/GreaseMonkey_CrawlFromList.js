@@ -83,7 +83,7 @@
 			// which sets your scroll position and the entire page to a lower position.
 			// We first scroll upwards, and when a stop has reached for a certain amount of time, then switch to downwards, and if a stop happens for a certain amount of time, load
 			// next URL.
-    let AlreadyLoadedNextURL = false
+		let AlreadyLoadedNextURL = false
 	//List of URLs to visit when bottom is reached
 const ListOfURLs = `
 https://twitter.com/search?q=from%3Atwitter%20until%3A2020-01-01&src=typed_query&f=top
@@ -282,7 +282,9 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 									if (ScrollingDirection == -1) {
 										ScrollingDirection = 1 //Top has reached for a certain amount of time, now switch to scroll down
 									} else { //scrolls down, be at the bottom long enough
-										NextURL(URL_index)
+										if (!(AlreadyLoadedNextURL)) {
+											NextURL(URL_index)
+										}
 									}
 								}
 							} else { //Scrolling occurred
@@ -297,7 +299,9 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 					}
 			} else {
 				URL_index++
-				NextURL(URL_index)
+				if (!(AlreadyLoadedNextURL)) {
+					NextURL(URL_index)
+				}
 			}
 		}
 	}
@@ -313,7 +317,7 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 						location.href = ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g)[URL_index] //Code stops executing after this executes.
 					}
 				} else {
-          console.log("TwitCrawl - Sequence URL progress: Done!")
+					console.log("TwitCrawl - Sequence URL progress: Done!")
 					alert("Done!")
 					Reset()
 				}
