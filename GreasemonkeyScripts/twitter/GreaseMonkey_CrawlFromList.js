@@ -70,8 +70,8 @@
 
 (async () => {
 	//Settings
-		const ScrollDistancePerSecond = 1000 //How many, in pixels scrolled, per second
-		const LoadWaitTime = 2 //How many seconds after detecting a scroll stop before loading next URL (this is so that it waits to load more tweets)
+		const ScrollDistancePerSecond = 10000 //How many, in pixels scrolled, per second
+		const LoadWaitTime = 4 //How many seconds after detecting a scroll stop before loading next URL (this is so that it waits to load more tweets)
 		//failsafe if too many items in the set could cause memory issues
 			const MaxSetSize = 100000
 	//Don't Touch
@@ -83,6 +83,7 @@
 			// which sets your scroll position and the entire page to a lower position.
 			// We first scroll upwards, and when a stop has reached for a certain amount of time, then switch to downwards, and if a stop happens for a certain amount of time, load
 			// next URL.
+    let AlreadyLoadedNextURL = false
 	//List of URLs to visit when bottom is reached
 const ListOfURLs = `
 https://twitter.com/search?q=from%3Atwitter%20until%3A2020-01-01&src=typed_query&f=top
@@ -306,10 +307,13 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 		() => {
 			//Success
 				if (URL_index < ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length&&URL_index>=0) {
-					console.log("TwitCrawl - Sequence URL progress: " + BigInt(URL_index+1).toString(10) + "/" + BigInt(ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length).toString(10) + " (" + clamp(((URL_index+1)*100)/ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length).toFixed(2) + "%, " + BigInt(ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length-URL_index-1).toString(10) + " remaining, Visiting: " + ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g)[URL_index] + " )")
-					location.href = ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g)[URL_index] //Code stops executing after this executes.
+					if (!(AlreadyLoadedNextURL)) {
+						AlreadyLoadedNextURL = true
+						console.log("TwitCrawl - Sequence URL progress: " + BigInt(URL_index+1).toString(10) + "/" + BigInt(ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length).toString(10) + " (" + clamp(((URL_index+1)*100)/ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length).toFixed(2) + "%, " + BigInt(ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length-URL_index-1).toString(10) + " remaining, Visiting: " + ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g)[URL_index] + " )")
+						location.href = ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g)[URL_index] //Code stops executing after this executes.
+					}
 				} else {
-					console.log("TwitCrawl - Sequence URL progress: Done!")
+          console.log("TwitCrawl - Sequence URL progress: Done!")
 					alert("Done!")
 					Reset()
 				}
