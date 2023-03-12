@@ -22,6 +22,9 @@
 (async () => {
 //Settings
 	const TimeBeforeLoadingNextURL = 5000 //How many milliseconds after the page fully loads before loading the next URL.
+	const TimeBeforeOrAfterLoad = 0
+		//0 = Start timer to load next URL after page fully loads
+		//1 = Start timer to load next URL before page fully loads.
 //-----------------------------------------------------------
 	const ListOfURLs = `
 https://google.com
@@ -41,7 +44,11 @@ https://wikipedia.org
 	}
 	GM.registerMenuCommand("Start URL sequence", StartSequence, "S");
 	
-	window.addEventListener('load', LoadURLAfterTimer)
+	if (TimeBeforeOrAfterLoad == 0) {
+		window.addEventListener('load', LoadURLAfterTimer)
+	} else {
+		LoadURLAfterTimer()
+	}
 	
 	function LoadURLAfterTimer() {
 		setTimeout(LoadAnotherPage, TimeBeforeLoadingNextURL)
