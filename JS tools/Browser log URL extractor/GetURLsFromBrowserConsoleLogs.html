@@ -48,6 +48,11 @@ URLs by removing the substring in the middle of the URL. So when extracting URLs
 				<li><label><input type="radio" id="Option_Sort_Alphabetically" name="SortSetting" onchange="AutoUpdate()" checked>Sort Alphabetically</label> (<label><input type="radio" id="Option_Sort_Alphabetically_Reverse" name="SortSetting" onchange="AutoUpdate()">Reverse</label>)</li>
 				<li><label><input type="radio" id="Option_Sort_None" name="SortSetting" onchange="AutoUpdate()">No sort (same order as input)</label></li>
 			</ul>
+			Misc:
+			<ul>
+				<li><label><input type="checkbox" id="Option_IgnoreFragment" onchange="AutoUpdate()" checked>Remove fragment identifier (<kbd>https://example.com#fragment</kbd> becomes <kbd>https://example.com</kbd>)</label></li>
+				<li><label><input type="checkbox" id="Option_ForceHTTPS" onchange="AutoUpdate()" checked>Force <kbd>http</kbd> to be <kbd>https</kbd></label></li>
+			</ul>
 			Number of URLs listed: <span id="NumberOfURLsListed">0</span><br>
 			<textarea id="OutputURLs" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"readonly></textarea><br>
 			<button onclick="setClipboard(document.getElementById('OutputURLs').value, 'CopiedTextMessage')" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
@@ -83,6 +88,9 @@ URLs by removing the substring in the middle of the URL. So when extracting URLs
 	}
 	function GetURLsFromText() {
 		let ListOfURLs = document.getElementById("TextInput").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"\']+/g)
+		if (ListOfURLs == null) {
+			ListOfURLs = [] //failsafe, prevents Array.map from performing a null which on the browser, would do nothing (if user enters a string with no valid URL).
+		}
 		let ListOfErrorURLs = document.getElementById("TextInput").value.match(/GEThttp(s)?\:\/\/(?!data:)[^\s\"\']+\/?\n\[HTTP\/\d (4|5)\d\d.+\]/g)
 			//currently (2022-08-20) firefox is the only browser as far as I know have a "browser console" and has the option to have huge log limit sizes.
 			if (ListOfErrorURLs==null) {
@@ -97,13 +105,22 @@ URLs by removing the substring in the middle of the URL. So when extracting URLs
 			//ListOfErrorURLs[Index][1] = Error HTTP status
 			//ListOfErrorURLs[Index][2] = Duplicate status
 			//ListOfErrorURLs[Index][3] = Duplicate Rerun flag
-		ListOfURLs = ListOfURLs.map((ArrayElement) => [ArrayElement, "", false])
+		ListOfURLs = ListOfURLs.map((ArrayElement) => {
+				let ProcessedURL = ArrayElement
+				if (document.getElementById("Option_IgnoreFragment").checked) {
+					ProcessedURL = ProcessedURL.replace(/#.*$/, "")
+				};
+				if (document.getElementById("Option_ForceHTTPS").checked) {
+					ProcessedURL = ProcessedURL.replace(/^ttp:\/\//, "ttps://")
+				};
+				return [ProcessedURL, "", false]
+		});
 			//ListOfURLs[Index][0] = URL
 			//ListOfURLs[Index][1] = Duplicate Status
 			//ListOfURLs[Index][2] = Duplicate Rerun flag
 		//Correct the URL string (console log may quote a string with a period added at the end, for example)
 			for (let Index = 0; Index < ListOfURLs.length; Index++) {
-				ListOfURLs[Index][0] = "h" + ListOfURLs[Index][0].replace(/\.$/, "").replace(/#.*$/, "")
+				ListOfURLs[Index][0] = "h" + ListOfURLs[Index][0].replace(/\.$/, "")
 			}
 		//Remove the URL that have been truncated (ellepses ("…")) on long URLs.
 			if (document.getElementById("Option_RemoveFirefoxTruncation").checked) {
