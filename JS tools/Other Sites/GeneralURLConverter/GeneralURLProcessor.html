@@ -38,6 +38,10 @@ Sort:
 	<li><label><input type="radio" name="SortSetting" checked onchange="Auto_update()" id="SortSetting_None">None (be in the same order as the input)</label></li>
 	<li><label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_ABC">Alphabetically</label> (<label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_ABC_Reverse">Reverse</label>)</li>
 </ul>
+Other:
+<ul>
+	<li><label><input type="checkbox" id="MiscSetting_IncludeURLsNotMatched" checked onchange="Auto_update()">Include URLs that did not match with any of the converters</label></li>
+</ul>
 <hr>
 <textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="HTML_OutputString" cols="100" rows="30" readonly></textarea><br>
 <button onclick="setClipboard(document.getElementById('HTML_OutputString').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br>
@@ -55,8 +59,7 @@ Sort:
 	//--https://example.com/test?page=10
 	// It will generate from page 1 to page 10. If you also have the same thing but different numbers and have "test" be a different string, it will
 	// generate all of them each with their OWN (no mixup, string before and after number must match) maximum numbers.
-	//--FindWhat: <Regex>: Same as above.
-	//--PageNumberAt: Regex that is used to find the number AND also used as a separator.
+	//--FindWhat: <Regex>: Same as above, but must match only the page number (in addition to making sure the URL pattern match), as string.split is being used.
 	//---Make sure you use non-capturing group "(?:noncapturing)") since the array it split into should only contain URL string before and after the number.
 	//---Must use in a way that it only matches the number in the substring, it must avoid matching/including any text that aren't page numbers.
 	//--PageNumberStartsAt: Page number to start at from counting from that number to the highest number. Some sites may have their page number start at 0, some at 1.
@@ -68,12 +71,11 @@ Sort:
 				Type:"normal",
 				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+\?format=[a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
 				ReplaceWith:["https://pbs.twimg.com/media/$1&name=orig", "https://pbs.twimg.com/media/$1&name=thumb"],
-				IncludeOriginal:false,
+				IncludeOriginal:false
 			},
 			{
 				Type:"pagination",
-				FindWhat:/^https:\/\/example\.com\/[a-zA-Z0-9_]+\?page=\d+/,
-				PageNumberAt:/(?:(?<=^https:\/\/example\.com\/[a-zA-Z0-9_]+\?page=))\d+(?:(?=$))/,
+				FindWhat:/(?:(?<=^https:\/\/example\.com\/[a-zA-Z0-9_]+\?page=))\d+(?:(?=$))/,
 				PageNumberStartsAt:1
 			}
 		]
@@ -124,22 +126,27 @@ Sort:
 
 		//Some loops had to use a for loop instead of array.foreach because
 		//-Not recommended for concurrent modification since we are checking for potential same/similar URL
-		//-We check every possible combinations, so there are two index numbers with the second one starting at FirstIndex+1
+		//-We check every possible combinations, so there are two index numbers with the second one starting at FirstIndex+1 instead of 0.
 		for (let i = 0; i < ListOfURLs.length; i++) { //Loop through every entered URL by the user
+			let UrlMatchedAnyConverter = false
 			if (ListOfURLs[i].HaveBeenChecked == false) { //Skip pagination URLs that have been checked by inner loop (optimization purposes)
 				ListOfConverters.forEach(Converter => { //For each URL the user entered, loop through converters
 					if (Converter.FindWhat.test(ListOfURLs[i].URL)) { //If URL matches one or more of the converters (a URL gets to loop through multiple converters)
+						UrlMatchedAnyConverter = true
+						if (Converter.IncludeOriginal) {
+							OutputSet.add(ListOfURLs[i].URL)
+						}
 						if (Converter.Type == "normal") {
 							Converter.ReplaceWith.forEach(ReplaceWithText => {
 								OutputSet.add(ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText))
 							});
 						} else if (Converter.Type == "pagination") {
-							let HighestPageNumberSoFar = parseInt(ListOfURLs[i].URL.match(Converter.PageNumberAt)[0], 10)
-							let PartsOfURLSame = ListOfURLs[i].URL.split(Converter.PageNumberAt)
+							let HighestPageNumberSoFar = parseInt(ListOfURLs[i].URL.match(Converter.FindWhat)[0], 10)
+							let PartsOfURLSame = ListOfURLs[i].URL.split(Converter.FindWhat)
 							for (let i2 = i+1; i2 < ListOfURLs.length; i2++) { //Loop to find a potential same URL but with higher page number
-								PartsOfURLSame2 = ListOfURLs[i2].URL.split(Converter.PageNumberAt)
+								PartsOfURLSame2 = ListOfURLs[i2].URL.split(Converter.FindWhat)
 								if (Converter.FindWhat.test(ListOfURLs[i2].URL) && (PartsOfURLSame[0] == PartsOfURLSame2[0]) && (PartsOfURLSame[1] == PartsOfURLSame2[1])) { //if regex and all parts of the URL the same ignoring page number, compare the page number
-									HighestPageNumberSoFar = Math.max(HighestPageNumberSoFar, parseInt(ListOfURLs[i2].URL.match(Converter.PageNumberAt)[0], 10))
+									HighestPageNumberSoFar = Math.max(HighestPageNumberSoFar, parseInt(ListOfURLs[i2].URL.match(Converter.FindWhat)[0], 10))
 									ListOfURLs[i2].HaveBeenChecked = true //Don't check this again when the outer loop advances
 								}
 							}
@@ -149,6 +156,9 @@ Sort:
 							}
 						}
 						
+					}
+					if ((UrlMatchedAnyConverter == false)&&document.getElementById("MiscSetting_IncludeURLsNotMatched").checked) {
+						OutputSet.add(ListOfURLs[i].URL)
 					}
 				});
 			}
