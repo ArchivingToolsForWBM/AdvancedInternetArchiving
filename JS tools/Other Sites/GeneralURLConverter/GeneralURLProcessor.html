@@ -35,24 +35,46 @@
 <textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" id="Input_EnteredURLs" cols="100" rows="30" oninput="Auto_update()"></textarea><br>
 Sort:
 <ul>
-	<li><label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_None">None (be in the same order as the input)</label></li>
-	<li><label><input type="radio" name="SortSetting" checked onchange="Auto_update()" id="SortSetting_ABC">Alphabetically</label> (<label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_ABC_Reverse">Reverse</label>)</li>
+	<li><label><input type="radio" name="SortSetting" checked onchange="Auto_update()" id="SortSetting_None">None (be in the same order as the input)</label></li>
+	<li><label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_ABC">Alphabetically</label> (<label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_ABC_Reverse">Reverse</label>)</li>
 </ul>
 <hr>
 <textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="HTML_OutputString" cols="100" rows="30" readonly></textarea><br>
 <button onclick="setClipboard(document.getElementById('HTML_OutputString').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br>
 <script>
 	//An array containing a list of objects specifying the replacement.
-	//FindWhat: <Regex>: A regular expression the URLs in the input must match with to identify what appropriate replacement to perform a URL conversion
-	// NOTE: I recommend matching the entire string if you do not fully understand how the URL format of a given website work.
-	//ReplaceWith: An array containing 1 or more items to replace with
-	//IncludeOriginal: <Boolean>: False if you only wanted the converted URL to be included in the output, true if you want to include
+	//-When "Type" is "normal": performs a simple replacement, the attributes are:
+	//--FindWhat: <Regex>: A regular expression the URLs in the input must match with to identify what appropriate replacement to perform a URL conversion
+	//  NOTE: I recommend matching the entire string if you do not fully understand how the URL format of a given website work.
+	//--ReplaceWith: An array containing 1 or more items to replace with
+	//--IncludeOriginal: <Boolean>: False if you only wanted the converted URL to be included in the output, true if you want to include
+	//-When "Type" is "pagination": This will generate each URL of each page number of the same kind, based on the highest page number of the matching kind that exists in the input,
+	// Example, if you provide similar URLs with the difference being the page numbers:
+	//--https://example.com/test?page=1 (usually "?page=1" is omitted but still works)
+	//--https://example.com/test?page=4
+	//--https://example.com/test?page=10
+	// It will generate from page 1 to page 10. If you also have the same thing but different numbers and have "test" be a different string, it will
+	// generate all of them each with their OWN (no mixup, string before and after number must match) maximum numbers.
+	//--FindWhat: <Regex>: Same as above.
+	//--PageNumberAt: Regex that is used to find the number AND also used as a separator.
+	//---Make sure you use non-capturing group "(?:noncapturing)") since the array it split into should only contain URL string before and after the number.
+	//---Must use in a way that it only matches the number in the substring, it must avoid matching/including any text that aren't page numbers.
+	//--PageNumberStartsAt: Page number to start at from counting from that number to the highest number. Some sites may have their page number start at 0, some at 1.
+	
 		const ListOfConverters = [
 			{
 				//Example 1: Twitter image URLs
-				FindWhat:/https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+\?format=[a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
+				//Example test: https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg
+				Type:"normal",
+				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+\?format=[a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
 				ReplaceWith:["https://pbs.twimg.com/media/$1&name=orig", "https://pbs.twimg.com/media/$1&name=thumb"],
-				IncludeOriginal:false
+				IncludeOriginal:false,
+			},
+			{
+				Type:"pagination",
+				FindWhat:/^https:\/\/example\.com\/[a-zA-Z0-9_]+\?page=\d+/,
+				PageNumberAt:/(?:(?<=^https:\/\/example\.com\/[a-zA-Z0-9_]+\?page=))\d+(?:(?=$))/,
+				PageNumberStartsAt:1
 			}
 		]
 	function Auto_update() {
@@ -90,23 +112,47 @@ Sort:
 			ListOfURLs = [] //failsafe, prevents Array.map from performing a null which on the browser, would do nothing (if user enters a string with no valid URL).
 		}
 		ListOfURLs = ListOfURLs.map(ArrayElement => {
-			return ArrayElement.replace(/^ttp(s)?/, "http$1").replace(/#.*$/, "") //Revert the URL to have the "h" of the http/https, and remove fragment identifier
+			
+			let URLObject = {
+				URL:ArrayElement.replace(/^ttp(s)?/, "http$1").replace(/#.*$/, ""), //Revert the URL to have the "h" of the http/https, and remove fragment identifier
+				HaveBeenChecked:false //This is used to check for duplicate or 2 URLs being similar (same URL but different page number)
+			}
+			return URLObject
 		});
 		
 		let OutputSet = new Set()
-		ListOfURLs.forEach(ArrayElement_EnteredURL => {
-			ListOfConverters.forEach(ArrayElement_Converter => {
-				if (ArrayElement_Converter.IncludeOriginal) {
-					OutputSet.add(ArrayElement_EnteredURL)
-				}
-				if (ArrayElement_Converter.FindWhat.test(ArrayElement_EnteredURL)) {
-					ArrayElement_Converter.ReplaceWith.forEach(ArrayElement_ReplaceWith => {
-						OutputSet.add(ArrayElement_EnteredURL.replace(ArrayElement_Converter.FindWhat, ArrayElement_ReplaceWith))
-					});
-					
-				};
-			});
-		});
+
+		//Some loops had to use a for loop instead of array.foreach because
+		//-Not recommended for concurrent modification since we are checking for potential same/similar URL
+		//-We check every possible combinations, so there are two index numbers with the second one starting at FirstIndex+1
+		for (let i = 0; i < ListOfURLs.length; i++) { //Loop through every entered URL by the user
+			if (ListOfURLs[i].HaveBeenChecked == false) { //Skip pagination URLs that have been checked by inner loop (optimization purposes)
+				ListOfConverters.forEach(Converter => { //For each URL the user entered, loop through converters
+					if (Converter.FindWhat.test(ListOfURLs[i].URL)) { //If URL matches one or more of the converters (a URL gets to loop through multiple converters)
+						if (Converter.Type == "normal") {
+							Converter.ReplaceWith.forEach(ReplaceWithText => {
+								OutputSet.add(ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText))
+							});
+						} else if (Converter.Type == "pagination") {
+							let HighestPageNumberSoFar = parseInt(ListOfURLs[i].URL.match(Converter.PageNumberAt)[0], 10)
+							let PartsOfURLSame = ListOfURLs[i].URL.split(Converter.PageNumberAt)
+							for (let i2 = i+1; i2 < ListOfURLs.length; i2++) { //Loop to find a potential same URL but with higher page number
+								PartsOfURLSame2 = ListOfURLs[i2].URL.split(Converter.PageNumberAt)
+								if (Converter.FindWhat.test(ListOfURLs[i2].URL) && (PartsOfURLSame[0] == PartsOfURLSame2[0]) && (PartsOfURLSame[1] == PartsOfURLSame2[1])) { //if regex and all parts of the URL the same ignoring page number, compare the page number
+									HighestPageNumberSoFar = Math.max(HighestPageNumberSoFar, parseInt(ListOfURLs[i2].URL.match(Converter.PageNumberAt)[0], 10))
+									ListOfURLs[i2].HaveBeenChecked = true //Don't check this again when the outer loop advances
+								}
+							}
+							//We now have the maximum number based on the user input
+							for (let i2 = Converter.PageNumberStartsAt; i2 <= HighestPageNumberSoFar; i2++) { //Generate a URL of each page
+								OutputSet.add(PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1])
+							}
+						}
+						
+					}
+				});
+			}
+		}
 		
 		let OutputArray = Array.from(OutputSet)
 		if (document.getElementById("SortSetting_ABC").checked) {
