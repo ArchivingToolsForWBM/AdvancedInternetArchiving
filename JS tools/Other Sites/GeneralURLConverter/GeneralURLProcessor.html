@@ -32,7 +32,7 @@
 
 <p>Enter text that have URLs in them here</p>
 <label><input type="checkbox" id="AutoUpdate" onchange="Auto_update()" checked>Auto update</label><br>
-<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" id="Input_EnteredURLs" cols="100" rows="30" oninput="Auto_update()"></textarea><br>
+<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" id="Input_EnteredURLs" cols="100" rows="30" oninput="NotifyInputChanged(); Auto_update()"></textarea><br>
 Filter:
 <ul>
 	<li><label><input type="checkbox" checked onchange="Auto_update()" id="FilterSetting_original">Original (same URL as you entered)</label></li>
@@ -51,6 +51,11 @@ Sort:
 
 <span id="URL_OutputTable"></span>
 <script>
+	var SavedOutput = []
+	var InputChanged = false
+	function NotifyInputChanged() {
+		InputChanged = true
+	}
 	//An array containing a list of objects specifying the replacement.
 	//-When "Type" is "normal": performs a simple replacement, the attributes are:
 	//--FindWhat: <Regex>: A regular expression the URLs in the input must match with to identify what appropriate replacement to perform a URL conversion
@@ -117,73 +122,81 @@ Sort:
 		let OutputSet = new Set() //Had to have set contain strings because if set contains any object and not primitive, would allow duplicates.
 		let OutputURLObjects = [] //
 		function MainFunction() {
-			OutputSet = new Set() //Reset them to not include previous versions
+			OutputSet = new Set() //Reset/clear them to not include previous versions
 			OutputURLObjects = [] //
 			document.getElementById("URL_OutputTable").innerHTML = ""
-			let ListOfURLs = document.getElementById("Input_EnteredURLs").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"\']+/g) //Why ttps instead of https? Blame firefox's URL truncation of long URLs.
-			if (ListOfURLs == null) {
-				ListOfURLs = [] //failsafe, prevents Array.map from performing a null which on the browser, would do nothing (if user enters a string with no valid URL).
-			}
-			ListOfURLs = ListOfURLs.map(ArrayElement => {
-				
-				let URLObject = {
-					URL:ArrayElement.replace(/^ttp(s)?/, "http$1").replace(/#.*$/, ""), //Revert the URL to have the "h" of the http/https, and remove fragment identifier
-					HaveBeenChecked:false, //This is used to check for duplicate or 2 URLs being similar (same URL but different page number)
-					IdentifiedType:""
+			if (InputChanged) {
+				let ListOfURLs = document.getElementById("Input_EnteredURLs").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"\']+/g) //Why ttps instead of https? Blame firefox's URL truncation of long URLs.
+				if (ListOfURLs == null) {
+					ListOfURLs = [] //failsafe, prevents Array.map from performing a null which on the browser, would do nothing (if user enters a string with no valid URL).
 				}
-				return URLObject
-			});
-	
-			//Some loops had to use a for loop instead of array.foreach because
-			//-Not recommended for concurrent modification since we are checking for potential same/similar URL
-			//-We check every possible combinations, so there are two index numbers with the second one starting at FirstIndex+1 instead of 0.
-			for (let i = 0; i < ListOfURLs.length; i++) { //Loop through every entered URL by the user
-				let UrlMatchedAnyConverter = false
-				if (ListOfURLs[i].HaveBeenChecked == false) { //Skip pagination URLs that have been checked by inner loop (optimization purposes)
-					ListOfConverters.forEach(Converter => { //For each URL the user entered, loop through converters
-						if (Converter.FindWhat.test(ListOfURLs[i].URL)) { //If URL matches one or more of the converters (a URL gets to loop through multiple converters)
-							UrlMatchedAnyConverter = true
-							if (Converter.IncludeOriginal) {
-								//OutputSet.add(ListOfURLs[i].URL)
-								ListOfURLs[i].IdentifiedType = "original"
-								AddToOutput(ListOfURLs[i])
-							}
-							if (Converter.Type == "normal") {
-								Converter.ReplaceWith.forEach(ReplaceWithText => {
-									//OutputSet.add(ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText))
-									AddToOutput({
-										URL:ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText),
-										IdentifiedType:"converted"
+				ListOfURLs = ListOfURLs.map(ArrayElement => {
+					
+					let URLObject = {
+						URL:ArrayElement.replace(/^ttp(s)?/, "http$1").replace(/#.*$/, ""), //Revert the URL to have the "h" of the http/https, and remove fragment identifier
+						HaveBeenChecked:false, //This is used to check for duplicate or 2 URLs being similar (same URL but different page number)
+						IdentifiedType:""
+					}
+					return URLObject
+				});
+		
+				//Some loops had to use a for loop instead of array.foreach because
+				//-Not recommended for concurrent modification since we are checking for potential same/similar URL
+				//-We check every possible combinations, so there are two index numbers with the second one starting at FirstIndex+1 instead of 0.
+				for (let i = 0; i < ListOfURLs.length; i++) { //Loop through every entered URL by the user
+					let UrlMatchedAnyConverter = false
+					if (ListOfURLs[i].HaveBeenChecked == false) { //Skip pagination URLs that have been checked by inner loop (optimization purposes)
+						ListOfConverters.forEach(Converter => { //For each URL the user entered, loop through converters
+							if (Converter.FindWhat.test(ListOfURLs[i].URL)) { //If URL matches one or more of the converters (a URL gets to loop through multiple converters)
+								UrlMatchedAnyConverter = true
+								if (Converter.IncludeOriginal) {
+									//OutputSet.add(ListOfURLs[i].URL)
+									ListOfURLs[i].IdentifiedType = "original"
+									AddToOutput(ListOfURLs[i])
+								}
+								if (Converter.Type == "normal") {
+									Converter.ReplaceWith.forEach(ReplaceWithText => {
+										//OutputSet.add(ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText))
+										AddToOutput({
+											URL:ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText),
+											IdentifiedType:"converted"
+										});
 									});
-								});
-							} else if (Converter.Type == "pagination") {
-								let HighestPageNumberSoFar = parseInt(ListOfURLs[i].URL.match(Converter.FindWhat)[0], 10)
-								let PartsOfURLSame = ListOfURLs[i].URL.split(Converter.FindWhat)
-								for (let i2 = i+1; i2 < ListOfURLs.length; i2++) { //Loop to find a potential same URL but with higher page number
-									PartsOfURLSame2 = ListOfURLs[i2].URL.split(Converter.FindWhat)
-									if (Converter.FindWhat.test(ListOfURLs[i2].URL) && (PartsOfURLSame[0] == PartsOfURLSame2[0]) && (PartsOfURLSame[1] == PartsOfURLSame2[1])) { //if regex and all parts of the URL the same ignoring page number, compare the page number
-										HighestPageNumberSoFar = Math.max(HighestPageNumberSoFar, parseInt(ListOfURLs[i2].URL.match(Converter.FindWhat)[0], 10))
-										ListOfURLs[i2].HaveBeenChecked = true //Don't check this again when the outer loop advances
+								} else if (Converter.Type == "pagination") {
+									let HighestPageNumberSoFar = parseInt(ListOfURLs[i].URL.match(Converter.FindWhat)[0], 10)
+									let PartsOfURLSame = ListOfURLs[i].URL.split(Converter.FindWhat)
+									for (let i2 = i+1; i2 < ListOfURLs.length; i2++) { //Loop to find a potential same URL but with higher page number
+										PartsOfURLSame2 = ListOfURLs[i2].URL.split(Converter.FindWhat)
+										if (Converter.FindWhat.test(ListOfURLs[i2].URL) && (PartsOfURLSame[0] == PartsOfURLSame2[0]) && (PartsOfURLSame[1] == PartsOfURLSame2[1])) { //if regex and all parts of the URL the same ignoring page number, compare the page number
+											HighestPageNumberSoFar = Math.max(HighestPageNumberSoFar, parseInt(ListOfURLs[i2].URL.match(Converter.FindWhat)[0], 10))
+											ListOfURLs[i2].HaveBeenChecked = true //Don't check this again when the outer loop advances
+										}
+									}
+									//We now have the maximum number based on the user input
+									for (let i2 = Converter.PageNumberStartsAt; i2 <= HighestPageNumberSoFar; i2++) { //Generate a URL of each page
+										//OutputSet.add(PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1])
+										AddToOutput({
+											URL:PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1],
+											IdentifiedType:"pagination"
+										});
 									}
 								}
-								//We now have the maximum number based on the user input
-								for (let i2 = Converter.PageNumberStartsAt; i2 <= HighestPageNumberSoFar; i2++) { //Generate a URL of each page
-									//OutputSet.add(PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1])
-									AddToOutput({
-										URL:PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1],
-										IdentifiedType:"pagination"
-									});
-								}
+								
 							}
-							
+						});
+						if ((UrlMatchedAnyConverter == false)&&document.getElementById("FilterSetting_other").checked) {
+							//OutputSet.add(ListOfURLs[i].URL)
+							ListOfURLs[i].IdentifiedType = "other"
+							AddToOutput(ListOfURLs[i])
 						}
-					});
-					if ((UrlMatchedAnyConverter == false)&&document.getElementById("FilterSetting_other").checked) {
-						//OutputSet.add(ListOfURLs[i].URL)
-						ListOfURLs[i].IdentifiedType = "other"
-						AddToOutput(ListOfURLs[i])
 					}
 				}
+				//Save finished output array into storage
+				SavedOutput = OutputURLObjects
+				InputChanged = false //Reset this back to false so that if input change again, this above code will run
+			} else {
+				//Load
+				OutputURLObjects = SavedOutput
 			}
 			let Filtered_OutputURLObjects = OutputURLObjects.filter(ArrayElement => {return document.getElementById("FilterSetting_" + ArrayElement.IdentifiedType).checked})
 			if (document.getElementById("SortSetting_ABC").checked) {
