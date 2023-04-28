@@ -38,6 +38,7 @@ Filter:
 	<li><label><input type="checkbox" checked onchange="Auto_update()" id="FilterSetting_original">Original (same URL as you entered)</label></li>
 	<li><label><input type="checkbox" checked onchange="Auto_update()" id="FilterSetting_converted">Converted URLs (replaced substrings)</label></li>
 	<li><label><input type="checkbox" checked onchange="Auto_update()" id="FilterSetting_pagination">pagination (have page number in URL)</label></li>
+	<li><label><input type="checkbox" onchange="Auto_update()" id="FilterSetting_blacklisted">Blacklisted (remove unwanted URLs such as ads, various google URLs, etc.)</label></li>
 	<li><label><input type="checkbox" checked onchange="Auto_update()" id="FilterSetting_other">other (URL not matching any of the listed patterns)</label></li>
 </ul>
 Sort:
@@ -73,6 +74,7 @@ Sort:
 	//---Make sure you use non-capturing group "(?:noncapturing)") since the array it split into should only contain URL string before and after the number.
 	//---Must use in a way that it only matches the number in the substring, it must avoid matching/including any text that aren't page numbers.
 	//--PageNumberStartsAt: Page number to start at from counting from that number to the highest number. Some sites may have their page number start at 0, some at 1.
+	//-When "Type" is "blacklisted", it can be filtered (filter setting). Only "FindWhat" is needed, anything that matches this regex will be labeled as blacklisted.
 	
 		const ListOfConverters = [
 			{
@@ -88,6 +90,11 @@ Sort:
 				Type:"pagination",
 				FindWhat:/(?:(?<=^https:\/\/example\.com\/[a-zA-Z0-9_]+\?page=))\d+(?:(?=.*$))/,
 				PageNumberStartsAt:1
+			},
+			{
+				//Example 3: Blacklisted test
+				Type:"blacklisted",
+				FindWhat:/https:\/\/ads\.google\.com.*$/
 			}
 		]
 	function Auto_update() {
@@ -180,6 +187,9 @@ Sort:
 											IdentifiedType:"pagination"
 										});
 									}
+								} else if (Converter.Type == "blacklisted") {
+									ListOfURLs[i].IdentifiedType = "blacklisted"
+									AddToOutput(ListOfURLs[i])
 								}
 								
 							}
