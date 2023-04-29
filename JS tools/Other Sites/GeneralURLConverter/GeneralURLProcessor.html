@@ -34,12 +34,13 @@
 <label><input type="checkbox" id="AutoUpdate" onchange="Auto_update()" checked>Auto update</label><br>
 <textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" id="Input_EnteredURLs" cols="100" rows="30" oninput="NotifyInputChanged(); Auto_update()"></textarea><br>
 Filter:
+<button onclick="ChangeFilterSettings('CheckboxFilters', 1); Auto_update()">Check all</button><button onclick="ChangeFilterSettings('CheckboxFilters', 0); Auto_update()">Uncheck all</button><button onclick="ChangeFilterSettings('CheckboxFilters', 2); Auto_update()">Invert</button>
 <ul>
-	<li><label><input type="checkbox" checked onchange="Auto_update()" id="FilterSetting_original">Original (same URL as you entered)</label></li>
-	<li><label><input type="checkbox" checked onchange="Auto_update()" id="FilterSetting_converted">Converted URLs (replaced substrings)</label></li>
-	<li><label><input type="checkbox" checked onchange="Auto_update()" id="FilterSetting_pagination">pagination (have page number in URL)</label></li>
-	<li><label><input type="checkbox" onchange="Auto_update()" id="FilterSetting_blacklisted">Blacklisted (remove unwanted URLs such as ads, various google URLs, etc.)</label></li>
-	<li><label><input type="checkbox" checked onchange="Auto_update()" id="FilterSetting_other">other (URL not matching any of the listed patterns)</label></li>
+	<li><label><input type="checkbox" class="CheckboxFilters" checked onchange="Auto_update()" id="FilterSetting_original">Original (same URL as you entered)</label></li>
+	<li><label><input type="checkbox" class="CheckboxFilters" checked onchange="Auto_update()" id="FilterSetting_converted">Converted URLs (replaced substrings)</label></li>
+	<li><label><input type="checkbox" class="CheckboxFilters" checked onchange="Auto_update()" id="FilterSetting_pagination">pagination (have page number in URL)</label></li>
+	<li><label><input type="checkbox" class="CheckboxFilters" onchange="Auto_update()" id="FilterSetting_blacklisted">Blacklisted (remove unwanted URLs such as ads, various google URLs, etc.)</label></li>
+	<li><label><input type="checkbox" class="CheckboxFilters" checked onchange="Auto_update()" id="FilterSetting_other">other (URL not matching any of the listed patterns)</label></li>
 </ul>
 Sort:
 <ul>
@@ -96,11 +97,31 @@ Sort:
 				//Example 3: Blacklisted test
 				Type:"blacklisted",
 				FindWhat:/http(s)?:\/\/(aa|about|accounts|adservice|apis|ads|mail|myactivity|policies|store|sustainability|www)?\.google(\.com)?(\/.*)?$/
+			},
+			{
+				Type:"Blacklisted",
+				FindWhat:/https:\/\/googleads.*$/
 			}
 		]
 	function Auto_update() {
 		if (document.getElementById("AutoUpdate").checked) {
 			MainFunction()
+		}
+	}
+	function ChangeFilterSettings(ElementClass, Setting) {
+		//ElementClass: the element class to be affected by this function
+		//Setting:
+		//0 = uncheck
+		//1 = check
+		//2+ = invert
+		if (Setting < 2) {
+			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
+				document.getElementsByClassName(ElementClass)[i].checked = Setting
+			}
+		} else {
+			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
+				document.getElementsByClassName(ElementClass)[i].checked = document.getElementsByClassName(ElementClass)[i].checked ^ 1
+			}
 		}
 	}
 	//Copy text from textarea
