@@ -45,6 +45,7 @@ Sort:
 <ul>
 	<li><label><input type="radio" name="SortSetting" checked onchange="Auto_update()" id="SortSetting_None">None (be in the same order as the input, and also based on the converters)</label></li>
 	<li><label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_ABC">Alphabetically</label> (<label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_ABC_Reverse">Reverse</label>)</li>
+	<li><label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_IdentifiedType">By Identified type</label> (<label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_IdentifiedType_Reverse">Reverse</label>)</li>
 </ul>
 <hr>
 <textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="HTML_OutputString" cols="100" rows="30" readonly></textarea><br>
@@ -94,7 +95,7 @@ Sort:
 			{
 				//Example 3: Blacklisted test
 				Type:"blacklisted",
-				FindWhat:/https:\/\/ads\.google\.com.*$/
+				FindWhat:/http(s)?:\/\/(aa|about|accounts|adservice|apis|ads|mail|myactivity|policies|store|sustainability|www)?\.google(\.com)?(\/.*)?$/
 			}
 		]
 	function Auto_update() {
@@ -223,6 +224,22 @@ Sort:
 						return 0;
 					} else {
 						return (a.URL < b.URL) ? 1 : -1;
+					}
+				});
+			} else if (document.getElementById("SortSetting_IdentifiedType").checked) {
+				Filtered_OutputURLObjects.sort((a, b) => {
+					if (a.IdentifiedType === b.IdentifiedType) {
+						return 0;
+					} else {
+						return (a.IdentifiedType < b.IdentifiedType) ? -1 : 1;
+					}
+				});
+			} else if (document.getElementById("SortSetting_IdentifiedType_Reverse").checked) {
+				Filtered_OutputURLObjects.sort((a, b) => {
+					if (a.IdentifiedType === b.IdentifiedType) {
+						return 0;
+					} else {
+						return (a.IdentifiedType < b.IdentifiedType) ? 1 : -1;
 					}
 				});
 			}
