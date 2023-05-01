@@ -22,10 +22,13 @@
 
 <label><input type="checkbox" checked id="Option_AutoUpdate" onchange="Auto_update()">Auto update</label>
 <table>
-<tr><th>Enter the list of URLs here</th><th>Enter the list save result here (must be 1 item per line and starting with the URL on each!)</th></tr>
+<tr><th>Enter the list of URLs here</th><th>Enter the list save result here</th></tr>
 <tr>
 	<td><textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" id="Input_EnteredURLs" cols="100" rows="30" oninput="NotifyInputChanged(); Auto_update()"></textarea></td>
-	<td><textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" id="Input_ResultURLs" cols="100" rows="30" oninput="NotifyInputChanged(); Auto_update()"></textarea></td>
+	<td>
+		<p>Note: Each line must contain a WBM result. This is by design in case if there is a format bug by WBGS or something.</p>
+		<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" id="Input_ResultURLs" cols="100" rows="30" oninput="NotifyInputChanged(); Auto_update()"></textarea>
+	</td>
 </tr>
 </table>
 <button onclick="MainFunction()">Process</button>
@@ -70,6 +73,8 @@
 		<td id="StatisticPercentage_NumberOfItems_Unsure_Total"><kbd><span id="Statistic_NumberOfItems_Unsure_Total">0</span></kbd></td>
 	</tr>
 </table><br>
+
+<span style="color: yellow;"><span id="URLsToWBMResultRatioMismatchWarning"></span></span>
 <table>
 	<tr><th>URLs you entered results (filtered)</th><th>Leftover results that not matched</th></tr>
 	<tr>
@@ -88,9 +93,18 @@
 				<li><label><input type="radio" name="Sort_EnteredURLs" onchange="Auto_update()" id="Sort_WBMResult">By WBM result alphabetically</label>/<label><input type="radio" name="Sort_EnteredURLs" id="Sort_WBMResult_Rev" onchange="Auto_update()">Reverse</label></li>
 				<li><label><input type="radio" name="Sort_EnteredURLs" onchange="Auto_update()" id="Sort_URLs_Status">By URLs save status flagged</label>/<label><input type="radio" name="Sort_EnteredURLs" id="Sort_URLs_Status_Rev" onchange="Auto_update()">Reverse</label></li>
 			</ul>
-			<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="Textarea_EnteredURLResult" cols="100" rows="30" readonly></textarea>
+			Other:
+			<ul>
+				<li><label><input type="checkbox" onchange="Auto_update()" checked id="Option_IncludeStatusAsPlaintext">Include save result and status in plaintext</label></li>
+			</ul>
+			<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="Textarea_EnteredURLResult" cols="100" rows="30" readonly></textarea><br>
+			<button onclick="setClipboard(document.getElementById('Textarea_EnteredURLResult').value, 'CopiedTextMessage')" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
 		</td>
-		<td><textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="Textarea_LeftoverWBMResult" cols="100" rows="30" readonly></textarea></td>
+		<td>
+			<kbd>Count: <span id="Count_NonMatchingWBMResults">0</span></kbd><br>
+			<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="Textarea_LeftoverWBMResult" cols="100" rows="30" readonly></textarea><br>
+			<button onclick="setClipboard(document.getElementById('Textarea_LeftoverWBMResult').value, 'CopiedTextMessage2')" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage2"></span>
+		</td>
 	</tr>
 	<tr>
 		<td><span id="EnteredURL_Status_Table"></span></td>
@@ -139,6 +153,7 @@
 		function MainFunction() {
 			let ListOfURLs = []
 			let ListOfWBMResult = []
+			document.getElementById("URLsToWBMResultRatioMismatchWarning").innerHTML = ""
 			if (InputChanged) {
 				Count_Success_SavedBefore = 0
 				Count_Success_FirstArchive = 0
@@ -163,54 +178,71 @@
 					return InputURLObject
 				});
 				
-				let ListOfWBMResult = (document.getElementById("Input_ResultURLs").value.split("\n")).map((ArrayElement) => { //NOTE: This is an array representing each line, zero-based (so empty lines may exists)
-					WBMResultObject = {
+				ListOfWBMResult = (document.getElementById("Input_ResultURLs").value.split("\n")).map((ArrayElement, Index) => { //NOTE: This is an array representing each line, zero-based (so empty lines may exists)
+					let WBMResultObject = {
 						Result:ArrayElement,
-						InputURLMatchWith:-1
+						InputURLMatchWith:-1,
+						Position:Index
 					}
 					return WBMResultObject
 				});
-				
+				ListOfWBMResult = ListOfWBMResult.filter((ArrayElement) => {
+					return (ArrayElement.Result != "")
+				});
 				for (let i=0; i<ListOfURLs.length;i++) { //Scan every entered URL to match with the results
 					for (let i2=0;i2<ListOfWBMResult.length;i2++) { //Loop through every WBM result to find a match (if multiple matches on WBMResult, only the first is read), if not, 
-						let URLOfResult = ""
-						if (ListOfWBMResult[i2].Result.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/) != null) {
-							URLOfResult = ListOfWBMResult[i2].Result.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/)[0]
-						}
-						URLOfResult = URLOfResult.replace(/https:\/\/web\.archive\.org\/web\/\d+\//, "") //Rid out the WBM URL substring to match the original URL
-						let HasWBMSubstring = /https:\/\/web\.archive\.org\/web\/\d+\//.test(ListOfWBMResult[i2].Result) //Failsafe if somehow the WBM result outputs a URL without the WBM substring.
-						if (ListOfURLs[i].GivenURL == URLOfResult) { //If a match is found...
-							ListOfURLs[i].StatusMessage = ListOfWBMResult[i2].Result.replace(/^http(s)?\:\/\/(?!data:)[^\s\"\']+ /, "")
-							if (/Error! /.test(ListOfURLs[i].StatusMessage)) { 
-								ListOfURLs[i].MatchWith = i2 //A MatchWith requires either the same URL when error occured, or if there is a successful save, must include the WBM substring to be 0 or higher
-								ListOfURLs[i].StatusType = "Unsure_Error"
-								Count_Unsure_Error++
-								
-								ListOfWBMResult[i2].InputURLMatchWith = i
-							} else if (/.*First Archive.*/.test(ListOfURLs[i].StatusMessage)&&HasWBMSubstring){
-								ListOfURLs[i].MatchWith = i2
-								ListOfURLs[i].StatusType = "Success_FirstArchive"
-								Count_Success_FirstArchive++
-								
-								ListOfWBMResult[i2].InputURLMatchWith = i
-							} else if (HasWBMSubstring){
-								ListOfURLs[i].MatchWith = i2
-								ListOfURLs[i].StatusType = "Success_SavedBefore"
-								Count_Success_SavedBefore++
-								
-								ListOfWBMResult[i2].InputURLMatchWith = i
+						if (ListOfWBMResult[i2].InputURLMatchWith == -1) {
+						//^Optimization, when matches are found not to check this WBM result again. Also prevents an issue where
+						//having duplicate submitted URLs can result in a WBM result's matchwith to be set to the last URL that is a duplicate.
+							let URLOfResult = ""
+							if (ListOfWBMResult[i2].Result.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/) != null) {
+								URLOfResult = ListOfWBMResult[i2].Result.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/)[0]
 							}
-							break;
+							URLOfResult = URLOfResult.replace(/https:\/\/web\.archive\.org\/web\/\d+\//, "") //Rid out the WBM URL substring to match the original URL
+							let HasWBMSubstring = /https:\/\/web\.archive\.org\/web\/\d+\//.test(ListOfWBMResult[i2].Result) //Failsafe if somehow the WBM result outputs a URL without the WBM substring.
+							let HasErrored = /Error!/.test(ListOfWBMResult[i2].Result)
+							
+							//^Conditions above acts as a failsafe that if ever that the WBM URL result would be:
+							//-Having an error with the WBM URL part as if it did save (like this: https://web.archive.org/web/YYYYMMDDhhmmss/https://example.com Error! <description>)
+							//-Successfully save but lacks the WBM substring (like saying https://example.com (x embeds) Seed URL)
+							//
+							//Thus the rule to match URLs is that if it errors out, it must be a non-WBM URL with the error text, otherwise if it was a successful save, it must have a WBM substring of the URL
+							//with no error text.
+							if (ListOfURLs[i].GivenURL == URLOfResult) { //If a match is found with a proper condition...
+								ListOfURLs[i].StatusMessage = ListOfWBMResult[i2].Result.replace(/^http(s)?\:\/\/(?!data:)[^\s\"\']+ /, "")
+								if (HasErrored&&(HasWBMSubstring==false)) { //If error, it should not have the WBM part of the URL and have the "Error!".
+									ListOfURLs[i].MatchWith = i2
+									ListOfWBMResult[i2].InputURLMatchWith = i
+									ListOfURLs[i].StatusType = "Unsure_Error"
+									Count_Unsure_Error++
+									
+									break;
+								} else if (/.*First Archive.*/.test(ListOfURLs[i].StatusMessage)&&HasWBMSubstring&&(HasErrored==false)){ //If success, it must have the WBM part of the URL AND not have an "Error!" as a failsafe.
+									ListOfURLs[i].MatchWith = i2
+									ListOfWBMResult[i2].InputURLMatchWith = i
+									ListOfURLs[i].StatusType = "Success_FirstArchive"
+									Count_Success_FirstArchive++
+									
+									break;
+								} else if (HasWBMSubstring&&(HasErrored==false)){
+									ListOfURLs[i].MatchWith = i2
+									ListOfWBMResult[i2].InputURLMatchWith = i
+									ListOfURLs[i].StatusType = "Success_SavedBefore"
+									Count_Success_SavedBefore++
+									
+									break;
+								}
+							}
 						}
 					}
-					if (ListOfURLs[i].MatchWith == -1) {
+					if (ListOfURLs[i].MatchWith == -1) { //If it finds none that matches (loop through entire WBM result, resulting in the matchwith field to remain -1)
 						Count_Unsure_NoMatch++
 					}
 				}
 				//Finished processing, save them to a list for optimization purposes
 				OutputList.InputURLList = ListOfURLs
 				OutputList.WBMResultList = ListOfWBMResult
-				//reset so it reconize a change again
+				//reset so it recognize a change again
 				InputChanged = false
 			} else {
 				ListOfURLs = OutputList.InputURLList
@@ -297,25 +329,45 @@
 				});
 			}
 			document.getElementById("Textarea_EnteredURLResult").value = ""
-			let PlainText_ListOfEnteredURLsResult = ""
+			let Plaintext_ListOfEnteredURLsResult = ""
 			let HTMLTable_ListOfEnteredURLsResult = ""
 			
 			HTMLTable_ListOfEnteredURLsResult += "<table>"
 			HTMLTable_ListOfEnteredURLsResult += "<tr><th>Position</th><th>URL</th><th>Save result</th><th>Status identified</th></tr>"
 			Filtered_ListOfURLs.forEach((ArrayElement, Index, ArrayItself) => {
-				PlainText_ListOfEnteredURLsResult += ArrayElement.GivenURL
+				Plaintext_ListOfEnteredURLsResult += ArrayElement.GivenURL
+				if (document.getElementById("Option_IncludeStatusAsPlaintext").checked) {
+					Plaintext_ListOfEnteredURLsResult += "\t" + ArrayElement.StatusMessage + "\t" + ArrayElement.StatusType
+				}
 				if (Index != ArrayItself.length-1) {
-					PlainText_ListOfEnteredURLsResult += "\n"
+					Plaintext_ListOfEnteredURLsResult += "\n"
 				}
 				
 				HTMLTable_ListOfEnteredURLsResult += "<tr>"
-				HTMLTable_ListOfEnteredURLsResult += "<td style='background-color: " + URLColorIndicator(ArrayElement.StatusType) + "; text-align: center;'>"+ BigInt(ArrayElement.Position+1).toString(10) +"</td><td style='background-color: " + URLColorIndicator(ArrayElement.StatusType) + ";'>"+escapeHTMLChars(ArrayElement.GivenURL)+"</td><td style='background-color: " + URLColorIndicator(ArrayElement.StatusType) + ";'>"+ArrayElement.StatusMessage+"</td><td style='background-color: " + URLColorIndicator(ArrayElement.StatusType) + ";'>"+ArrayElement.StatusType+"</td>"
+				HTMLTable_ListOfEnteredURLsResult += "<td style='background-color: " + URLColorIndicator(ArrayElement.StatusType) + "; text-align: center;'><pre>"+ BigInt(ArrayElement.Position+1).toString(10) +"</pre></td><td style='background-color: " + URLColorIndicator(ArrayElement.StatusType) + ";'><pre>"+escapeHTMLChars(ArrayElement.GivenURL)+"</pre></td><td style='background-color: " + URLColorIndicator(ArrayElement.StatusType) + ";'><pre>"+ArrayElement.StatusMessage+"</pre></td><td style='background-color: " + URLColorIndicator(ArrayElement.StatusType) + ";'><pre>"+ArrayElement.StatusType+"</pre></td>"
 				HTMLTable_ListOfEnteredURLsResult += "</tr>"
 			});
 			HTMLTable_ListOfEnteredURLsResult += "</table>"
-			document.getElementById("Textarea_EnteredURLResult").value = PlainText_ListOfEnteredURLsResult
+			document.getElementById("Textarea_EnteredURLResult").value = Plaintext_ListOfEnteredURLsResult
 			document.getElementById("EnteredURL_Status_Table").innerHTML = HTMLTable_ListOfEnteredURLsResult
 			
+			let Filtered_ListOfWBMResult = ListOfWBMResult.filter((ArrayElement) => {
+				return (ArrayElement.InputURLMatchWith == -1)
+			});
+			
+			let Plaintext_ListOfLeftOverWBMResult = ""
+			document.getElementById("Count_NonMatchingWBMResults").innerHTML = BigInt(Filtered_ListOfWBMResult.length).toString(10)
+			Filtered_ListOfWBMResult.forEach((ArrayElement, Index, ArrayItself) => {
+				Plaintext_ListOfLeftOverWBMResult += ArrayElement.Result
+				if (Index != ArrayItself.length-1) {
+					Plaintext_ListOfLeftOverWBMResult += "\n"
+				}
+			});
+			document.getElementById("Textarea_LeftoverWBMResult").value = Plaintext_ListOfLeftOverWBMResult
+			
+			if (ListOfURLs.length > ListOfWBMResult.length) {
+				document.getElementById("URLsToWBMResultRatioMismatchWarning").innerHTML = "The WBM result have "+ BigInt(ListOfURLs.length - ListOfWBMResult.length).toString(10) + " fewer result(s) than your entered URLs. It is possible you entered more URLs than what is allowed. (There are " + BigInt(ListOfURLs.length).toString(10) + " entered URLs and " + BigInt(ListOfWBMResult.length).toString(10) +" WBM results)"
+			}
 		}
 	}
 	function URLColorIndicator(SaveStatus) {
@@ -469,4 +521,28 @@
 			string = string.replaceAll("\n", "<br>") //Again just in case if WBGS would ever use linebreaks in a cell.
 			return string
 	}
+
+	//Copy text from textarea
+		function setClipboard(String, CopyMessageID) {
+			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
+			const type = "text/plain";
+			const blob = new Blob([String], { type });
+			const data = [new ClipboardItem({ [type]: blob })];
+	
+			navigator.clipboard.write(data).then(
+				() => {
+				/* success */
+					document.getElementById(CopyMessageID).innerHTML = " <span style='color: #00FF00;'>Copied!</span>"
+					setTimeout(DeleteCopyMessage.bind(null, CopyMessageID), 1500)
+				},
+				() => {
+				/* failure */
+					document.getElementById(CopyMessageID).innerHTML = " <span style='color: #FF0000;'>Copy failed!</span>"
+					setTimeout(DeleteCopyMessage.bind(null, CopyMessageID), 1500)
+				}
+			);
+		}
+		function DeleteCopyMessage(CopyMessageID) {
+			document.getElementById(CopyMessageID).innerHTML = ""
+		}
 </script>
