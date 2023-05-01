@@ -101,6 +101,7 @@ Sort:
 		}
 	}
 	function AutoUpdate() {
+		UpdateBlacklistCount()
 		if (document.getElementById("Option_AutoUpdate").checked) {
 			MainFunction()
 		}
@@ -142,6 +143,13 @@ Sort:
 			document.getElementById("HTML_DuplicateBlacklistCount").innerHTML = "0"
 		document.getElementById("TextOutput").value = ""
 	}
+	function UpdateBlacklistCount() {
+		let InputBlacklist = [...new Set(((document.getElementById("TextInput_Blacklist").value).split('\n')))]
+		InputBlacklist = new Set(InputBlacklist.filter((ArrayElement) => {return !(/^\s*$/.test(ArrayElement))}))
+		document.getElementById("UniqueBlacklistCount").innerHTML = BigInt(InputBlacklist.size).toString(10)
+		
+		return InputBlacklist
+	}
 	function MainFunction() {
 		let InputList
 		if (document.getElementById("TextInput").value == "") {
@@ -168,9 +176,8 @@ Sort:
 				//Now, please note: Unique = [new Set(InputList)] is a better way of removing duplicates, but the problem is what if the user wants to MERELY detect duplicates and
 				//have them displayed? Therefore using loops and flagging them is a more viable option.
 				
-				let InputBlacklist = [...new Set(((document.getElementById("TextInput_Blacklist").value).split('\n')))]
-				InputBlacklist = new Set(InputBlacklist.filter((ArrayElement) => {return !(/^\s*$/.test(ArrayElement))}))
-				document.getElementById("UniqueBlacklistCount").innerHTML = BigInt(InputBlacklist.size).toString(10)
+				
+				let InputBlacklist = UpdateBlacklistCount()
 				Count_Lines = InputList.length
 				Count_OriginalItem = 0
 				Count_Duplicates = 0
