@@ -55,24 +55,24 @@ Filter:<br>
 				</tr>
 				<tr>
 					<th>User homepage</th>
-					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_UserMainPage" id="FilterSetting_TwitterPage_UserMainPage" checked></label></td>
+					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_UserMainPage" id="FilterSetting_TwitterPage_UserMainPage"></label></td>
 					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="MobileTwitterPage_UserMainPage" id="FilterSetting_MobileTwitterPage_UserMainPage"></label></td>
-					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage" id="FilterSetting_NitterPage_UserMainPage" checked></label></td>
+					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage" id="FilterSetting_NitterPage_UserMainPage"></label></td>
 				</tr>
 				<tr>
 					<th>Tweets</th>
-					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_Tweet" id="FilterSetting_TwitterPage_Tweet" checked></label></td>
+					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_Tweet" id="FilterSetting_TwitterPage_Tweet"></label></td>
 					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="MobileTwitterPage_Tweet" id="FilterSetting_MobileTwitterPage_Tweet"></label></td>
-					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_Tweet" id="FilterSetting_NitterPage_Tweet" checked></label></td>
+					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_Tweet" id="FilterSetting_NitterPage_Tweet"></label></td>
 				</tr>
 			</table>
 		</li>
 		<li>Nitter user's tab pages (cannot save twitter user's tabs due to login wall)</li>
 		<ul>
-			<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage_WithReplies" id="FilterSetting_NitterPage_UserMainPage_WithReplies" checked>Nitter Replies</label></li>
-			<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage_Media" id="FilterSetting_NitterPage_UserMainPage_Media" checked>Nitter Media</label></li>
+			<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage_WithReplies" id="FilterSetting_NitterPage_UserMainPage_WithReplies">Nitter Replies</label></li>
+			<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage_Media" id="FilterSetting_NitterPage_UserMainPage_Media">Nitter Media</label></li>
 		</ul>
-		<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_Ievents" id="FilterSetting_TwitterPage_Ievents" checked>Events</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_Ievents" id="FilterSetting_TwitterPage_Ievents">Events</label></li>
 	</ul>
 	<li>Tweet Images <button onclick="ChangeFilterSettings('TwitterImages', 1); AutoUpdateCode()">Check All</button><button onclick="ChangeFilterSettings('TwitterImages', 0); AutoUpdateCode()">Uncheck All</button><button onclick="ChangeFilterSettings('TwitterImages', 2); AutoUpdateCode()">Invert</button></li>
 	<ul>
@@ -119,6 +119,11 @@ Filter:<br>
 		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="Twitter_Tco" id="FilterSetting_Twitter_Tco" checked>t.co</label></li>
 		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="Twitter_Other" id="FilterSetting_Twitter_Other" >Other twitter</label></li>
 		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="OtherSites" id="FilterSetting_OtherSites" >Other sites</label></li>
+	</ul>
+	<li>Emergency</li>
+	<ul>
+		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="Twitter_Embed" id="FilterSetting_Embed" checked>Generate Tweet embeds</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="Twitter_RSS" id="FilterSetting_RSS" checked>Generate user page via https://rsshub.app/</label></li>
 	</ul>
 </ul>
 Misc:
@@ -274,7 +279,7 @@ Misc:
 			// https://pbs.twimg.com/tweet_video/<video_id>.mp4
 			// https://video.twimg.com/tweet_video/<video_id>.mp4
 			//
-			//T.co
+			//t.co
 			// http://t.co/<ID>
 			//Side note: JSON.stringify does not work with bigint.
 			if (/^http(s)?\:\/\/(www\.)?twitter\.com\/(?!i\/events)/.test(ListOfURLs[i])) {
@@ -302,6 +307,9 @@ Misc:
 							if (document.getElementById("FilterSetting_NitterPage_UserMainPage").checked) {
 								UniqueListOfURLs.add(JSON.stringify([Nitter_Domain + "/" + PotentialUsername, "NitterPage_UserMainPage", "-1"]))
 							}
+							if (document.getElementById("FilterSetting_RSS").checked) {
+								UniqueListOfURLs.add(JSON.stringify(["https://rsshub.app/twitter/user/" + PotentialUsername, "RSS", "-1"]))
+							}
 						}
 					//Tweets
 						if (TweetID != -1n) {
@@ -313,6 +321,9 @@ Misc:
 							}
 							if (document.getElementById("FilterSetting_NitterPage_Tweet").checked) {
 								UniqueListOfURLs.add(JSON.stringify([Nitter_Domain + "/" + PotentialUsername + "/status/" + TweetID.toString(10), "NitterPage_Tweet", TweetID.toString(10)]))
+							}
+							if (document.getElementById("FilterSetting_Embed").checked) {
+								UniqueListOfURLs.add(JSON.stringify(["https://platform.twitter.com/embed/Tweet.html?id=" + TweetID.toString(10), "Embed", TweetID.toString(10)]))
 							}
 						}
 					//Nitter tabs
