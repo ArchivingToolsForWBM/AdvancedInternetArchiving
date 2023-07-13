@@ -55,22 +55,22 @@ Filter:<br>
 				</tr>
 				<tr>
 					<th>User homepage</th>
-					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_UserMainPage" id="FilterSetting_TwitterPage_UserMainPage"></label></td>
+					<td><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_UserMainPage" id="FilterSetting_TwitterPage_UserMainPage"></label></td>
 					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="MobileTwitterPage_UserMainPage" id="FilterSetting_MobileTwitterPage_UserMainPage"></label></td>
-					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage" id="FilterSetting_NitterPage_UserMainPage"></label></td>
+					<td><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage" id="FilterSetting_NitterPage_UserMainPage"></label></td>
 				</tr>
 				<tr>
 					<th>Tweets</th>
-					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_Tweet" id="FilterSetting_TwitterPage_Tweet"></label></td>
+					<td><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_Tweet" id="FilterSetting_TwitterPage_Tweet"></label></td>
 					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="MobileTwitterPage_Tweet" id="FilterSetting_MobileTwitterPage_Tweet"></label></td>
-					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_Tweet" id="FilterSetting_NitterPage_Tweet"></label></td>
+					<td><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_Tweet" id="FilterSetting_NitterPage_Tweet"></label></td>
 				</tr>
 			</table>
 		</li>
 		<li>Nitter user's tab pages (cannot save twitter user's tabs due to login wall)</li>
 		<ul>
-			<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage_WithReplies" id="FilterSetting_NitterPage_UserMainPage_WithReplies">Nitter Replies</label></li>
-			<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage_Media" id="FilterSetting_NitterPage_UserMainPage_Media">Nitter Media</label></li>
+			<li><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage_WithReplies" id="FilterSetting_NitterPage_UserMainPage_WithReplies">Nitter Replies</label></li>
+			<li><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage_Media" id="FilterSetting_NitterPage_UserMainPage_Media">Nitter Media</label></li>
 		</ul>
 		<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_Ievents" id="FilterSetting_TwitterPage_Ievents">Events</label></li>
 	</ul>
@@ -80,7 +80,11 @@ Filter:<br>
 		<li><label><input type="checkbox" class="TwitterURLFilter TwitterImages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimg_Orig" id="FilterSetting_TwitterMedia_PbsTwimg_Orig">Old Images (original resolution, <kbd>https://pbs.twimg.com/media/&lt;base_64_string&gt;.&lt;file_type&gt;:orig</kbd>)</label></li>
 		<li><label><input type="checkbox" class="TwitterURLFilter TwitterImages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgModern" id="FilterSetting_TwitterMedia_PbsTwimgModern">Modern Images (default resolution <kbd>https://pbs.twimg.com/media/&lt;base_64_string&gt;?format=&lt;file_type&gt;&name=&lt;resolution_name&gt;</kbd>)</label></li>
 		<li><label><input type="checkbox" class="TwitterURLFilter TwitterImages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgModern_Orig" id="FilterSetting_TwitterMedia_PbsTwimgModern_Orig" checked>Modern Images (original resolution, <kbd>https://pbs.twimg.com/media/&lt;base_64_string&gt;?format=&lt;file_type&gt;&name=orig</kbd>)</label></li>
-		<li><label><input type="checkbox" class="TwitterURLFilter TwitterImages" onchange="AutoUpdateCode()" data-js_url_filter="NitterMedia_PbsTwimg_Orig" id="FilterSetting_NitterMedia_PbsTwimg_Orig">Nitter images (full resolution), <kbd>https://nitter.net/pic/orig/media%2F&lt;base_64_string&gt;.jpg</kbd>)</label></li>
+		<li>Nitter
+			<ul>
+				<li><label><input checked type="checkbox" class="TwitterURLFilter TwitterImages" onchange="AutoUpdateCode()" data-js_url_filter="NitterMedia_PbsTwimg_Orig" id="FilterSetting_NitterMedia_PbsTwimg_Orig">Nitter images (full resolution), <kbd>https://nitter.net/pic/orig/media%2F&lt;base_64_string&gt;.jpg</kbd>)</label></li>
+			</ul>
+		</li>
 	</ul>
 	<li>Profile images</li>
 	<ul>
@@ -92,7 +96,11 @@ Filter:<br>
 	<ul>
 		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgProfileBanner_600x200" id="FilterSetting_TwitterMedia_PbsTwimgProfileBanner_600x200" checked>600x200</label></li>
 		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgProfileBanner_1500x500" id="FilterSetting_TwitterMedia_PbsTwimgProfileBanner_1500x500" checked>1500x500 (max resolution?)</label></li>
-		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="NitterMedia_PbsTwimgProfileBanner_1500x500" id="FilterSetting_NitterMedia_PbsTwimgProfileBanner_1500x500">Nitter 1500x500 (max resolution?)</label></li>
+		<li>Nitter
+		<ul>
+			<li><label><input checked type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="NitterMedia_PbsTwimgProfileBanner_1500x500" id="FilterSetting_NitterMedia_PbsTwimgProfileBanner_1500x500">Nitter 1500x500 (max resolution?)</label></li>
+		</ul>
+		</li>
 	</ul>
 	<li>Card images</li>
 	<ul>
@@ -103,15 +111,23 @@ Filter:<br>
 	<ul>
 		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimg_Video" id="FilterSetting_TwitterMedia_PbsTwimg_Video" checked>Video (<kbd>https://pbs.twimg.com/tweet_video/[video_id].mp4</kbd>)</label></li>
 		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_VideoTwimg" id="FilterSetting_TwitterMedia_VideoTwimg" checked>Video (legacy URL? <kbd>https://video.twimg.com/tweet_video/[video_id].mp4</kbd>)</label></li>
-		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos" onchange="AutoUpdateCode()" data-js_url_filter="NitterMedia_VideoTwimg" id="FilterSetting_NitterMedia_VideoTwimg">Nitter Video (legacy URL? <kbd>https://nitter.net/pic/video.twimg.com%2Ftweet_video%2F[video_id].mp4</kbd>)</label></li>
+		<li>Nitter:
+			<ul>
+				<li><label><input checked type="checkbox" class="TwitterURLFilter TwitterVideos" onchange="AutoUpdateCode()" data-js_url_filter="NitterMedia_VideoTwimg" id="FilterSetting_NitterMedia_VideoTwimg">Nitter Video (legacy URL? <kbd>https://nitter.net/pic/video.twimg.com%2Ftweet_video%2F[video_id].mp4</kbd>)</label></li>
+			</ul>
+		</li>
 		<li>Thumbnails:<button onclick="ChangeFilterSettings('TwitterVideosThumb', 1); AutoUpdateCode()">Check All</button><button onclick="ChangeFilterSettings('TwitterVideosThumb', 0); AutoUpdateCode()">Uncheck All</button><button onclick="ChangeFilterSettings('TwitterVideosThumb', 2); AutoUpdateCode()">Invert</button></li>
 		<ul>
-		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimg_Video_Thumb" id="FilterSetting_TwitterMedia_PbsTwimg_Video_Thumb" checked>Video thumbnail (old and still used, <kbd>https://pbs.twimg.com/tweet_video_thumb/[video_id].[image_file_type]</kbd>)</label></li>
-		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimg_Video_Thumb_Orig" id="FilterSetting_TwitterMedia_PbsTwimg_Video_Thumb_Orig" checked>Video thumbnail, original (old and still used, <kbd>https://pbs.twimg.com/tweet_video_thumb/[video_id].[image_file_type]:orig</kbd>)</label></li>
-		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgModern_Video_Thumb_DefaultResolution" id="FilterSetting_TwitterMedia_PbsTwimgModern_Video_Thumb_DefaultResolution">[404] Modern video thumbnail (default resolution, <kbd>https://pbs.twimg.com/tweet_video_thumb/[video_id]?format=[image_file_type]</kbd>) Note that this goes 404, so a <kbd>&name=<resolution></kbd> must be specified.</label></li>
-		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgModern_Video_Thumb" id="FilterSetting_TwitterMedia_PbsTwimgModern_Video_Thumb_Orig" checked>Modern video thumbnail (original resolution, <kbd>https://pbs.twimg.com/tweet_video_thumb/[video_id]?format=[image_file_type]&name=orig</kbd>)</label></li>
-		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="NitterMedia_PbsTwimgModern_Video_Thumb" id="FilterSetting_NitterMedia_PbsTwimgModern_Video_Thumb">Nitter video thumbnail (&ldquo;small&rdquo; resolution, <kbd>https://nitter.net/pic/tweet_video_thumb%2F[video_id].[image_file_type]%3Fname%3Dsmall</kbd>)</label></li>
-		<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="NitterMedia_PbsTwimgModern_Video_Thumb_Orig" id="FilterSetting_NitterMedia_PbsTwimgModern_Video_Thumb_Orig">Nitter video thumbnail (original resolution, <kbd>https://nitter.net/pic/tweet_video_thumb%2F[video_id].[image_file_type]%3Fname%3Dorig</kbd>)</label></li>
+			<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimg_Video_Thumb" id="FilterSetting_TwitterMedia_PbsTwimg_Video_Thumb" checked>Video thumbnail (old and still used, <kbd>https://pbs.twimg.com/tweet_video_thumb/[video_id].[image_file_type]</kbd>)</label></li>
+			<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimg_Video_Thumb_Orig" id="FilterSetting_TwitterMedia_PbsTwimg_Video_Thumb_Orig" checked>Video thumbnail, original (old and still used, <kbd>https://pbs.twimg.com/tweet_video_thumb/[video_id].[image_file_type]:orig</kbd>)</label></li>
+			<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgModern_Video_Thumb_DefaultResolution" id="FilterSetting_TwitterMedia_PbsTwimgModern_Video_Thumb_DefaultResolution">[404] Modern video thumbnail (default resolution, <kbd>https://pbs.twimg.com/tweet_video_thumb/[video_id]?format=[image_file_type]</kbd>) Note that this goes 404, so a <kbd>&name=<resolution></kbd> must be specified.</label></li>
+			<li><label><input type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="TwitterMedia_PbsTwimgModern_Video_Thumb" id="FilterSetting_TwitterMedia_PbsTwimgModern_Video_Thumb_Orig" checked>Modern video thumbnail (original resolution, <kbd>https://pbs.twimg.com/tweet_video_thumb/[video_id]?format=[image_file_type]&name=orig</kbd>)</label></li>
+			<li>Nitter
+				<ul>
+					<li><label><input checked type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="NitterMedia_PbsTwimgModern_Video_Thumb" id="FilterSetting_NitterMedia_PbsTwimgModern_Video_Thumb">Nitter video thumbnail (&ldquo;small&rdquo; resolution, <kbd>https://nitter.net/pic/tweet_video_thumb%2F[video_id].[image_file_type]%3Fname%3Dsmall</kbd>)</label></li>
+					<li><label><input checked type="checkbox" class="TwitterURLFilter TwitterVideos TwitterVideosThumb" onchange="AutoUpdateCode()" data-js_url_filter="NitterMedia_PbsTwimgModern_Video_Thumb_Orig" id="FilterSetting_NitterMedia_PbsTwimgModern_Video_Thumb_Orig">Nitter video thumbnail (original resolution, <kbd>https://nitter.net/pic/tweet_video_thumb%2F[video_id].[image_file_type]%3Fname%3Dorig</kbd>)</label></li>
+				</ul>
+			</li>
 		</ul>
 	</ul>
 	<li>Other</li>
