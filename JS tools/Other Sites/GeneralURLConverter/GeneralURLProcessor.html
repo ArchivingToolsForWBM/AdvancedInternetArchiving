@@ -165,7 +165,7 @@ Sort:
 				ListOfURLs = ListOfURLs.map(ArrayElement => {
 					
 					let URLObject = {
-						URL:ArrayElement.replace(/^ttp(s)?/, "http$1").replace(/#.*$/, ""), //Revert the URL to have the "h" of the http/https, and remove fragment identifier
+						URL:ArrayElement.replace(/^ttp(s)?/, "http$1").replace(/#.*$/, "").replace(/\.$/, ""), //Revert the URL to have the "h" of the http/https, remove fragment identifier, and remove the erroneous dot at the end from the error message
 						HaveBeenChecked:false, //This is used to check for duplicate or 2 URLs being similar (same URL but different page number)
 						IdentifiedType:""
 					}
