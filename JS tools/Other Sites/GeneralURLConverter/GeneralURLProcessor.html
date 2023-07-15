@@ -60,23 +60,26 @@ Sort:
 		InputChanged = true
 	}
 	//An array containing a list of objects specifying the replacement.
-	//-When "Type" is "normal": performs a simple replacement, the attributes are:
+	//-When "Type" is "normal": performs a simple replacement (replace a substring or remove a part of the string), the attributes are:
 	//--FindWhat: <Regex>: A regular expression the URLs in the input must match with to identify what appropriate replacement to perform a URL conversion
 	//  NOTE: I recommend matching the entire string if you do not fully understand how the URL format of a given website work.
-	//--ReplaceWith: An array containing 1 or more items to replace with
-	//--IncludeOriginal: <Boolean>: False if you only wanted the converted URL to be included in the output, true if you want to include
+	//--ReplaceWith: An array containing 1 or more items to replace with.
+	//--IncludeOriginal: <Boolean>: False if you only wanted the converted URL to be included in the output, true if you want to include.
 	//-When "Type" is "pagination": This will generate each URL of each page number of the same kind, based on the highest page number of the matching kind that exists in the input,
 	// Example, if you provide similar URLs with the difference being the page numbers:
 	//--https://example.com/test?page=1 (usually "?page=1" is omitted but still works)
 	//--https://example.com/test?page=4
 	//--https://example.com/test?page=10
-	// It will generate from page 1 to page 10. If you also have the same thing but different numbers and have "test" be a different string, it will
-	// generate all of them each with their OWN (no mixup, string before and after number must match) maximum numbers.
+	// It will generate from page 1 to page 10. If you also have a similar thing but different numbers and have "test" be a different string, it will
+	// generate all of them each with their OWN (no mixup, string before and after the page number must match) maximum numbers.
 	//--FindWhat: <Regex>: Same as above, but must match only the page number (in addition to making sure the URL pattern match), as string.split is being used.
-	//---Make sure you use non-capturing group "(?:noncapturing)") since the array it split into should only contain URL string before and after the number.
-	//---Must use in a way that it only matches the number in the substring, it must avoid matching/including any text that aren't page numbers.
-	//--PageNumberStartsAt: Page number to start at from counting from that number to the highest number. Some sites may have their page number start at 0, some at 1.
+	//---Make sure you use non-capturing group "(?:noncapturing)") since the array it split into (string.split) should only contain URL string before and after the number.
+	//---Must use in a way that it only matches the number in the substring, it must avoid matching/including any characters that aren't page numbers.
+	//--PageNumberStartsAt: Page number to start at from counting from that number to the highest number. Some sites may have their page number start at 0, some at 1. Please
+	//  let me know if you found pages that uses negative numbers (I never seen websites ever use negative page numbers), or fork this with the adoption of negative values.
 	//-When "Type" is "blacklisted", it can be filtered (filter setting). Only "FindWhat" is needed, anything that matches this regex will be labeled as blacklisted.
+	//
+	//See quick reference here: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet
 	
 		const ListOfConverters = [
 			{
@@ -205,7 +208,7 @@ Sort:
 									for (let i2 = Converter.PageNumberStartsAt; i2 <= HighestPageNumberSoFar; i2++) { //Generate a URL of each page
 										//OutputSet.add(PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1])
 										AddToOutput({
-											URL:PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1],
+											URL:PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1], //Insert each page number URL
 											IdentifiedType:"pagination"
 										});
 									}
@@ -213,7 +216,6 @@ Sort:
 									ListOfURLs[i].IdentifiedType = "blacklisted"
 									AddToOutput(ListOfURLs[i])
 								}
-								
 							}
 						});
 						if ((UrlMatchedAnyConverter == false)&&document.getElementById("FilterSetting_other").checked) {
