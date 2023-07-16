@@ -49,9 +49,9 @@ Sort:
 	<li><label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_IdentifiedType">By Identified type</label> (<label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_IdentifiedType_Reverse">Reverse</label>)</li>
 </ul>
 <hr>
+<kbd><span id="Output_URL_Count">0</span> URLs generated.</kbd><br>
 <textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="HTML_OutputString" cols="100" rows="30" readonly></textarea><br>
 <button onclick="setClipboard(document.getElementById('HTML_OutputString').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br><br>
-
 <span id="URL_OutputTable"></span>
 <script>
 	var SavedOutput = []
@@ -233,6 +233,9 @@ Sort:
 				OutputURLObjects = SavedOutput
 			}
 			let Filtered_OutputURLObjects = OutputURLObjects.filter(ArrayElement => {return document.getElementById("FilterSetting_" + ArrayElement.IdentifiedType).checked})
+			
+			document.getElementById("Output_URL_Count").innerHTML = BigInt(Filtered_OutputURLObjects.length).toString(10)
+			
 			if (document.getElementById("SortSetting_ABC").checked) {
 				Filtered_OutputURLObjects.sort((a, b) => {
 					if (a.URL === b.URL) {

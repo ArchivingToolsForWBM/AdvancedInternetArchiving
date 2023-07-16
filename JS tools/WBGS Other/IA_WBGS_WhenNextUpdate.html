@@ -46,7 +46,7 @@ Total URLs processed: <input type="number" min="0" max="50000" value="0" onchang
 		Calculate()
 	}
 	function Calculate() {
-		const BatchSize = 40n //How many URLs before each update.
+		const BatchSize = 80n //How many URLs before each update.
 		const MaxURLs = 50000n //The maximum number of URLs to process.
 		let Output = ""
 		let NumberOfUrlsProcessed = BigintClamp(CorrectDecBigIntValue(document.getElementById("Input").value), 0n, MaxURLs)
