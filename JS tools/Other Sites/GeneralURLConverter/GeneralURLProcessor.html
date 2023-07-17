@@ -47,6 +47,7 @@ Sort:
 	<li><label><input type="radio" name="SortSetting" checked onchange="Auto_update()" id="SortSetting_None">None (be in the same order as the input, and also based on the converters)</label></li>
 	<li><label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_ABC">Alphabetically</label> (<label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_ABC_Reverse">Reverse</label>)</li>
 	<li><label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_IdentifiedType">By Identified type</label> (<label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_IdentifiedType_Reverse">Reverse</label>)</li>
+	<li><label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_KeyName">By KeyName</label> (<label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_KeyName_Reverse">Reverse</label>)</li>
 </ul>
 <hr>
 <kbd><span id="Output_URL_Count">0</span> URLs generated.</kbd><br>
@@ -64,7 +65,7 @@ Sort:
 	//--FindWhat: <Regex>: A regular expression the URLs in the input must match with to identify what appropriate replacement to perform a URL conversion
 	//  NOTE: I recommend matching the entire string if you do not fully understand how the URL format of a given website work. I've experienced where the converted URL
 	//  wasn't included in the output at all. So make sure as you add more objects, test every one of them!
-	//--ReplaceWith: An array containing 1 or more items to replace with.
+	//--ReplaceWith: An array containing 1 or more items to replace with. Note: if this attribute omitted, will not include the URL at all unless "IncludeOriginal:true" is used.
 	//--IncludeOriginal: <Boolean>: False if you only wanted the converted URL to be included in the output, true if you want to include.
 	//-When "Type" is "pagination": This will generate each URL of each page number of the same kind, based on the highest page number of the matching kind that exists in the input,
 	// Example, if you provide similar URLs with the difference being the page numbers:
@@ -79,7 +80,8 @@ Sort:
 	//--PageNumberStartsAt: Page number to start at from counting from that number to the highest number. Some sites may have their page number start at 0, some at 1. Please
 	//  let me know if you found pages that uses negative numbers (I never seen websites ever use negative page numbers), or fork this with the adoption of negative values.
 	//-When "Type" is "blacklisted", it can be filtered (filter setting). Only "FindWhat" is needed, anything that matches this regex will be labeled as blacklisted.
-	//
+	//-An optional "KeyName" (string) can be used for sorting purposes if you find special use case out of it (especially if you are searching for non-archivable pages but
+	// want to find an alternative URL is savable). By default (and if omitted) will be a blank string ("").
 	//See quick reference here: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet
 	
 		const ListOfConverters = [
@@ -89,7 +91,8 @@ Sort:
 				Type:"normal",
 				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+\?format=[a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
 				ReplaceWith:["https://pbs.twimg.com/media/$1&name=orig", "https://pbs.twimg.com/media/$1&name=thumb"],
-				IncludeOriginal:false
+				IncludeOriginal:false,
+				KeyName:"Twitter_ImageURL_Modern"
 			},
 			{
 				//Example 1.1: Twitter image URLs (older format, some forum or blog sites may link to an image using an older image URL format)
@@ -97,22 +100,32 @@ Sort:
 				Type:"normal",
 				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+)\.([a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
 				ReplaceWith:["https://pbs.twimg.com/media/$1?format=$2&name=orig", "https://pbs.twimg.com/media/$1?format=$2&name=thumb", "https://pbs.twimg.com/media/$1.$2:orig"],
-				IncludeOriginal:false
+				IncludeOriginal:false,
+				KeyName:"Twitter_ImageURL_Old"
 			},
 			{
 				//Example 2: Pagination test (made-up example)
 				Type:"pagination",
 				FindWhat:/(?:(?<=^https:\/\/example\.com\/[a-zA-Z0-9_]+\?page=))\d+(?:(?=.*$))/,
-				PageNumberStartsAt:1
+				PageNumberStartsAt:1,
+				KeyName:"Example_Pagination"
 			},
 			{
 				//Example 3: Blacklisted test (several google ad-related pages)
 				Type:"blacklisted",
-				FindWhat:/http(s)?:\/\/(aa|about|accounts|adservice|apis|ads|mail|myactivity|policies|store|sustainability|www)?\.google(\.com)?(\/.*)?$/
+				FindWhat:/http(s)?:\/\/(aa|about|accounts|adservice|apis|ads|mail|myactivity|policies|store|sustainability|www)?\.google(\.com)?(\/.*)?$/,
+				KeyName:"Garbage_AdPages"
 			},
 			{
 				Type:"Blacklisted",
-				FindWhat:/https:\/\/googleads.*$/
+				FindWhat:/https:\/\/googleads.*$/,
+				KeyName:"Garbage_AdPages"
+			},
+			{
+				Type:"normal",
+				FindWhat:/https:\/\/dropbox\.com\/s.*$/,
+				KeyName:"Unsavable",
+				IncludeOriginal:true
 			}
 		]
 	function Auto_update() {
@@ -176,7 +189,8 @@ Sort:
 					let URLObject = {
 						URL:ArrayElement.replace(/^ttp(s)?/, "http$1").replace(/#.*$/, "").replace(/\.$/, ""), //Revert the URL to have the "h" of the http/https, remove fragment identifier, and remove the erroneous dot at the end from the error message
 						HaveBeenChecked:false, //This is used to check for duplicate or 2 URLs being similar (same URL but different page number)
-						IdentifiedType:""
+						IdentifiedType:"",
+						KeyName:""
 					}
 					return URLObject
 				});
@@ -190,19 +204,25 @@ Sort:
 						ListOfConverters.forEach(Converter => { //For each URL the user entered, loop through converters
 							if (Converter.FindWhat.test(ListOfURLs[i].URL)) { //If URL matches one or more of the converters (a URL gets to loop through multiple converters)
 								UrlMatchedAnyConverter = true
+								if (Converter.hasOwnProperty("KeyName")) {
+									ListOfURLs[i].KeyName = Converter.KeyName
+								}
 								if (Converter.IncludeOriginal) {
 									//OutputSet.add(ListOfURLs[i].URL)
 									ListOfURLs[i].IdentifiedType = "original"
 									AddToOutput(ListOfURLs[i])
 								}
 								if (Converter.Type == "normal") {
-									Converter.ReplaceWith.forEach(ReplaceWithText => {
-										//OutputSet.add(ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText))
-										AddToOutput({
-											URL:ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText),
-											IdentifiedType:"converted"
+									if (Converter.hasOwnProperty("ReplaceWith")) {
+										Converter.ReplaceWith.forEach(ReplaceWithText => {
+											//OutputSet.add(ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText))
+											AddToOutput({
+												URL:ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText),
+												IdentifiedType:"converted",
+												KeyName:ListOfURLs[i].KeyName
+											});
 										});
-									});
+									};
 								} else if (Converter.Type == "pagination") {
 									let HighestPageNumberSoFar = parseInt(ListOfURLs[i].URL.match(Converter.FindWhat)[0], 10)
 									let PartsOfURLSame = ListOfURLs[i].URL.split(Converter.FindWhat)
@@ -218,7 +238,8 @@ Sort:
 										//OutputSet.add(PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1])
 										AddToOutput({
 											URL:PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1], //Insert each page number URL
-											IdentifiedType:"pagination"
+											IdentifiedType:"pagination",
+											KeyName:ListOfURLs[i].KeyName
 										});
 									}
 								} else if (Converter.Type == "blacklisted") {
@@ -277,6 +298,22 @@ Sort:
 						return (a.IdentifiedType < b.IdentifiedType) ? 1 : -1;
 					}
 				});
+			} else if (document.getElementById("SortSetting_KeyName").checked) {
+				Filtered_OutputURLObjects.sort((a, b) => {
+					if (a.KeyName === b.KeyName) {
+						return 0;
+					} else {
+						return (a.KeyName < b.KeyName) ? -1 : 1;
+					}
+				});
+			} else if (document.getElementById("SortSetting_KeyName_Reverse").checked) {
+				Filtered_OutputURLObjects.sort((a, b) => {
+					if (a.KeyName === b.KeyName) {
+						return 0;
+					} else {
+						return (a.KeyName < b.KeyName) ? 1 : -1;
+					}
+				});
 			}
 			let OutputString = ""
 			
@@ -290,9 +327,9 @@ Sort:
 			
 			let OutputHTMLTableString = ""
 			OutputHTMLTableString += "<table>"
-			OutputHTMLTableString += "<tr><th>URL</th><th>Identified Type</th></tr>"
+			OutputHTMLTableString += "<tr><th>URL</th><th>Identified Type</th><th>Key name</th></tr>"
 			Filtered_OutputURLObjects.forEach((ArrayElement) => {
-				OutputHTMLTableString += "<tr><td><pre>"+escapeHTMLChars(ArrayElement.URL)+"</pre></td><td><pre>"+ArrayElement.IdentifiedType+"</pre></td></tr>"
+				OutputHTMLTableString += "<tr><td><pre>"+escapeHTMLChars(ArrayElement.URL)+"</pre></td><td><pre>"+ArrayElement.IdentifiedType+"</pre></td><td><pre>"+ArrayElement.KeyName+"</pre></td></tr>"
 			});
 			OutputHTMLTableString += "</table>"
 			document.getElementById("URL_OutputTable").innerHTML = OutputHTMLTableString
