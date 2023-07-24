@@ -44,8 +44,8 @@ Filter:
 </ul>
 Sort:
 <ul>
-	<li><label><input type="radio" name="SortSetting" checked onchange="Auto_update()" id="SortSetting_None">None (be in the same order as the input, and also based on the converters)</label></li>
-	<li><label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_ABC">Alphabetically</label> (<label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_ABC_Reverse">Reverse</label>)</li>
+	<li><label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_None">None (be in the same order as the input, and also based on the converters)</label></li>
+	<li><label><input type="radio" name="SortSetting" checked onchange="Auto_update()" id="SortSetting_ABC">Alphabetically</label> (<label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_ABC_Reverse">Reverse</label>)</li>
 	<li><label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_IdentifiedType">By Identified type</label> (<label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_IdentifiedType_Reverse">Reverse</label>)</li>
 	<li><label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_KeyName">By KeyName</label> (<label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_KeyName_Reverse">Reverse</label>)</li>
 </ul>
@@ -79,9 +79,11 @@ Sort:
 	//---Must use in a way that it only matches the number in the substring, it must avoid matching/including any characters that aren't page numbers (else an error occurs).
 	//--PageNumberStartsAt: Page number to start at from counting from that number to the highest number. Some sites may have their page number start at 0, some at 1. Please
 	//  let me know if you found pages that uses negative numbers (I never seen websites ever use negative page numbers), or fork this with the adoption of negative values.
-	//-When "Type" is "blacklisted", it can be filtered (filter setting). Only "FindWhat" is needed, anything that matches this regex will be labeled as blacklisted.
+	//-When "Type" is "blacklisted", it can be filtered (filter setting). Only "FindWhat" is needed, anything that matches this regex will be labeled as blacklisted. Please note
+	// if a URL matches on matches multiple listed objects with at least one of them not being blacklisted, it will be included.
 	//-An optional "KeyName" (string) can be used for sorting purposes if you find special use case out of it (especially if you are searching for non-archivable pages but
 	// want to find an alternative URL is savable). By default (and if omitted) will be a blank string ("").
+	//
 	//See quick reference here: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet
 	
 		const ListOfConverters = [
