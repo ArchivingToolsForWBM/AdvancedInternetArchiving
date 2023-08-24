@@ -31,6 +31,8 @@
 <p>This tool is to be used with <a href="https://greasyfork.org/en/discussions/requests/57590-extract-links-to-tweet-and-media-on-twitter-as-you-scroll-down">this
 greasemonkey script</a> to extract twitter URLs (user's homepage, images, videos (that are on twitter's servers, not an external).).</p>
 
+<p>This also converts URL equivalents to nitter instances. To change what nitter instances to use, edit this HTML file on <kbd>Nitter_Domain</kbd>.</p>
+
 <input type="checkbox" id="AutoUpdate" onchange="AutoUpdateCode()" checked><label for="AutoUpdate">Auto update</label><br>
 <p>Enter the list of twitter URLs (1 URL per line, with no whitespace anywhere), be it a link to a tweet, an image, video, etc.</p>
 <textarea id="TwitterURLInput" type="text" cols="100" rows="30" oninput="AutoUpdateCode()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
@@ -55,13 +57,13 @@ Filter:<br>
 				</tr>
 				<tr>
 					<th>User homepage</th>
-					<td><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_UserMainPage" id="FilterSetting_TwitterPage_UserMainPage"></label></td>
+					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_UserMainPage" id="FilterSetting_TwitterPage_UserMainPage"></label></td>
 					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="MobileTwitterPage_UserMainPage" id="FilterSetting_MobileTwitterPage_UserMainPage"></label></td>
 					<td><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage" id="FilterSetting_NitterPage_UserMainPage"></label></td>
 				</tr>
 				<tr>
 					<th>Tweets</th>
-					<td><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_Tweet" id="FilterSetting_TwitterPage_Tweet"></label></td>
+					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_Tweet" id="FilterSetting_TwitterPage_Tweet"></label></td>
 					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="MobileTwitterPage_Tweet" id="FilterSetting_MobileTwitterPage_Tweet"></label></td>
 					<td><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_Tweet" id="FilterSetting_NitterPage_Tweet"></label></td>
 				</tr>
@@ -139,7 +141,7 @@ Filter:<br>
 	<li>Emergency</li>
 	<ul>
 		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="Twitter_Embed" id="FilterSetting_Embed" checked>Generate Tweet embeds</label></li>
-		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="Twitter_RSS" id="FilterSetting_RSS" checked>Generate user page via https://rsshub.app/</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="Twitter_RSS" id="FilterSetting_RSS">Generate user page via https://rsshub.app/</label></li>
 	</ul>
 </ul>
 Misc:
