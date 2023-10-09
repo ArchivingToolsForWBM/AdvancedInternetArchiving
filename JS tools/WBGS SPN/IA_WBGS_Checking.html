@@ -92,6 +92,7 @@ Misc:
 </ul>
 <button onclick="CheckURLs()">Submit</button><button onclick="Reset()">Reset</button><br><br>
 <hr>
+<span id="AllSavedIndicator" style="color: #00ff00; font-size: 150%;" hidden>All URLs have been saved successfully!</span>
 <table>
 	<tr><th colspan="2">Statistics</th></tr>
 	<tr>
@@ -151,6 +152,7 @@ Misc:
 		<td id="StatisticPercentage_NumberOfItems_Unsure_Total"><kbd><span id="Statistic_NumberOfItems_Unsure_Total">0</span></kbd></td>
 	</tr>
 </table><br>
+<kbd><span id="OutputPlaintextItemCount">0</span> result(s)</kbd><br>
 <textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
 <button onclick="setClipboard(document.getElementById('Output_Plaintext').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br>
 <span id="Output_table"></span>
@@ -427,6 +429,14 @@ Misc:
 			}
 		//Output data
 			if (InputList.length != 0) {
+				//All saved indicator
+					let Count_Success = Count_Success_SavedBefore + Count_Success_FirstArchive
+					let Count_Unsures = Count_Unsure_NoIAResult + Count_Unsure_BlankColumnD + Count_Unsure_Redirected + Count_Unsure_Error + Count_Unsure_SavedANon2XX + Count_Unsure_Blocklisted
+					if (Count_Success == InputList.length) {
+						document.getElementById("AllSavedIndicator").hidden = false
+					} else {	//If the user then enters another list of URLs without resetting or refreshing this must also reset.
+						document.getElementById("AllSavedIndicator").hidden = true
+					}
 				//statistics (bar graph)
 					//Show statistics table, I use Bigint to prevent potential E notation.
 						//Total
@@ -462,14 +472,13 @@ Misc:
 							document.getElementById("Statistic_NumberOfItems_Unsure_BlockListed").innerHTML = BigInt(Count_Unsure_Blocklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Blocklisted, InputList.length, 2, true) + ")"
 							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_BlockListed").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Blocklisted, InputList.length, "to right", "#400000", "#000000")
 						//Total success and unsures
-							let Count_Success = Count_Success_SavedBefore + Count_Success_FirstArchive
 							document.getElementById("Statistic_NumberOfItems_Success_Total").innerHTML = BigInt(Count_Success).toString(10) + " (" + BetterPercentageUsingInts(Count_Success, InputList.length, 2, true) + ")"
 							document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success, InputList.length, "to right", "#0000ff", "#000000")
-							
-							let Count_Unsures = Count_Unsure_NoIAResult + Count_Unsure_BlankColumnD + Count_Unsure_Redirected + Count_Unsure_Error + Count_Unsure_SavedANon2XX + Count_Unsure_Blocklisted
+
 							document.getElementById("Statistic_NumberOfItems_Unsure_Total").innerHTML = BigInt(Count_Unsures).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsures, InputList.length, 2, true) + ")"
 							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsures, InputList.length, "to right", "#0000ff", "#000000")
 				//Retry list in plaintext
+					document.getElementById("OutputPlaintextItemCount").innerHTML = BigInt(FilteredListForDisplay.length).toString(10)
 					Output = ""
 					if (FilteredListForDisplay.length != 0) {
 						if (document.getElementById("PlainText_DisplayInfo").checked == false) { //For better performance on the text mode to display, have the if statement OUTSIDE the loop so it doesn't get repeatedly executed
@@ -569,6 +578,8 @@ Misc:
 			
 			document.getElementById("Statistic_NumberOfItems_Unsure_Total").innerHTML = "0"
 			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style = ""
+			
+		document.getElementById("OutputPlaintextItemCount").innerHTML = "0"
 		document.getElementById("Output_Plaintext").value = ""
 		document.getElementById("Output_table").innerHTML = ""
 	}

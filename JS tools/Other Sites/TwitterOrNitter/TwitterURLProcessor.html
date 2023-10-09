@@ -43,7 +43,8 @@ Sort:<br>
 	<li><label><input type="radio" name="SortSettings" onchange="AutoUpdateCode()" id="SortSetting_TweetID">Tweet ID (non-tweets are considered &ldquo;-1&rdquo;)</label> (<label><input type="radio" name="SortSettings" onchange="AutoUpdateCode()" id="SortSetting_TweetID_Reverse">Reverse</label>)</li>
 </ul>
 Filter:<br>
-<button onclick="ChangeFilterSettings('TwitterURLFilter', 1); AutoUpdateCode()">Check All</button><button onclick="ChangeFilterSettings('TwitterURLFilter', 0); AutoUpdateCode()">Uncheck All</button><button onclick="ChangeFilterSettings('TwitterURLFilter', 2); AutoUpdateCode()">Invert</button>
+<button onclick="ChangeFilterSettings('TwitterURLFilter', 1); AutoUpdateCode()">Check All</button><button onclick="ChangeFilterSettings('TwitterURLFilter', 0); AutoUpdateCode()">Uncheck All</button><button onclick="ChangeFilterSettings('TwitterURLFilter', 2); AutoUpdateCode()">Invert</button><br>
+<button onclick="ChangeFilterSettings('TwitterPages', 0); AutoUpdateCode()" title="Twitter is now blocking web scrapers, use this if WBM cannot save tweets.">Uncheck all twitter pages</button>
 <ul>
 	<li>Twitter pages <button onclick="ChangeFilterSettings('TwitterPages', 1); AutoUpdateCode()">Check All</button><button onclick="ChangeFilterSettings('TwitterPages', 0); AutoUpdateCode()">Uncheck All</button><button onclick="ChangeFilterSettings('TwitterPages', 2); AutoUpdateCode()">Invert</button></li>
 	<ul>
@@ -57,13 +58,13 @@ Filter:<br>
 				</tr>
 				<tr>
 					<th>User homepage</th>
-					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_UserMainPage" id="FilterSetting_TwitterPage_UserMainPage"></label></td>
+					<td><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_UserMainPage" id="FilterSetting_TwitterPage_UserMainPage"></label></td>
 					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="MobileTwitterPage_UserMainPage" id="FilterSetting_MobileTwitterPage_UserMainPage"></label></td>
 					<td><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage" id="FilterSetting_NitterPage_UserMainPage"></label></td>
 				</tr>
 				<tr>
 					<th>Tweets</th>
-					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_Tweet" id="FilterSetting_TwitterPage_Tweet"></label></td>
+					<td><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_Tweet" id="FilterSetting_TwitterPage_Tweet"></label></td>
 					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="MobileTwitterPage_Tweet" id="FilterSetting_MobileTwitterPage_Tweet"></label></td>
 					<td><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_Tweet" id="FilterSetting_NitterPage_Tweet"></label></td>
 				</tr>
