@@ -3,13 +3,15 @@
 # Introduction
 This is a tool/tutorial I made for saving URLs in bulk to the wayback machine using their [SPN2](https://blog.archive.org/2019/10/23/the-wayback-machines-save-page-now-is-new-and-improved/) automated system. It will extract or search URLs of the saved results to see which URLs you sent have issue(s). 
 
-Most of the easy-to-use tools is in the folder “JS tools” where you can run the HTMLs in your browser (and make sure you have JS enabled). All other stuff besides that are outdated and likely not useful.
+Most of the easy-to-use tools is in the folder “JS tools” where you can run the HTMLs in your browser (and make sure you have JS enabled). All other stuff besides that are outdated and likely not useful. The other files provided here are really old but I choose to keep them here in case for future reference
 
 Although I still recommend using notepad++ and other tools that would format the URLs correctly.
 
-I made this because when you sent a list of URLs and obtain the results back, it is not always that all URLs will be successfully saved, and you may want to retry saving those URLs, and repeat until all saveable URLs are successfully saved. Furthermore, random redirects can occur (sites like twitter redirects to random json files or a malicious ad to go to some random sites) and would show the status misleadingly:
+I made the URL-save-checking tool because when you sent a list of URLs and obtain the results back, it is not always that all URLs will be successfully saved, and you may want to retry saving those URLs, and repeat until all saveable URLs are successfully saved. Furthermore, random redirects can occur (sites like twitter redirects to random json files or a malicious ad to go to some random sites) and would show the status misleadingly:
 * On email, it would not show the source URL it was redirected from and may flag based on the destination site than the primary site (saving a tweet may redirect to a json text page labeled as success than showing an error, for example). The order of URLs you get from the result are seemingly randomized, therefore the user is not informed which URL is redirected from.
 * On WBGS, because it leaves the original URLs you want to archive intact (column A on google sheets), it is easily distinguishable which URLs have redirected, but just like the email, it does not have a reliable explicit indicator (like having a text saying “redirect” or “a redirect have occured, redirected to &lt;redirect destination&gt;”). A standard CTRL+F will not help because it is a pattern-based detection, finding a string with portions that matches.
+
+There are also additional tools I made that formats URLs (very useful for saving image URLs that have a full-resolution version, for example), remove duplicates in a list, and others that makes obtaining URLs to save much easier.
 
 # Sample Screenshots
 ## WBGS
