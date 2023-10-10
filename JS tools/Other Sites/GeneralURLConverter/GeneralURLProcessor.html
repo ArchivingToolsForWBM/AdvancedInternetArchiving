@@ -189,7 +189,7 @@ Sort:
 				ListOfURLs = ListOfURLs.map(ArrayElement => {
 					
 					let URLObject = {
-						URL:ArrayElement.replace(/^ttp(s)?/, "http$1").replace(/https?:\/\/web\.archive\.org\/web\/\d+\//, "").replace(/#.*$/, "").replace(/\.$/, ""),
+						URL:ArrayElement.replace(/^ttp(s)?/, "http$1").replace(/https?:\/\/web\.archive\.org\/web\/\d+(im_)?\//, "").replace(/#.*$/, "").replace(/\.$/, ""),
 							//^-Revert the URL to have the "h" of the http/https
 							// -When extracting links on WBM version of pages, obtain the original version of URLs (ideal for saving outlinks from a volatile page).
 							// -remove fragment identifier
