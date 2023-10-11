@@ -70,6 +70,14 @@ Sort:<br>
 		<td>How many not saved:</td>
 		<td id="StatisticPercentage_NumberOfItems_NotSaved"><kbd><span id="Statistic_NumberOfItems_NotSaved">0</span></kbd></td>
 	</tr>
+	<tr>
+		<td>Earliest date</td>
+		<td><kbd id="StatisticDate_Earliest">?</kbd></td>
+	</tr>
+	<tr>
+		<td>Latest date</td>
+		<td><kbd id="StatisticDate_Latest">?</kbd></td>
+	</tr>
 </table><br>
 <kbd><span id="OutputCount">0</span> result(s). <span id="OutputCount_FilteredOut">0</span> filtered out.</kbd><br>
 <textarea readonly id="Output_List" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
@@ -153,7 +161,7 @@ Sort:<br>
 					if ((TimeStamp < Date_Earliest)||(Date_Earliest == "?")) { //If there is an earlier timestamp than the earliest OR we newly found a given timestamp the first time, set it to it
 						Date_Earliest = TimeStamp
 					}
-					if ((TimeStamp > Date_Latest)||(Date_Earliest == "?")) { //If there is an later timestamp than the timestamp OR we newly found a given timestamp the first time, set it to it
+					if ((TimeStamp > Date_Latest)||(Date_Latest == "?")) { //If there is an later timestamp than the timestamp OR we newly found a given timestamp the first time, set it to it
 						Date_Latest = TimeStamp
 					}
 				}
@@ -240,7 +248,9 @@ Sort:<br>
 				//How many not saved
 					document.getElementById("Statistic_NumberOfItems_NotSaved").innerHTML = BigInt(Count_NotSaved).toString(10) + " (" + BetterPercentageUsingInts(Count_NotSaved, Count_TotalUrls, 2, true) + ")"
 					document.getElementById("StatisticPercentage_NumberOfItems_NotSaved").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_NotSaved, Count_TotalUrls, "to right", "#800000", "#000000")
-				
+				//Earliest and latest date found
+					document.getElementById("StatisticDate_Earliest").innerHTML = Date_Earliest
+					document.getElementById("StatisticDate_Latest").innerHTML = Date_Latest
 				//How many in the output (post-filtering)
 					document.getElementById("OutputCount").innerHTML = BigInt(InputList.length).toString(10)
 					document.getElementById("OutputCount_FilteredOut").innerHTML = BigInt(Count_TotalUrls-InputList.length).toString(10)
