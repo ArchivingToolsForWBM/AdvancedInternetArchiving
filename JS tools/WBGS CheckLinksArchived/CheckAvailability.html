@@ -203,7 +203,7 @@ Sort:<br>
 				if (document.getElementById("DateRangeEnd").value != "") {
 					LatestDateApplied = true
 				}
-				if (HasTimeStamp && LatestDateApplied && (ArrayElement[1][0] > (document.getElementById("DateRangeEnd").value + " 00:00:00"))) {
+				if (HasTimeStamp && LatestDateApplied && (ArrayElement[1][0] >= (document.getElementById("DateRangeEnd").value + " 00:00:00"))) {
 					IsAfterTheLatestDateFilter = true
 				}
 				
