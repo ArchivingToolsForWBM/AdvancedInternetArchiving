@@ -1,0 +1,750 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+		</style>
+	</head>
+<body>
+
+<p>This tool will take a given <a href="https://en.wikipedia.org/wiki/Tab-separated_values">tab-seperated values (TSV)</a> table from google sheets of the archive results  (&ldquo;Archive URLs&rdquo;), and searches for any potential issues or anomalies.
+Note: this tool only judges based on the output data of the table, not the actual web-page content.</p>
+
+<h3>How to use</h3>
+<ol>
+	<li>Have a google account and go to google drive, create a spreadsheet anywhere you wish.</li>
+	<li>
+		Make sure you authorized WBGS the ability to edit that spreadsheet, else it will not be able to write the results. To do that, right-click the spreadsheet file (or the folder it is in) &rightarrow; Share &rightarrow; Under &ldquo;General Access&rdquo; set it to
+		&ldquo;Anyone with the link&rdquo; and the role (a dropdown list to the right) set to &ldquo;Editor&rdquo;.
+	</li>
+	<li>Open the spreadsheet, and have your list of URLs all on column A (the first column) where each row contains 1 URL. </li>
+	<li>Before you start a process and any subsequent process, make sure the spreadsheet is saved! This is especially for those with weak internet connection.</li>
+	<li>On Wayback Gsheets, make sure you are logged in (both the IA and google), and on the main menu, select &ldquo;Archive URLs&rdquo;, paste your URL of the google sheets containing the list of URLs. and press &ldquo;Archive&rdquo;.</li>
+	<li>
+		When URLs get a result (it updates every N URLs processed as it processes), the spreadsheet should be in this format:
+<table><tr><td><pre>SentURL1	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	FirstArchive
+SentURL2	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	FirstArchive
+SentURL3	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	FirstArchive
+...</pre></td></tr></table>
+		After the process finishes, or if a process queues or gets stuck on the remaining few URLs, select columns A-F and copy (CTRL+C). Then on this HTML file, paste (CTRL+V) your list in the following textarea. The data should be converted into
+		<a href="https://en.wikipedia.org/wiki/Tab-separated_values">tab-seperated values</a>.
+	</li>
+	<li>
+		This HTML file will now display various stuff (at the bottom), mainly to filter out URLs that probably haven't saved. By default, it will get only URLs that are &ldquo;potentially not saved properly&rdquo;: errors, redirects, or strange things like column D being blank, etc..
+		From this point on, you can re-attempt to save these URLs again.
+		<ul><li>
+			If you happen to run into issues with the process (queued mid-process, stuck on last few URLs, and/or you aborting the process), I strongly recommend starting a new google sheet and use that instead because there is a tendency that a problematic process may run again
+			after a queue, and if you have edited the sheet while there's a process on it, could overwrite the save results.
+		</ul></li>
+	</li>
+</ol>
+
+Paste your google sheet result here:<br><br>
+<input type="checkbox" id="AutoUpdate" checked onchange="AutoUpdate()"><label for="AutoUpdate">Auto update</label><br>
+<textarea id="GsheetInput" cols="100" rows="30" oninput="SaveStatusesChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br><br>
+
+Filters:<button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 2); AutoUpdate()">Invert</button>
+<ul>
+	<li>Sure saved: <button onclick="ChangeFilterSettings('SureSaved', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('SureSaved', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('SureSaved', 2); AutoUpdate()">Invert</button></li>
+	<ul>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_SavedBefore" class="FilterSettings_ArchiveStatus SureSaved" data-status_list_name="Success_SavedBefore"><label for="Filter_Success_SavedBefore">Success (have saved before (green))</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_FirstArchive" class="FilterSettings_ArchiveStatus SureSaved" data-status_list_name="Success_FirstArchive"><label for="Filter_Success_FirstArchive">Success (&ldquo;First Archive&rdquo; (light green)) </label></li>
+	</ul>
+	<li>Unsure saved: <button onclick="ChangeFilterSettings('UnsureSaved', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('UnsureSaved', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('UnsureSaved', 2); AutoUpdate()">Invert</button></li>
+	<ul>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_NoIAResult" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_NoIAResult"><label for="Filter_Unsure_NoIAResult">No results (grey)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_BlankColumnD" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_BlankColumnD"><label for="Filter_Unsure_BlankColumnD">Result but column D is blank (light red)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Redirected" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_Redirected"><label for="Filter_Unsure_Redirected">Redirects (yellow)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Error" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_Error"><label for="Filter_Unsure_Error">Errors (red)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_SavedANon2XX" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_SavedANon2XX"><label for="Filter_Unsure_SavedANon2XX">Saved but isn't a 2XX (3XX/4XX/5XX) (orange)</label></li>
+		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_BlockListed" class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_BlockListed"><label for="Filter_Unsure_BlockListed">&ldquo;This URL is in the Save Page Now service block list and cannot be captured.&rdquo; (dark red)</label></li>
+	</ul>
+</ul>
+Sort:<br>
+<ul>
+<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_UserSentURLOrder" name="Sort_Output">Same order of URLs you set (not sorting at all)</label></li>
+<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse" name="Sort_Output" checked>Based on the status message (sort by column D). Note: Any results displaying the URL versions are ordered <abbr title="It is because the URL starts with &ldquo;https://web.archive.org/web/YYYYMMDDhhmmss/[...]&rdquo; and &ldquo;YYYYMMDDhhmmss&rdquo; is the timestamp.">chronologically</abbr></label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse_Reverse" name="Sort_Output">Reverse</label>)</li>
+<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SubmittedURLsABC" name="Sort_Output">By URLs you sent, alphabetically</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SubmittedURLsABC_Reverse" name="Sort_Output">Reverse</label>)</li>
+<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusType" name="Sort_Output">Based on the status <abbr title="Missing data, missing URLs, errors, redirects, and successes.">type</abbr> identified from the save results</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusType_Reverse" name="Sort_Output">Reverse</label>)</li>
+<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_HTTPStatus" name="Sort_Output">Based on the HTTP status code (column C)</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_HTTPStatus_Reverse" name="Sort_Output">Reverse</label>)</li>
+<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_OutlinksCount" name="Sort_Output">Out links count (column E)</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_OutlinksCount_Reverse" name="Sort_Output">Reverse</label>)</li>
+</ul>
+Text display settings:<br>
+	<ul>
+		<li><label><input type="checkbox" onchange="AutoUpdate()" id="PlainText_DisplayInfo" checked>Display WBGS result info in the plaintext</label></li>
+	</ul>
+Misc:
+<ul>
+	<li><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" id="MiscSetting_IgnoreFragment" checked>Ignore </label><a href="https://en.wikipedia.org/wiki/URI_fragment">URI fragment</a><label for="MiscSetting_IgnoreFragment"> (the # and everything after it will be ignored when checking for a match)</label></li>
+	<li><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" id="MiscSetting_IgnoreHttpHttpsDifference" checked>Ignore difference between HTTP/HTTPS versions.</label></li>
+</ul>
+<button onclick="CheckURLs()">Submit</button><button onclick="Reset()">Reset</button><br><br>
+<hr>
+<span id="AllSavedIndicator" style="color: #00ff00; font-size: 150%;" hidden>All URLs have been saved successfully!</span>
+<table>
+	<tr><th colspan="2">Statistics</th></tr>
+	<tr>
+		<td>Total URLs found:</td>
+		<td><kbd><span id="Statistic_NumberOfItems_TotalURLs">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td>How many displayed after filtered:</td>
+		<td id="StatisticPercentage_NumberOfItems_RemainingAfterFilter"><kbd><span id="Statistic_NumberOfItems_RemainingAfterFilter">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td>How many were removed from filter:</td>
+		<td id="StatisticPercentage_NumberOfItems_RemovedAfterFilter"><kbd><span id="Statistic_NumberOfItems_RemovedAfterFilter">0</span></kbd></td>
+	</tr>
+	<tr><th colspan="2">Classification stats</th></tr>
+	<tr>
+		<td><kbd>Success_SavedBefore</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Success_SavedBefore"><kbd><span id="Statistic_NumberOfItems_Success_SavedBefore">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Success_FirstArchive</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Success_FirstArchive"><kbd><span id="Statistic_NumberOfItems_Success_FirstArchive">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Unsure_NoIAResult</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Unsure_NoIAResult"><kbd><span id="Statistic_NumberOfItems_Unsure_NoIAResult">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Unsure_BlankColumnD</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Unsure_BlankColumnD"><kbd><span id="Statistic_NumberOfItems_Unsure_BlankColumnD">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Unsure_Redirected</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Unsure_Redirected"><kbd><span id="Statistic_NumberOfItems_Unsure_Redirected">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Unsure_Error</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Unsure_Error"><kbd><span id="Statistic_NumberOfItems_Unsure_Error">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Unsure_SavedANon2XX</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Unsure_SavedANon2XX"><kbd><span id="Statistic_NumberOfItems_Unsure_SavedANon2XX">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Unsure_BlockListed</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Unsure_BlockListed"><kbd><span id="Statistic_NumberOfItems_Unsure_BlockListed">0</span></kbd></td>
+	</tr>
+	<tr>
+		<th colspan="2">Classification totals</th>
+	</tr>
+	<tr>
+		<td><kbd>Success</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Success_Total"><kbd><span id="Statistic_NumberOfItems_Success_Total">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Unsure</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_Unsure_Total"><kbd><span id="Statistic_NumberOfItems_Unsure_Total">0</span></kbd></td>
+	</tr>
+</table><br>
+<kbd><span id="OutputPlaintextItemCount">0</span> result(s)</kbd><br>
+<textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
+<button onclick="setClipboard(document.getElementById('Output_Plaintext').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br>
+<span id="Output_table"></span>
+</body>
+<script>
+	var IsListChanged = false
+	var SavedList = []
+	
+	var Count_Success_SavedBefore = 0
+	var Count_Success_FirstArchive = 0
+	var Count_Unsure_NoIAResult = 0
+	var Count_Unsure_BlankColumnD = 0
+	var Count_Unsure_Redirected = 0
+	var Count_Unsure_Error = 0
+	var Count_Unsure_SavedANon2XX = 0
+	var Count_Unsure_Blocklisted = 0
+	
+	function AutoUpdate() {
+		if (document.getElementById("AutoUpdate").checked) {
+			CheckURLs()
+		}
+	}
+	
+	function SaveStatusesChanged() {
+		IsListChanged = true //If you edit the textarea, changed the "ignore fragment identifier", those are considered a change to the list.
+	}
+
+	function ChangeFilterSettings(ElementClass, Setting) {
+		//ElementClass: the element class to be affected by this function
+		//Setting:
+		//0 = uncheck
+		//1 = check
+		//2+ = invert
+		if (Setting < 2) {
+			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
+				document.getElementsByClassName(ElementClass)[i].checked = Setting
+			}
+		} else {
+			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
+				document.getElementsByClassName(ElementClass)[i].checked = document.getElementsByClassName(ElementClass)[i].checked ^ 1
+			}
+		}
+	}
+
+	function CheckURLs() {
+		const regex_IA_URLPart = /^https:\/\/web\.archive\.org\/web\/\d*\//
+		const regex_IAURLExtractMainSiteURL_Start = /(?<=https:\/\/web\.archive\.org\/web\/\d*\/)/
+		const regex_IAURLExtractMainSiteURL_End = /$/
+		
+		let Output = ""
+		let InputList = []
+		
+		if (IsListChanged) { //if changed, reset the output.
+			Count_Success_SavedBefore = 0
+			Count_Success_FirstArchive = 0
+			Count_Unsure_NoIAResult = 0
+			Count_Unsure_BlankColumnD = 0
+			Count_Unsure_Redirected = 0
+			Count_Unsure_Error = 0
+			Count_Unsure_SavedANon2XX = 0
+			Count_Unsure_Blocklisted = 0
+			
+			//Note to self:
+			//Column[0] = (Google sheets' column A) SentURL (the URLs you entered)
+			//Column[1] = (Google sheets' column B) YES/NO (it is now the status indicating if it had saved before)
+			//Column[2] = (Google sheets' column C) HTTPStatus
+			//Column[3] = (Google sheets' column D) ArchiveURL/Error
+			//Column[4] = (Google sheets' column E) Number (it's now the number of outlinks saved)
+			//Column[5] = (Google sheets' column F) FirstArchive
+			
+			//These are "pre-process" to format and remove invalid data
+				InputList = (document.getElementById("GsheetInput").value).split(/(?:\n)(?=(?:[^"]|"[^"]*")*$)/)
+					//^Get each ROW (not line of text) on google sheet.
+					// Credit goes to MarkusQ : https://stackoverflow.com/questions/632475/regex-to-pick-characters-outside-of-pair-of-quotes
+					// If you have spreadsheet reserved characters such as newline in a cell (ALT+ENTER), they're escaped by wrapping the entire string in quotes
+					// when converted to plaintext, much line windows command prompt when dealing with file path containing spaces.
+					// 
+					// I use that instead of '\n' because of a rare chance in the future should the WBGS ever enters data in a cell that uses newline.
+				InputList = InputList.map((ArrayElement, Index) => {
+					return {
+						SpreadSheetRowData : ArrayElement,
+						SpreadSheetRowNumberMinusOne : Index
+					}
+				});
+					//^Get gsheet row and its row number (0-based)
+				InputList = InputList.filter((ArrayElement) => {return ((/^[^\t]+?\t[^\t]*?\t[^\t]*?\t[^\t]*?\t[^\t]*?\t[^\t]*?$/).test(ArrayElement.SpreadSheetRowData))})
+					//^remove invalid data.
+			//Main process
+				InputList = InputList.map((ArrayElement) => {
+					//Destructuring assignment FTW
+						let SpreadSheetRowData_Array = [Col_A_SentUrl, Col_B_YesNo, Col_C_HttpStatus, Col_D_SavedURLOrError, Col_E_OutlinksCount, Col_F_FirstArchive] = ArrayElement.SpreadSheetRowData.split(/\t/)
+					//Get save status and count how many
+						let SaveStatus = ""
+						let StatusColor = ""
+						if (Col_B_YesNo == "" && Col_C_HttpStatus == "" && Col_D_SavedURLOrError == "" && Col_E_OutlinksCount == "" && Col_F_FirstArchive == "") { //If absolutely no results...
+							SaveStatus = "Unsure_NoIAResult"
+							StatusColor = "#808080"
+							Count_Unsure_NoIAResult++
+						} else if (/^https:\/\/web\.archive\.org\/web\/\d+/.test(Col_D_SavedURLOrError)) { //If there's a WBM version of a webpage...
+							let ComparedEnteredUrl = Col_A_SentUrl
+							if (document.getElementById("MiscSetting_IgnoreFragment").checked) {
+								ComparedEnteredUrl = ComparedEnteredUrl.replace(/#.*$/, "") //Ignore fragment identifier to ignore it (WBM always remove it in its saved URLs on the spreadsheet).
+							}
+							if (document.getElementById("MiscSetting_IgnoreHttpHttpsDifference").checked) {
+								ComparedEnteredUrl = ComparedEnteredUrl.replace(/^http:\/\//, "https://")
+							}
+							let IA_PageURLOnly = Col_D_SavedURLOrError.replace(/^http(s)?\:\/\/web\.archive\.org\/web\/\d+\//, "")
+							if (document.getElementById("MiscSetting_IgnoreHttpHttpsDifference").checked) {
+								IA_PageURLOnly = IA_PageURLOnly.replace(/^http:\/\//, "https://")
+							}
+							if (ComparedEnteredUrl == IA_PageURLOnly) { //And the two site URLs on both versions matches...
+								if (/^(3|4|5)\d\d/.test(Col_C_HttpStatus) == false) { //And not any abnormal HTTP responses
+									if (Col_F_FirstArchive == "First Archive") { //And an indicator saying first archive
+										SaveStatus = "Success_FirstArchive"
+										StatusColor = "#00C000"
+										Count_Success_FirstArchive++
+									} else {
+										SaveStatus = "Success_SavedBefore"
+										StatusColor = "#008000"
+										Count_Success_SavedBefore++
+									}
+								} else {
+									SaveStatus = "Unsure_SavedANon2XX"
+									StatusColor = "#FFA500"
+									Count_Unsure_SavedANon2XX++
+								}
+							} else {
+								SaveStatus = "Unsure_Redirected"
+								StatusColor = "#808000"
+								Count_Unsure_Redirected++
+							}
+						} else if (/^\s*$/.test(Col_D_SavedURLOrError)){ //Otherwise if its blank or just any whitespace character...
+							SaveStatus = "Unsure_BlankColumnD"
+							StatusColor = "#A08080"
+							Count_Unsure_BlankColumnD++
+						} else if (/^This URL is in the Save Page Now service block list and cannot be captured/.test(Col_D_SavedURLOrError)) {
+							SaveStatus = "Unsure_BlockListed"
+							StatusColor = "#400000"
+							Count_Unsure_Blocklisted++
+						} else {
+							SaveStatus = "Unsure_Error"
+							StatusColor = "#800000"
+							Count_Unsure_Error++
+						}
+					//Outlinks count
+						let OutLinksCountNumber = 0n
+						if (/\d+ outlinks? captured/.test(Col_E_OutlinksCount)) {
+							OutLinksCountNumber = BigInt(Col_E_OutlinksCount.replaceAll(/[^\d+]/g, ""))
+						}
+					//Return the object (the naming with the column letters ommited so that this is also useful if in a 0.001% that the IA would change the output data format)
+						return {
+							SpreadSheetRowData_Array : SpreadSheetRowData_Array, //The array version of a google sheet row
+							SentURL : Col_A_SentUrl,
+							HTTPStatus : Col_C_HttpStatus,
+							WBM_SaveResponse : Col_D_SavedURLOrError, //The text on column D either a WBM URL or a message saying it errored or cannot save it at all
+							
+							SaveStatus : SaveStatus, //Unsure_NoIAResult, Unsure_BlankColumnD, Success_SavedBefore, Success_FirstArchive, Unsure_Redirected, Unsure_Error, Unsure_SavedANon2XX, Unsure_BlockListed
+							StatusColor : StatusColor, //Color of the savestatus
+							SpreadSheetRowNumberMinusOne : ArrayElement.SpreadSheetRowNumberMinusOne, //The row numbers the URL were placed on the spreadsheet
+							OutLinksCountNumber : OutLinksCountNumber //Outlinks count, bigint for save count > 2^53 (just in case).
+						}
+				});
+			
+			//Save it to the list
+				SavedList = InputList
+		} else { //If no change, grab it from the save data, since we already have the data.
+			InputList = SavedList
+		}
+		IsListChanged = false //Set it back to false so that if the user updates the list again, and sort, does not rerun the code above.
+		//Filter
+			let FilteredListForDisplay = InputList.filter((ArrayElement) => {
+				return document.getElementById("Filter_" + ArrayElement.SaveStatus).checked
+			});
+		//Sort the filtered data. NOTE: array.reverse() is unstable, meaning the order of same keys will be reversed.
+			if (document.getElementById("Sort_Output_SaveStatusResponse").checked) {
+				FilteredListForDisplay.sort((a, b) => {
+					if (a.WBM_SaveResponse === b.WBM_SaveResponse) {
+						return 0;
+					} else {
+						return (a.WBM_SaveResponse < b.WBM_SaveResponse) ? -1 : 1;
+					}
+				});
+			} else if (document.getElementById("Sort_Output_SaveStatusResponse_Reverse").checked) {
+				FilteredListForDisplay.sort((a, b) => {
+					if (a.WBM_SaveResponse === b.WBM_SaveResponse) {
+						return 0;
+					} else {
+						return (a.WBM_SaveResponse < b.WBM_SaveResponse) ? 1 : -1;
+					}
+				});
+			} else if (document.getElementById("Sort_Output_SubmittedURLsABC").checked) {
+				FilteredListForDisplay.sort((a, b) => {
+					if (a.SentURL === b.SentURL) {
+						return 0;
+					} else {
+						return (a.SentURL < b.SentURL) ? -1 : 1;
+					}
+				});
+			} else if (document.getElementById("Sort_Output_SubmittedURLsABC_Reverse").checked) {
+				FilteredListForDisplay.sort((a, b) => {
+					if (a.SentURL === b.SentURL) {
+						return 0;
+					} else {
+						return (a.SentURL < b.SentURL) ? 1 : -1;
+					}
+				});
+			} else if (document.getElementById("Sort_Output_SaveStatusType").checked) {
+				FilteredListForDisplay.sort((a, b) => {
+					if (a.SaveStatus === b.SaveStatus) {
+						return 0;
+					} else {
+						return (a.SaveStatus < b.SaveStatus) ? -1 : 1;
+					}
+				});
+			} else if (document.getElementById("Sort_Output_SaveStatusType_Reverse").checked) {
+				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareStatusIndicatorReverse)
+				FilteredListForDisplay.sort((a, b) => {
+					if (a.SaveStatus === b.SaveStatus) {
+						return 0;
+					} else {
+						return (a.SaveStatus < b.SaveStatus) ? 1 : -1;
+					}
+				});
+			} else if (document.getElementById("Sort_Output_HTTPStatus").checked) {
+				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareHTTPStatus)
+				FilteredListForDisplay.sort((a, b) => {
+					if (a.HTTPStatus === b.HTTPStatus) {
+						return 0;
+					} else {
+						return (a.HTTPStatus < b.HTTPStatus) ? -1 : 1;
+					}
+				});
+			} else if (document.getElementById("Sort_Output_HTTPStatus_Reverse").checked) {
+				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareHTTPStatusReverse)
+				FilteredListForDisplay.sort((a, b) => {
+					if (a.HTTPStatus === b.HTTPStatus) {
+						return 0;
+					} else {
+						return (a.HTTPStatus < b.HTTPStatus) ? 1 : -1;
+					}
+				});
+			} else if (document.getElementById("Sort_Output_OutlinksCount").checked) {
+				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareOutlinksCount)
+				FilteredListForDisplay.sort((a, b) => {
+					return Number(a.OutLinksCountNumber - b.OutLinksCountNumber) //if this was bigint, do subtraction first, then convert to a double-float (which rounds here) to prevent potential issues if 2 large numbers are close to one another.
+				});
+			} else if (document.getElementById("Sort_Output_OutlinksCount_Reverse").checked) {
+				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareOutlinksCountReverse)
+				FilteredListForDisplay.sort((a, b) => {
+					return Number(b.OutLinksCountNumber - a.OutLinksCountNumber) //again...
+				});
+			}
+		//Output data
+			if (InputList.length != 0) {
+				//All saved indicator
+					let Count_Success = Count_Success_SavedBefore + Count_Success_FirstArchive
+					let Count_Unsures = Count_Unsure_NoIAResult + Count_Unsure_BlankColumnD + Count_Unsure_Redirected + Count_Unsure_Error + Count_Unsure_SavedANon2XX + Count_Unsure_Blocklisted
+					if (Count_Success == InputList.length) {
+						document.getElementById("AllSavedIndicator").hidden = false
+					} else {	//If the user then enters another list of URLs without resetting or refreshing this must also reset.
+						document.getElementById("AllSavedIndicator").hidden = true
+					}
+				//statistics (bar graph)
+					//Show statistics table, I use Bigint to prevent potential E notation.
+						//Total
+							document.getElementById("Statistic_NumberOfItems_TotalURLs").innerHTML = BigInt(InputList.length).toString(10)
+						//Displayed
+							document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").innerHTML = BigInt(FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(FilteredListForDisplay.length, InputList.length, 2, true) +")"
+							document.getElementById("StatisticPercentage_NumberOfItems_RemainingAfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(FilteredListForDisplay.length, InputList.length, "to right", "#0000ff", "#000000")
+						//How many removed
+							document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").innerHTML = BigInt(InputList.length - FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length - FilteredListForDisplay.length, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_RemovedAfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(InputList.length - FilteredListForDisplay.length, InputList.length, "to right", "#0000ff", "#000000")
+						//Saved before
+							document.getElementById("Statistic_NumberOfItems_Success_SavedBefore").innerHTML = BigInt(Count_Success_SavedBefore).toString(10) + " (" + BetterPercentageUsingInts(Count_Success_SavedBefore, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Success_SavedBefore").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_SavedBefore, InputList.length, "to right", "#008000", "#000000")
+						//First archives
+							document.getElementById("Statistic_NumberOfItems_Success_FirstArchive").innerHTML = BigInt(Count_Success_FirstArchive).toString(10) + " (" + BetterPercentageUsingInts(Count_Success_FirstArchive, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Success_FirstArchive").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_FirstArchive, InputList.length, "to right", "#00C000", "#000000")
+						//No IA results
+							document.getElementById("Statistic_NumberOfItems_Unsure_NoIAResult").innerHTML = BigInt(Count_Unsure_NoIAResult).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_NoIAResult, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_NoIAResult").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_NoIAResult, InputList.length, "to right", "#808080", "#000000")
+						//Blank column D
+							document.getElementById("Statistic_NumberOfItems_Unsure_BlankColumnD").innerHTML = BigInt(Count_Unsure_BlankColumnD).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_BlankColumnD, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_BlankColumnD").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_BlankColumnD, InputList.length, "to right", "#A08080", "#000000")
+						//Redirected
+							document.getElementById("Statistic_NumberOfItems_Unsure_Redirected").innerHTML = BigInt(Count_Unsure_Redirected).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Redirected, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Redirected").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Redirected, InputList.length, "to right", "#808000", "#000000")
+						//Error
+							document.getElementById("Statistic_NumberOfItems_Unsure_Error").innerHTML = BigInt(Count_Unsure_Error).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Error, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Error").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Error, InputList.length, "to right", "#800000", "#000000")
+						//Non 2XX
+							document.getElementById("Statistic_NumberOfItems_Unsure_SavedANon2XX").innerHTML = BigInt(Count_Unsure_SavedANon2XX).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_SavedANon2XX, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_SavedANon2XX").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_SavedANon2XX, InputList.length, "to right", "#FFA500", "#000000")
+						//Blocklist
+							document.getElementById("Statistic_NumberOfItems_Unsure_BlockListed").innerHTML = BigInt(Count_Unsure_Blocklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Blocklisted, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_BlockListed").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Blocklisted, InputList.length, "to right", "#400000", "#000000")
+						//Total success and unsures
+							document.getElementById("Statistic_NumberOfItems_Success_Total").innerHTML = BigInt(Count_Success).toString(10) + " (" + BetterPercentageUsingInts(Count_Success, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success, InputList.length, "to right", "#0000ff", "#000000")
+
+							document.getElementById("Statistic_NumberOfItems_Unsure_Total").innerHTML = BigInt(Count_Unsures).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsures, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsures, InputList.length, "to right", "#0000ff", "#000000")
+				//Retry list in plaintext
+					document.getElementById("OutputPlaintextItemCount").innerHTML = BigInt(FilteredListForDisplay.length).toString(10)
+					Output = ""
+					if (FilteredListForDisplay.length != 0) {
+						if (document.getElementById("PlainText_DisplayInfo").checked == false) { //For better performance on the text mode to display, have the if statement OUTSIDE the loop so it doesn't get repeatedly executed
+							for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
+								Output += FilteredListForDisplay[Index].SentURL
+								if (Index != FilteredListForDisplay.length - 1) {
+									Output += "\n"
+								}
+							}
+						} else {
+							for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
+								Output += FilteredListForDisplay[Index].SpreadSheetRowData_Array[0] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[1] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[2] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[3] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[4] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[5]
+								if (Index != FilteredListForDisplay.length - 1) {
+									Output += "\n"
+								}
+							}
+						}
+						
+					} else {
+						Output = "No results."
+					}
+					document.getElementById("Output_Plaintext").value = Output
+				//Display filtered list using HTML table. Shows the URLs, the color indicator, and the WBM response.
+					Output = ""
+					if (FilteredListForDisplay.length != 0) {
+						Output += "<table>"
+						Output += "<tr>"
+						Output += "<th>Item number</th>"
+						Output += "<th>GS line number</th>"
+						Output += "<th>URLs you&apos;ve sent</th><th>HTTP status</th><th>Save status of URLs or errors</th><th>Number of outlinks saved</th><th>Status type</th>"
+						Output += "</tr>"
+						for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
+							//Table
+								Output += "<tr>"
+								Output += "<td style='text-align: center;'><kbd>" + BigInt(Index+1).toString(10) + "</kbd></td>"
+								Output += "<td style='text-align: center;'><kbd>" + BigInt(FilteredListForDisplay[Index].SpreadSheetRowNumberMinusOne+1).toString(10) + "</kbd></td>"
+								Output += "<td style='background-color: " + FilteredListForDisplay[Index].StatusColor + ";'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index].SpreadSheetRowData_Array[0]) + "</kbd></td><td style='background-color: " + FilteredListForDisplay[Index].StatusColor + ";'><kbd>" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[2] + "</kbd></td><td style='background-color: " + FilteredListForDisplay[Index].StatusColor + "'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index].SpreadSheetRowData_Array[3]) + "</kbd></td><td style='background-color: " + FilteredListForDisplay[Index].StatusColor + ";'>" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[4] + "</td><td style='background-color: " + FilteredListForDisplay[Index].StatusColor + "'><kbd>" + FilteredListForDisplay[Index].SaveStatus + "</kbd></td>"
+								Output += "</tr>"
+						}
+						Output += "</table>"
+					} else {
+						Output += "<br><kbd>No items found</kbd>"
+					}
+					//Done
+						document.getElementById("Output_table").innerHTML = Output
+			} else {
+				ClearOutputs()
+			}
+	}
+	function Reset() {
+		document.getElementById("GsheetInput").value = ""
+		document.getElementById("Filter_Success_SavedBefore").checked = false
+		document.getElementById("Filter_Success_FirstArchive").checked = false
+		document.getElementById("Filter_Unsure_NoIAResult").checked = true
+		document.getElementById("Filter_Unsure_BlankColumnD").checked = true
+		document.getElementById("Filter_Unsure_Redirected").checked = true
+		document.getElementById("Filter_Unsure_Error").checked = true
+		document.getElementById("Filter_Unsure_SavedANon2XX").checked = true
+		
+		document.getElementById("Sort_Output_SaveStatusResponse").checked = true
+		
+		ClearOutputs()
+	}
+	function ClearOutputs() {
+		//Total
+			document.getElementById("Statistic_NumberOfItems_TotalURLs").innerHTML = "0"
+		//Displayed
+			document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_RemainingAfterFilter").style = ""
+		//How many removed
+			document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_RemovedAfterFilter").style = ""
+		//Saved before
+			document.getElementById("Statistic_NumberOfItems_Success_SavedBefore").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_Success_SavedBefore").style = ""
+		//First archives
+			document.getElementById("Statistic_NumberOfItems_Success_FirstArchive").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_Success_FirstArchive").style = ""
+		//No IA results
+			document.getElementById("Statistic_NumberOfItems_Unsure_NoIAResult").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_NoIAResult").style = ""
+		//Blank column D
+			document.getElementById("Statistic_NumberOfItems_Unsure_BlankColumnD").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_BlankColumnD").style = ""
+		//Redirected
+			document.getElementById("Statistic_NumberOfItems_Unsure_Redirected").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Redirected").style = ""
+		//Error
+			document.getElementById("Statistic_NumberOfItems_Unsure_Error").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Error").style = ""
+		//Non 2XX
+			document.getElementById("Statistic_NumberOfItems_Unsure_SavedANon2XX").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_SavedANon2XX").style = ""
+		//Total success and unsures
+			document.getElementById("Statistic_NumberOfItems_Success_Total").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style = ""
+			
+			document.getElementById("Statistic_NumberOfItems_Unsure_Total").innerHTML = "0"
+			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style = ""
+			
+		document.getElementById("OutputPlaintextItemCount").innerHTML = "0"
+		document.getElementById("Output_Plaintext").value = ""
+		document.getElementById("Output_table").innerHTML = ""
+	}
+	function escapeHTMLChars(string) {
+		//Should the user's input contains "<", ">", and "&", prevent the innerHTML from treating these as HTML tags/escapes
+			string = string.replaceAll("&", "&amp;") //This must be done first, to avoid replacing already-replaced symbol's ampersand character.
+			string = string.replaceAll("<", "&lt;")
+			string = string.replaceAll(">", "&gt;")
+			string = string.replaceAll("\n", "<br>") //Again just in case if WBGS would ever use linebreaks in a cell.
+			return string
+	}
+	function URLColorIndicator(SaveStatus) {
+		let ColorIndicator = "black"
+		switch (SaveStatus) {
+			case "Unsure_NoIAResult":
+				ColorIndicator = "#808080"
+				break
+			case "Unsure_BlankColumnD":
+				ColorIndicator = "#A08080"
+				break
+			case "Success_SavedBefore":
+				ColorIndicator = "#008000"
+				break
+			case "Success_FirstArchive":
+				ColorIndicator = "#00C000"
+				break
+			case "Unsure_Redirected":
+				ColorIndicator = "#808000"
+				break
+			case "Unsure_Error":
+				ColorIndicator = "#800000"
+				break
+			case "Unsure_SavedANon2XX":
+				ColorIndicator = "#FFA500"
+				break
+			case "Unsure_BlockListed":
+				ColorIndicator = "#400000"
+		}
+		return ColorIndicator
+	}
+	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec, Clamped) {
+		//Quantity = Amount in relation of MaxQuantity
+		//MaxQuantity = Total
+		//Clamped = (boolean): false = allow greater than 100%, true = only 0%-100% will display.
+		//This function calculates a percentage of a value (must be bigint), and returns a
+		//string representing a percentage using fixed-point arithmetic (https://en.wikipedia.org/wiki/Fixed-point_arithmetic ).
+		//Unlike a typical Quantity*100/MaxQuantity (or Quantity / MaxQuantity * 100)
+		//This also reports if rounding to 0 or 100% have occurred.
+		//Note: Don't use negative or decimal numbers for any of the parameters!
+		
+		//Output: A string:
+		//"--" if MaxQuantity is 0 (division by zero in bigint is not handled unlike double-precision floating point)
+		//"<number>%" a percentage. Rounds half-up.
+		//"Greater than <1*(10**(2+NumberOfDigitsAfterDec_BigInt))-1>" if results between 99.99..% and 100% (avoids rounding up towards 100%).
+		//"Less than <1/(10**NumberOfDigitsAfterDec_BigInt)>" is same as above but avoids rounding towards 0%.
+		
+		//100.0 is 1000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 1
+		//100.00 is 10000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 2
+		//100.000 is 100000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 3
+		Quantity = BigInt(Quantity)
+		MaxQuantity = BigInt(MaxQuantity)
+		NumberOfDigitsAfterDec_BigInt = BigInt(NumberOfDigitsAfterDec)
+		if (MaxQuantity == 0n) {
+			return "--"
+		} else {
+			let Percentage = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) / MaxQuantity
+			let Modulo = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) % MaxQuantity
+			//Check if remainder is greater than or equal to half of MaxQuantity, if so, increment
+			//Percentage by 1 unit.
+			
+			//Get halfway point, note: this must be rounded half up as well so that if Modulo is 0.5 greater in the case MaxQuantity is an odd number,
+			//would correctly round upwards. Example: 3/2 is 1.5 (default round to 1), since we are dealing with integers, Remainder being 2 or more should be
+			//consider a round up for percentage
+				let HalfwayPointOfMaxQuantity = MaxQuantity / 2n
+				if ((MaxQuantity % 2n) != 0n) {
+					HalfwayPointOfMaxQuantity++
+				}
+			//Round half-up
+				if (Modulo >= HalfwayPointOfMaxQuantity) { //round upwards
+					Percentage++
+					if (Clamped) {Percentage = BigintClamp(Percentage, 0n, 100n * 10n ** (NumberOfDigitsAfterDec_BigInt))}
+					//We rounded the number up (actually increased the value), but it can potentially be at 100%, lets check it and if it did, override it.
+					if (Percentage == 100n*10n**NumberOfDigitsAfterDec_BigInt) {
+						//Rounded to 100% detected
+						//Note to self:
+						//Should say 99% if NumberOfDigitsAfterDec_BigInt = 0
+						//Should say 99.9% if NumberOfDigitsAfterDec_BigInt = 1
+						//99.99 if NumberOfDigitsAfterDec_BigInt = 2
+						//and so on.
+						//So basically the number of 9s after the decimal
+						//is NumberOfDigitsAfterDec_BigInt.
+							let DecimalPortion = ""
+							if (NumberOfDigitsAfterDec_BigInt != 0n) {
+								DecimalPortion += "."
+								for (let NineCount = 0; NineCount < NumberOfDigitsAfterDec; NineCount++) {
+									DecimalPortion += "9"
+								}
+							}
+						return "Greater than 99" + DecimalPortion + "%"
+					}
+				} else {
+					//Rounded downwards (default)
+					
+					if ((Modulo != 0n)&&(Percentage == 0n)) {
+						//Rounded to 0% detected
+						//Note to self:
+						//Should say 1% if NumberOfDigitsAfterDec_BigInt = 0
+						//Should say 0.1% if NumberOfDigitsAfterDec_BigInt = 1
+						//0.01% if NumberOfDigitsAfterDec_BigInt = 2
+						//and so on.
+						//Basically, if NumberOfDigitsAfterDec_BigInt = 2, the number of zeros
+						//between the decimal point and "1" is NumberOfDigitsAfterDec_BigInt - 1
+							let DecimalPortion = ""
+							if (NumberOfDigitsAfterDec_BigInt != 0n) {
+								DecimalPortion += "."
+								for (let ZeroCount = 0; ZeroCount < NumberOfDigitsAfterDec - 1; ZeroCount++) {
+									DecimalPortion += "0"
+								}
+								return "Less than 0" + DecimalPortion + "1%"
+							} else {
+								return "Less than 1%"
+							}
+					}
+				}
+				//Split the number separated by decimal point.
+					if (Clamped) {Percentage = BigintClamp(Percentage, 0n, 100n * 10n ** (NumberOfDigitsAfterDec_BigInt))}
+					let OutputString = Percentage.toString(10)
+					let WholeNumberPart = OutputString.substring(0, OutputString.length - NumberOfDigitsAfterDec)
+					if (WholeNumberPart == "") {
+						WholeNumberPart = "0"
+					}
+					//This make sure that leading zeros (when less than 1%) exists, should the value in fixed point have fewer digits
+					//so that it can display things like 0.01 (stored internally in fixed point as 1) instead of 0.1 when NumberOfDigitsAfterDec is set to 2.
+					//It is due to the fact that toString(10) removes all leading zeros.
+						if (OutputString.length < NumberOfDigitsAfterDec) {
+							let NumberOfLeadingZeroesNeeded = NumberOfDigitsAfterDec - OutputString.length //example: 34 (length = 2) which is supposed to be 0.00034% when NumberOfDigitsAfterDec = 5, so 5-2 = 3, so 3 0s are needed.
+							let LeadingZeroes = ""
+							for (let Count = 0; Count < NumberOfLeadingZeroesNeeded; Count++) {
+								LeadingZeroes += "0"
+							}
+							OutputString = LeadingZeroes + OutputString
+						}
+					let DecimalPart = OutputString.substring(OutputString.length - NumberOfDigitsAfterDec)
+			return WholeNumberPart + "." + DecimalPart + "%"
+		}
+	}
+	function CSSBackgroundImageLinearGradiantPercentageBarGraph(Quantity, MaxQuantity, Direction, Color_Full, Color_Empty) {
+		//Returns a percentage displayed as a background image representing a bar graph as CSS.
+		let Percentage = 0
+		if (MaxQuantity != 0) {
+			Percentage = Quantity * 100/MaxQuantity //Multiply first so that it only rounds at the last step, minimizing rounding errors.
+		}
+		Percentage = clamp(Percentage, 0, 100)
+		return "background-image: linear-gradient("+Direction+", "+Color_Full+" "+Percentage+"%, "+Color_Empty+" "+Percentage+"% 100%);"
+	}
+	function clamp(num, min, max) {
+		//Restrict a number within a specified range.
+			if (isNaN(num) == true) {
+				num = 0
+			}
+			return num <= min ? min : num >= max ? max : num;
+	}
+	function BigintClamp(num, min, max) {
+		//Restrict a number within a specified range, bigInt edition (since NaN cannot be represented in bigint).
+			return num <= min ? min : num >= max ? max : num;
+	}
+	//Copy text from textarea
+		function setClipboard(String) {
+			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
+			const type = "text/plain";
+			const blob = new Blob([String], { type });
+			const data = [new ClipboardItem({ [type]: blob })];
+	
+			navigator.clipboard.write(data).then(
+				() => {
+				/* success */
+					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #00FF00;'>Copied!</span>"
+					setTimeout(DeleteCopyMessage, 1500)
+				},
+				() => {
+				/* failure */
+					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #FF0000;'>Copy failed!</span>"
+					setTimeout(DeleteCopyMessage, 1500)
+				}
+			);
+		}
+		function DeleteCopyMessage() {
+			document.getElementById("CopiedTextMessage").innerHTML = ""
+		}
+</script>
