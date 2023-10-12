@@ -26,6 +26,7 @@ https://exampleNoResultsAtAll.com
 https://exampleSavedButHTTP4xx	Already captured	429	https://web.archive.org/web/20210101000000/https://exampleSavedButHTTP4xx	0	
 https://exampleBlockListed			This URL is in the Save Page Now service block list and cannot be captured	0 outlinks captured	
 ```
+(Note that the images below are older versions)
 ![image](https://user-images.githubusercontent.com/89951208/208203542-55853962-a25b-47c9-a6c0-12f79efafc6e.png)
 ![image](https://user-images.githubusercontent.com/89951208/208203561-034b85ab-23c5-4418-8017-360aea499a49.png)
 ![image](https://user-images.githubusercontent.com/89951208/208203583-37878df0-c016-4c0e-afe3-f0b7a23413f5.png)
