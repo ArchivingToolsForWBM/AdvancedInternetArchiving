@@ -239,7 +239,7 @@ Misc:
 				});
 					//^Get gsheet row and its row number (0-based)
 				InputList = InputList.filter((ArrayElement) => {return ((/^[^\t]+?\t[^\t]*?\t[^\t]*?\t[^\t]*?\t[^\t]*?\t[^\t]*?$/).test(ArrayElement.SpreadSheetRowData))})
-					//^remove invalid data.
+					//^remove invalid data that can't be processed.
 			//Main process
 				InputList = InputList.map((ArrayElement) => {
 					//Destructuring assignment FTW
