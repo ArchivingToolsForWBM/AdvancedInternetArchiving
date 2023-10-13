@@ -573,35 +573,6 @@ Misc:
 			string = string.replaceAll("\n", "<br>") //Again just in case if WBGS would ever use linebreaks in a cell.
 			return string
 	}
-	function URLColorIndicator(SaveStatus) {
-		let ColorIndicator = "black"
-		switch (SaveStatus) {
-			case "Unsure_NoIAResult":
-				ColorIndicator = "#808080"
-				break
-			case "Unsure_BlankColumnD":
-				ColorIndicator = "#A08080"
-				break
-			case "Success_SavedBefore":
-				ColorIndicator = "#008000"
-				break
-			case "Success_FirstArchive":
-				ColorIndicator = "#00C000"
-				break
-			case "Unsure_Redirected":
-				ColorIndicator = "#808000"
-				break
-			case "Unsure_Error":
-				ColorIndicator = "#800000"
-				break
-			case "Unsure_SavedANon2XX":
-				ColorIndicator = "#FFA500"
-				break
-			case "Unsure_BlockListed":
-				ColorIndicator = "#400000"
-		}
-		return ColorIndicator
-	}
 	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec, Clamped) {
 		//Quantity = Amount in relation of MaxQuantity
 		//MaxQuantity = Total
