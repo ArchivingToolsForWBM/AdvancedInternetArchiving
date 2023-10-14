@@ -15,6 +15,7 @@
 			span.NoLineBreak {
 				white-space: nowrap;
 			}
+			input { font-family: monospace;}
 		</style>
 	</head>
 <body>
@@ -154,6 +155,14 @@ Misc:
 		<td><kbd>Unsure</kbd></td>
 		<td id="StatisticPercentage_NumberOfItems_Unsure_Total"><kbd><span id="Statistic_NumberOfItems_Unsure_Total">0</span></kbd></td>
 	</tr>
+	<tr>
+		<td><kbd>Earliest archive date</kbd></td>
+		<td><kbd><span id="StatisticDate_Earliest">?</span></kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Latest archive date</kbd></td>
+		<td><kbd><span id="StatisticDate_Latest">?</span></kbd></td>
+	</tr>
 </table><br>
 <kbd><span id="OutputPlaintextItemCount">0</span> result(s)</kbd><br>
 <textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
@@ -172,6 +181,9 @@ Misc:
 	var Count_Unsure_Error = 0
 	var Count_Unsure_SavedANon2XX = 0
 	var Count_Unsure_Blocklisted = 0
+	
+	var Date_Earliest = "?"
+	var Date_Latest = "?"
 	
 	function AutoUpdate() {
 		if (document.getElementById("AutoUpdate").checked) {
@@ -250,12 +262,22 @@ Misc:
 					//Get save status and count how many
 						let SaveStatus = ""
 						let StatusColor = ""
+						let Timestamp = "?"
 						if (Col_B_YesNo == "" && Col_C_HttpStatus == "" && Col_D_SavedURLOrError == "" && Col_E_OutlinksCount == "" && Col_F_FirstArchive == "") { //If absolutely no results...
 							SaveStatus = "Unsure_NoIAResult"
 							StatusColor = "#808080"
 							Count_Unsure_NoIAResult++
 						} else if (/^https:\/\/web\.archive\.org\/web\/\d+/.test(Col_D_SavedURLOrError)) { //If there's a WBM version of a webpage...
 							let ComparedEnteredUrl = Col_A_SentUrl
+							//Get timestamp
+								Timestamp = Col_D_SavedURLOrError.replace(/^https:\/\/web\.archive\.org\/web\/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2}).*$/, "$1-$2-$3 $4:$5:$6")
+								
+								if ((Timestamp < Date_Earliest)||(Date_Earliest == "?")) { //If there is an earlier timestamp than the earliest OR we newly found a given timestamp the first time, set it to it
+									Date_Earliest = Timestamp
+								}
+								if ((Timestamp > Date_Latest)||(Date_Latest == "?")) { //If there is an later timestamp than the timestamp OR we newly found a given timestamp the first time, set it to it
+									Date_Latest = Timestamp
+								}
 							//Ignore fragment identifier to ignore it (WBM always remove it in its saved URLs on the spreadsheet).
 								if (document.getElementById("MiscSetting_IgnoreFragment").checked) {
 									ComparedEnteredUrl = ComparedEnteredUrl.replace(/#.*$/, "")
@@ -317,7 +339,8 @@ Misc:
 							SaveStatus : SaveStatus, //Unsure_NoIAResult, Unsure_BlankColumnD, Success_SavedBefore, Success_FirstArchive, Unsure_Redirected, Unsure_Error, Unsure_SavedANon2XX, Unsure_BlockListed
 							StatusColor : StatusColor, //Color of the savestatus
 							SpreadSheetRowNumberMinusOne : ArrayElement.SpreadSheetRowNumberMinusOne, //The row numbers the URL were placed on the spreadsheet
-							OutLinksCountNumber : OutLinksCountNumber //Outlinks count, bigint for save count > 2^53 (just in case).
+							OutLinksCountNumber : OutLinksCountNumber, //Outlinks count, bigint for save count > 2^53 (just in case).
+							Timestamp : Timestamp
 						}
 				});
 			
@@ -420,7 +443,7 @@ Misc:
 					} else {	//If the user then enters another list of URLs without resetting or refreshing this must also reset.
 						document.getElementById("AllSavedIndicator").hidden = true
 					}
-				//statistics (bar graph)
+				//statistics
 					//Show statistics table, I use Bigint to prevent potential E notation.
 						//Total
 							document.getElementById("Statistic_NumberOfItems_TotalURLs").innerHTML = BigInt(InputList.length).toString(10)
@@ -460,6 +483,9 @@ Misc:
 
 							document.getElementById("Statistic_NumberOfItems_Unsure_Total").innerHTML = BigInt(Count_Unsures).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsures, InputList.length, 2, true) + ")"
 							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsures, InputList.length, "to right", "#0000ff", "#000000")
+						//Earliest and latest date
+							document.getElementById("StatisticDate_Earliest").innerHTML = Date_Earliest
+							document.getElementById("StatisticDate_Latest").innerHTML = Date_Latest
 				//Retry list in plaintext
 					document.getElementById("OutputPlaintextItemCount").innerHTML = BigInt(FilteredListForDisplay.length).toString(10)
 					Output = ""
@@ -491,14 +517,19 @@ Misc:
 						Output += "<tr>"
 						Output += "<th>Item number</th>"
 						Output += "<th>GS line number</th>"
-						Output += "<th>URLs you&apos;ve sent</th><th>HTTP status</th><th>Save status of URLs or errors</th><th>Number of outlinks saved</th><th>Status type</th>"
+						Output += "<th>URLs you&apos;ve sent</th><th>HTTP status</th><th>Save status of URLs or errors</th><th>Timestamp</th><th>Number of outlinks</th><th>Status type</th>"
 						Output += "</tr>"
 						for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
 							//Table
 								Output += "<tr>"
-								Output += "<td style='text-align: center;'><kbd>" + BigInt(Index+1).toString(10) + "</kbd></td>"
-								Output += "<td style='text-align: center;'><kbd>" + BigInt(FilteredListForDisplay[Index].SpreadSheetRowNumberMinusOne+1).toString(10) + "</kbd></td>"
-								Output += "<td style='background-color: " + FilteredListForDisplay[Index].StatusColor + ";'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index].SpreadSheetRowData_Array[0]) + "</kbd></td><td style='background-color: " + FilteredListForDisplay[Index].StatusColor + ";'><kbd>" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[2] + "</kbd></td><td style='background-color: " + FilteredListForDisplay[Index].StatusColor + "'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index].SpreadSheetRowData_Array[3]) + "</kbd></td><td style='background-color: " + FilteredListForDisplay[Index].StatusColor + ";'>" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[4] + "</td><td style='background-color: " + FilteredListForDisplay[Index].StatusColor + "'><kbd>" + FilteredListForDisplay[Index].SaveStatus + "</kbd></td>"
+								Output += "<td style='text-align: center;'><kbd>" + BigInt(Index+1).toString(10) + "</kbd></td>" //Item number
+								Output += "<td style='text-align: center;'><kbd>" + BigInt(FilteredListForDisplay[Index].SpreadSheetRowNumberMinusOne+1).toString(10) + "</kbd></td>" //Google sheet line number
+								Output += "<td style='background-color: " + FilteredListForDisplay[Index].StatusColor + ";'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index].SpreadSheetRowData_Array[0]) + "</kbd></td>" //URLs you entered
+								Output += "<td style='background-color: " + FilteredListForDisplay[Index].StatusColor + ";'><kbd>" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[2] + "</kbd></td>" // HTTP status
+								Output += "<td style='background-color: " + FilteredListForDisplay[Index].StatusColor + "'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index].SpreadSheetRowData_Array[3]) + "</kbd></td>" //WBM save status
+								Output += "<td style='background-color: " + FilteredListForDisplay[Index].StatusColor + "; white-space: nowrap;'><kbd>" + FilteredListForDisplay[Index].Timestamp + "</kbd></td>" //Timestamp
+								Output += "<td style='background-color: " + FilteredListForDisplay[Index].StatusColor + ";'>" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[4] + "</td>" //Number of outlinks
+								Output += "<td style='background-color: " + FilteredListForDisplay[Index].StatusColor + "'><kbd>" + FilteredListForDisplay[Index].SaveStatus + "</kbd></td>" //Status type
 								Output += "</tr>"
 						}
 						Output += "</table>"
