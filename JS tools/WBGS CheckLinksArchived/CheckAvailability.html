@@ -153,7 +153,7 @@ Sort:<br>
 			//
 			//I use that instead of '\n' because of a rare chance in the future should the WBGS ever enters data in a cell that uses newline.
 			
-			Count_TotalUrls = InputList.length
+			Count_TotalUrls = 0
 			Count_Saved = 0
 			Count_Redirected = 0
 			Count_NotSaved = 0
@@ -161,7 +161,7 @@ Sort:<br>
 			Date_Earliest = "?"
 			Date_Latest = "?"
 			
-			InputList = InputList.filter((ArrayElement) => {return /^[^\t]+?\t[^\t]*?\t[^\t]*?$/.test(ArrayElement)}); //rid out invalid entries
+			InputList = InputList.filter((ArrayElement) => {return /^[^\t]+?(\t[^\t]*?){2}$/.test(ArrayElement)}); //rid out invalid entries
 			
 			InputList = InputList.map((ArrayElement) => {
 				let SpreadSheetData = ArrayElement.split("\t") //[URL, YesNo, WBMVersion]
@@ -249,6 +249,7 @@ Sort:<br>
 		} else { //If no change, grab it from the save data, since we already have the data.
 			InputList = SavedList
 		}
+		Count_TotalUrls = InputList.length //get the total number entries, without any invalid entries, that is prior to filtering.
 		IsListOrModeChanged = false //Set it back to false so that if the user updates the list again, and sort, does not rerun the code above.
 		//Filter
 			InputList = InputList.filter((ArrayElement) => {
