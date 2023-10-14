@@ -84,9 +84,11 @@ Sort:<br>
 <li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_HTTPStatus" name="Sort_Output">Based on the HTTP status code (column C)</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_HTTPStatus_Reverse" name="Sort_Output">Reverse</label>)</li>
 <li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_OutlinksCount" name="Sort_Output">Out links count (column E)</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_OutlinksCount_Reverse" name="Sort_Output">Reverse</label>)</li>
 </ul>
-Text display settings:<br>
+Plaintext format settings (post-filter):<br>
 	<ul>
-		<li><label><input type="checkbox" onchange="AutoUpdate()" id="PlainText_DisplayInfo" checked>Display WBGS result info in the plaintext</label></li>
+		<li><label><input type="radio" name="TextOutputFormat" onchange="AutoUpdate()" id="PlainText_DisplayInfo_EnteredURLsOnly">Display just entered URLs in the plaintext</label></li>
+		<li><label><input type="radio" name="TextOutputFormat" onchange="AutoUpdate()" id="PlainText_DisplayInfo_WBGSInfo" checked>Display entered URLs + WBGS result info in the plaintext</label></li>
+		<li><label><input type="radio" name="TextOutputFormat" onchange="AutoUpdate()" id="PlainText_DisplayInfo_AllAsJson">Display full information as JSON</label></li>
 	</ul>
 Misc:
 <p hidden>dev comment: These NEED to call SaveStatusesChanged, which sets IsListOrModeChanged to true, so the system correctly realizes it is in fact a change on treating certain things (http and https for example, have different results depending on the ignore for that) </p>
@@ -184,6 +186,11 @@ Misc:
 	
 	var Date_Earliest = "?"
 	var Date_Latest = "?"
+	
+	BigInt.prototype.toJSON = function() { return this.toString() }
+	//^This fixes an issue where you stringify an object that contains a bigint causes a typeerror ("Do not know how to serialize a BigInt"),
+	// by converting it into a string
+	// Thanks Mozilla! https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt#use_within_json
 	
 	function AutoUpdate() {
 		if (document.getElementById("AutoUpdate").checked) {
@@ -490,20 +497,22 @@ Misc:
 					document.getElementById("OutputPlaintextItemCount").innerHTML = BigInt(FilteredListForDisplay.length).toString(10)
 					Output = ""
 					if (FilteredListForDisplay.length != 0) {
-						if (document.getElementById("PlainText_DisplayInfo").checked == false) { //For better performance on the text mode to display, have the if statement OUTSIDE the loop so it doesn't get repeatedly executed
+						if (document.getElementById("PlainText_DisplayInfo_EnteredURLsOnly").checked) { //For better performance on the text mode to display, have the if statement OUTSIDE the loop so it doesn't get repeatedly executed
 							for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
 								Output += FilteredListForDisplay[Index].SentURL
 								if (Index != FilteredListForDisplay.length - 1) {
 									Output += "\n"
 								}
 							}
-						} else {
+						} else if (document.getElementById("PlainText_DisplayInfo_WBGSInfo").checked) {
 							for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
 								Output += FilteredListForDisplay[Index].SpreadSheetRowData_Array[0] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[1] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[2] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[3] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[4] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[5]
 								if (Index != FilteredListForDisplay.length - 1) {
 									Output += "\n"
 								}
 							}
+						} else if (document.getElementById("PlainText_DisplayInfo_AllAsJson").checked) {
+							Output = JSON.stringify(FilteredListForDisplay , null, " ")
 						}
 						
 					} else {
