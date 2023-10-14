@@ -88,6 +88,7 @@ Text display settings:<br>
 		<li><label><input type="checkbox" onchange="AutoUpdate()" id="PlainText_DisplayInfo" checked>Display WBGS result info in the plaintext</label></li>
 	</ul>
 Misc:
+<p hidden>dev comment: These NEED to call SaveStatusesChanged, which sets IsListOrModeChanged to true, so the system correctly realizes it is in fact a change on treating certain things (http and https for example, have different results depending on the ignore for that) </p>
 <ul>
 	<li><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" id="MiscSetting_IgnoreFragment" checked>Ignore </label><a href="https://en.wikipedia.org/wiki/URI_fragment">URI fragment</a><label for="MiscSetting_IgnoreFragment"> (the # and everything after it will be ignored when checking for a match)</label></li>
 	<li><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" id="MiscSetting_IgnoreHttpHttpsDifference" checked>Ignore difference between HTTP/HTTPS versions.</label></li>
@@ -160,7 +161,7 @@ Misc:
 <span id="Output_table"></span>
 </body>
 <script>
-	var IsListChanged = false
+	var IsListOrModeChanged = false
 	var SavedList = []
 	
 	var Count_Success_SavedBefore = 0
@@ -179,7 +180,7 @@ Misc:
 	}
 	
 	function SaveStatusesChanged() {
-		IsListChanged = true //If you edit the textarea, changed the "ignore fragment identifier", those are considered a change to the list.
+		IsListOrModeChanged = true //If you edit the textarea, changed the "ignore fragment identifier", those are considered a change to the list.
 	}
 
 	function ChangeFilterSettings(ElementClass, Setting) {
@@ -207,7 +208,7 @@ Misc:
 		let Output = ""
 		let InputList = []
 		
-		if (IsListChanged) { //if changed, reset the output.
+		if (IsListOrModeChanged) { //if changed, reset the output.
 			Count_Success_SavedBefore = 0
 			Count_Success_FirstArchive = 0
 			Count_Unsure_NoIAResult = 0
@@ -325,7 +326,7 @@ Misc:
 		} else { //If no change, grab it from the save data, since we already have the data.
 			InputList = SavedList
 		}
-		IsListChanged = false //Set it back to false so that if the user updates the list again, and sort, does not rerun the code above.
+		IsListOrModeChanged = false //Set it back to false so that if the user updates the list again, and sort, does not rerun the code above.
 		//Filter
 			let FilteredListForDisplay = InputList.filter((ArrayElement) => {
 				return document.getElementById("Filter_" + ArrayElement.SaveStatus).checked
