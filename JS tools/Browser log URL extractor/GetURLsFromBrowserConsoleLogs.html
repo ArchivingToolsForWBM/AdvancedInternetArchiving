@@ -23,7 +23,13 @@ URLs by removing the substring in the middle of the URL. So when extracting URLs
 <p>NOTE: This only works on firefox because it has a <a href="https://firefox-source-docs.mozilla.org/devtools-user/browser_console/index.html">Browser console feature</a> and the ability to set your log limit to really large size (Go to the address bar, enter <kbd>about:config</kbd>, accept the risk and continue, then search for
 <kbd>HUD</kbd>, and set <kbd>devtools.hud.loglimit</kbd> and <kbd>devtools.hud.loglimit.console</kbd> to <kbd>2147483647</kbd>).</p>
 
-<label><input type="checkbox" id="Option_AutoUpdate" oninput="AutoUpdate()" checked>Auto Update</label><br>
+<label><input type="checkbox" id="Option_AutoUpdate" oninput="AutoUpdate()" checked>Auto Update</label><br><br>
+
+Extraction modes:
+<ul>
+	<li><label><input type="radio" name="ExtractionMode" id="Option_ExtractAll" oninput="AutoUpdate()" checked>Extract by finding any URL reguardless of format</label><br></li>
+	<li><label><input type="radio" name="ExtractionMode" id="Option_HarMode" oninput="AutoUpdate()">HAR mode (reads the text from HAR text format, obtained via browser devtool's network info)</label><br></li>
+</ul>
 <textarea id="TextInput" cols="100" rows="30" oninput="AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br><br>
 
 <hr>
@@ -87,7 +93,12 @@ URLs by removing the substring in the middle of the URL. So when extracting URLs
 		}
 	}
 	function GetURLsFromText() {
-		let ListOfURLs = document.getElementById("TextInput").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"\']+/g)
+		let ListOfURLs = []
+		if (document.getElementById("Option_HarMode").checked == false) {
+			ListOfURLs = document.getElementById("TextInput").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"\']+/g)
+		} else {
+			ListOfURLs = document.getElementById("TextInput").value.match(/(?<=("url": "))[^"\s]+?(?=("(.|\s)*))/g) //Look for "url": "<URL>"
+		}
 		if (ListOfURLs == null) {
 			ListOfURLs = [] //failsafe, prevents Array.map from performing a null which on the browser, would do nothing (if user enters a string with no valid URL).
 		}
@@ -110,7 +121,7 @@ URLs by removing the substring in the middle of the URL. So when extracting URLs
 				if (document.getElementById("Option_IgnoreFragment").checked) {
 					ProcessedURL = ProcessedURL.replace(/#.*$/, "")
 				};
-				if (document.getElementById("Option_ForceHTTPS").checked) {
+				if (document.getElementById("Option_ForceHTTPS").checked &&document.getElementById("Option_HarMode").checked == false) {
 					ProcessedURL = ProcessedURL.replace(/^ttp:\/\//, "ttps://")
 				};
 				return [ProcessedURL, "", false]
@@ -119,8 +130,10 @@ URLs by removing the substring in the middle of the URL. So when extracting URLs
 			//ListOfURLs[Index][1] = Duplicate Status
 			//ListOfURLs[Index][2] = Duplicate Rerun flag
 		//Correct the URL string (console log may quote a string with a period added at the end, for example)
-			for (let Index = 0; Index < ListOfURLs.length; Index++) {
-				ListOfURLs[Index][0] = "h" + ListOfURLs[Index][0].replace(/\.$/, "")
+			if (document.getElementById("Option_HarMode").checked == false) {
+				for (let Index = 0; Index < ListOfURLs.length; Index++) {
+					ListOfURLs[Index][0] = "h" + ListOfURLs[Index][0].replace(/\.$/, "")
+				}
 			}
 		//Remove the URL that have been truncated (ellepses ("…")) on long URLs.
 			if (document.getElementById("Option_RemoveFirefoxTruncation").checked) {
