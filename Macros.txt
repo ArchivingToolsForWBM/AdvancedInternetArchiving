@@ -1,3 +1,5 @@
+WARNING: These use Notepad++ v.8.5.2 (or older versions). They may be broken in the newer versions. See this: https://notepad-plus-plus.org/news/v853-released/
+
         <Macro name="IA - Get timestamp from URL" Ctrl="no" Alt="no" Shift="no" Key="0">
             <Action type="3" message="1700" wParam="0" lParam="0" sParam="" />
             <Action type="3" message="1601" wParam="0" lParam="0" sParam="(?&apos;ArchiveURL&apos;https://web.archive.org/web/(?&apos;Year&apos;\d\d\d\d)(?&apos;Month&apos;\d\d)(?&apos;Day&apos;\d\d)(?&apos;Hours&apos;\d\d)(?&apos;Minutes&apos;\d\d)(?&apos;Seconds&apos;\d\d)/(.*)$)" />

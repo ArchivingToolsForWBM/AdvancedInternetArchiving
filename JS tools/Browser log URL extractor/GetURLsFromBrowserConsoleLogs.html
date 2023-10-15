@@ -30,6 +30,8 @@ Extraction modes:
 	<li><label><input type="radio" name="ExtractionMode" id="Option_ExtractAll" oninput="AutoUpdate()" checked>Extract by finding any URL reguardless of format</label><br></li>
 	<li><label><input type="radio" name="ExtractionMode" id="Option_HarMode" oninput="AutoUpdate()">HAR mode (reads the text from HAR text format, obtained via browser devtool's network info)</label><br></li>
 </ul>
+<p>Please note that the latter option (HAR mode) can reach the maximum call stack size (or recursion limit) when you enter the entire HAR file data. Therefore I strongly recommend using notepad++'s find on <kbd>"url":</kbd> and click
+<kbd>Find All in Current Document</kbd> to rid out text we don't want. HAR files are HUGE.</p>
 <textarea id="TextInput" cols="100" rows="30" oninput="AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br><br>
 
 <hr>
