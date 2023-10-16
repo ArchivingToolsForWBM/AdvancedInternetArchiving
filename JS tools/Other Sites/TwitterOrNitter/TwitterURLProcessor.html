@@ -60,20 +60,20 @@ Filter:<br>
 					<th>User homepage</th>
 					<td><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_UserMainPage" id="FilterSetting_TwitterPage_UserMainPage"></label></td>
 					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="MobileTwitterPage_UserMainPage" id="FilterSetting_MobileTwitterPage_UserMainPage"></label></td>
-					<td><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage" id="FilterSetting_NitterPage_UserMainPage"></label></td>
+					<td><label><input checked type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage" id="FilterSetting_NitterPage_UserMainPage"></label></td>
 				</tr>
 				<tr>
 					<th>Tweets</th>
 					<td><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_Tweet" id="FilterSetting_TwitterPage_Tweet"></label></td>
 					<td><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="MobileTwitterPage_Tweet" id="FilterSetting_MobileTwitterPage_Tweet"></label></td>
-					<td><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_Tweet" id="FilterSetting_NitterPage_Tweet"></label></td>
+					<td><label><input checked type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_Tweet" id="FilterSetting_NitterPage_Tweet"></label></td>
 				</tr>
 			</table>
 		</li>
 		<li>Nitter user's tab pages (cannot save twitter user's tabs due to login wall)</li>
 		<ul>
-			<li><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage_WithReplies" id="FilterSetting_NitterPage_UserMainPage_WithReplies">Nitter Replies</label></li>
-			<li><label><input checked type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage_Media" id="FilterSetting_NitterPage_UserMainPage_Media">Nitter Media</label></li>
+			<li><label><input checked type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage_WithReplies" id="FilterSetting_NitterPage_UserMainPage_WithReplies">Nitter Replies</label></li>
+			<li><label><input checked type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="NitterPage_UserMainPage_Media" id="FilterSetting_NitterPage_UserMainPage_Media">Nitter Media</label></li>
 		</ul>
 		<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="TwitterPage_Ievents" id="FilterSetting_TwitterPage_Ievents">Events</label></li>
 	</ul>
@@ -141,7 +141,7 @@ Filter:<br>
 	</ul>
 	<li>Emergency</li>
 	<ul>
-		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="Twitter_Embed" id="FilterSetting_Embed" checked>Generate Tweet embeds</label></li>
+		<li><label><input type="checkbox" class="TwitterURLFilter TwitterPages" onchange="AutoUpdateCode()" data-js_url_filter="Twitter_Embed" id="FilterSetting_Embed" checked>Generate Tweet embeds</label></li>
 		<li><label><input type="checkbox" class="TwitterURLFilter" onchange="AutoUpdateCode()" data-js_url_filter="Twitter_RSS" id="FilterSetting_RSS">Generate user page via https://rsshub.app/</label></li>
 	</ul>
 </ul>
