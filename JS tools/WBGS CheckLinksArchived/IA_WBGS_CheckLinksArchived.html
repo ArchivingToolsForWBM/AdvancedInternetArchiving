@@ -315,7 +315,7 @@ Sort:<br>
 			//List
 				Output = ""
 				for (var Index = 0; Index < InputList.length; Index++) {
-					Output += escapeHTMLChars(InputList[Index].SubmittedURL)
+					Output += InputList[Index].SubmittedURL
 					if (Index != InputList.length - 1) {
 						Output += "\n"
 					}
