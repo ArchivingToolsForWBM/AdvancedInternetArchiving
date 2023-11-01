@@ -83,6 +83,7 @@ Filters:<button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 1)
 		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error404" checked class="FilterSettings_ArchiveStatus CantSave" data-status_list_name="CantSave_Error404">&ldquo;The target server cannot find the requested resource &lt;URL&gt; (HTTP status=404).&rdquo; (dark red)</label></li>
 	</ul>
 </ul>
+<p>Please note that pages can change between being able to be save or not. That's why they're checked by default.</p>
 Sort:<br>
 <ul>
 <li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_UserSentURLOrder" name="Sort_Output">Same order of URLs you set (not sorting at all)</label></li>
@@ -467,7 +468,7 @@ Misc:
 			if (InputList.length != 0) {
 				//All saved indicator
 					let Count_Success = Count_Success_SavedBefore + Count_Success_FirstArchive
-					let Count_Unsures = Count_Unsure_NoIAResult + Count_Unsure_BlankColumnD + Count_Unsure_Redirected + Count_Unsure_Error + Count_Unsure_SavedANon2XX + Count_CantSave_BlockListed
+					let Count_Unsures = Count_Unsure_NoIAResult + Count_Unsure_BlankColumnD + Count_Unsure_Redirected + Count_Unsure_Error + Count_Unsure_SavedANon2XX
 					let Count_CantSaves = Count_CantSave_BlockListed + Count_CantSave_Error404
 					if (Count_Success == InputList.length && InputList.length != 0) {
 						document.getElementById("AllSavedIndicator").hidden = false
