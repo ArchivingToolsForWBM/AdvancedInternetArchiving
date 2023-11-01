@@ -66,21 +66,21 @@ Filters:<button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 1)
 <ul>
 	<li>Sure saved: <button onclick="ChangeFilterSettings('SureSaved', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('SureSaved', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('SureSaved', 2); AutoUpdate()">Invert</button></li>
 	<ul>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_SavedBefore" class="FilterSettings_ArchiveStatus SureSaved" data-status_list_name="Success_SavedBefore"><label for="Filter_Success_SavedBefore">Success (have saved before (green))</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_FirstArchive" class="FilterSettings_ArchiveStatus SureSaved" data-status_list_name="Success_FirstArchive"><label for="Filter_Success_FirstArchive">Success (&ldquo;First Archive&rdquo; (light green)) </label></li>
+		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_SavedBefore" class="FilterSettings_ArchiveStatus SureSaved" data-status_list_name="Success_SavedBefore">Success (have saved before (green))</label></li>
+		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_FirstArchive" class="FilterSettings_ArchiveStatus SureSaved" data-status_list_name="Success_FirstArchive">Success (&ldquo;First Archive&rdquo; (light green)) </label></li>
 	</ul>
 	<li>Unsure saved: <button onclick="ChangeFilterSettings('UnsureSaved', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('UnsureSaved', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('UnsureSaved', 2); AutoUpdate()">Invert</button></li>
 	<ul>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_NoIAResult" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_NoIAResult"><label for="Filter_Unsure_NoIAResult">No results (grey)</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_BlankColumnD" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_BlankColumnD"><label for="Filter_Unsure_BlankColumnD">Result but column D is blank (light red)</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Redirected" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_Redirected"><label for="Filter_Unsure_Redirected">Redirects (yellow)</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Error" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_Error"><label for="Filter_Unsure_Error">Errors (red)</label></li>
-		<li><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_SavedANon2XX" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_SavedANon2XX"><label for="Filter_Unsure_SavedANon2XX">Saved but isn't a 2XX (3XX/4XX/5XX) (orange)</label></li>
+		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_NoIAResult" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_NoIAResult">No results (grey)</label></li>
+		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_BlankColumnD" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_BlankColumnD">Result but column D is blank (light red)</label></li>
+		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Redirected" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_Redirected">Redirects (yellow)</label></li>
+		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Error" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_Error">Errors (red)</label></li>
+		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_SavedANon2XX" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_SavedANon2XX">Saved but isn't a 2XX (3XX/4XX/5XX) (orange)</label></li>
 	</ul>
 	<li>Can't save <button onclick="ChangeFilterSettings('CantSave', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('CantSave', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('CantSave', 2); AutoUpdate()">Invert</button></li>
 	<ul>
-		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_BlockListed" class="FilterSettings_ArchiveStatus CantSave" data-status_list_name="CantSave_BlockListed">&ldquo;This URL is in the Save Page Now service block list and cannot be captured.&rdquo; (dark red)</label></li>
-		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error404" class="FilterSettings_ArchiveStatus CantSave" data-status_list_name="CantSave_Error404">&ldquo;The target server cannot find the requested resource &lt;URL&gt; (HTTP status=404).&rdquo; (dark red)</label></li>
+		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_BlockListed" checked class="FilterSettings_ArchiveStatus CantSave" data-status_list_name="CantSave_BlockListed">&ldquo;This URL is in the Save Page Now service block list and cannot be captured.&rdquo; (dark red)</label></li>
+		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error404" checked class="FilterSettings_ArchiveStatus CantSave" data-status_list_name="CantSave_Error404">&ldquo;The target server cannot find the requested resource &lt;URL&gt; (HTTP status=404).&rdquo; (dark red)</label></li>
 	</ul>
 </ul>
 Sort:<br>
