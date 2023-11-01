@@ -81,6 +81,7 @@ Filters:<button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 1)
 	<ul>
 		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_BlockListed" checked class="FilterSettings_ArchiveStatus CantSave" data-status_list_name="CantSave_BlockListed">&ldquo;This URL is in the Save Page Now service block list and cannot be captured.&rdquo; (dark red)</label></li>
 		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error404" checked class="FilterSettings_ArchiveStatus CantSave" data-status_list_name="CantSave_Error404">&ldquo;The target server cannot find the requested resource &lt;URL&gt; (HTTP status=404).&rdquo; (dark red)</label></li>
+		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error403" checked class="FilterSettings_ArchiveStatus CantSave" data-status_list_name="CantSave_Error403">&ldquo;The capture failed because Save Page Now does not have access rights for &lt;URL&gt; (HTTP status=403).&rdquo; (dark red)</label></li>
 	</ul>
 </ul>
 <p>Please note that pages can change between being able to be save or not. That's why they're checked by default.</p>
@@ -160,6 +161,10 @@ Misc:
 		<td id="StatisticPercentage_NumberOfItems_CantSave_Error404"><kbd><span id="Statistic_NumberOfItems_CantSave_Error404">0</span></kbd></td>
 	</tr>
 	<tr>
+		<td><kbd>CantSave_Error403</kbd></td>
+		<td id="StatisticPercentage_NumberOfItems_CantSave_Error403"><kbd><span id="Statistic_NumberOfItems_CantSave_Error403">0</span></kbd></td>
+	</tr>
+	<tr>
 		<th colspan="2">Classification totals</th>
 	</tr>
 	<tr>
@@ -171,16 +176,16 @@ Misc:
 		<td id="StatisticPercentage_NumberOfItems_Unsure_Total"><kbd><span id="Statistic_NumberOfItems_Unsure_Total">0</span></kbd></td>
 	</tr>
 	<tr>
-		<td><kbd>Can't save</kbd></td>
+		<td><kbd>CantSave</kbd></td>
 		<td id="StatisticPercentage_NumberOfItems_CantSave_Total"><kbd><span id="Statistic_NumberOfItems_CantSave_Total">0</span></kbd></td>
 	</tr>
 	<tr><th colspan="2">Timestamp range</th></tr>
 	<tr>
-		<td><kbd>Earliest archive date</kbd></td>
+		<td>Earliest archive date:</td>
 		<td><kbd><span id="StatisticDate_Earliest">?</span></kbd></td>
 	</tr>
 	<tr>
-		<td><kbd>Latest archive date</kbd></td>
+		<td>Latest archive date:</td>
 		<td><kbd><span id="StatisticDate_Latest">?</span></kbd></td>
 	</tr>
 </table><br>
@@ -202,6 +207,7 @@ Misc:
 	var Count_Unsure_SavedANon2XX = 0
 	var Count_CantSave_BlockListed = 0
 	var Count_CantSave_Error404 = 0
+	var Count_CantSave_Error403 = 0
 	
 	var Date_Earliest = "?"
 	var Date_Latest = "?"
@@ -256,6 +262,7 @@ Misc:
 			Count_Unsure_SavedANon2XX = 0
 			Count_CantSave_BlockListed = 0
 			Count_CantSave_Error404 = 0
+			Count_CantSave_Error403 = 0
 			
 			//Note to self:
 			//Column[0] = (Google sheets' column A) SentURL (the URLs you entered)
@@ -350,6 +357,10 @@ Misc:
 							SaveStatus = "CantSave_Error404"
 							StatusColor = "#400000"
 							Count_CantSave_Error404++
+						} else if (/^The capture failed because Save Page Now does not have access rights for/.test(Col_D_SavedURLOrError)) {
+							SaveStatus = "CantSave_Error403"
+							StatusColor = "#400000"
+							Count_CantSave_Error403++
 						} else {
 							SaveStatus = "Unsure_Error"
 							StatusColor = "#800000"
@@ -469,7 +480,7 @@ Misc:
 				//All saved indicator
 					let Count_Success = Count_Success_SavedBefore + Count_Success_FirstArchive
 					let Count_Unsures = Count_Unsure_NoIAResult + Count_Unsure_BlankColumnD + Count_Unsure_Redirected + Count_Unsure_Error + Count_Unsure_SavedANon2XX
-					let Count_CantSaves = Count_CantSave_BlockListed + Count_CantSave_Error404
+					let Count_CantSaves = Count_CantSave_BlockListed + Count_CantSave_Error404 + Count_CantSave_Error403
 					if (Count_Success == InputList.length && InputList.length != 0) {
 						document.getElementById("AllSavedIndicator").hidden = false
 					} else {	//If the user then enters another list of URLs without resetting or refreshing this must also reset.
@@ -512,6 +523,9 @@ Misc:
 						//Error404
 							document.getElementById("Statistic_NumberOfItems_CantSave_Error404").innerHTML = BigInt(Count_CantSave_Error404).toString(10) + " (" + BetterPercentageUsingInts(Count_CantSave_Error404, InputList.length, 2, true) + ")"
 							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_Error404").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_CantSave_Error404, InputList.length, "to right", "#400000", "#000000")
+						//Error403
+							document.getElementById("Statistic_NumberOfItems_CantSave_Error403").innerHTML = BigInt(Count_CantSave_Error403).toString(10) + " (" + BetterPercentageUsingInts(Count_CantSave_Error403, InputList.length, 2, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_Error403").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_CantSave_Error403, InputList.length, "to right", "#400000", "#000000")
 						//Total success and unsures
 							document.getElementById("Statistic_NumberOfItems_Success_Total").innerHTML = BigInt(Count_Success).toString(10) + " (" + BetterPercentageUsingInts(Count_Success, InputList.length, 2, true) + ")"
 							document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success, InputList.length, "to right", "#0000ff", "#000000")
