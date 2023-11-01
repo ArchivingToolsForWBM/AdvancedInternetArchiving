@@ -25,6 +25,7 @@ https://exampleBlankColumnD.com	Already captured	-		0
 https://exampleNoResultsAtAll.com					
 https://exampleSavedButHTTP4xx	Already captured	429	https://web.archive.org/web/20210101000000/https://exampleSavedButHTTP4xx	0	
 https://exampleBlockListed			This URL is in the Save Page Now service block list and cannot be captured	0 outlinks captured	
+https://exampleError404			The target server cannot find the requested resource https://exampleError404 (HTTP status=404).	0 outlinks captured	
 ```
 (Note that the images below are older versions)
 ![image](https://user-images.githubusercontent.com/89951208/208203542-55853962-a25b-47c9-a6c0-12f79efafc6e.png)
