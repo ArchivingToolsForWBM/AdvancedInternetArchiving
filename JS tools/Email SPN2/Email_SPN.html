@@ -64,6 +64,7 @@
 		<td><kbd>Unsure_NoMatch</kbd></td>
 		<td id="StatisticPercentage_NumberOfItems_Unsure_NoMatch"><kbd><span id="Statistic_NumberOfItems_Unsure_NoMatch">0</span></kbd></td>
 	</tr>
+		<tr><th colspan="2">Classification totals</th></tr>
 	<tr>
 		<td><kbd>Success</kbd></td>
 		<td id="StatisticPercentage_NumberOfItems_Success_Total"><kbd><span id="Statistic_NumberOfItems_Success_Total">0</span></kbd></td>
@@ -71,6 +72,17 @@
 	<tr>
 		<td><kbd>Unsure</kbd></td>
 		<td id="StatisticPercentage_NumberOfItems_Unsure_Total"><kbd><span id="Statistic_NumberOfItems_Unsure_Total">0</span></kbd></td>
+	</tr>
+	<tr>
+		<th colspan="2">Date range</th>
+	</tr>
+	<tr>
+		<td>Earliest archive date:</td>
+		<td><kbd id="StatisticDate_Earliest">?</kbd></td>
+	</tr>
+	<tr>
+		<td>Latest archive date:</td>
+		<td><kbd id="StatisticDate_Latest">?</kbd></td>
 	</tr>
 </table><br>
 
@@ -119,6 +131,10 @@
 	var Count_Success_FirstArchive = 0
 	var Count_Unsure_Error = 0
 	var Count_Unsure_NoMatch = 0
+	
+	var Date_Earliest = "?"
+	var Date_Latest = "?"
+	
 	function NotifyInputChanged() {
 		InputChanged = true
 	}
@@ -160,6 +176,9 @@
 				Count_Unsure_Error = 0
 				Count_Unsure_NoMatch = 0
 				
+				Date_Earliest = "?"
+				Date_Latest = "?"
+				
 				OutputList.InputURLList = []
 				OutputList.WBMResultList = []
 				
@@ -167,22 +186,36 @@
 				if (ListOfURLs == null) {
 					ListOfURLs = [] //failsafe, prevents Array.map from performing a null which on the browser, would do nothing (if user enters a string with no valid URL).
 				};
-				ListOfURLs = ListOfURLs.map((ArrayElement, Index) => {
+				ListOfURLs = ListOfURLs.map((ArrayElement, Index) => { //default states for each entered URLs
 					InputURLObject = {
 						GivenURL:ArrayElement,
 						MatchWith:-1, //Will be -1 if no match is found.
 						StatusMessage:"",
 						StatusType:"Unsure_NoMatch",
-						Position:Index
+						StatusColor:"#808000",
+						Position:Index,
+						Timestamp:"?"
 					}
 					return InputURLObject
 				});
 				
 				ListOfWBMResult = (document.getElementById("Input_ResultURLs").value.split("\n")).map((ArrayElement, Index) => { //NOTE: This is an array representing each line, zero-based (so empty lines may exists)
+					let Timestamp = "?"
+					if (/^https:\/\/web\.archive\.org\/web\/\d{14}/.test(ArrayElement)) {
+						Timestamp = ArrayElement.replace(/^https:\/\/web\.archive\.org\/web\/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2}).*$/, "$1-$2-$3 $4:$5:$6")
+						if ((Timestamp < Date_Earliest)||(Date_Earliest == "?")) { //If there is an earlier timestamp than the earliest OR we newly found a given timestamp the first time, set it to it
+							Date_Earliest = Timestamp
+						}
+						if ((Timestamp > Date_Latest)||(Date_Latest == "?")) { //If there is an later timestamp than the timestamp OR we newly found a given timestamp the first time, set it to it
+							Date_Latest = Timestamp
+						}
+					}
+					
 					let WBMResultObject = {
 						Result:ArrayElement,
 						InputURLMatchWith:-1,
-						Position:Index
+						Position:Index,
+						Timestamp:Timestamp
 					}
 					return WBMResultObject
 				});
@@ -209,11 +242,14 @@
 							//Thus the rule to match URLs is that if it errors out, it must be a non-WBM URL with the error text, otherwise if it was a successful save, it must have a WBM substring of the URL
 							//with no error text.
 							if (ListOfURLs[i].GivenURL == URLOfResult) { //If a match is found with a proper condition...
-								ListOfURLs[i].StatusMessage = ListOfWBMResult[i2].Result.replace(/^http(s)?\:\/\/(?!data:)[^\s\"\']+ /, "")
+								ListOfURLs[i].Timestamp = ListOfWBMResult[i2].Timestamp
+								//ListOfURLs[i].StatusMessage = ListOfWBMResult[i2].Result.replace(/^http(s)?\:\/\/(?!data:)[^\s\"\']+ /, "")
+								ListOfURLs[i].StatusMessage = ListOfWBMResult[i2].Result
 								if (HasErrored&&(HasWBMSubstring==false)) { //If error, it should not have the WBM part of the URL and have the "Error!".
 									ListOfURLs[i].MatchWith = i2
 									ListOfWBMResult[i2].InputURLMatchWith = i
 									ListOfURLs[i].StatusType = "Unsure_Error"
+									ListOfURLs[i].StatusColor = "#800000"
 									Count_Unsure_Error++
 									
 									break;
@@ -221,6 +257,7 @@
 									ListOfURLs[i].MatchWith = i2
 									ListOfWBMResult[i2].InputURLMatchWith = i
 									ListOfURLs[i].StatusType = "Success_FirstArchive"
+									ListOfURLs[i].StatusColor = "#00C000"
 									Count_Success_FirstArchive++
 									
 									break;
@@ -228,6 +265,7 @@
 									ListOfURLs[i].MatchWith = i2
 									ListOfWBMResult[i2].InputURLMatchWith = i
 									ListOfURLs[i].StatusType = "Success_SavedBefore"
+									ListOfURLs[i].StatusColor = "#008000"
 									Count_Success_SavedBefore++
 									
 									break;
@@ -278,6 +316,9 @@
 
 			document.getElementById("Statistic_NumberOfItems_Unsure_Total").innerHTML = BigInt(Count_Unsure_Error + Count_Unsure_NoMatch).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Error + Count_Unsure_NoMatch, ListOfURLs.length, 2, true) +")"
 			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Error + Count_Unsure_NoMatch, ListOfURLs.length, "to right", "#0000ff", "#000000")
+			
+			document.getElementById("StatisticDate_Earliest").innerHTML = Date_Earliest
+			document.getElementById("StatisticDate_Latest").innerHTML = Date_Latest
 
 			if (document.getElementById("Sort_URLs_ABC").checked) {
 				Filtered_ListOfURLs.sort((a, b) => {
@@ -333,7 +374,7 @@
 			let HTMLTable_ListOfEnteredURLsResult = ""
 			
 			HTMLTable_ListOfEnteredURLsResult += "<table>"
-			HTMLTable_ListOfEnteredURLsResult += "<tr><th>Position</th><th>URL</th><th>Save result</th><th>Status identified</th></tr>"
+			HTMLTable_ListOfEnteredURLsResult += "<tr><th>Position</th><th>URL</th><th>Save result</th><th>Timestamp</th><th>Status identified</th></tr>"
 			Filtered_ListOfURLs.forEach((ArrayElement, Index, ArrayItself) => {
 				Plaintext_ListOfEnteredURLsResult += ArrayElement.GivenURL
 				if (document.getElementById("Option_IncludeStatusAsPlaintext").checked) {
@@ -344,7 +385,11 @@
 				}
 				
 				HTMLTable_ListOfEnteredURLsResult += "<tr>"
-				HTMLTable_ListOfEnteredURLsResult += "<td style='background-color: " + URLColorIndicator(ArrayElement.StatusType) + "; text-align: center;'><pre>"+ BigInt(ArrayElement.Position+1).toString(10) +"</pre></td><td style='background-color: " + URLColorIndicator(ArrayElement.StatusType) + ";'><pre>"+escapeHTMLChars(ArrayElement.GivenURL)+"</pre></td><td style='background-color: " + URLColorIndicator(ArrayElement.StatusType) + ";'><pre>"+ArrayElement.StatusMessage+"</pre></td><td style='background-color: " + URLColorIndicator(ArrayElement.StatusType) + ";'><pre>"+ArrayElement.StatusType+"</pre></td>"
+				HTMLTable_ListOfEnteredURLsResult += "<td style='background-color: " + ArrayElement.StatusColor + "; text-align: center;'><pre>"+ BigInt(ArrayElement.Position+1).toString(10) +"</pre></td>"
+				HTMLTable_ListOfEnteredURLsResult += "<td style='background-color: " + ArrayElement.StatusColor + ";'><pre>"+escapeHTMLChars(ArrayElement.GivenURL)+"</pre></td>"
+				HTMLTable_ListOfEnteredURLsResult += "<td style='background-color: " + ArrayElement.StatusColor + ";'><pre>"+ArrayElement.StatusMessage+"</pre></td>"
+				HTMLTable_ListOfEnteredURLsResult += "<td style='background-color: " + ArrayElement.StatusColor + ";'><pre>"+ArrayElement.Timestamp+"</pre></td>"
+				HTMLTable_ListOfEnteredURLsResult += "<td style='background-color: " + ArrayElement.StatusColor + ";'><pre>"+ArrayElement.StatusType+"</pre></td>"
 				HTMLTable_ListOfEnteredURLsResult += "</tr>"
 			});
 			HTMLTable_ListOfEnteredURLsResult += "</table>"
@@ -369,23 +414,6 @@
 				document.getElementById("URLsToWBMResultRatioMismatchWarning").innerHTML = "The WBM result have "+ BigInt(ListOfURLs.length - ListOfWBMResult.length).toString(10) + " fewer result(s) than your entered URLs. It is possible you entered more URLs than what is allowed. (There are " + BigInt(ListOfURLs.length).toString(10) + " entered URLs and " + BigInt(ListOfWBMResult.length).toString(10) +" WBM results)"
 			}
 		}
-	}
-	function URLColorIndicator(SaveStatus) {
-		let ColorIndicator = "black"
-		switch (SaveStatus) {
-			case "Success_SavedBefore":
-				ColorIndicator = "#008000"
-				break
-			case "Success_FirstArchive":
-				ColorIndicator = "#00C000"
-				break
-			case "Unsure_Error":
-				ColorIndicator = "#800000"
-				break
-			case "Unsure_NoMatch":
-				ColorIndicator = "#808000"
-		}
-		return ColorIndicator
 	}
 	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec, Clamped) {
 		//Quantity = Amount in relation of MaxQuantity
