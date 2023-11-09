@@ -250,9 +250,9 @@ Sort:<br>
 				//Check if its status is allowed into the output
 					let IsStatusIncluded = document.getElementById("FilterList_" + ArrayElement.Status).checked
 				//Check if it has a date, and if the min/max date is provided, check if it is earlier than the min date or later than max date
-					let HasTimeStamp = false
-					if (ArrayElement.TimeStamp != "Error") {
-						HasTimeStamp = true
+					let HasTimestamp = false
+					if (ArrayElement.Timestamp != "Error") {
+						HasTimestamp = true
 					}
 					
 					let IsBeforeTheEarliestDateFilter = false
@@ -260,7 +260,7 @@ Sort:<br>
 					if (document.getElementById("DateRangeStart").value != "") {
 						EarliestDateApplied = true
 					}
-					if (HasTimeStamp && EarliestDateApplied && (ArrayElement.Timestamp < (document.getElementById("DateRangeStart").value + " 00:00:00"))) {
+					if (HasTimestamp && EarliestDateApplied && (ArrayElement.Timestamp < (document.getElementById("DateRangeStart").value + " 00:00:00"))) {
 						IsBeforeTheEarliestDateFilter = true
 					}
 					
@@ -269,7 +269,7 @@ Sort:<br>
 					if (document.getElementById("DateRangeEnd").value != "") {
 						LatestDateApplied = true
 					}
-					if (HasTimeStamp && LatestDateApplied && (ArrayElement.Timestamp >= (document.getElementById("DateRangeEnd").value + " 00:00:00"))) {
+					if (HasTimestamp && LatestDateApplied && (ArrayElement.Timestamp >= (document.getElementById("DateRangeEnd").value + " 00:00:00"))) {
 						IsAfterTheLatestDateFilter = true
 					}
 				//Determine if this should be included in output array
