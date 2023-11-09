@@ -260,7 +260,7 @@ Sort:<br>
 					if (document.getElementById("DateRangeStart").value != "") {
 						EarliestDateApplied = true
 					}
-					if (HasTimeStamp && EarliestDateApplied && (ArrayElement.TimeStamp < (document.getElementById("DateRangeStart").value + " 00:00:00"))) {
+					if (HasTimeStamp && EarliestDateApplied && (ArrayElement.Timestamp < (document.getElementById("DateRangeStart").value + " 00:00:00"))) {
 						IsBeforeTheEarliestDateFilter = true
 					}
 					
@@ -269,7 +269,7 @@ Sort:<br>
 					if (document.getElementById("DateRangeEnd").value != "") {
 						LatestDateApplied = true
 					}
-					if (HasTimeStamp && LatestDateApplied && (ArrayElement.TimeStamp >= (document.getElementById("DateRangeEnd").value + " 00:00:00"))) {
+					if (HasTimeStamp && LatestDateApplied && (ArrayElement.Timestamp >= (document.getElementById("DateRangeEnd").value + " 00:00:00"))) {
 						IsAfterTheLatestDateFilter = true
 					}
 				//Determine if this should be included in output array
