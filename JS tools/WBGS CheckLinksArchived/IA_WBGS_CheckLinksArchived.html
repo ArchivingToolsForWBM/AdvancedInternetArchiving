@@ -65,17 +65,27 @@ Sort:<br>
 		<td><kbd><span id="Statistic_NumberOfItems_TotalURLs">0</span></kbd></td>
 	</tr>
 	<tr>
-		<td>How many saved:</td>
+		<td>How many displayed after filtered:</td>
+		<td id="StatisticPercentage_NumberOfItems_FilteredRemaining"><kbd><span id="Statistic_NumberOfItems_FilteredRemaining">0</span></kbd></td>
+	</tr>
+	<tr>
+		<td>How many were removed from filter:	</td>
+		<td id="StatisticPercentage_NumberOfItems_FilteredRemoved"><kbd><span id="Statistic_NumberOfItems_FilteredRemoved">0</span></kbd></td>
+	</tr>
+	<tr><th colspan="2">Classification stats</th></tr>
+	<tr>
+		<td><kbd>Saved</kbd></td>
 		<td id="StatisticPercentage_NumberOfItems_Saved"><kbd><span id="Statistic_NumberOfItems_Saved">0</span></kbd></td>
 	</tr>
 	<tr>
-		<td>How many saved but also redirected:</td>
+		<td><kbd>SavedRedirected</kbd></td>
 		<td id="StatisticPercentage_NumberOfItems_SavedRedirected"><kbd><span id="Statistic_NumberOfItems_SavedRedirected">0</span></kbd></td>
 	</tr>
 	<tr>
-		<td>How many not saved:</td>
+		<td><kbd>NotSaved</kbd></td>
 		<td id="StatisticPercentage_NumberOfItems_NotSaved"><kbd><span id="Statistic_NumberOfItems_NotSaved">0</span></kbd></td>
 	</tr>
+	<tr><th colspan="2">Timestamp range</th></tr>
 	<tr>
 		<td>Earliest timestamp</td>
 		<td><kbd id="StatisticTimestamp_Earliest">?</kbd></td>
@@ -85,9 +95,8 @@ Sort:<br>
 		<td><kbd id="StatisticTimestamp_Latest">?</kbd></td>
 	</tr>
 </table><br>
-<kbd><span id="OutputCount">0</span> result(s). <span id="OutputCount_FilteredOut">0</span> filtered out.</kbd><br>
 <textarea readonly id="Output_List" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
-<button onclick="CopyOutputString()">Copy to clipboard</button><br>
+<button onclick="setClipboard(document.getElementById('Output_List').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br>
 <span id="Output_Table"></span>
 </body>
 <script>
@@ -310,8 +319,11 @@ Sort:<br>
 					document.getElementById("StatisticTimestamp_Earliest").innerHTML = Date_Earliest
 					document.getElementById("StatisticTimestamp_Latest").innerHTML = Date_Latest
 				//How many in the output (post-filtering)
-					document.getElementById("OutputCount").innerHTML = BigInt(InputList.length).toString(10)
-					document.getElementById("OutputCount_FilteredOut").innerHTML = BigInt(Count_TotalUrls-InputList.length).toString(10)
+					document.getElementById("Statistic_NumberOfItems_FilteredRemaining").innerHTML = BigInt(InputList.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length, Count_TotalUrls, 2, true) + ")"
+					document.getElementById("StatisticPercentage_NumberOfItems_FilteredRemaining").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(InputList.length, Count_TotalUrls, "to right", "#0000ff", "#000000")
+					
+					document.getElementById("Statistic_NumberOfItems_FilteredRemoved").innerHTML = BigInt(Count_TotalUrls-InputList.length).toString(10) + " (" + BetterPercentageUsingInts(Count_TotalUrls-InputList.length, Count_TotalUrls, 2, true) + ")"
+					document.getElementById("StatisticPercentage_NumberOfItems_FilteredRemoved").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_TotalUrls-InputList.length, Count_TotalUrls, "to right", "#0000ff", "#000000")
 			//List
 				Output = ""
 				for (var Index = 0; Index < InputList.length; Index++) {
@@ -471,9 +483,27 @@ Sort:<br>
 		//Restrict a number within a specified range, bigInt edition (since NaN cannot be represented in bigint).
 			return num <= min ? min : num >= max ? max : num;
 	}
-	function CopyOutputString() {
-		let copyText = document.getElementById("Output_List")
-		copyText.select();
-		document.execCommand("copy");
-	}
+	//Copy text from textarea
+		function setClipboard(String) {
+			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
+			const type = "text/plain";
+			const blob = new Blob([String], { type });
+			const data = [new ClipboardItem({ [type]: blob })];
+	
+			navigator.clipboard.write(data).then(
+				() => {
+				/* success */
+					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #00FF00;'>Copied!</span>"
+					setTimeout(DeleteCopyMessage, 1500)
+				},
+				() => {
+				/* failure */
+					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #FF0000;'>Copy failed!</span>"
+					setTimeout(DeleteCopyMessage, 1500)
+				}
+			);
+		}
+		function DeleteCopyMessage() {
+			document.getElementById("CopiedTextMessage").innerHTML = ""
+		}
 </script>
