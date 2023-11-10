@@ -157,11 +157,20 @@ Misc:
 
 <span id="OutputTable"></span>
 <script>
-	const Nitter_Domain = "https://nitter.privacydev.net" //URL of nitter instance. Must:
+	//List of previously used nitter instances (as a reference to know which one is archivable), from most recent to oldest
+	//https://nitter.ktachibana.party
+	//https://nitter.privacydev.net
+	const Nitter_Domain = "https://nitter.ktachibana.party" //URL of nitter instance. Must:
 	//-Have a protocol ("http://" or "https://", latter recommended)
 	//-Have a hostname ("nitter.net")
 	//-No slash at the end (".net/" is invalid, use ".net")
 	//Change this if you find that the current instance have issues. See a list of nitter instances here: https://github.com/xnaas/nitter-instances
+	//Please note that media URLs may be configured differently, such as being base64Media encoded like this:
+	//
+	//https://<nitter_instance>/pic/orig/enc/<base64_string>
+	//
+	//If that is the case, then I would recommend you to extract links from nitter directly instead of grabbing links from twitter then converting
+	//as the media URLs don't correlate between twitter and nitter.
 	//
 	//Also, RIP pussthecat.org, some idiot UK police (presumably the City of London Police, the people who just make people guilty until proven innocent)
 	//didn't properly check the service legitimacy and ended up flagging it as a pirate site, just because of an infringing content that was hosted on 
@@ -170,7 +179,6 @@ Misc:
 	//content. It's like making browser companies (google, firefox, etc.) liable just because the user using it to download illegal material and
 	//expecting enforcement at the browser level, assuming that these people expect nitter to block out flagged content posted on twitter.
 	
-	//issues to fix: https://nitter.net/pic/pbs.twimg.com%2Fprofile_images%2F1518405903900286976%2FDRjDUx-Y.jpg
 	const Twitter_NotAUserNameList = [
 		"TOS",
 		"about",
