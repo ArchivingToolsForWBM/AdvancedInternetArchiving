@@ -32,7 +32,10 @@
 <textarea id="URL_InputList" cols="100" rows="30" oninput="InputChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br><br>
 <button onclick="MainCode()">Submit</button>
 <hr>
-<table><tr><td><pre><span id="Output"></span></pre></td></tr></table>
+<table>
+	<tr><th>Displaying <span id="DisplayedDateRangeMin">?</span> to <span id="DisplayedDateRangeMax">?</span></th></tr>
+	<tr><td><pre><span id="Output"></span></pre></td></tr>
+</table>
 
 <script>
 	//Settings
@@ -115,10 +118,16 @@
 		let OutputString = ""
 		let StartingViewPosition = EarliestTime
 		let DisplaySize = (Math.floor(LatestTime-StartingViewPosition) / 1000)+1
+		
+		document.getElementById("DisplayedDateRangeMin").innerHTML = new Date(StartingViewPosition).toISOString().replace("T", " ").replace(".000Z", "")
+		
 		if (DisplaySize > MaxDisplayFailsafe) {
 			DisplaySize = MaxDisplayFailsafe
 			alert("The time range between the earliest and latest time is too long, please enter a list of URLs having the range no longer than " + MaxDisplayFailsafe.toString(10) + " seconds apart. Now displaying the first " + MaxDisplayFailsafe.toString(10) + " seconds since the earliest URL.")
 		}
+		
+		document.getElementById("DisplayedDateRangeMax").innerHTML = new Date((DisplaySize*1000)+StartingViewPosition-1).toISOString().replace("T", " ").replace(/\.\d{3}Z/, "")
+		
 		for (let i = 0; i < DisplaySize; i++) { //Loop every second intervals of time
 			let DateToCheck = (i*1000)+StartingViewPosition
 			OutputString += new Date(DateToCheck).toISOString().replace("T", " ").replace(".000Z", "") + ": "
