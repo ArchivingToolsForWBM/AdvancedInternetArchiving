@@ -24,17 +24,25 @@
 	</head>
 <body>
 
-<p>This HTML file takes a given list of WBM URLs and will display a timeline with several points in time where these URLs are saved at</p>
+<p>This HTML file takes a given list of WBM URLs and will display a timeline (second-interval, WBM's smallest unit of time) with several points in time where these URLs are saved at.</p>
 
 <p>This is useful mainly for inspecting the performance of the WBGS processing.</p>
 
 <label><input type="checkbox" id="Option_AutoUpdate" onchange="AutoUpdate()" checked>Auto Update</label><br>
 <textarea id="URL_InputList" cols="100" rows="30" oninput="InputChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br><br>
 <button onclick="MainCode()">Submit</button>
+<hr>
+<table><tr><td><pre><span id="Output"></span></pre></td></tr></table>
 
 <script>
-	var IsInputDataChanged = false
-	var Saved_WBM_URLs = []
+	//Settings
+		const MaxDisplayFailsafe = 43200 //The cap on how many lines (each representing a second) displayed in the output. This is just in case you entered a list of WBM URLs with a massive range that would choke your browser
+	//Stuff not to touch unless you know what you're doing.
+		var IsInputDataChanged = false
+		var Saved_WBM_URLs = []
+		
+		var EarliestTime = 0
+		var LatestTime = 0
 	
 	function InputChanged() {
 		IsInputDataChanged = true //If you edit the textarea, changed the "ignore fragment identifier", those are considered a change to the list.
@@ -45,15 +53,15 @@
 		}
 	}
 	function MainCode() {
-		let WBM_URLs = []
+		let ArrayOfUniqueTimestamp = []
 		if (IsInputDataChanged) {
 			//Extract information from the URL
-			WBM_URLs = [...new Set(document.getElementById("URL_InputList").value.match(/http(s)?:\/\/web\.archive\.org\/web\/\d{14}[a-zA-Z0-9_]*\/[^\s]+/g))]
+			let WBM_URLs = [...new Set(document.getElementById("URL_InputList").value.match(/http(s)?:\/\/web\.archive\.org\/web\/\d{14}[a-zA-Z0-9_]*\/[^\s]+/g))]
 			WBM_URLs = WBM_URLs.map((WBM_URL) => {
 				let Site_URL = WBM_URL.match(/(?<=(http(s)?:\/\/web\.archive\.org\/web\/\d{14}[a-zA-Z0-9_]*\/)).*$/)[0]
 				let Timestamp = WBM_URL.match(/(?<=(http(s)?:\/\/web\.archive\.org\/web\/))\d{14}(?=(.*$))/, "")[0].replace(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/, "$1-$2-$3T$4:$5:$6.000Z")
 				let TimeStamp_Date = new Date(Timestamp)
-				let UTC_DateTime = TimeStamp_Date.getTime()
+				let UTC_DateTime = TimeStamp_Date.valueOf()
 				
 				OutputObject = {
 					WBM_URL : WBM_URL,
@@ -63,28 +71,29 @@
 				}
 				return OutputObject
 			});
-			//Following code finds URLs with the same timestamp, have a new array (GroupOfSameTimeStamp) with all of them having the same timestamp,
+			//Following code finds URLs with the same timestamp, have a new array (GroupOfSameTimestamp) with all of them having the same timestamp,
 			//then place that array in another array (ArrayOfUniqueTimestamp) so that we basically group the URLs together and count as one element.
-			let ArrayOfUniqueTimestamp = []
 			for (let i = 0, len = WBM_URLs.length; i < len; i++) {
 				if (WBM_URLs[i].RerunChecked == false) {
-					let GroupOfSameTimeStamp = [WBM_URLs[i]]
+					let GroupOfSameTimestamp = [WBM_URLs[i]]
 					for (let i2 = i+1; i2 < len; i2++) {
 						if (WBM_URLs[i2].RerunChecked == false) {
 							if (WBM_URLs[i].UTC_DateTime == WBM_URLs[i2].UTC_DateTime) {
-								GroupOfSameTimeStamp.push(WBM_URLs[i2])
+								GroupOfSameTimestamp.push(WBM_URLs[i2])
 								WBM_URLs[i2].RerunChecked = true
 							}
 						}
 					}
-					ArrayOfUniqueTimestamp.push(GroupOfSameTimeStamp)
+					ArrayOfUniqueTimestamp.push(GroupOfSameTimestamp)
 				}
 			}
 			//Map it so it is easier to obtain the timestamp (reformats it)
-			ArrayOfUniqueTimestamp = ArrayOfUniqueTimestamp.map((GroupOfSameTimeStamp) => {
+			ArrayOfUniqueTimestamp = ArrayOfUniqueTimestamp.map((GroupOfSameTimestamp) => {
 				let Group = {
-					UTC_DateTime : GroupOfSameTimeStamp[0].UTC_DateTime,
-					ListOfURLs : GroupOfSameTimeStamp
+					UTC_DateTime : GroupOfSameTimestamp[0].UTC_DateTime,
+					UTC_DateTime_Rounded2Seconds_For_PositionDisplay : Math.floor(GroupOfSameTimestamp[0].UTC_DateTime / 1000) * 1000,
+					ListOfURLs : GroupOfSameTimestamp,
+					RerunCheckedTimeline : false //Same as before but this time, when a group is placed on a timeline, and the next second is processed, won't process ALL the groups since they're already placed.
 				}
 				return Group
 			});
@@ -92,12 +101,46 @@
 			ArrayOfUniqueTimestamp.sort((a, b) => {
 				return a.UTC_DateTime - b.UTC_DateTime
 			});
-			let EarliestTime = ArrayOfUniqueTimestamp[0].UTC_DateTime
-			let LatestTime = ArrayOfUniqueTimestamp.at(-1).UTC_DateTime
-			let a = 0
+			EarliestTime = ArrayOfUniqueTimestamp[0].UTC_DateTime_Rounded2Seconds_For_PositionDisplay
+			LatestTime = ArrayOfUniqueTimestamp.at(-1).UTC_DateTime_Rounded2Seconds_For_PositionDisplay
+			
+			Saved_WBM_URLs = ArrayOfUniqueTimestamp //Save it
 		} else {
 			ArrayOfUniqueTimestamp = Saved_WBM_URLs
 		}
 		IsInputDataChanged = false  //Set it back to false so that if the user updates the list again, and sort, does not rerun the code above.
+		let OutputString = ""
+		let StartingViewPosition = EarliestTime
+		let DisplaySize = (Math.floor(LatestTime-StartingViewPosition) / 1000)+1
+		if (DisplaySize > MaxDisplayFailsafe) {
+			DisplaySize = MaxDisplayFailsafe
+			alert("The time range between the earliest and latest time is too long, please enter a list of URLs having the range no longer than " + MaxDisplayFailsafe.toString(10) + " seconds apart. Now displaying the first " + MaxDisplayFailsafe.toString(10) + " seconds since the earliest URL.")
+		}
+		for (let i = 0; i < DisplaySize; i++) { //Loop every second intervals of time
+			let DateToCheck = (i*1000)+StartingViewPosition
+			OutputString += new Date(DateToCheck).toISOString().replace("T", " ").replace(".000Z", "") + ": "
+			for (let i2 = 0, len = ArrayOfUniqueTimestamp.length; i2 < len; i2++) { //Loop to find a group of URLs that matches the current second intervals
+				if (ArrayOfUniqueTimestamp[i2].RerunCheckedTimeline == false) {
+					if (ArrayOfUniqueTimestamp[i2].UTC_DateTime_Rounded2Seconds_For_PositionDisplay == DateToCheck) { //Dump every URLs in the group into the list
+						for (let i3 = 0, len = ArrayOfUniqueTimestamp[i2].ListOfURLs.length; i3 < len; i3++) {
+							OutputString += "<a href='" + escapeHTMLChars(ArrayOfUniqueTimestamp[i2].ListOfURLs[i3].WBM_URL) + "'>" + escapeHTMLChars(ArrayOfUniqueTimestamp[i2].ListOfURLs[i3].Site_URL) + "</a> "
+						}
+						ArrayOfUniqueTimestamp[i2].RerunCheckedTimeline = true
+					}
+				}
+			}
+			OutputString += "\n"
+		}
+		document.getElementById("Output").innerHTML = OutputString
+	}
+	
+	
+	function escapeHTMLChars(string) {
+		//Should the user's input contains "<", ">", and "&", prevent the innerHTML from treating these as HTML tags/escapes
+			string = string.replaceAll("&", "&amp;") //This must be done first, to avoid replacing already-replaced symbol's ampersand character.
+			string = string.replaceAll("<", "&lt;")
+			string = string.replaceAll(">", "&gt;")
+			string = string.replaceAll("\n", "<br>") //Again just in case if WBGS would ever use linebreaks in a cell.
+			return string
 	}
 </script>
