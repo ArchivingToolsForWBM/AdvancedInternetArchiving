@@ -24,9 +24,9 @@
 	</head>
 <body>
 
-<p>This HTML file takes a given list of WBM URLs and will display a timeline (second-interval, WBM's smallest unit of time) with several points in time where these URLs are saved at.</p>
+<p>This HTML file takes a given list of WBM URLs and will display as a timeline, of every second, WBM's smallest unit of time, showing breaks between URLs rather than omitting the times of no URLs saved.</p>
 
-<p>This is useful mainly for inspecting the performance of the WBGS processing.</p>
+<p>This is useful mainly for inspecting the performance of the WBGS processing, including showing how many URLs saved within a specific time frame.</p>
 
 <label><input type="checkbox" id="Option_AutoUpdate" onchange="AutoUpdate()" checked>Auto Update</label><br>
 <textarea id="URL_InputList" cols="100" rows="30" oninput="InputChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br><br>
@@ -36,7 +36,10 @@
 
 <script>
 	//Settings
-		const MaxDisplayFailsafe = 43200 //The cap on how many lines (each representing a second) displayed in the output. This is just in case you entered a list of WBM URLs with a massive range that would choke your browser
+		const MaxDisplayFailsafe = 43200
+			//^The cap on how many lines (each representing a second) displayed in the output.
+			// This is just in case you entered a list of WBM URLs with a massive range that
+			// would choke your browser.
 	//Stuff not to touch unless you know what you're doing.
 		var IsInputDataChanged = false
 		var Saved_WBM_URLs = []
