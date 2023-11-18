@@ -1,0 +1,103 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+			input { font-family: monospace;}
+			
+			label, input[type='checkbox'], input[type='radio'] {
+				cursor: pointer;
+			}
+		</style>
+	</head>
+<body>
+
+<p>This HTML file takes a given list of WBM URLs and will display a timeline with several points in time where these URLs are saved at</p>
+
+<p>This is useful mainly for inspecting the performance of the WBGS processing.</p>
+
+<label><input type="checkbox" id="Option_AutoUpdate" onchange="AutoUpdate()" checked>Auto Update</label><br>
+<textarea id="URL_InputList" cols="100" rows="30" oninput="InputChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br><br>
+<button onclick="MainCode()">Submit</button>
+
+<script>
+	var IsInputDataChanged = false
+	var Saved_WBM_URLs = []
+	
+	function InputChanged() {
+		IsInputDataChanged = true //If you edit the textarea, changed the "ignore fragment identifier", those are considered a change to the list.
+	}
+	function AutoUpdate() {
+		if (document.getElementById("Option_AutoUpdate").checked) {
+			MainCode()
+		}
+	}
+	function MainCode() {
+		let WBM_URLs = []
+		if (IsInputDataChanged) {
+			//Extract information from the URL
+			WBM_URLs = [...new Set(document.getElementById("URL_InputList").value.match(/http(s)?:\/\/web\.archive\.org\/web\/\d{14}[a-zA-Z0-9_]*\/[^\s]+/g))]
+			WBM_URLs = WBM_URLs.map((WBM_URL) => {
+				let Site_URL = WBM_URL.match(/(?<=(http(s)?:\/\/web\.archive\.org\/web\/\d{14}[a-zA-Z0-9_]*\/)).*$/)[0]
+				let Timestamp = WBM_URL.match(/(?<=(http(s)?:\/\/web\.archive\.org\/web\/))\d{14}(?=(.*$))/, "")[0].replace(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/, "$1-$2-$3T$4:$5:$6.000Z")
+				let TimeStamp_Date = new Date(Timestamp)
+				let UTC_DateTime = TimeStamp_Date.getTime()
+				
+				OutputObject = {
+					WBM_URL : WBM_URL,
+					Site_URL : Site_URL,
+					UTC_DateTime : UTC_DateTime,
+					RerunChecked : false //For finding 2+ URLs with the same timestamp, to optimize and perform action exactly once on the following block of code.
+				}
+				return OutputObject
+			});
+			//Following code finds URLs with the same timestamp, have a new array (GroupOfSameTimeStamp) with all of them having the same timestamp,
+			//then place that array in another array (ArrayOfUniqueTimestamp) so that we basically group the URLs together and count as one element.
+			let ArrayOfUniqueTimestamp = []
+			for (let i = 0, len = WBM_URLs.length; i < len; i++) {
+				if (WBM_URLs[i].RerunChecked == false) {
+					let GroupOfSameTimeStamp = [WBM_URLs[i]]
+					for (let i2 = i+1; i2 < len; i2++) {
+						if (WBM_URLs[i2].RerunChecked == false) {
+							if (WBM_URLs[i].UTC_DateTime == WBM_URLs[i2].UTC_DateTime) {
+								GroupOfSameTimeStamp.push(WBM_URLs[i2])
+								WBM_URLs[i2].RerunChecked = true
+							}
+						}
+					}
+					ArrayOfUniqueTimestamp.push(GroupOfSameTimeStamp)
+				}
+			}
+			//Map it so it is easier to obtain the timestamp (reformats it)
+			ArrayOfUniqueTimestamp = ArrayOfUniqueTimestamp.map((GroupOfSameTimeStamp) => {
+				let Group = {
+					UTC_DateTime : GroupOfSameTimeStamp[0].UTC_DateTime,
+					ListOfURLs : GroupOfSameTimeStamp
+				}
+				return Group
+			});
+			//Sort. This can be used to determine the earliest and latest timestamp
+			ArrayOfUniqueTimestamp.sort((a, b) => {
+				return a.UTC_DateTime - b.UTC_DateTime
+			});
+			let EarliestTime = ArrayOfUniqueTimestamp[0].UTC_DateTime
+			let LatestTime = ArrayOfUniqueTimestamp.at(-1).UTC_DateTime
+			let a = 0
+		} else {
+			ArrayOfUniqueTimestamp = Saved_WBM_URLs
+		}
+		IsInputDataChanged = false  //Set it back to false so that if the user updates the list again, and sort, does not rerun the code above.
+	}
+</script>
