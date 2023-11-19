@@ -10,6 +10,7 @@
 			table, th, td {
 			border: 1px solid white;
 			border-collapse: collapse;
+			padding: 0px;
 			}
 			
 			span.NoLineBreak {
@@ -20,6 +21,14 @@
 			label, input[type='checkbox'], input[type='radio'] {
 				cursor: pointer;
 			}
+			
+			.verticalLine {
+				border-left: 1px solid #ffffff;
+				height: 500px;
+				position: relative;
+				left: 20px;
+				top: 20px;
+			}
 		</style>
 	</head>
 <body>
@@ -28,14 +37,33 @@
 
 <p>This is useful mainly for inspecting the performance of the WBGS processing, including showing how many URLs saved within a specific time frame.</p>
 
+<p>The left output shows the timeline in detail, and the right shows a histogram minimized version of the left. Please note that the histogram, if you enter too much URLs, will show all the time range while
+the timeline on the left will show up to the maximum number of seconds. The maximum is there to prevent massive loop counts of each second, while the histogram only loops through every URL timestamp instead
+of the entire range of seconds.</p>
+
 <label><input type="checkbox" id="Option_AutoUpdate" onchange="AutoUpdate()" checked>Auto Update</label><br>
 <textarea id="URL_InputList" cols="100" rows="30" oninput="InputChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br><br>
 <button onclick="MainCode()">Submit</button>
 <hr>
 <kbd>Displaying <span id="DisplayedDateRangeMin">?</span> to <span id="DisplayedDateRangeMax">?</span></kbd>
-<div style="overflow: scroll; height: 600px;border: solid; resize: both;">
-	<table><tr><td><pre><span id="Output"></span></pre></td></tr></table>
-</div>
+<table>
+	<tr>
+		<th>Timeline (every second)</th>
+		<th>Histogram</th>
+	</tr>
+	<tr>
+		<td>
+			<div style="overflow: scroll; width: 700px; height: 600px; min-height: 550px; border: solid; resize: both;">
+				<table><tr><td><pre><span id="Output"></span></pre></td></tr></table>
+			</div>
+		</td>
+		<td style="width: 50px; vertical-align: top;">
+			<div style="position: relative" class="verticalLine" id="PercentageTimeline">
+				
+			</div>
+		</td>
+	</tr>
+</table>
 <script>
 	//Settings
 		const MaxDisplayFailsafe = 43200
@@ -62,6 +90,9 @@
 		if (IsInputDataChanged) {
 			//Extract information from the URL
 			let WBM_URLs = [...new Set(document.getElementById("URL_InputList").value.match(/http(s)?:\/\/web\.archive\.org\/web\/\d{14}[a-zA-Z0-9_]*\/[^\s]+/g))]
+			if (WBM_URLs == null) {
+				WBM_URLs = []
+			}
 			WBM_URLs = WBM_URLs.map((WBM_URL) => {
 				let Site_URL = WBM_URL.match(/(?<=(http(s)?:\/\/web\.archive\.org\/web\/\d{14}[a-zA-Z0-9_]*\/)).*$/)[0]
 				let Timestamp = WBM_URL.match(/(?<=(http(s)?:\/\/web\.archive\.org\/web\/))\d{14}(?=(.*$))/, "")[0].replace(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/, "$1-$2-$3T$4:$5:$6.000Z")
@@ -106,9 +137,25 @@
 			ArrayOfUniqueTimestamp.sort((a, b) => {
 				return a.UTC_DateTime - b.UTC_DateTime
 			});
-			EarliestTime = ArrayOfUniqueTimestamp[0].UTC_DateTime_Rounded2Seconds_For_PositionDisplay
-			LatestTime = ArrayOfUniqueTimestamp.at(-1).UTC_DateTime_Rounded2Seconds_For_PositionDisplay
-			
+			if (ArrayOfUniqueTimestamp.length != 0) {
+				//Min and max dates
+				EarliestTime = ArrayOfUniqueTimestamp[0].UTC_DateTime_Rounded2Seconds_For_PositionDisplay
+				LatestTime = ArrayOfUniqueTimestamp.at(-1).UTC_DateTime_Rounded2Seconds_For_PositionDisplay
+				
+				//Get feature scaling on the time range (this will obtain the percentage in between the earliest and latest time)
+				ArrayOfUniqueTimestamp = ArrayOfUniqueTimestamp.map((GroupOfSameTimestamp) => {
+					let TimePercentage = clamp((GroupOfSameTimestamp.UTC_DateTime - EarliestTime) * 100 / (LatestTime - EarliestTime), 0, 100)
+					GroupOfSameTimestamp_WithTimePercentage = { //For some reason, defineProperty errors out saying it is not a function, tried finding JS's built-in methods to attach a new attribute does not work.
+						UTC_DateTime : GroupOfSameTimestamp.UTC_DateTime,
+						UTC_DateTime_Rounded2Seconds_For_PositionDisplay : GroupOfSameTimestamp.UTC_DateTime_Rounded2Seconds_For_PositionDisplay,
+						ListOfURLs : GroupOfSameTimestamp.ListOfURLs,
+						RerunCheckedTimeline : GroupOfSameTimestamp.RerunCheckedTimeline,
+						TimePercentage : TimePercentage
+					}
+					
+					return GroupOfSameTimestamp_WithTimePercentage
+				});
+			}
 			Saved_WBM_URLs = ArrayOfUniqueTimestamp //Save it
 		} else {
 			ArrayOfUniqueTimestamp = Saved_WBM_URLs
@@ -118,11 +165,13 @@
 		let StartingViewPosition = EarliestTime
 		let DisplaySize = (Math.floor(LatestTime-StartingViewPosition) / 1000)+1
 		
+		//let jsonobject = JSON.stringify(ArrayOfUniqueTimestamp) //This is a test to make sure no circular reference occurs.
+		
 		document.getElementById("DisplayedDateRangeMin").innerHTML = new Date(StartingViewPosition).toISOString().replace("T", " ").replace(".000Z", "")
 		
 		if (DisplaySize > MaxDisplayFailsafe) {
 			DisplaySize = MaxDisplayFailsafe
-			alert("The time range between the earliest and latest time is too long, please enter a list of URLs having the range no longer than " + MaxDisplayFailsafe.toString(10) + " seconds apart. Now displaying the first " + MaxDisplayFailsafe.toString(10) + " seconds since the earliest URL.")
+			alert("The time range between the earliest and latest time is too long, please enter a list of URLs having the range no longer than " + MaxDisplayFailsafe.toString(10) + " seconds apart. Now displaying the first " + MaxDisplayFailsafe.toString(10) + " seconds since the earliest URL on the second-by-second timeline.")
 		}
 		
 		document.getElementById("DisplayedDateRangeMax").innerHTML = new Date((DisplaySize*1000)+StartingViewPosition-1).toISOString().replace("T", " ").replace(/\.\d{3}Z/, "")
@@ -145,6 +194,12 @@
 			OutputString += "\n"
 		}
 		document.getElementById("Output").innerHTML = OutputString
+		
+		let TimeLinePercentageText = ""
+		for (let i = 0, len = ArrayOfUniqueTimestamp.length; i < len; i++ ) {
+			TimeLinePercentageText += "<div style='border-top: 1px solid #ffffff; width: " + ArrayOfUniqueTimestamp[i].ListOfURLs.length*5 + "px; position: absolute; left: -1px; top: " + ArrayOfUniqueTimestamp[i].TimePercentage.toString(10) + "%;'></div>"
+		}
+		document.getElementById("PercentageTimeline").innerHTML = TimeLinePercentageText
 	}
 	
 	
@@ -155,5 +210,12 @@
 			string = string.replaceAll(">", "&gt;")
 			string = string.replaceAll("\n", "<br>") //Again just in case if WBGS would ever use linebreaks in a cell.
 			return string
+	}
+	function clamp(num, min, max) {
+		//Restrict a number within a specified range.
+			if (isNaN(num) == true) {
+				num = 0
+			}
+			return num <= min ? min : num >= max ? max : num;
 	}
 </script>
