@@ -32,11 +32,10 @@
 <textarea id="URL_InputList" cols="100" rows="30" oninput="InputChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br><br>
 <button onclick="MainCode()">Submit</button>
 <hr>
-<table>
-	<tr><th>Displaying <span id="DisplayedDateRangeMin">?</span> to <span id="DisplayedDateRangeMax">?</span></th></tr>
-	<tr><td><pre><span id="Output"></span></pre></td></tr>
-</table>
-
+<kbd>Displaying <span id="DisplayedDateRangeMin">?</span> to <span id="DisplayedDateRangeMax">?</span></kbd>
+<div style="overflow: scroll; max-height: 600px;border: solid">
+	<table><tr><td><pre><span id="Output"></span></pre></td></tr></table>
+</div>
 <script>
 	//Settings
 		const MaxDisplayFailsafe = 43200
