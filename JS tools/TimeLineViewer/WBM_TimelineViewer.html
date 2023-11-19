@@ -175,23 +175,27 @@ of the entire range of seconds.</p>
 		}
 		
 		document.getElementById("DisplayedDateRangeMax").innerHTML = new Date((DisplaySize*1000)+StartingViewPosition-1).toISOString().replace("T", " ").replace(/\.\d{3}Z/, "")
-		
-		for (let i = 0; i < DisplaySize; i++) { //Loop every second intervals of time
-			let DateToCheck = (i*1000)+StartingViewPosition
-			OutputString += new Date(DateToCheck).toISOString().replace("T", " ").replace(".000Z", "") + ": "
-			for (let i2 = 0, len = ArrayOfUniqueTimestamp.length; i2 < len; i2++) { //Loop to find a group of URLs that matches the current second intervals
-				if (ArrayOfUniqueTimestamp[i2].RerunCheckedTimeline == false) { //When a group is already inserted into the list, skip over.
-					if (ArrayOfUniqueTimestamp[i2].UTC_DateTime_Rounded2Seconds_For_PositionDisplay == DateToCheck) { //Dump every URLs in the group into the list
-						OutputString += "(" + ArrayOfUniqueTimestamp[i2].ListOfURLs.length + ") "
-						for (let i3 = 0, len = ArrayOfUniqueTimestamp[i2].ListOfURLs.length; i3 < len; i3++) {
-							//thanks https://stackoverflow.com/questions/15551779/open-link-in-new-tab-or-window
-							OutputString += "<a target='_blank' rel='noopener noreferrer' href='" + escapeHTMLChars(ArrayOfUniqueTimestamp[i2].ListOfURLs[i3].WBM_URL) + "'>" + escapeHTMLChars(ArrayOfUniqueTimestamp[i2].ListOfURLs[i3].Site_URL) + "</a> "
+		if (ArrayOfUniqueTimestamp.length != 0) {
+			for (let i = 0; i < DisplaySize; i++) { //Loop every second intervals of time
+				let DateToCheck = (i*1000)+StartingViewPosition
+				OutputString += new Date(DateToCheck).toISOString().replace("T", " ").replace(".000Z", "") + ": "
+				for (let i2 = 0, len = ArrayOfUniqueTimestamp.length; i2 < len; i2++) { //Loop to find a group of URLs that matches the current second intervals
+					if (ArrayOfUniqueTimestamp[i2].RerunCheckedTimeline == false) { //When a group is already inserted into the list, skip over.
+						if (ArrayOfUniqueTimestamp[i2].UTC_DateTime_Rounded2Seconds_For_PositionDisplay == DateToCheck) { //Dump every URLs in the group into the list
+							OutputString += "(" + ArrayOfUniqueTimestamp[i2].ListOfURLs.length + ") "
+							for (let i3 = 0, len = ArrayOfUniqueTimestamp[i2].ListOfURLs.length; i3 < len; i3++) {
+								//thanks https://stackoverflow.com/questions/15551779/open-link-in-new-tab-or-window
+								OutputString += "<a target='_blank' rel='noopener noreferrer' href='" + escapeHTMLChars(ArrayOfUniqueTimestamp[i2].ListOfURLs[i3].WBM_URL) + "'>" + escapeHTMLChars(ArrayOfUniqueTimestamp[i2].ListOfURLs[i3].Site_URL) + "</a> "
+							}
+							ArrayOfUniqueTimestamp[i2].RerunCheckedTimeline = true
 						}
-						ArrayOfUniqueTimestamp[i2].RerunCheckedTimeline = true
 					}
 				}
+				OutputString += "\n"
 			}
-			OutputString += "\n"
+		} else {
+			document.getElementById("DisplayedDateRangeMin").innerHTML = "?"
+			document.getElementById("DisplayedDateRangeMax").innerHTML = "?"
 		}
 		document.getElementById("Output").innerHTML = OutputString
 		
