@@ -53,7 +53,9 @@ Sort:
 <kbd><span id="Output_URL_Count">0</span> URLs generated.</kbd><br>
 <textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="HTML_OutputString" cols="100" rows="30" readonly></textarea><br>
 <button onclick="setClipboard(document.getElementById('HTML_OutputString').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br><br>
+<div style="overflow: scroll; height: 600px;border: solid; resize: both;">
 <span id="URL_OutputTable"></span>
+</div>
 <script>
 	var SavedOutput = []
 	var InputChanged = false

@@ -135,7 +135,8 @@
 					if (ArrayOfUniqueTimestamp[i2].UTC_DateTime_Rounded2Seconds_For_PositionDisplay == DateToCheck) { //Dump every URLs in the group into the list
 						OutputString += "(" + ArrayOfUniqueTimestamp[i2].ListOfURLs.length + ") "
 						for (let i3 = 0, len = ArrayOfUniqueTimestamp[i2].ListOfURLs.length; i3 < len; i3++) {
-							OutputString += "<a href='" + escapeHTMLChars(ArrayOfUniqueTimestamp[i2].ListOfURLs[i3].WBM_URL) + "'>" + escapeHTMLChars(ArrayOfUniqueTimestamp[i2].ListOfURLs[i3].Site_URL) + "</a> "
+							//thanks https://stackoverflow.com/questions/15551779/open-link-in-new-tab-or-window
+							OutputString += "<a target='_blank' rel='noopener noreferrer' href='" + escapeHTMLChars(ArrayOfUniqueTimestamp[i2].ListOfURLs[i3].WBM_URL) + "'>" + escapeHTMLChars(ArrayOfUniqueTimestamp[i2].ListOfURLs[i3].Site_URL) + "</a> "
 						}
 						ArrayOfUniqueTimestamp[i2].RerunCheckedTimeline = true
 					}
