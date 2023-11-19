@@ -33,7 +33,7 @@
 <button onclick="MainCode()">Submit</button>
 <hr>
 <kbd>Displaying <span id="DisplayedDateRangeMin">?</span> to <span id="DisplayedDateRangeMax">?</span></kbd>
-<div style="overflow: scroll; max-height: 600px;border: solid">
+<div style="overflow: scroll; height: 600px;border: solid; resize: both;">
 	<table><tr><td><pre><span id="Output"></span></pre></td></tr></table>
 </div>
 <script>
@@ -131,8 +131,9 @@
 			let DateToCheck = (i*1000)+StartingViewPosition
 			OutputString += new Date(DateToCheck).toISOString().replace("T", " ").replace(".000Z", "") + ": "
 			for (let i2 = 0, len = ArrayOfUniqueTimestamp.length; i2 < len; i2++) { //Loop to find a group of URLs that matches the current second intervals
-				if (ArrayOfUniqueTimestamp[i2].RerunCheckedTimeline == false) {
+				if (ArrayOfUniqueTimestamp[i2].RerunCheckedTimeline == false) { //When a group is already inserted into the list, skip over.
 					if (ArrayOfUniqueTimestamp[i2].UTC_DateTime_Rounded2Seconds_For_PositionDisplay == DateToCheck) { //Dump every URLs in the group into the list
+						OutputString += "(" + ArrayOfUniqueTimestamp[i2].ListOfURLs.length + ") "
 						for (let i3 = 0, len = ArrayOfUniqueTimestamp[i2].ListOfURLs.length; i3 < len; i3++) {
 							OutputString += "<a href='" + escapeHTMLChars(ArrayOfUniqueTimestamp[i2].ListOfURLs[i3].WBM_URL) + "'>" + escapeHTMLChars(ArrayOfUniqueTimestamp[i2].ListOfURLs[i3].Site_URL) + "</a> "
 						}
