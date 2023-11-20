@@ -142,7 +142,8 @@ of the entire range of seconds.</p>
 				EarliestTime = ArrayOfUniqueTimestamp[0].UTC_DateTime_Rounded2Seconds_For_PositionDisplay
 				LatestTime = ArrayOfUniqueTimestamp.at(-1).UTC_DateTime_Rounded2Seconds_For_PositionDisplay
 				
-				//Get feature scaling on the time range (this will obtain the percentage in between the earliest and latest time)
+				//Get min-max feature scaling (https://en.wikipedia.org/wiki/Feature_scaling#Rescaling_(min-max_normalization) ) on the time range
+				//(this will obtain the percentage in between the earliest and latest time)
 				ArrayOfUniqueTimestamp = ArrayOfUniqueTimestamp.map((GroupOfSameTimestamp) => {
 					let TimePercentage = clamp((GroupOfSameTimestamp.UTC_DateTime - EarliestTime) * 100 / (LatestTime - EarliestTime), 0, 100)
 					GroupOfSameTimestamp_WithTimePercentage = { //For some reason, defineProperty errors out saying it is not a function, tried finding JS's built-in methods to attach a new attribute does not work.
