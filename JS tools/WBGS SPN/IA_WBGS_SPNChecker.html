@@ -36,10 +36,13 @@ Note: this tool only judges based on the output data of the table, not the actua
 	</li><br>
 	<li>Open the spreadsheet, and have your list of URLs all on column A (the first column) where each row contains 1 URL, with the first URL on the first row. </li><br>
 	<li>Before you start a process and any subsequent process, make sure the spreadsheet is saved! This is especially for those with weak internet connection.</li><br>
-	<li>On Wayback Gsheets, make sure you are logged in (both the IA and google), and on the main menu, select &ldquo;Archive URLs&rdquo;, paste your URL of the google sheets containing the list of URLs. and press &ldquo;Archive&rdquo;.</li><br>
+	<li>
+		On Wayback Gsheets, make sure you are logged in (both the IA and google), and on the main menu, select &ldquo;Archive URLs&rdquo;, paste your URL of the google sheets containing the list of URLs, check the &ldquo;<kbd>Save results in a new Sheet.</kbd>&rdquo; option and press &ldquo;Archive&rdquo;.<br><br>
+		In case you keep forgetting to check the option to have the results in a new sheet, I made a rather simple greasemonkey script in <kbd>AdvancedInternetArchiving/GreasemonkeyScripts/WBGS</kbd>. All it does is automatically check the checkbox of that option when being on the start process page.
+	</li><br>
 	<li>If the process successfully starts, you'll get an email titled &ldquo;Wayback gsheets capture tracking&rdquo; about that process.</li><br>
 	<li>
-		When URLs get a result (it updates every N URLs processed as it processes), the spreadsheet should be in this format:
+		In the newly created sheet (created by the WBGS when the process starts traversing URLs), when URLs get a result (it updates every N URLs processed as it processes), the spreadsheet should be in this format:
 <table><tr><td><pre>SentURL1	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	FirstArchive
 SentURL2	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	FirstArchive
 SentURL3	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	FirstArchive
@@ -50,11 +53,23 @@ SentURL3	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	Fir
 	<li>
 		This HTML file will now display various stuff (at the bottom), mainly to filter to only show URLs that probably haven't saved. By default, it will get only URLs that are &ldquo;potentially not saved properly&rdquo;: errors, redirects, or strange things like column D being blank, etc..
 		From this point on, you can re-attempt to save these URLs again. An easy-to-copy URLs is provided in an output textarea.<br><br>
-		<ul><li>
-			If you happen to run into issues with the process (queued mid-process, stuck on last few URLs, and/or you aborting the process), I strongly recommend starting a new google sheet and use that instead because there is a tendency that a problematic process may run again
-			after a queue, and if you have edited the sheet while there's a process on it, could overwrite the save results.
-		</ul></li>
+		<ul>
+			<li>
+				If you happen to run into issues with the process (queued mid-process, stuck on last few URLs, and/or you aborting the process), I strongly recommend starting a new google sheet and use that instead because there is a tendency that a problematic process may run again
+				after a queue, and if you have edited the sheet while there's a process on it, could overwrite the save results.
+			</li><br>
+			<li>
+				The reason why I instructed you to have &ldquo;<kbd>Save results in a new Sheet.</kbd>&rdquo; checked is because of a bug I encountered that a process may duplicate, and overwrite any save results by the second and subsequent duplicate processes. This bug usually happens some
+				time after the process have started after it initally-queues, or finished. When this happens, you get 2+ identical emails titled &ldquo;<kbd>Wayback gsheets capture tracking</kbd>&rdquo; sharing the same tracking URLs linked, and the home page of WBGS after logging
+				in also showing duplicate processes. When having the results in a new sheet and the process duplicates, they won't overwrite each other since each process will create its own sheet.
+			</li>
+		</ul>
 	</li><br>
+	<li>
+		If you run into process duplicating itself and both are done, I would rather have you filter only URLs flagged as &ldquo;success&rdquo; on all save result sheets, have them all formatted as <kbd>Display just entered URLs in the plaintext</kbd>, copy that, open the list cleaner tool (provided here)
+		paste them into the blacklist, and copy all the URLs you entered and paste them into the first textarea (make sure no tabs and one URL per line on both textareas). This will remove any URLs that have been successfully saved at least once of all the processes including duplicates. Then re-attempt
+		saving the URLs output from the list cleaner.
+	</li>
 </ol>
 <p>I strongly recommend checking the process and emails to see any anomalies, this include anything strange happening on the process activity log, using the browser inspect element for any http error statuses on the WBGS pages, etc. If you do find one, make sure you contact the IA about it.</p>
 
