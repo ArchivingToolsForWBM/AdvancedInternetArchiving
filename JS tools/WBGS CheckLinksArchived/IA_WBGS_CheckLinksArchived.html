@@ -97,7 +97,9 @@ Sort:<br>
 </table><br>
 <textarea readonly id="Output_List" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
 <button onclick="setClipboard(document.getElementById('Output_List').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br>
-<span id="Output_Table"></span>
+<div style="overflow: scroll; height: 600px;border: solid 1px; resize: both;">
+	<span id="Output_Table"></span>
+</div>
 </body>
 <script>
 	var IsListOrModeChanged = false

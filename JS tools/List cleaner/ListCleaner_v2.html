@@ -52,8 +52,7 @@ Sort:
 </ul>
 <button onclick="MainFunction()">Submit</button><button onclick="Reset()">Reset</button>
 <hr>
-<textarea id="TextOutput"cols="100" rows="30" readonly style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
-<button onclick="setClipboard(document.getElementById('TextOutput').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
+
 <table>
 <tr><th colspan="2">Statistics</th></tr>
 <tr><td><kbd>Total number of lines:</kbd></td><td><kbd><span id="HTML_LineCount">0</span></kbd></td></tr>
@@ -68,7 +67,10 @@ Sort:
 <tr><td><kbd>Total number of items that got blacklisted (ignoring duplicates):</kbd></td><td id="HTML_BarGraph_BlacklistCount"><kbd><span id="HTML_BlacklistCount">0</span></td></tr>
 <tr><td><kbd>Total number of items that got blacklisted and are duplicates:</kbd></td><td id="HTML_BarGraph_DuplicateBlacklistCount"><kbd><span id="HTML_DuplicateBlacklistCount">0</span></td></tr>
 </table><br>
-<div style="overflow: scroll; height: 600px;border: solid; resize: both;">
+<textarea id="TextOutput"cols="100" rows="30" readonly style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
+<button onclick="setClipboard(document.getElementById('TextOutput').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br>
+
+<div style="overflow: scroll; height: 600px;border: solid 1px; resize: both;">
 <span id="OutputTable"></span>
 </div>
 </body>
