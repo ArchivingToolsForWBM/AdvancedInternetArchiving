@@ -13,12 +13,10 @@
 	// rather a dynamic page (https://en.wikipedia.org/wiki/Dynamic_web_page ) similar to being on twitter and clicking on links
 	// to another twitter page, which result in this JS code not executing until you refresh the page.
 	
-	let hasClicked = false
 	
 	function Code() {
 		if (window.location.href == "https://archive.org/services/wayback-gsheets/check?method=archive" && document.querySelectorAll('input[type=checkbox]')[2].checked == false) {
 			document.querySelectorAll('input[type=checkbox]')[2].click()
-			hasClicked = true
 		}
 	}
 })();
