@@ -17,6 +17,9 @@
 	function Code() {
 		if (window.location.href == "https://archive.org/services/wayback-gsheets/check?method=archive" && document.querySelectorAll('input[type=checkbox]')[2].checked == false) {
 			document.querySelectorAll('input[type=checkbox]')[2].click()
+			//^Had to use .click() instead of just directly setting the checked state to true bc if user interacts with other inputs, it will uncheck it.
+			// Probably because of this: https://stackoverflow.com/questions/30488218/checkbox-onchange-event-not-firing that JS setting checked to true
+			// does not fire the onchange event because it is changing the attribute.
 		}
 	}
 })();
