@@ -160,7 +160,8 @@ Misc:
 	//List of previously used nitter instances (as a reference to know which one is archivable), from most recent to oldest
 	//https://nitter.ktachibana.party
 	//https://nitter.privacydev.net
-	const Nitter_Domain = "https://nitter.ktachibana.party" //URL of nitter instance. Must:
+	//https://nitter.moomoo.me
+	const Nitter_Domain = "https://nitter.moomoo.me" //URL of nitter instance. Must:
 	//-Have a protocol ("http://" or "https://", latter recommended)
 	//-Have a hostname ("nitter.net")
 	//-No slash at the end (".net/" is invalid, use ".net")
@@ -178,6 +179,10 @@ Misc:
 	//And I am totally against making intermediary services who acts as proxy (a mere pass-through) liable the same way as sites that actually do host
 	//content. It's like making browser companies (google, firefox, etc.) liable just because the user using it to download illegal material and
 	//expecting enforcement at the browser level, assuming that these people expect nitter to block out flagged content posted on twitter.
+	//
+	//2023-12-10 note: I noticed that twitter's media section including on the search results now only display a grid of images instead of tweets
+	//until the image is clicked, and that it only displays the first image of a tweet when there are multiple (including if its loaded in the HTML)
+	//Therefore if you try to extract URLs, you'll only get the URL of the first image and the tweet.
 	
 	const Twitter_NotAUserNameList = [
 		"TOS",
