@@ -171,7 +171,17 @@ Sort:
 			{
 				Type:"normal",
 				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance) + "\\/((?!(about|logo\\.png|search|pic))[a-zA-Z0-9\-_]+).*$"),
-				ReplaceWith:[Nitter_Instance + "$1", Nitter_Instance + "$1/with_replies", Nitter_Instance + "$1/media"]
+				ReplaceWith:[Nitter_Instance + "/$1", Nitter_Instance + "/$1/with_replies", Nitter_Instance + "/$1/media"]
+			},
+			{
+				Type:"normal",
+				FindWhat:RegExp("^(" + NitterInstance_StringToRegex(Nitter_Instance) + "\\/((?!(about|logo\\.png|search|pic))[a-zA-Z0-9\-_]+)\\/status\\/\\d+).*$"),
+				ReplaceWith:["$1"]
+			},
+			//Rid out links from nitter linking to twitter and https://liberapay.com/zedeus
+			{
+				Type:"blacklisted",
+				FindWhat:/^(https?:\/\/twitter\.com\/[a-zA-Z0-9\-_]+\/(media|with_replies)|https:\/\/liberapay\.com\/zedeus\/?$)/
 			}
 		]
 	function NitterInstance_StringToRegex(StringInput) {
