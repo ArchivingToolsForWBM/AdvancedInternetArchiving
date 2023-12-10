@@ -43,7 +43,7 @@ Filter:
 	<li><label><input type="checkbox" class="CheckboxFilters" checked onchange="Auto_update()" id="FilterSetting_other">other (URL not matching any of the listed patterns)</label></li>
 </ul>
 Keynames to filter:<button onclick="ChangeFilterSettings('CheckboxFiltersKeyName', 1); Auto_update()">Check all</button><button onclick="ChangeFilterSettings('CheckboxFiltersKeyName', 0); Auto_update()">Uncheck all</button><button onclick="ChangeFilterSettings('CheckboxFiltersKeyName', 2); Auto_update()">Invert</button>
-<div style="overflow: auto; height: 300px; width: 250px; border: solid; resize: both; white-space: nowrap;">
+<div style="overflow: auto; height: 300px; width: 250px; border: solid 1px; resize: both; white-space: nowrap;">
 	<span id="ToggleableCustomFilters"></span>
 </div>
 Sort:
@@ -190,7 +190,7 @@ Sort:
 			},
 			{
 				Type:"normal",
-				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance) + "\\/((?!(about|logo\\.png|search|pic))[a-zA-Z0-9\-_]+).*$"),
+				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance) + "\\/((?!(about|logo\\.png|search|settings|pic))[a-zA-Z0-9\\-_]+).*$"),
 				ReplaceWith:[Nitter_Instance + "/$1", Nitter_Instance + "/$1/with_replies", Nitter_Instance + "/$1/media"]
 			},
 			{
@@ -202,6 +202,10 @@ Sort:
 			{
 				Type:"blacklisted",
 				FindWhat:/^(https?:\/\/twitter\.com\/[a-zA-Z0-9\-_]+\/(media|with_replies)|https:\/\/liberapay\.com\/zedeus\/?$)/
+			},
+			{
+				Type:"blacklisted",
+				FindWhat:/^https:\/\/twitter\.com\/search.*$/
 			}
 		]
 	window.onload = LoadCustomToggableFilters
