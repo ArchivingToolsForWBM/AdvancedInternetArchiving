@@ -42,6 +42,10 @@ Filter:
 	<li><label><input type="checkbox" class="CheckboxFilters" onchange="Auto_update()" id="FilterSetting_blacklisted">Blacklisted (remove unwanted URLs such as ads, various google URLs, etc.)</label></li>
 	<li><label><input type="checkbox" class="CheckboxFilters" checked onchange="Auto_update()" id="FilterSetting_other">other (URL not matching any of the listed patterns)</label></li>
 </ul>
+Keynames to filter:<button onclick="ChangeFilterSettings('CheckboxFiltersKeyName', 1); Auto_update()">Check all</button><button onclick="ChangeFilterSettings('CheckboxFiltersKeyName', 0); Auto_update()">Uncheck all</button><button onclick="ChangeFilterSettings('CheckboxFiltersKeyName', 2); Auto_update()">Invert</button>
+<div style="overflow: auto; height: 300px; width: 250px; border: solid; resize: both; white-space: nowrap;">
+	<span id="ToggleableCustomFilters"></span>
+</div>
 Sort:
 <ul>
 	<li><label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_None">None (be in the same order as the input, and also based on the converters)</label></li>
@@ -107,7 +111,7 @@ Sort:
 	//  let me know if you found pages that uses negative numbers (I never seen websites ever use negative page numbers), or fork this with the adoption of negative values.
 	//-When "Type" is "blacklisted", it can be filtered (filter setting). Only "FindWhat" is needed, anything that matches this regex will be labeled as blacklisted. Please note
 	// if a URL matches on matches multiple listed objects with at least one of them not being blacklisted, it will be included.
-	//-An optional "KeyName" (string) can be used for sorting purposes if you find special use case out of it (especially if you are searching for non-archivable pages but
+	//-An optional "KeyName" (string) can be used for sorting and filtering purposes if you find special use case out of it (especially if you are searching for non-archivable pages but
 	// want to find an alternative URL is savable). By default (and if omitted) will be a blank string ("").
 	//
 	//See quick reference here: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet
@@ -115,7 +119,7 @@ Sort:
 		const ListOfConverters = [
 			{
 				//Example 1: Twitter image URLs
-				//Example test: https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg
+				//https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig (converts modern to modern, so if you entered a modern, can be filtered)
 				Type:"normal",
 				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+\?format=[a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
 				ReplaceWith:["https://pbs.twimg.com/media/$1&name=orig", "https://pbs.twimg.com/media/$1&name=thumb"],
@@ -123,11 +127,27 @@ Sort:
 				KeyName:"Twitter_ImageURL_Modern"
 			},
 			{
-				//Example 1.1: Twitter image URLs (older format, some forum or blog sites may link to an image using an older image URL format)
-				//Example test: https://pbs.twimg.com/media/CBAoaU1UwAIUPIc.jpg
+				//Example 1.1 Same as above but also converts old to modern (https://pbs.twimg.com/media/CBAoaU1UwAIUPIc.jpg -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig)
+				Type:"normal",
+				FindWhat:/https:\/\/pbs\.twimg.com\/media\/([^\s\?]+)\.\.([a-zA-Z0-9]+)/,
+				ReplaceWith:["https://pbs.twimg.com/media/$1.$2:orig", "https://pbs.twimg.com/media/$1.$2:thumb"],
+				KeyName:"Twitter_ImageURL_Modern"
+			},
+			{
+				//Example 1.2: Opposite of example 1
+				//Example test: https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc.jpg:orig (converts old to old, so if you entered a modern, can be filtered)
 				Type:"normal",
 				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+)\.([a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
-				ReplaceWith:["https://pbs.twimg.com/media/$1?format=$2&name=orig", "https://pbs.twimg.com/media/$1?format=$2&name=thumb", "https://pbs.twimg.com/media/$1.$2:orig"],
+				ReplaceWith:["https://pbs.twimg.com/media/$1.$2:orig", "https://pbs.twimg.com/media/$1.$2:thumb"],
+				IncludeOriginal:false,
+				KeyName:"Twitter_ImageURL_Old"
+			},
+			{
+				//Example 1.3: Opposite of example 1.1, converts modern to old
+				//Example test: https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc.jpg:orig
+				Type:"normal",
+				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+)\?format=([a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
+				ReplaceWith:["https://pbs.twimg.com/media/$1.$2:orig", "https://pbs.twimg.com/media/$1.$2:thumb"],
 				IncludeOriginal:false,
 				KeyName:"Twitter_ImageURL_Old"
 			},
@@ -184,6 +204,26 @@ Sort:
 				FindWhat:/^(https?:\/\/twitter\.com\/[a-zA-Z0-9\-_]+\/(media|with_replies)|https:\/\/liberapay\.com\/zedeus\/?$)/
 			}
 		]
+	window.onload = LoadCustomToggableFilters
+	function LoadCustomToggableFilters() {
+		let ListOfKeyNames = new Set()
+		ListOfConverters.forEach((ArrayElement) => {
+			if (ArrayElement.hasOwnProperty("KeyName")) {
+				ListOfKeyNames.add(ArrayElement.KeyName)
+			}
+		});
+		ListOfKeyNames = Array.from(ListOfKeyNames)
+		ListOfKeyNames.sort()
+		
+		let HTMLContent = ""
+		HTMLContent += "<ul>"
+		ListOfKeyNames.forEach((ArrayElement) => {
+			HTMLContent += "<li><label><input type='checkbox' checked onchange='Auto_update()' class='CheckboxFiltersKeyName' id='FilterSetting_" + escapeHTMLChars(ArrayElement) + "'><kbd>" + escapeHTMLChars(ArrayElement) + "</kbd></label></li>"
+		});
+		HTMLContent += "</ul>"
+		document.getElementById("ToggleableCustomFilters").innerHTML = HTMLContent
+	}
+	
 	function NitterInstance_StringToRegex(StringInput) {
 		return StringInput.replace("/", "\\/").replace(".", "\\.")
 	}
@@ -325,7 +365,14 @@ Sort:
 				//Load
 				OutputURLObjects = SavedOutput
 			}
-			let Filtered_OutputURLObjects = OutputURLObjects.filter(ArrayElement => {return document.getElementById("FilterSetting_" + ArrayElement.IdentifiedType).checked})
+			let Filtered_OutputURLObjects = OutputURLObjects.filter((ArrayElement) => {
+				let IsIdentifiedTypeAllowed = document.getElementById("FilterSetting_" + ArrayElement.IdentifiedType).checked
+				let IsKeynameAllowed = true
+				if (document.getElementById("FilterSetting_" + ArrayElement.KeyName) != null) {
+					IsKeynameAllowed = document.getElementById("FilterSetting_" + ArrayElement.KeyName).checked
+				}
+				return (IsIdentifiedTypeAllowed && IsKeynameAllowed)
+			})
 			
 			document.getElementById("Output_URL_Count").innerHTML = BigInt(Filtered_OutputURLObjects.length).toString(10)
 			
