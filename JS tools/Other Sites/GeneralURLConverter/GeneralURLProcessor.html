@@ -117,40 +117,40 @@ Sort:
 	//See quick reference here: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet
 	
 		const ListOfConverters = [
-			{
-				//Example 1: Twitter image URLs
-				//https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig (converts modern to modern, so if you entered a modern, can be filtered)
-				Type:"normal",
-				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+\?format=[a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
-				ReplaceWith:["https://pbs.twimg.com/media/$1&name=orig", "https://pbs.twimg.com/media/$1&name=thumb"],
-				IncludeOriginal:false,
-				KeyName:"Twitter_ImageURL_Modern"
-			},
-			{
-				//Example 1.1 Same as above but also converts old to modern (https://pbs.twimg.com/media/CBAoaU1UwAIUPIc.jpg -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig)
-				Type:"normal",
-				FindWhat:/https:\/\/pbs\.twimg.com\/media\/([^\s\?]+)\.\.([a-zA-Z0-9]+)/,
-				ReplaceWith:["https://pbs.twimg.com/media/$1.$2:orig", "https://pbs.twimg.com/media/$1.$2:thumb"],
-				KeyName:"Twitter_ImageURL_Modern"
-			},
-			{
-				//Example 1.2: Opposite of example 1
-				//Example test: https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc.jpg:orig (converts old to old, so if you entered a modern, can be filtered)
-				Type:"normal",
-				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+)\.([a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
-				ReplaceWith:["https://pbs.twimg.com/media/$1.$2:orig", "https://pbs.twimg.com/media/$1.$2:thumb"],
-				IncludeOriginal:false,
-				KeyName:"Twitter_ImageURL_Old"
-			},
-			{
-				//Example 1.3: Opposite of example 1.1, converts modern to old
-				//Example test: https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc.jpg:orig
-				Type:"normal",
-				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+)\?format=([a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
-				ReplaceWith:["https://pbs.twimg.com/media/$1.$2:orig", "https://pbs.twimg.com/media/$1.$2:thumb"],
-				IncludeOriginal:false,
-				KeyName:"Twitter_ImageURL_Old"
-			},
+//			{
+//				//Example 1: Twitter image URLs
+//				//https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig (converts modern to modern, so if you entered a modern, can be filtered)
+//				Type:"normal",
+//				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+\?format=[a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
+//				ReplaceWith:["https://pbs.twimg.com/media/$1&name=orig", "https://pbs.twimg.com/media/$1&name=thumb"],
+//				IncludeOriginal:false,
+//				KeyName:"Twitter_ImageURL_Modern"
+//			},
+//			{
+//				//Example 1.1 Same as above but also converts old to modern (https://pbs.twimg.com/media/CBAoaU1UwAIUPIc.jpg -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig)
+//				Type:"normal",
+//				FindWhat:/https:\/\/pbs\.twimg.com\/media\/([^\s\?]+)\.\.([a-zA-Z0-9]+)/,
+//				ReplaceWith:["https://pbs.twimg.com/media/$1.$2:orig", "https://pbs.twimg.com/media/$1.$2:thumb"],
+//				KeyName:"Twitter_ImageURL_Modern"
+//			},
+//			{
+//				//Example 1.2: Opposite of example 1
+//				//Example test: https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc.jpg:orig (converts old to old, so if you entered a modern, can be filtered)
+//				Type:"normal",
+//				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+)\.([a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
+//				ReplaceWith:["https://pbs.twimg.com/media/$1.$2:orig", "https://pbs.twimg.com/media/$1.$2:thumb"],
+//				IncludeOriginal:false,
+//				KeyName:"Twitter_ImageURL_Old"
+//			},
+//			{
+//				//Example 1.3: Opposite of example 1.1, converts modern to old
+//				//Example test: https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc.jpg:orig
+//				Type:"normal",
+//				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+)\?format=([a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
+//				ReplaceWith:["https://pbs.twimg.com/media/$1.$2:orig", "https://pbs.twimg.com/media/$1.$2:thumb"],
+//				IncludeOriginal:false,
+//				KeyName:"Twitter_ImageURL_Old"
+//			},
 			{
 				//Example 2: Pagination test (made-up example)
 				Type:"pagination",
@@ -176,7 +176,9 @@ Sort:
 				IncludeOriginal:true
 			},
 			//Nitter pages
-			//https://nitter.privacydev.net/pic/media%2FFtWxZRraYAMrvmM.jpg%3Fname%3Dsmall%26format%3Dwebp
+			//https://nitter.privacydev.net/pic/media%2FFtWxZRraYAMrvmM.jpg%3Fname%3Dsmall%26format%3Dwebp <- downsized image
+			//https://nitter.moomoo.me/pic/orig/media%2FFtWxZRraYAMrvmM.jpg
+			//https://pbs.twimg.com/media/FtWxZRraYAMrvmM?format=jpg&name=orig
 			//https://nitter.ktachibana.party
 			{
 				Type:"blacklisted",
@@ -195,10 +197,26 @@ Sort:
 			},
 			{
 				Type:"normal",
-				FindWhat:RegExp("^(" + NitterInstance_StringToRegex(Nitter_Instance) + "\\/((?!(about|logo\\.png|search|pic))[a-zA-Z0-9\-_]+)\\/status\\/\\d+).*$"),
+				FindWhat:RegExp("^(" + NitterInstance_StringToRegex(Nitter_Instance) + "\\/((?!(about|logo\\.png|search|pic))[a-zA-Z0-9\\-_]+)\\/status\\/\\d+).*$"),
 				ReplaceWith:["$1"]
 			},
-			//Rid out links from nitter linking to twitter and https://liberapay.com/zedeus
+			{
+				Type:"normal",
+				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance) + "\\/pic\\/orig\\/media%2F([a-zA-Z0-9\\-_]+)\\.([a-zA-Z0-9]+)$"),
+				ReplaceWith:["https://pbs.twimg.com/media/$1?format=$2&name=orig"],
+				IncludeOriginal:false,
+				KeyName:"Twitter_ImgURL"
+			},
+			{
+				//Yes a duplicate of above, so I have the nitter and twitter versions, and each with a different KeyName. Doing this just in case of a pesky rate limit
+				//and that twitter image URLs seems to guarantee to always save unlike saving tweet pages (make sure nitter doesn't base-64 encode its media URLs though).
+				Type:"normal",
+				FindWhat:RegExp("(" + NitterInstance_StringToRegex(Nitter_Instance) + "\\/pic\\/orig\\/media%2F[a-zA-Z0-9\\-_]+\\.[a-zA-Z0-9]+)$"),
+				ReplaceWith:["$1"],
+				IncludeOriginal:false, //I need this to be false so it doesn't potentially create the same URL as the previous converter/loop's output with a different keyname.
+				KeyName:"Twitter_Nitter_ImgURL"
+			},
+			//Rid out links from nitter linking to non-savable twitter pages and https://liberapay.com/zedeus
 			{
 				Type:"blacklisted",
 				FindWhat:/^(https?:\/\/twitter\.com\/[a-zA-Z0-9\-_]+\/(media|with_replies)|https:\/\/liberapay\.com\/zedeus\/?$)/
