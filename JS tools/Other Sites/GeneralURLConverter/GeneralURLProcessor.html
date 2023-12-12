@@ -94,7 +94,7 @@ Sort:
 	
 	//An array containing a list of objects specifying the replacement.
 	//-When "Type" is "normal": performs a simple replacement (replace a substring or remove a part of the string), the attributes are:
-	//--FindWhat: <Regex>: A regular expression the URLs in the input must match with to identify what appropriate replacement to perform a URL conversion
+	//--FindWhat: <Regex>: A regular expression the URLs in the input must match with to identify what appropriate replacement to perform a URL conversion.
 	//  NOTE: I recommend matching the entire string if you do not fully understand how the URL format of a given website work. I've experienced where the converted URL
 	//  wasn't included in the output at all. So make sure as you add more objects, test every one of them!
 	//--ReplaceWith: An array containing 1 or more items to replace with. Note: if this attribute omitted, will not include the URL at all unless "IncludeOriginal:true" is used.
