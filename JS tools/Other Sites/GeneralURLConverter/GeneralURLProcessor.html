@@ -43,7 +43,7 @@ Filter:
 	<li><label><input type="checkbox" class="CheckboxFilters" checked onchange="Auto_update()" id="FilterSetting_other">other (URL not matching any of the listed patterns)</label></li>
 </ul>
 Keynames to filter:<button onclick="ChangeFilterSettings('CheckboxFiltersKeyName', 1); Auto_update()">Check all</button><button onclick="ChangeFilterSettings('CheckboxFiltersKeyName', 0); Auto_update()">Uncheck all</button><button onclick="ChangeFilterSettings('CheckboxFiltersKeyName', 2); Auto_update()">Invert</button>
-<div style="overflow: auto; height: 300px; width: 250px; border: solid 1px; resize: both; white-space: nowrap;">
+<div style="overflow: auto; height: 300px; width: 300px; border: solid 1px; resize: both; white-space: nowrap;">
 	<span id="Parent_ToggleableCustomFilters">
 		<span id="ToggleableCustomFilters"></span>
 	</span>
@@ -59,7 +59,7 @@ Sort:
 <kbd><span id="Output_URL_Count">0</span> URLs generated.</kbd><br>
 <textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="HTML_OutputString" cols="100" rows="30" readonly></textarea><br>
 <button onclick="setClipboard(document.getElementById('HTML_OutputString').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br><br>
-<div style="overflow: scroll; height: 600px;border: solid; resize: both;">
+<div style="overflow: scroll; height: 600px; border: solid 1px; resize: both;">
 <span id="URL_OutputTable"></span>
 </div>
 <script>
@@ -68,6 +68,10 @@ Sort:
 	function NotifyInputChanged() {
 		InputChanged = true
 	}
+	//List of previously used nitter instances (as a reference to know which one is archivable), from most recent to oldest
+	//https://nitter.ktachibana.party
+	//https://nitter.privacydev.net
+	//https://nitter.moomoo.me
 	const Nitter_Instance = "https://nitter.moomoo.me"
 		//^Nitter instances:
 		//-Have a protocol ("http://" or "https://", latter recommended)
@@ -97,8 +101,8 @@ Sort:
 	//--FindWhat: <Regex>: A regular expression the URLs in the input must match with to identify what appropriate replacement to perform a URL conversion.
 	//  NOTE: I recommend matching the entire string if you do not fully understand how the URL format of a given website work. I've experienced where the converted URL
 	//  wasn't included in the output at all. So make sure as you add more objects, test every one of them!
-	//--ReplaceWith: An array containing 1 or more items to replace with. Note: if this attribute omitted, will not include the URL at all unless "IncludeOriginal:true" is used.
-	//--IncludeOriginal: <Boolean>: False if you only wanted the converted URL to be included in the output, true if you want to include.
+	//--ReplaceWith: An array containing n objects, those objects are formatted: {Replacement:"https://example.com", KeyName:""}. Note: if this attribute omitted, will not include
+	//  the matched URL at all. The KeyName attribute is optional.
 	//-When "Type" is "pagination": This will generate each URL of each page number of the same kind, based on the highest page number of the matching kind that exists in the input,
 	// Example, if you provide similar URLs with the difference being the page numbers:
 	//--https://example.com/test?page=1 (usually "?page=1" is omitted but still works)
@@ -111,10 +115,12 @@ Sort:
 	//---Must use in a way that it only matches the number in the substring, it must avoid matching/including any characters that aren't page numbers (else an error occurs).
 	//--PageNumberStartsAt: Page number to start at from counting from that number to the highest number. Some sites may have their page number start at 0, some at 1. Please
 	//  let me know if you found pages that uses negative numbers (I never seen websites ever use negative page numbers), or fork this with the adoption of negative values.
+	//--KeyName does the same thing as "normal" except that you have to have this be placed on the main object converter instead of an object inside an array inside a main
+	//  object converter. This will apply on each page number of the URL.
 	//-When "Type" is "blacklisted", it can be filtered (filter setting). Only "FindWhat" is needed, anything that matches this regex will be labeled as blacklisted. Please note
 	// if a URL matches on matches multiple listed objects with at least one of them not being blacklisted, it will be included.
-	//-An optional "KeyName" (string) can be used for sorting and filtering purposes if you find special use case out of it (especially if you are searching for non-archivable pages but
-	// want to find an alternative URL is savable). By default (and if omitted) will be a blank string ("").
+	//
+	//The "KeyName" is useful for sorting and filtering, such as to find pagination URLs to extract links from or to remove non-archivable pages.
 	//
 	//See quick reference here: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet
 	
@@ -124,34 +130,27 @@ Sort:
 //				//https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig (converts modern to modern, so if you entered a modern, can be filtered)
 //				Type:"normal",
 //				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+\?format=[a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
-//				ReplaceWith:["https://pbs.twimg.com/media/$1&name=orig", "https://pbs.twimg.com/media/$1&name=thumb"],
-//				IncludeOriginal:false,
-//				KeyName:"Twitter_ImageURL_Modern"
+//				ReplaceWith:[{Replacement:"https://pbs.twimg.com/media/$1&name=orig", KeyName:"Twitter_Images_Modern_Orig"}, {Replacement:"https://pbs.twimg.com/media/$1&name=thumb", KeyName:"Twitter_Images_Modern_thumb"}]
 //			},
 //			{
 //				//Example 1.1 Same as above but also converts old to modern (https://pbs.twimg.com/media/CBAoaU1UwAIUPIc.jpg -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig)
 //				Type:"normal",
 //				FindWhat:/https:\/\/pbs\.twimg.com\/media\/([^\s\?]+)\.\.([a-zA-Z0-9]+)/,
-//				ReplaceWith:["https://pbs.twimg.com/media/$1.$2:orig", "https://pbs.twimg.com/media/$1.$2:thumb"],
-//				KeyName:"Twitter_ImageURL_Modern"
+//				ReplaceWith:[{Replacement:"https://pbs.twimg.com/media/$1.$2:orig", KeyName:"Twitter_Images_Modern_Orig"}, {Replacement:"https://pbs.twimg.com/media/$1.$2:thumb", KeyName:"Twitter_Images_Modern_thumb"}],
 //			},
 //			{
 //				//Example 1.2: Opposite of example 1
 //				//Example test: https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc.jpg:orig (converts old to old, so if you entered a modern, can be filtered)
 //				Type:"normal",
 //				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+)\.([a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
-//				ReplaceWith:["https://pbs.twimg.com/media/$1.$2:orig", "https://pbs.twimg.com/media/$1.$2:thumb"],
-//				IncludeOriginal:false,
-//				KeyName:"Twitter_ImageURL_Old"
+//				ReplaceWith:[{Replacement:"https://pbs.twimg.com/media/$1.$2:orig", KeyName:"Twitter_Images_Old_Orig"}, {Replacement:"https://pbs.twimg.com/media/$1.$2:thumb", KeyName:"Twitter_Images_Old_Thumb"}]
 //			},
 //			{
 //				//Example 1.3: Opposite of example 1.1, converts modern to old
 //				//Example test: https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc.jpg:orig
 //				Type:"normal",
 //				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+)\?format=([a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
-//				ReplaceWith:["https://pbs.twimg.com/media/$1.$2:orig", "https://pbs.twimg.com/media/$1.$2:thumb"],
-//				IncludeOriginal:false,
-//				KeyName:"Twitter_ImageURL_Old"
+//				ReplaceWith:[{Replacement:"https://pbs.twimg.com/media/$1.$2:orig", KeyName:"Twitter_Images_Old_Orig"}, {Replacement:"https://pbs.twimg.com/media/$1.$2:thumb", KeyName:"Twitter_Images_Old_Thumb"}]
 //			},
 			{
 				//Example 2: Pagination test (made-up example)
@@ -174,8 +173,7 @@ Sort:
 			{
 				Type:"normal",
 				FindWhat:/https:\/\/dropbox\.com\/s.*$/,
-				KeyName:"Unsavable",
-				IncludeOriginal:true
+				KeyName:"Unsavable"
 			},
 			//Nitter pages
 			//https://nitter.privacydev.net/pic/media%2FFtWxZRraYAMrvmM.jpg%3Fname%3Dsmall%26format%3Dwebp <- downsized image
@@ -193,29 +191,32 @@ Sort:
 				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance) + "\/zedeus.*$")
 			},
 			{
+				//Profile pages
 				Type:"normal",
 				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance) + "\\/((?!(about|logo\\.png|search|settings|pic))[a-zA-Z0-9\\-_]+).*$"),
-				ReplaceWith:[Nitter_Instance + "/$1", Nitter_Instance + "/$1/with_replies", Nitter_Instance + "/$1/media"]
+				ReplaceWith:[{Replacement:Nitter_Instance + "/$1", KeyName:"Nitter_UserProfile_Front"}, {Replacement:Nitter_Instance + "/$1/with_replies", KeyName:"Nitter_UserProfile_Replies"}, {Replacement:Nitter_Instance + "/$1/media", KeyName:"Nitter_UserProfile_Media"}]
 			},
 			{
+				//Tweets
 				Type:"normal",
 				FindWhat:RegExp("^(" + NitterInstance_StringToRegex(Nitter_Instance) + "\\/((?!(about|logo\\.png|search|pic))[a-zA-Z0-9\\-_]+)\\/status\\/\\d+).*$"),
-				ReplaceWith:["$1"]
+				ReplaceWith:[{Replacement:"$1", KeyName:"Nitter_Tweet"}]
 			},
 			{
+				//Images (convert nitter images to twitter modern images)
 				Type:"normal",
 				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance) + "\\/pic\\/orig\\/media%2F([a-zA-Z0-9\\-_]+)\\.([a-zA-Z0-9]+)$"),
-				ReplaceWith:["https://pbs.twimg.com/media/$1?format=$2&name=orig"],
-				IncludeOriginal:false,
+				ReplaceWith:[{Replacement:"https://pbs.twimg.com/media/$1?format=$2&name=orig", KeyName:"Twitter_Images_Modern_Orig"},{Replacement:"https://pbs.twimg.com/media/$1?format=$2&name=thumb", KeyName:"Twitter_Images_Modern_thumb"}],
 				KeyName:"Twitter_ImgURL"
 			},
 			{
 				//Yes a duplicate of above, so I have the nitter and twitter versions, and each with a different KeyName. Doing this just in case of a pesky rate limit
 				//and that twitter image URLs seems to guarantee to always save unlike saving tweet pages (make sure nitter doesn't base-64 encode its media URLs though).
+				
+				//Nitter images
 				Type:"normal",
 				FindWhat:RegExp("(" + NitterInstance_StringToRegex(Nitter_Instance) + "\\/pic\\/orig\\/media%2F[a-zA-Z0-9\\-_]+\\.[a-zA-Z0-9]+)$"),
-				ReplaceWith:["$1"],
-				IncludeOriginal:false, //I need this to be false so it doesn't potentially create the same URL as the previous converter/loop's output with a different keyname.
+				ReplaceWith:[{Replacement:"$1", KeyName:"Nitter_Images"}],
 				KeyName:"Twitter_Nitter_ImgURL"
 			},
 			//Rid out links from nitter linking to non-savable twitter pages and https://liberapay.com/zedeus
@@ -231,9 +232,19 @@ Sort:
 	window.onload = LoadCustomToggableFilters
 	function LoadCustomToggableFilters() {
 		let ListOfKeyNames = new Set()
-		ListOfConverters.forEach((ArrayElement) => {
-			if (ArrayElement.hasOwnProperty("KeyName")) {
-				ListOfKeyNames.add(ArrayElement.KeyName)
+		ListOfConverters.forEach((Converter) => {
+			if (Converter.Type == "normal") {
+				if (Converter.hasOwnProperty("ReplaceWith")) {
+					Converter.ReplaceWith.forEach((ReplacementList) => {
+						if (ReplacementList.hasOwnProperty("KeyName")) {
+							ListOfKeyNames.add(ReplacementList.KeyName)
+						}
+					});
+				}
+			} else if (Converter.Type == "pagination"||Converter.Type == "blacklisted") {
+				if (Converter.hasOwnProperty("KeyName")) {
+					ListOfKeyNames.add(Converter.KeyName)
+				}
 			}
 		});
 		ListOfKeyNames = Array.from(ListOfKeyNames)
@@ -330,7 +341,7 @@ Sort:
 							// -remove the erroneous dot at the end from the error message
 						HaveBeenChecked:false, //This is used to check for duplicate or 2 URLs being similar (same URL but different page number)
 						IdentifiedType:"",
-						KeyName:""
+						KeyName:"" //Failsafe - for blacklisted or IdentifiedType being "other", should have its KeyName be blank instead of "undefined"
 					}
 					return URLObject
 				});
@@ -344,42 +355,42 @@ Sort:
 						ListOfConverters.forEach(Converter => { //For each URL the user entered, loop through converters
 							if (Converter.FindWhat.test(ListOfURLs[i].URL)) { //If URL matches one or more of the converters (a URL gets to loop through multiple converters)
 								UrlMatchedAnyConverter = true
-								if (Converter.hasOwnProperty("KeyName")) {
-									ListOfURLs[i].KeyName = Converter.KeyName
-								}
-								if (Converter.IncludeOriginal) {
-									//OutputSet.add(ListOfURLs[i].URL)
-									ListOfURLs[i].IdentifiedType = "original"
-									AddToOutput(ListOfURLs[i])
-								}
 								if (Converter.Type == "normal") {
 									if (Converter.hasOwnProperty("ReplaceWith")) {
 										Converter.ReplaceWith.forEach(ReplaceWithText => {
+											let SetKeyName = ""
+											if (ReplaceWithText.hasOwnProperty("KeyName")) {
+												SetKeyName = ReplaceWithText.KeyName
+											}
 											//OutputSet.add(ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText))
 											AddToOutput({
-												URL:ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText),
+												URL:ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText.Replacement),
 												IdentifiedType:"converted",
-												KeyName:ListOfURLs[i].KeyName
+												KeyName:SetKeyName
 											});
 										});
 									};
 								} else if (Converter.Type == "pagination") {
-									let HighestPageNumberSoFar = parseInt(ListOfURLs[i].URL.match(Converter.FindWhat)[0], 10)
-									let PartsOfURLSame = ListOfURLs[i].URL.split(Converter.FindWhat)
+									let SetKeyName = ""
+									if (Converter.hasOwnProperty("KeyName")) {
+										SetKeyName = Converter.KeyName
+									}
+									let HighestPageNumberSoFar = parseInt(ListOfURLs[i].URL.match(Converter.FindWhat)[0], 10) //Track highest page number starting with the number we first processed
+									let PartsOfURLSame = ListOfURLs[i].URL.split(Converter.FindWhat) //Get substrings before and after the page number
 									for (let i2 = i+1; i2 < ListOfURLs.length; i2++) { //Loop to find a potential same URL but with higher page number
 										PartsOfURLSame2 = ListOfURLs[i2].URL.split(Converter.FindWhat)
 										if (Converter.FindWhat.test(ListOfURLs[i2].URL) && (PartsOfURLSame[0] == PartsOfURLSame2[0]) && (PartsOfURLSame[1] == PartsOfURLSame2[1])) { //if regex and all parts of the URL the same ignoring page number, compare the page number
-											HighestPageNumberSoFar = Math.max(HighestPageNumberSoFar, parseInt(ListOfURLs[i2].URL.match(Converter.FindWhat)[0], 10))
+											HighestPageNumberSoFar = Math.max(HighestPageNumberSoFar, parseInt(ListOfURLs[i2].URL.match(Converter.FindWhat)[0], 10)) //Update highest page number
 											ListOfURLs[i2].HaveBeenChecked = true //Don't check this again when the outer loop advances
 										}
 									}
 									//We now have the maximum number based on the user input
-									for (let i2 = Converter.PageNumberStartsAt; i2 <= HighestPageNumberSoFar; i2++) { //Generate a URL of each page
+									for (let i2 = Converter.PageNumberStartsAt; i2 <= HighestPageNumberSoFar; i2++) { //Generate a URL of each page number
 										//OutputSet.add(PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1])
 										AddToOutput({
 											URL:PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1], //Insert each page number URL
 											IdentifiedType:"pagination",
-											KeyName:ListOfURLs[i].KeyName
+											KeyName:SetKeyName
 										});
 									}
 								} else if (Converter.Type == "blacklisted") {
