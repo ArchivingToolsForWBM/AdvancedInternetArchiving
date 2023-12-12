@@ -44,7 +44,9 @@ Filter:
 </ul>
 Keynames to filter:<button onclick="ChangeFilterSettings('CheckboxFiltersKeyName', 1); Auto_update()">Check all</button><button onclick="ChangeFilterSettings('CheckboxFiltersKeyName', 0); Auto_update()">Uncheck all</button><button onclick="ChangeFilterSettings('CheckboxFiltersKeyName', 2); Auto_update()">Invert</button>
 <div style="overflow: auto; height: 300px; width: 250px; border: solid 1px; resize: both; white-space: nowrap;">
-	<span id="ToggleableCustomFilters"></span>
+	<span id="Parent_ToggleableCustomFilters">
+		<span id="ToggleableCustomFilters"></span>
+	</span>
 </div>
 Sort:
 <ul>
@@ -235,15 +237,28 @@ Sort:
 			}
 		});
 		ListOfKeyNames = Array.from(ListOfKeyNames)
-		ListOfKeyNames.sort()
+		ListOfKeyNames.sort() //We now have a list of keynames we can filter out, in Alphabetical order.
 		
-		let HTMLContent = ""
-		HTMLContent += "<ul>"
+		let UnorderedListOfKeynameFilters = document.createElement("ul")
 		ListOfKeyNames.forEach((ArrayElement) => {
-			HTMLContent += "<li><label><input type='checkbox' checked onchange='Auto_update()' class='CheckboxFiltersKeyName' id='FilterSetting_" + escapeHTMLChars(ArrayElement) + "'><kbd>" + escapeHTMLChars(ArrayElement) + "</kbd></label></li>"
+			let Element_li = document.createElement("li")
+			let Element_label = document.createElement("label")
+			let Element_input = document.createElement("input")
+			Element_input.setAttribute("type", "checkbox")
+			Element_input.setAttribute("checked", "checked");
+			Element_input.setAttribute("id", "FilterSetting_"  + ArrayElement)
+			Element_input.setAttribute("onchange", "Auto_update()")
+			Element_input.setAttribute("class", "CheckboxFiltersKeyName")
+			let Element_kbd = document.createElement("kbd")
+			
+			Element_li.appendChild(Element_label) //<li><label></label></li>
+			Element_label.appendChild(Element_input) //<li><label><input type="checkbox"></label></li>
+			Element_label.appendChild(Element_kbd) //<li><label><input type="checkbox"><kbd></kbd></label></li>
+			Element_kbd.appendChild(document.createTextNode(ArrayElement)) //<li><label><input type="checkbox"><kbd>KeyName</kbd></label></li>
+			
+			UnorderedListOfKeynameFilters.appendChild(Element_li)
 		});
-		HTMLContent += "</ul>"
-		document.getElementById("ToggleableCustomFilters").innerHTML = HTMLContent
+		document.getElementById("Parent_ToggleableCustomFilters").insertBefore(UnorderedListOfKeynameFilters, document.getElementById("ToggleableCustomFilters"));
 	}
 	
 	function NitterInstance_StringToRegex(StringInput) {
