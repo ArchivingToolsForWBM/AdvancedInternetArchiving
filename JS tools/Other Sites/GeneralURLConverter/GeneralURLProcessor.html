@@ -206,8 +206,7 @@ Sort:
 				//Images (convert nitter images to twitter modern images)
 				Type:"normal",
 				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance) + "\\/pic\\/orig\\/media%2F([a-zA-Z0-9\\-_]+)\\.([a-zA-Z0-9]+)$"),
-				ReplaceWith:[{Replacement:"https://pbs.twimg.com/media/$1?format=$2&name=orig", KeyName:"Twitter_Images_Modern_Orig"},{Replacement:"https://pbs.twimg.com/media/$1?format=$2&name=thumb", KeyName:"Twitter_Images_Modern_thumb"}],
-				KeyName:"Twitter_ImgURL"
+				ReplaceWith:[{Replacement:"https://pbs.twimg.com/media/$1?format=$2&name=orig", KeyName:"Twitter_Images_Modern_Orig"},{Replacement:"https://pbs.twimg.com/media/$1?format=$2&name=thumb", KeyName:"Twitter_Images_Modern_thumb"}]
 			},
 			{
 				//Yes a duplicate of above, so I have the nitter and twitter versions, and each with a different KeyName. Doing this just in case of a pesky rate limit
@@ -216,8 +215,7 @@ Sort:
 				//Nitter images
 				Type:"normal",
 				FindWhat:RegExp("(" + NitterInstance_StringToRegex(Nitter_Instance) + "\\/pic\\/orig\\/media%2F[a-zA-Z0-9\\-_]+\\.[a-zA-Z0-9]+)$"),
-				ReplaceWith:[{Replacement:"$1", KeyName:"Nitter_Images"}],
-				KeyName:"Twitter_Nitter_ImgURL"
+				ReplaceWith:[{Replacement:"$1", KeyName:"Nitter_Images"}]
 			},
 			//Rid out links from nitter linking to non-savable twitter pages and https://liberapay.com/zedeus
 			{
