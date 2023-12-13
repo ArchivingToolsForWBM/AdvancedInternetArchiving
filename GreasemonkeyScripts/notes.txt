@@ -1,0 +1,18 @@
+If Links are not in the HTML itself but is inside a JS code that writes the link into a clipboard (that probably social media sites do for links to the posts), I would strongly recommend monkey-patch this:
+
+	navigator.clipboard.writeText = async function(data) {
+		console.log(data);
+	}
+
+This overrides JS from writing directly to the clipboard to instead the console log.
+
+However, if you want to go full-automation, beware that the clipboard API requires the document to be focused, so this:
+
+	document.getElementsByTagName("button")[<number>].click()
+
+must be this instead:
+
+	if (document.hasFocus()) {
+		//<some other code here>
+		document.getElementsByTagName("button")[<number>].click()
+	}
