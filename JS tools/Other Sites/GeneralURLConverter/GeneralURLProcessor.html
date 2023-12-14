@@ -69,10 +69,11 @@ Sort:
 		InputChanged = true
 	}
 	//List of previously used nitter instances (as a reference to know which one is archivable), from most recent to oldest.
+	//https://nitter.poast.org (503'ing)
 	//https://nitter.moomoo.me (slow)
 	//https://nitter.ktachibana.party
 	//https://nitter.privacydev.net
-	const Nitter_Instance = "https://nitter.poast.org"
+	const Nitter_Instance_ConvertTo = "https://nitter.privacydev.net"
 		//^Nitter instances:
 		//-Have a protocol ("http://" or "https://", latter recommended)
 		//-Have a hostname ("nitter.net")
@@ -95,6 +96,8 @@ Sort:
 		//2023-12-10 note: I noticed that twitter's media section including on the search results now only display a grid of images instead of tweets
 		//until the image is clicked, and that it only displays the first image of a tweet when there are multiple (including if its loaded in the HTML)
 		//Therefore if you try to extract URLs, you'll only get the URL of the first image and the tweet.
+	const Nitter_Instance_ConvertFrom = "https://nitter.moomoo.me"
+		//^Same as above, but when you are scraping from nitter instance A, but get URLs from instance B.
 	
 	//An array containing a list of objects specifying the replacement.
 	//-When "Type" is "normal": performs a simple replacement (replace a substring or remove a part of the string), the attributes are:
@@ -182,30 +185,34 @@ Sort:
 			//https://nitter.ktachibana.party
 			{
 				Type:"blacklisted",
-				//FindWhat:/^https:\/\/nitter\.ktachibana\.party\/(pic\/media.*name%3Dsmall|search|[a-zA-Z0-9\-_]+\/status\/\d+\/(favoriters|retweeters)|about$|logo\.png$|search$|settings)/
-				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance) + "\\/(pic\\/media.*name%3Dsmall|search|[a-zA-Z0-9\\-_]+\\/status\\/\\d+\\/(favoriters|retweeters)|about$|logo\\.png$|search$|settings)")
+				FindWhat:RegExp("(" + (NitterInstance_StringToRegex(Nitter_Instance_ConvertTo) + "|" + NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom)) + ")\\/(pic\\/media.*name%3Dsmall|search|[a-zA-Z0-9\\-_]+\\/status\\/\\d+\\/(favoriters|retweeters)|about$|logo\\.png$|search$|settings)")
+			},
+			{
+				//We don't want the home page consisting just a search bar.
+				Type:"blacklisted",
+				FindWhat:RegExp("^(" + (NitterInstance_StringToRegex(Nitter_Instance_ConvertTo) + "|" + NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom)) + ")\\/?$"),
 			},
 			{
 				Type:"blacklisted",
 				//FindWhat:/https:\/\/liberapay\.com\/zedeus.*$/
-				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance) + "\/zedeus.*$")
+				FindWhat:RegExp("(" + (NitterInstance_StringToRegex(Nitter_Instance_ConvertTo) + "|" + NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom)) + ")" + "\/zedeus.*$")
 			},
 			{
 				//Profile pages
 				Type:"normal",
-				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance) + "\\/((?!(about|logo\\.png|search|settings|pic))[a-zA-Z0-9\\-_]+).*$"),
-				ReplaceWith:[{Replacement:Nitter_Instance + "/$1", KeyName:"Nitter_UserProfile_Front"}, {Replacement:Nitter_Instance + "/$1/with_replies", KeyName:"Nitter_UserProfile_Replies"}, {Replacement:Nitter_Instance + "/$1/media", KeyName:"Nitter_UserProfile_Media"}]
+				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/((?!(about|logo\\.png|search|settings|pic))[a-zA-Z0-9\\-_]+).*$"),
+				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "/$1", KeyName:"Nitter_UserProfile_Front"}, {Replacement:Nitter_Instance_ConvertTo + "/$1/with_replies", KeyName:"Nitter_UserProfile_Replies"}, {Replacement:Nitter_Instance_ConvertTo + "/$1/media", KeyName:"Nitter_UserProfile_Media"}]
 			},
 			{
 				//Tweets
 				Type:"normal",
-				FindWhat:RegExp("^(" + NitterInstance_StringToRegex(Nitter_Instance) + "\\/((?!(about|logo\\.png|search|pic))[a-zA-Z0-9\\-_]+)\\/status\\/\\d+).*$"),
-				ReplaceWith:[{Replacement:"$1", KeyName:"Nitter_Tweet"}]
+				FindWhat:RegExp("^" + NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "(\\/((?!(about|logo\\.png|search|pic))[a-zA-Z0-9\\-_]+)\\/status\\/\\d+).*$"),
+				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "$1", KeyName:"Nitter_Tweet"}]
 			},
 			{
 				//Images (convert nitter images to twitter modern images)
 				Type:"normal",
-				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance) + "\\/pic\\/orig\\/media%2F([a-zA-Z0-9\\-_]+)\\.([a-zA-Z0-9]+)$"),
+				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/orig\\/media%2F([a-zA-Z0-9\\-_]+)\\.([a-zA-Z0-9]+)$"),
 				ReplaceWith:[{Replacement:"https://pbs.twimg.com/media/$1?format=$2&name=orig", KeyName:"Twitter_Images_Modern_Orig"},{Replacement:"https://pbs.twimg.com/media/$1?format=$2&name=thumb", KeyName:"Twitter_Images_Modern_thumb"}]
 			},
 			{
@@ -214,8 +221,14 @@ Sort:
 				
 				//Nitter images
 				Type:"normal",
-				FindWhat:RegExp("(" + NitterInstance_StringToRegex(Nitter_Instance) + "\\/pic\\/orig\\/media%2F[a-zA-Z0-9\\-_]+\\.[a-zA-Z0-9]+)$"),
-				ReplaceWith:[{Replacement:"$1", KeyName:"Nitter_Images"}]
+				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "(\\/pic\\/orig\\/media%2F[a-zA-Z0-9\\-_]+\\.[a-zA-Z0-9]+)$"),
+				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "$1", KeyName:"Nitter_Images"}]
+			},
+			{
+				//Profile images and banners
+				Type:"normal",
+				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "(\\/pic\\/(https%3A%2F%2Fpbs\\.twimg\\.com%2Fprofile_banners%2F|pbs\\.twimg\\.com%2Fprofile_images%2F|profile_images%2F).*$)"),
+				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "$1", KeyName:"Nitter_ProfileBannersAndImages"}]
 			},
 			//Rid out links from nitter linking to non-savable twitter pages and https://liberapay.com/zedeus
 			{
