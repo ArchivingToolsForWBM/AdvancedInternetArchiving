@@ -28,6 +28,7 @@
 			//^When there is an iframe and multiple windows, this is the max recursion before cutting off further inner windows (failsafe to stop potential infinite loops/stack overload)
 	//Don't touch
 		let IframeRecursionCount = 0 //Tracks how many levels deep sub-window frames to scan into.
+		let AntiRaceCondition = false //This script uses setInterval(), which is an asynchronous function. We don't want potential unintentional overwriting cause by race condition.
 
 	//"all" is a set that contains only unique items, the console.log however isn't necessarily a set so that COULD have duplicate items in it.
 	//By checking via [!all.has(string)] before adding to the set and console logging, this prevents dupes from entering the console log. Do note that
@@ -87,14 +88,18 @@
 	}
 	
 	function ExtractLinksOnWindow(Input_Window) {
-		//This extracts links in the current window, then searches for any subwindow, calls itself recursively
-		//to extract its links and across multiple windows (multiple windows that aren't inside of another). Best used
-		//when the subwindows loaded a different document but the main window didn't, by calling this function again.
-		ExtractLinksFromPage(Input_Window.document)
-		for (let i=0; ((i<Input_Window.frames.length)&&(IframeRecursionCount<IframeMaxRecursion));i++) {
-			IframeRecursionCount++
-			ExtractLinksOnWindow(Input_Window.frames[i])
-			IframeRecursionCount-- //Don't count as total number of function calls, just how many levels deep.
+		if (!AntiRaceCondition) {
+			AntiRaceCondition = true
+			//This extracts links in the current window, then searches for any subwindow, calls itself recursively
+			//to extract its links and across multiple windows (multiple windows that aren't inside of another). Best used
+			//when the subwindows loaded a different document but the main window didn't, by calling this function again.
+			ExtractLinksFromPage(Input_Window.document)
+			for (let i=0; ((i<Input_Window.frames.length)&&(IframeRecursionCount<IframeMaxRecursion));i++) {
+				IframeRecursionCount++
+				ExtractLinksOnWindow(Input_Window.frames[i])
+				IframeRecursionCount-- //Don't count as total number of function calls, just how many levels deep.
+			}
+			AntiRaceCondition = false
 		}
 	}
 	window.addEventListener('scroll',addEventListenersToPages.bind(null, window));

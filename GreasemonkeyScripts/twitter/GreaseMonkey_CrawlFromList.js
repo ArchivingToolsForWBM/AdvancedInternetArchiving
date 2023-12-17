@@ -84,6 +84,7 @@
 			// We first scroll upwards, and when a stop has reached for a certain amount of time, then switch to downwards, and if a stop happens for a certain amount of time, load
 			// next URL.
 		let AlreadyLoadedNextURL = false
+		let AntiRaceCondition = false //This script uses setInterval(), which is an asynchronous function. We don't want potential unintentional overwriting cause by race condition.
 	//List of URLs to visit when bottom is reached
 const ListOfURLs = `
 https://twitter.com/search?q=from%3Atwitter%20until%3A2020-01-01&src=typed_query&f=top
@@ -232,76 +233,80 @@ https://twitter.com/search?q=from%3Atwitter%20until%3A2019-01-01&src=typed_query
 		
 	}
 	async function MainLoop() {
-		GetTwitterLinks() //Just in case if no scrolling occured and misses extracting links.
-		let URL_index = await GM.getValue("TwitterURLIndex", -1).catch(function(reason) {
-			window.alert("Loading URL index failed!")
-			Reset()
-		});
-		
-		let TwitterURLSequenceEnabled = await GM.getValue("TwitterURLSequence_Enabled", false).catch(function(reason) {
-			window.alert("Loading sequence enabled status failed!")
-			Reset()
-		})
-		//Loading content besides the whole screen is loading i.e tweets, clicking on "Show". Unlike "IsPageInitallyLoaded",
-		//which remains true after page initially loads without user input, "IsPageCurrentlyLoadingSubContent" can be false again.
-			let IsPageCurrentlyLoadingSubContent = false
-			if (document.getElementsByTagName("circle").length != 0) {
-				IsPageCurrentlyLoadingSubContent = true
-			}
-		if (TwitterURLSequenceEnabled) {
-			if (URL_index >= -1) {
-				//First, wait until page is loaded
-					if (document.getElementsByTagName("circle").length == 0) {
-						IsPageInitallyLoaded = true
-					}
-					
-					if (IsPageInitallyLoaded == false) { //If tweets not loaded yet
-						console.log("TwitCrawl - Page not loaded yet")
-					} else { //If page are loaded
-							PreviousYScrollPosition = window.scrollY //Previous position to see if the page has been scrolled.
-						//Autoscroll
-							//First check if this is a search (because a twitter search ALWAYS starts the scroll position at the top of the page and NEVER loads as you scroll up, unlike tweets that have other tweets before it in a thread)
-								if (/http(s)?\:\/\/(mobile\.)?twitter\.com\/search\?q=/.test(window.location.href)) {
-									ScrollingDirection = 1
-								}
-							//Don't skip over "Show" content (collapsed tweets)
-								if (IsPageCurrentlyLoadingSubContent == false) {
-									window.scrollTo(0, window.scrollY+(ScrollDistancePerSecond * ScrollingDirection)); //Try to scroll the page
-								}
-						//Check if bottom has reached resulting in scrolling stops. If no scrolling for consecutive LoadWaitTime , load next URL.
-							if ((PreviousYScrollPosition == window.scrollY) && (IsPageCurrentlyLoadingSubContent == false)) { //If no scrolling occurred
-								HowManySecondsOfNoScroll++ //Increment the number of seconds of no scroll
-								HowManySecondsOfNoScroll = clamp(HowManySecondsOfNoScroll, 0, LoadWaitTime) //Clamp the seconds counter to avoid negative number display
-								
-								if (ScrollingDirection == -1) {
-									console.log("TwitCrawl - Scroll top reached. Seconds left before changing switching to scroll down: " + (LoadWaitTime - HowManySecondsOfNoScroll).toString(10))
-								} else {
-									console.log("TwitCrawl - Scroll bottom reached. Seconds left before loading next URL: " + (LoadWaitTime - HowManySecondsOfNoScroll).toString(10))
-								}
-								if (HowManySecondsOfNoScroll >= LoadWaitTime) {
+		if (!AntiRaceCondition) {
+			AntiRaceCondition == true
+			GetTwitterLinks() //Just in case if no scrolling occured and misses extracting links.
+			let URL_index = await GM.getValue("TwitterURLIndex", -1).catch(function(reason) {
+				window.alert("Loading URL index failed!")
+				Reset()
+			});
+			
+			let TwitterURLSequenceEnabled = await GM.getValue("TwitterURLSequence_Enabled", false).catch(function(reason) {
+				window.alert("Loading sequence enabled status failed!")
+				Reset()
+			})
+			//Loading content besides the whole screen is loading i.e tweets, clicking on "Show". Unlike "IsPageInitallyLoaded",
+			//which remains true after page initially loads without user input, "IsPageCurrentlyLoadingSubContent" can be false again.
+				let IsPageCurrentlyLoadingSubContent = false
+				if (document.getElementsByTagName("circle").length != 0) {
+					IsPageCurrentlyLoadingSubContent = true
+				}
+			if (TwitterURLSequenceEnabled) {
+				if (URL_index >= -1) {
+					//First, wait until page is loaded
+						if (document.getElementsByTagName("circle").length == 0) {
+							IsPageInitallyLoaded = true
+						}
+						
+						if (IsPageInitallyLoaded == false) { //If tweets not loaded yet
+							console.log("TwitCrawl - Page not loaded yet")
+						} else { //If page are loaded
+								PreviousYScrollPosition = window.scrollY //Previous position to see if the page has been scrolled.
+							//Autoscroll
+								//First check if this is a search (because a twitter search ALWAYS starts the scroll position at the top of the page and NEVER loads as you scroll up, unlike tweets that have other tweets before it in a thread)
+									if (/http(s)?\:\/\/(mobile\.)?twitter\.com\/search\?q=/.test(window.location.href)) {
+										ScrollingDirection = 1
+									}
+								//Don't skip over "Show" content (collapsed tweets)
+									if (IsPageCurrentlyLoadingSubContent == false) {
+										window.scrollTo(0, window.scrollY+(ScrollDistancePerSecond * ScrollingDirection)); //Try to scroll the page
+									}
+							//Check if bottom has reached resulting in scrolling stops. If no scrolling for consecutive LoadWaitTime , load next URL.
+								if ((PreviousYScrollPosition == window.scrollY) && (IsPageCurrentlyLoadingSubContent == false)) { //If no scrolling occurred
+									HowManySecondsOfNoScroll++ //Increment the number of seconds of no scroll
+									HowManySecondsOfNoScroll = clamp(HowManySecondsOfNoScroll, 0, LoadWaitTime) //Clamp the seconds counter to avoid negative number display
+									
 									if (ScrollingDirection == -1) {
-										ScrollingDirection = 1 //Top has reached for a certain amount of time, now switch to scroll down
-									} else { //scrolls down, be at the bottom long enough
-										if (!(AlreadyLoadedNextURL)) {
-											NextURL(URL_index)
+										console.log("TwitCrawl - Scroll top reached. Seconds left before changing switching to scroll down: " + (LoadWaitTime - HowManySecondsOfNoScroll).toString(10))
+									} else {
+										console.log("TwitCrawl - Scroll bottom reached. Seconds left before loading next URL: " + (LoadWaitTime - HowManySecondsOfNoScroll).toString(10))
+									}
+									if (HowManySecondsOfNoScroll >= LoadWaitTime) {
+										if (ScrollingDirection == -1) {
+											ScrollingDirection = 1 //Top has reached for a certain amount of time, now switch to scroll down
+										} else { //scrolls down, be at the bottom long enough
+											if (!(AlreadyLoadedNextURL)) {
+												NextURL(URL_index)
+											}
 										}
 									}
+								} else { //Scrolling occurred
+									HowManySecondsOfNoScroll = 0 //reset the counter
+									if (ScrollingDirection == -1) {
+										console.log("TwitCrawl - Scrolling/loading upward...")
+									} else {
+										console.log("TwitCrawl - Scrolling/loading downward...")
+									}
 								}
-							} else { //Scrolling occurred
-								HowManySecondsOfNoScroll = 0 //reset the counter
-								if (ScrollingDirection == -1) {
-									console.log("TwitCrawl - Scrolling/loading upward...")
-								} else {
-									console.log("TwitCrawl - Scrolling/loading downward...")
-								}
-							}
-							PreviousYScrollPosition = window.scrollY
+								PreviousYScrollPosition = window.scrollY
+						}
+				} else {
+					URL_index++
+					if (!(AlreadyLoadedNextURL)) {
+						NextURL(URL_index)
 					}
-			} else {
-				URL_index++
-				if (!(AlreadyLoadedNextURL)) {
-					NextURL(URL_index)
 				}
+				AntiRaceCondition = false
 			}
 		}
 	}
