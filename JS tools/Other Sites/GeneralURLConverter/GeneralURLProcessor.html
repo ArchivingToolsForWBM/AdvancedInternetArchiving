@@ -219,7 +219,7 @@ Sort:
 				//Yes a duplicate of above, so I have the nitter and twitter versions, and each with a different KeyName. Doing this just in case of a pesky rate limit
 				//and that twitter image URLs seems to guarantee to always save unlike saving tweet pages (make sure nitter doesn't base-64 encode its media URLs though).
 				
-				//Nitter images
+				//Nitter images (from a tweet that has pictures)
 				Type:"normal",
 				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "(\\/pic\\/orig\\/media%2F[a-zA-Z0-9\\-_]+\\.[a-zA-Z0-9]+)$"),
 				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "$1", KeyName:"Nitter_Images"}]
@@ -229,6 +229,13 @@ Sort:
 				Type:"normal",
 				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "(\\/pic\\/(https%3A%2F%2Fpbs\\.twimg\\.com%2Fprofile_banners%2F|pbs\\.twimg\\.com%2Fprofile_images%2F|profile_images%2F).*$)"),
 				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "$1", KeyName:"Nitter_ProfileBannersAndImages"}]
+			},
+			{
+				//Thumbnails on profile pages, converted to nitter images.
+				//https://nitter.x86-64-unknown-linux-gnu.zip/pic/media%2FF4gd6gjakAAFhsD.jpg%3Athumb
+				Type:"normal",
+				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/media%2F([a-zA-Z0-9\\-_]+)\\.([a-zA-Z0-9]+).*$"),
+				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "/pic/orig/media%2F$1.$2", KeyName:"Nitter_Images"}]
 			},
 			//Rid out links from nitter linking to non-savable twitter pages and https://liberapay.com/zedeus
 			{
