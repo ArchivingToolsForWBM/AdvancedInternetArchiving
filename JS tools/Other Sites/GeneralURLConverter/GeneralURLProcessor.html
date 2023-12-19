@@ -68,36 +68,40 @@ Sort:
 	function NotifyInputChanged() {
 		InputChanged = true
 	}
-	//List of previously used nitter instances (as a reference to know which one is archivable), from most recent to oldest.
-	//https://nitter.poast.org (503'ing)
-	//https://nitter.moomoo.me (slow)
-	//https://nitter.ktachibana.party
-	//https://nitter.privacydev.net
-	const Nitter_Instance_ConvertTo = "https://nitter.privacydev.net"
-		//^Nitter instances:
-		//-Have a protocol ("http://" or "https://", latter recommended)
-		//-Have a hostname ("nitter.net")
-		//Change this if you find that the current instance have issues. See a list of nitter instances here: https://github.com/xnaas/nitter-instances
-		//Please note that media URLs may be configured differently, such as being base64Media encoded like this:
-		//
-		//https://<nitter_instance>/pic/orig/enc/<base64_string>
-		//
-		//If that is the case, then I would recommend you to extract links from nitter directly instead of grabbing links from twitter then converting
-		//as the media URLs don't correlate between twitter and nitter.
-		//
-		//Also, RIP pussthecat.org, some idiot UK police (presumably the City of London Police, the people who just make people guilty until proven innocent)
-		//didn't properly check the service legitimacy and ended up flagging it as a pirate site, just because of an infringing content that was hosted on 
-		//twitter and was passed through nitter. Nitter is not to be conscripted into doing twitter's copyright enforcement that they have no control over.
-		//And I am totally against making intermediary services who acts as proxy (a mere pass-through) liable the same way as sites that actually do host
-		//content. It's like making browser companies (google, firefox, etc.) liable just because the user using it to download illegal material and
-		//expecting enforcement at the browser level, assuming that these people expect nitter to block out flagged content posted on twitter.
-		//
-		//2023-12-10 note: I noticed that twitter's media section including on the search results now only display a grid of images instead of tweets
-		//until the image is clicked, and that it only displays the first image of a tweet when there are multiple (including if its loaded in the HTML)
-		//Therefore if you try to extract URLs, you'll only get the URL of the first image and the tweet.
-	const Nitter_Instance_ConvertFrom = "https://nitter.moomoo.me"
-		//^Same as above, but when you are scraping from nitter instance A, but get URLs from instance B.
-	
+	//Nitter instance settings.
+		//List of previously used nitter instances (as a reference to know which one is archivable), from most recent to oldest.
+		//https://nitter.poast.org (503'ing)
+		//https://nitter.moomoo.me (slow)
+		//https://nitter.ktachibana.party
+		//https://nitter.privacydev.net
+		const Setting_Nitter_Instance_ConvertTo = "https://nitter.privacydev.net"
+			//^Nitter instances:
+			//-Have a protocol ("http://" or "https://", latter recommended)
+			//-Have a hostname ("nitter.net")
+			//Change this if you find that the current instance have issues. See a list of nitter instances here: https://github.com/xnaas/nitter-instances
+			//Please note that media URLs may be configured differently, such as being base64Media encoded like this:
+			//
+			//https://<nitter_instance>/pic/orig/enc/<base64_string>
+			//
+			//If that is the case, then I would recommend you to extract links from nitter directly instead of grabbing links from twitter then converting
+			//as the media URLs don't correlate between twitter and nitter.
+			//
+			//Also, RIP pussthecat.org, some idiot UK police (presumably the City of London Police, the people who just make people guilty until proven innocent)
+			//didn't properly check the service legitimacy and ended up flagging it as a pirate site, just because of an infringing content that was hosted on 
+			//twitter and was passed through nitter. Nitter is not to be conscripted into doing twitter's copyright enforcement that they have no control over.
+			//And I am totally against making intermediary services who acts as proxy (a mere pass-through) liable the same way as sites that actually do host
+			//content. It's like making browser companies (google, firefox, etc.) liable just because the user using it to download illegal material and
+			//expecting enforcement at the browser level, assuming that these people expect nitter to block out flagged content posted on twitter.
+			//
+			//2023-12-10 note: I noticed that twitter's media section including on the search results now only display a grid of images instead of tweets
+			//until the image is clicked, and that it only displays the first image of a tweet when there are multiple (including if its loaded in the HTML)
+			//Therefore if you try to extract URLs, you'll only get the URL of the first image and the tweet.
+		const Setting_Nitter_Instance_ConvertFrom = "https://nitter.moomoo.me"
+			//^Same as above, but when you are scraping from nitter instance A, but get URLs from instance B.
+		
+		//Don't touch these. It corrects the instance URLs in the event your browser appends a slash symbol at the end of the domain name.
+			const Nitter_Instance_ConvertTo = Setting_Nitter_Instance_ConvertTo.replace(/\/$/, "")
+			const Nitter_Instance_ConvertFrom = Setting_Nitter_Instance_ConvertFrom.replace(/\/$/, "")
 	//An array containing a list of objects specifying the replacement.
 	//-When "Type" is "normal": performs a simple replacement (replace a substring or remove a part of the string), the attributes are:
 	//--FindWhat: <Regex>: A regular expression the URLs in the input must match with to identify what appropriate replacement to perform a URL conversion.
@@ -290,7 +294,7 @@ Sort:
 	}
 	
 	function NitterInstance_StringToRegex(StringInput) {
-		return StringInput.replace(/\/$/, "").replace("/", "\\/").replace(".", "\\.")
+		return StringInput.replace("/", "\\/").replace(".", "\\.")
 	}
 	function Auto_update() {
 		if (document.getElementById("AutoUpdate").checked) {
