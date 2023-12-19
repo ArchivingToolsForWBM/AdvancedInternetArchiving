@@ -77,7 +77,6 @@ Sort:
 		//^Nitter instances:
 		//-Have a protocol ("http://" or "https://", latter recommended)
 		//-Have a hostname ("nitter.net")
-		//-No slash at the end (".net/" is invalid, use ".net").
 		//Change this if you find that the current instance have issues. See a list of nitter instances here: https://github.com/xnaas/nitter-instances
 		//Please note that media URLs may be configured differently, such as being base64Media encoded like this:
 		//
@@ -291,7 +290,7 @@ Sort:
 	}
 	
 	function NitterInstance_StringToRegex(StringInput) {
-		return StringInput.replace("/", "\\/").replace(".", "\\.")
+		return StringInput.replace(/\/$/, "").replace("/", "\\/").replace(".", "\\.")
 	}
 	function Auto_update() {
 		if (document.getElementById("AutoUpdate").checked) {
