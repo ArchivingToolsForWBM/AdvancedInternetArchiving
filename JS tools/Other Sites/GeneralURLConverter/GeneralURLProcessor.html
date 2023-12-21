@@ -209,13 +209,13 @@ Sort:
 			{
 				//Profile pages
 				Type:"normal",
-				FindWhat:RegExp("(?:" + NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "|https:\\/\\/twitter\\.com)" + "\\/((?!(about|intent|logo\\.png|search|settings|pic))[a-zA-Z0-9\\-_]+).*$"),
+				FindWhat:RegExp("(?:" + NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "|https:\\/\\/twitter\\.com|https?:\\/\\/(?:www\\.)?x\\.com)" + "\\/((?!(about|intent|logo\\.png|search|settings|pic))[a-zA-Z0-9\\-_]+).*$"),
 				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "/$1", KeyName:"Nitter_UserProfile_Front"}, {Replacement:Nitter_Instance_ConvertTo + "/$1/with_replies", KeyName:"Nitter_UserProfile_Replies"}, {Replacement:Nitter_Instance_ConvertTo + "/$1/media", KeyName:"Nitter_UserProfile_Media"}]
 			},
 			{
 				//Tweets
 				Type:"normal",
-				FindWhat:RegExp("(?:" + NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "|https:\\/\\/twitter\\.com)" + "(\\/((?!(about|logo\\.png|search|pic))[a-zA-Z0-9\\-_]+)\\/status\\/\\d+).*$"),
+				FindWhat:RegExp("(?:" + NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "|https:\\/\\/twitter\\.com|https?:\\/\\/(?:www\\.)?x\\.com)" + "(\\/((?!(about|logo\\.png|search|pic))[a-zA-Z0-9\\-_]+)\\/status\\/\\d+).*$"),
 				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "$1", KeyName:"Nitter_Tweet"}]
 			},
 			{
