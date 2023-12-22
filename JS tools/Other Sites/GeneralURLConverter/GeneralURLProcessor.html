@@ -256,15 +256,33 @@ Sort:
 				FindWhat:/^https:\/\/twitter\.com\/search.*$/
 			},
 			//github pages
-			//valid repository name: [A-Za-z0-9_.\-]
-			//valid username: [A-Za-z0-9\-]
+			//valid repository name: [A-Za-z0-9_.\-]+
+			//valid username: (?:(?!(contact|features|enterprise|sponsors|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+
 			//https://github.com/Username
 			//https://github.com/Username/RepositoryName
 			//https://github.com/Username/RepositoryName/archive/refs/heads/master.zip
+			//https://github.com/Username/RepositoryName/archive/refs/tags/filename.zip
+			//https://github.com/Username/RepositoryName/releases/download/v05/bsnes-plus-05-x64.7z
 			{
 				Type:"normal",
-				FindWhat:/(^https?:\/\/github\.com\/([A-Za-z0-9\-]+)\/([A-Za-z0-9_.\-]+)\/archive\/refs\/heads\/[A-Za-z0-9\-]+\.zip).*$/,
-				ReplaceWith:[{Replacement:"$1", KeyName:"Github_RepositoryZip"}, {Replacement:"https://github.com/$2", KeyName:"Github_User"}, {Replacement:"https://github.com/$2/$3", KeyName:"Github_Repository"}]
+				FindWhat:/(^https?:\/\/github\.com\/([A-Za-z0-9\-]+)\/([A-Za-z0-9_.\-]+)\/archive\/refs\/(?:(heads|tags))\/[^\/]+).*$/,
+				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Repository_Download"}, {Replacement:"https://github.com/$2", KeyName:"Github_Profile"}, {Replacement:"https://github.com/$2/$3", KeyName:"Github_Repository"}]
+			},
+			{
+				Type:"normal",
+				FindWhat:/(https?:\/\/github\.com\/[A-Za-z0-9\-]+\/[A-Za-z0-9_.\-]+\/releases\/download\/.+$)/,
+				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Releases_Download"}]
+			},
+			{
+				Type:"normal",
+				FindWhat:/(^(https:\/\/github\.com\/(?:(?!(contact|features|enterprise|sponsors|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+)\/[A-Za-z0-9_.\-]+).*$/,
+				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Repository"}, {Replacement:"$1/releases", KeyName:"Github_Releases"}, {Replacement:"$2", KeyName:"Github_Profile"}]
+			},
+			{
+				Type:"pagination",
+				FindWhat:/(?:(?<=(?:https?:\/\/github\.com\/(?:(?!(?:contact|features|enterprise|sponsors|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+\?page=)))\d+(?=(?:&tab=repositories$))/,
+				PageNumberStartsAt:1,
+				KeyName:"Github_Repository_Lists"
 			}
 		]
 	window.onload = LoadCustomToggableFilters
@@ -414,7 +432,7 @@ Sort:
 										SetKeyName = Converter.KeyName
 									}
 									let HighestPageNumberSoFar = parseInt(ListOfURLs[i].URL.match(Converter.FindWhat)[0], 10) //Track highest page number starting with the number we first processed
-									let PartsOfURLSame = ListOfURLs[i].URL.split(Converter.FindWhat) //Get substrings before and after the page number
+									let PartsOfURLSame = ListOfURLs[i].URL.split(Converter.FindWhat) //Get substrings before and after the page number (must be: ["string before number", "string after number"], a length of 2)
 									for (let i2 = i+1; i2 < ListOfURLs.length; i2++) { //Loop to find a potential same URL but with higher page number
 										PartsOfURLSame2 = ListOfURLs[i2].URL.split(Converter.FindWhat)
 										if (Converter.FindWhat.test(ListOfURLs[i2].URL) && (PartsOfURLSame[0] == PartsOfURLSame2[0]) && (PartsOfURLSame[1] == PartsOfURLSame2[1])) { //if regex and all parts of the URL the same ignoring page number, compare the page number
@@ -525,7 +543,7 @@ Sort:
 			OutputHTMLTableString += "<table>"
 			OutputHTMLTableString += "<tr><th>URL</th><th>Identified Type</th><th>Key name</th></tr>"
 			Filtered_OutputURLObjects.forEach((ArrayElement) => {
-				OutputHTMLTableString += "<tr><td><pre>"+escapeHTMLChars(ArrayElement.URL)+"</pre></td><td><pre>"+ArrayElement.IdentifiedType+"</pre></td><td><pre>"+ArrayElement.KeyName+"</pre></td></tr>"
+				OutputHTMLTableString += "<tr><td><kbd>"+escapeHTMLChars(ArrayElement.URL)+"</kbd></td><td><kbd>"+ArrayElement.IdentifiedType+"</kbd></td><td><kbd>"+ArrayElement.KeyName+"</kbd></td></tr>"
 			});
 			OutputHTMLTableString += "</table>"
 			document.getElementById("URL_OutputTable").innerHTML = OutputHTMLTableString
