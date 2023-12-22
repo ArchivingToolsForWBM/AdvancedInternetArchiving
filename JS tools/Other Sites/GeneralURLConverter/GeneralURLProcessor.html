@@ -254,6 +254,17 @@ Sort:
 			{
 				Type:"blacklisted",
 				FindWhat:/^https:\/\/twitter\.com\/search.*$/
+			},
+			//github pages
+			//valid repository name: [A-Za-z0-9_.\-]
+			//valid username: [A-Za-z0-9\-]
+			//https://github.com/Username
+			//https://github.com/Username/RepositoryName
+			//https://github.com/Username/RepositoryName/archive/refs/heads/master.zip
+			{
+				Type:"normal",
+				FindWhat:/(^https?:\/\/github\.com\/([A-Za-z0-9\-]+)\/([A-Za-z0-9_.\-]+)\/archive\/refs\/heads\/[A-Za-z0-9\-]+\.zip).*$/,
+				ReplaceWith:[{Replacement:"$1", KeyName:"Github_RepositoryZip"}, {Replacement:"https://github.com/$2", KeyName:"Github_User"}, {Replacement:"https://github.com/$2/$3", KeyName:"Github_Repository"}]
 			}
 		]
 	window.onload = LoadCustomToggableFilters
@@ -520,9 +531,35 @@ Sort:
 			document.getElementById("URL_OutputTable").innerHTML = OutputHTMLTableString
 		}
 		function AddToOutput(URLObject) {
-			if (!OutputSet.has(URLObject.URL)) {
+			if (!OutputSet.has(URLObject.URL)) {	//If output not have the URL, add it to the list
 				OutputSet.add(URLObject.URL)
 				OutputURLObjects.push(URLObject)
+			} else {
+				//If already has it on the list, but its IdentifiedType is "other", and/or KeyName is blank, update it
+				//Situations like this happen if a given URL not matching with any converters came first, then
+				//another URL after converted through processing happens to match the former URL. That later URL have
+				//more information than the one already on the list gets prevented from being added, so we have a URL
+				//with inferior data.
+				//
+				//example:
+				//https://github.com/Username
+				//https://github.com/Username/RepositoryName
+				//https://github.com/Username/RepositoryName/archive/refs/heads/master.zip
+				//
+				//If there is only a converter that matches the 3rd URL (and converts into the first two), and the first two URLs are already in the set,
+				//they'll be labeled as "other" with a blank keyname, and then when the third URL gets processed, and then converted into the first two
+				//URLs, they won't be added, despite those having known information (IdentifiedType and KeyName)
+				for (let i = 0, j=OutputURLObjects.length; i < j; i++) {
+					if (URLObject.URL == OutputURLObjects[i].URL) { //Match is found, update any missing info in OutputURLObjects[i].URL
+						if (OutputURLObjects[i].IdentifiedType == "other" && URLObject.IdentifiedType != "other") {
+							OutputURLObjects[i].IdentifiedType = URLObject.IdentifiedType
+						}
+						if (OutputURLObjects[i].KeyName == "" && URLObject.KeyName != "") {
+							OutputURLObjects[i].KeyName = URLObject.KeyName
+						}
+						break;
+					}
+				}
 			}
 		}
 	}
