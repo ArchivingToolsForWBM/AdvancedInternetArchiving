@@ -257,7 +257,7 @@ Sort:
 			},
 			//github pages
 			//valid repository name: [A-Za-z0-9_.\-]+
-			//valid username: (?:(?!(contact|features|enterprise|sponsors|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+
+			//valid username: (?:(?!(contact|features|enterprise|sponsors|search|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+
 			//https://github.com/Username
 			//https://github.com/Username/RepositoryName
 			//https://github.com/Username/RepositoryName/archive/refs/heads/master.zip
@@ -275,12 +275,12 @@ Sort:
 			},
 			{
 				Type:"normal",
-				FindWhat:/(^(https:\/\/github\.com\/(?:(?!(contact|features|enterprise|sponsors|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+)\/[A-Za-z0-9_.\-]+).*$/,
+				FindWhat:/(^(https:\/\/github\.com\/(?:(?!(contact|features|enterprise|sponsors|search|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+)\/[A-Za-z0-9_.\-]+).*$/,
 				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Repository"}, {Replacement:"$1/releases", KeyName:"Github_Releases"}, {Replacement:"$2", KeyName:"Github_Profile"}]
 			},
 			{
 				Type:"pagination",
-				FindWhat:/(?:(?<=(?:https?:\/\/github\.com\/(?:(?!(?:contact|features|enterprise|sponsors|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+\?page=)))\d+(?=(?:&tab=repositories$))/,
+				FindWhat:/(?:(?<=(?:https?:\/\/github\.com\/(?:(?!(?:contact|features|enterprise|sponsors|search|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+\?page=)))\d+(?=(?:&tab=repositories$))/,
 				PageNumberStartsAt:1,
 				KeyName:"Github_Repository_Lists"
 			}
