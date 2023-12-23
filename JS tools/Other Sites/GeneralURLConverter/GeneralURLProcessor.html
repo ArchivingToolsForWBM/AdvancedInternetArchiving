@@ -257,12 +257,14 @@ Sort:
 			},
 			//github pages
 			//valid repository name: [A-Za-z0-9_.\-]+
-			//valid username: (?:(?!(contact|features|enterprise|sponsors|search|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+
+			//valid username: (?:(?!(?:contact|features|enterprise|sponsors|search|security|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+
 			//https://github.com/Username
 			//https://github.com/Username/RepositoryName
 			//https://github.com/Username/RepositoryName/archive/refs/heads/master.zip
 			//https://github.com/Username/RepositoryName/archive/refs/tags/filename.zip
 			//https://github.com/Username/RepositoryName/releases/download/v01/filename.extension
+			//https://github.com/Username?tab=repositories
+			//https://github.com/Username?page=2&tab=repositories
 			{
 				Type:"normal",
 				FindWhat:/(^https?:\/\/github\.com\/([A-Za-z0-9\-]+)\/([A-Za-z0-9_.\-]+)\/archive\/refs\/(?:(heads|tags))\/[^\/]+).*$/,
@@ -275,12 +277,19 @@ Sort:
 			},
 			{
 				Type:"normal",
-				FindWhat:/(^(https:\/\/github\.com\/(?:(?!(contact|features|enterprise|sponsors|search|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+)\/[A-Za-z0-9_.\-]+).*$/,
+				FindWhat:/(^(https?:\/\/github\.com\/(?:(?!(?:contact|features|enterprise|sponsors|search|security|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+)\/[A-Za-z0-9_.\-]+).*$/,
 				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Repository"}, {Replacement:"$1/releases", KeyName:"Github_Releases"}, {Replacement:"$2", KeyName:"Github_Profile"}]
 			},
 			{
+				Type:"normal",
+				FindWhat:/(^https?:\/\/github\.com\/(?:(?!(?:contact|features|enterprise|sponsors|search|security|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+$)/,
+				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Profile"}, {Replacement:"$1\?tab=repositories", KeyName:"Github_Repository_Lists"}]
+			},
+			{
+				//Github didn't provide a way to find the last page of a repository pagination, however, it does tell you how many total repositories and that there is a max of 30 repositories per page,
+				//thus [NumberOfPaginationPages = max(ceiling(NumberOfRepositoriesTotal/30), 1)].
 				Type:"pagination",
-				FindWhat:/(?:(?<=(?:https?:\/\/github\.com\/(?:(?!(?:contact|features|enterprise|sponsors|search|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+\?page=)))\d+(?=(?:&tab=repositories$))/,
+				FindWhat:/(?:(?<=(?:https?:\/\/github\.com\/(?:(?!(?:contact|features|enterprise|sponsors|search|security|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+\?page=)))\d+(?=(?:&tab=repositories$))/,
 				PageNumberStartsAt:1,
 				KeyName:"Github_Repository_Lists"
 			}
@@ -313,7 +322,7 @@ Sort:
 			let Element_input = document.createElement("input")
 			Element_input.setAttribute("type", "checkbox")
 			Element_input.setAttribute("checked", "checked");
-			Element_input.setAttribute("id", "FilterSetting_"  + ArrayElement)
+			Element_input.setAttribute("id", "FilterSetting_" + ArrayElement)
 			Element_input.setAttribute("onchange", "Auto_update()")
 			Element_input.setAttribute("class", "CheckboxFiltersKeyName")
 			let Element_kbd = document.createElement("kbd")
