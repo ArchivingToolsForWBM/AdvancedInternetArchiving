@@ -278,7 +278,7 @@ Sort:
 			{
 				Type:"normal",
 				FindWhat:/(^(https?:\/\/github\.com\/(?:(?!(?:collections|contact|customer\-stories|features|enterprise|organizations|pricing|readme|sponsors|search|security|signup|solutions|team|topics|trending|orgs)))[A-Za-z0-9\-]+)\/[A-Za-z0-9_.\-]+).*$/,
-				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Repository"}, {Replacement:"$1\?tab=repositories", KeyName:"Github_Repository_Lists_Home"}, {Replacement:"$1/releases", KeyName:"Github_Releases"}, {Replacement:"$2", KeyName:"Github_Profile"}]
+				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Repository"}, {Replacement:"$2\?tab=repositories", KeyName:"Github_Repository_Lists_Home"}, {Replacement:"$1/releases", KeyName:"Github_Releases"}, {Replacement:"$2", KeyName:"Github_Profile"}]
 			},
 			{
 				Type:"normal",
