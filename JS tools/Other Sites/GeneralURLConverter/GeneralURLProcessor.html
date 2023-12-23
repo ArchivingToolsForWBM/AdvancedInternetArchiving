@@ -257,7 +257,7 @@ Sort:
 			},
 			//github pages
 			//valid repository name: [A-Za-z0-9_.\-]+
-			//valid username: (?:(?!(?:contact|features|enterprise|sponsors|search|security|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+
+			//valid username: (?:(?!(?:contact|features|enterprise|pricing|sponsors|search|security|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+
 			//https://github.com/Username
 			//https://github.com/Username/RepositoryName
 			//https://github.com/Username/RepositoryName/archive/refs/heads/master.zip
@@ -277,19 +277,19 @@ Sort:
 			},
 			{
 				Type:"normal",
-				FindWhat:/(^(https?:\/\/github\.com\/(?:(?!(?:contact|features|enterprise|sponsors|search|security|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+)\/[A-Za-z0-9_.\-]+).*$/,
+				FindWhat:/(^(https?:\/\/github\.com\/(?:(?!(?:contact|features|enterprise|pricing|sponsors|search|security|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+)\/[A-Za-z0-9_.\-]+).*$/,
 				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Repository"}, {Replacement:"$1/releases", KeyName:"Github_Releases"}, {Replacement:"$2", KeyName:"Github_Profile"}]
 			},
 			{
 				Type:"normal",
-				FindWhat:/(^https?:\/\/github\.com\/(?:(?!(?:contact|features|enterprise|sponsors|search|security|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+$)/,
-				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Profile"}, {Replacement:"$1\?tab=repositories", KeyName:"Github_Repository_Lists"}]
+				FindWhat:/(^https?:\/\/github\.com\/(?:(?!(?:contact|features|enterprise|pricing|sponsors|search|security|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+$)/,
+				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Profile"}, {Replacement:"$1\?tab=repositories", KeyName:"Github_Repository_Lists_Home"}]
 			},
 			{
 				//Github didn't provide a way to find the last page of a repository pagination, however, it does tell you how many total repositories and that there is a max of 30 repositories per page,
 				//thus [NumberOfPaginationPages = max(ceiling(NumberOfRepositoriesTotal/30), 1)].
 				Type:"pagination",
-				FindWhat:/(?:(?<=(?:https?:\/\/github\.com\/(?:(?!(?:contact|features|enterprise|sponsors|search|security|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+\?page=)))\d+(?=(?:&tab=repositories$))/,
+				FindWhat:/(?:(?<=(?:https?:\/\/github\.com\/(?:(?!(?:contact|features|enterprise|pricing|sponsors|search|security|signup|solutions|organizations|orgs)))[A-Za-z0-9\-]+\?page=)))\d+(?=(?:&tab=repositories$))/,
 				PageNumberStartsAt:1,
 				KeyName:"Github_Repository_Lists"
 			}
