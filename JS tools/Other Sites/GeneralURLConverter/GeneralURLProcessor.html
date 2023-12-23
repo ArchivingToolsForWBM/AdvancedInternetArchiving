@@ -33,6 +33,11 @@
 <p>Enter text that have URLs in them here</p>
 <label><input type="checkbox" id="AutoUpdate" onchange="Auto_update()" checked>Auto update</label><br>
 <textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" id="Input_EnteredURLs" cols="100" rows="30" oninput="NotifyInputChanged(); Auto_update()"></textarea><br>
+Pre-processing options:
+<ul>
+	<li><label><input type="checkbox" checked id="Checkbox_HTTPS" onchange="NotifyInputChanged(); Auto_update()">Force http &rarr; https</label></li>
+</ul><br>
+
 Filter:
 <button onclick="ChangeFilterSettings('CheckboxFilters', 1); Auto_update()">Check all</button><button onclick="ChangeFilterSettings('CheckboxFilters', 0); Auto_update()">Uncheck all</button><button onclick="ChangeFilterSettings('CheckboxFilters', 2); Auto_update()">Invert</button>
 <ul>
@@ -257,7 +262,7 @@ Sort:
 			},
 			//github pages
 			//valid repository name: [A-Za-z0-9_.\-]+
-			//valid username: (?:(?!(?:collections|contact|customer\-stories|features|enterprise|organizations|pricing|readme|sponsors|search|security|signup|solutions|team|topics|trending|orgs)))[A-Za-z0-9\-]+
+			//valid username: (?:(?!(?:about|collections|contact|customer\-stories|features|enterprise|organizations|pricing|readme|sponsors|search|security|signup|solutions|team|topics|trending|orgs)))[A-Za-z0-9\-]+
 			//https://github.com/Username
 			//https://github.com/Username/RepositoryName
 			//https://github.com/Username/RepositoryName/archive/refs/heads/master.zip
@@ -277,19 +282,19 @@ Sort:
 			},
 			{
 				Type:"normal",
-				FindWhat:/(^(https?:\/\/github\.com\/(?:(?!(?:collections|contact|customer\-stories|features|enterprise|organizations|pricing|readme|sponsors|search|security|signup|solutions|team|topics|trending|orgs)))[A-Za-z0-9\-]+)\/[A-Za-z0-9_.\-]+).*$/,
+				FindWhat:/(^(https?:\/\/github\.com\/(?:(?!(?:about|collections|contact|customer\-stories|features|enterprise|organizations|pricing|readme|sponsors|search|security|signup|solutions|team|topics|trending|orgs)))[A-Za-z0-9\-]+)\/[A-Za-z0-9_.\-]+).*$/,
 				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Repository"}, {Replacement:"$2\?tab=repositories", KeyName:"Github_Repository_Lists_Home"}, {Replacement:"$1/releases", KeyName:"Github_Releases"}, {Replacement:"$2", KeyName:"Github_Profile"}]
 			},
 			{
 				Type:"normal",
-				FindWhat:/(^https?:\/\/github\.com\/(?:(?!(?:collections|contact|customer\-stories|features|enterprise|organizations|pricing|readme|sponsors|search|security|signup|solutions|team|topics|trending|orgs)))[A-Za-z0-9\-]+$)/,
+				FindWhat:/(^https?:\/\/github\.com\/(?:(?!(?:about|collections|contact|customer\-stories|features|enterprise|organizations|pricing|readme|sponsors|search|security|signup|solutions|team|topics|trending|orgs)))[A-Za-z0-9\-]+$)/,
 				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Profile"}, {Replacement:"$1\?tab=repositories", KeyName:"Github_Repository_Lists_Home"}]
 			},
 			{
 				//Github didn't provide a way to find the last page of a repository pagination, however, it does tell you how many total repositories and that there is a max of 30 repositories per page,
 				//thus [NumberOfPaginationPages = max(ceiling(NumberOfRepositoriesTotal/30), 1)].
 				Type:"pagination",
-				FindWhat:/(?:(?<=(?:https?:\/\/github\.com\/(?:(?!(?:collections|contact|customer\-stories|features|enterprise|organizations|pricing|readme|sponsors|search|security|signup|solutions|team|topics|trending|orgs)))[A-Za-z0-9\-]+\?page=)))\d+(?=(?:&tab=repositories$))/,
+				FindWhat:/(?:(?<=(?:https?:\/\/github\.com\/(?:(?!(?:about|collections|contact|customer\-stories|features|enterprise|organizations|pricing|readme|sponsors|search|security|signup|solutions|team|topics|trending|orgs)))[A-Za-z0-9\-]+\?page=)))\d+(?=(?:&tab=repositories$))/,
 				PageNumberStartsAt:1,
 				KeyName:"Github_Repository_Lists"
 			}
@@ -397,9 +402,12 @@ Sort:
 					ListOfURLs = [] //failsafe, prevents Array.map from performing a null which on the browser, would do nothing (if user enters a string with no valid URL).
 				}
 				ListOfURLs = ListOfURLs.map(ArrayElement => {
-					
+					let ConvertedURL = ArrayElement.replace(/^ttp(s)?/, "http$1").replace(/https?:\/\/web\.archive\.org\/web\/\d+(im_)?\//, "").replace(/#.*$/, "").replace(/\.$/, "")
+					if (document.getElementById("Checkbox_HTTPS").checked) {
+						ConvertedURL = ConvertedURL.replace(/^http:\/\//, "https://")
+					}
 					let URLObject = {
-						URL:ArrayElement.replace(/^ttp(s)?/, "http$1").replace(/https?:\/\/web\.archive\.org\/web\/\d+(im_)?\//, "").replace(/#.*$/, "").replace(/\.$/, ""),
+						URL:ConvertedURL,
 							//^-Revert the URL to have the "h" of the http/https
 							// -When extracting links on WBM version of pages, obtain the original version of URLs (ideal for saving outlinks from a volatile page).
 							// -remove fragment identifier
