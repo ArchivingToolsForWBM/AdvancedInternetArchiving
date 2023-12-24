@@ -114,7 +114,11 @@ Sort:
 			const Nitter_Instance_ConvertTo = Setting_Nitter_Instance_ConvertTo.replace(/\/$/, "")
 			const Nitter_Instance_ConvertFrom = Setting_Nitter_Instance_ConvertFrom.replace(/\/$/, "")
 	//Github stuff
-		//This is a string to be RegExp()'ed into a regex. Needed to determine if the part of the URL is a username.
+		//This is a string to be RegExp()'ed into a regex. Needed to determine if the part of the URL is a username associated with a repository.
+		//On notepad++ to convert, use ReplaceAll on:
+		//- "\|" with "\n" to convert the vertical-bar-separated words into a list
+		//- "[\r\n]" with "|" to convert it into  vertical-bar-separated words.
+		//It must be "(?:(?!(?:" + <vertical-bar-separated words> + "))[A-Za-z0-9\\-]+)" to ensure no capturing groups.
 		const Github_UsernamePart = "(?:(?!(?:about|codespaces|collections|contact|customer\\-stories|enterprise|features|git\\-guides|images|login|mobile|organizations|orgs|premium-support|pricing|readme|search|security|signup|sitemap|solutions|sponsors|team|topics|trending|users))[A-Za-z0-9\\-]+)"
 	//An array containing a list of objects specifying the replacement.
 	//-When "Type" is "normal": performs a simple replacement (replace a substring or remove a part of the string), the attributes are:
@@ -265,7 +269,6 @@ Sort:
 			},
 			//github pages
 			//valid repository name: [A-Za-z0-9_.\-]+
-			//valid username: (?:(?!(?:about|collections|contact|customer\-stories|features|enterprise|organizations|pricing|readme|sponsors|search|security|signup|solutions|team|topics|trending|orgs)))[A-Za-z0-9\-]+
 			//https://github.com/Username
 			//https://github.com/Username/RepositoryName
 			//https://github.com/Username/RepositoryName/archive/refs/heads/master.zip
@@ -273,6 +276,7 @@ Sort:
 			//https://github.com/Username/RepositoryName/releases/download/v01/filename.extension
 			//https://github.com/Username?tab=repositories
 			//https://github.com/Username?page=2&tab=repositories
+			//
 			{
 				Type:"normal",
 				FindWhat:/(^https?:\/\/github\.com\/([A-Za-z0-9\-]+)\/([A-Za-z0-9_.\-]+)\/archive\/refs\/(?:(heads|tags))\/[^\/]+).*$/,
@@ -284,15 +288,20 @@ Sort:
 				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Releases_Download"}]
 			},
 			{
+				//Note: repositories may be empty, so a download link generated from "https://github.com/Username/RepositoryName" may instead open a
+				//page with "This repository is empty." with a 401 error instead of bringing up the save as prompt to download.
+				//Example: https://github.com/24qwert/riaa will generate various URLs, one of them is
+				//https://github.com/24qwert/riaa/archive/refs/heads/master.zip which when opened, brings up that message instead of downloading. I
+				//strongly recommend if you are planning to mass-save these (as well as the repository page itself) on WBGS, I strongly recommend
+				//removing empty repositories using WBGS's "Check if URLs are available in the Live Web" feature, and filter out URLs with 401s (or
+				//potentially any 4XX errors).
 				Type:"normal",
 				FindWhat: RegExp("(^(https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z0-9_.\\-]+)).*$"),
-				//FindWhat:/(^(https?:\/\/github\.com\/(?:(?!(?:about|collections|contact|customer\-stories|features|enterprise|organizations|pricing|readme|sponsors|search|security|signup|solutions|team|topics|trending|orgs)))[A-Za-z0-9\-]+)\/[A-Za-z0-9_.\-]+).*$/,
-				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Repository"}, {Replacement:"$2\?tab=repositories", KeyName:"Github_Repository_Lists_Home"}, {Replacement:"$1/releases", KeyName:"Github_Releases"}, {Replacement:"$2", KeyName:"Github_Profile"}]
+				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Repository"}, {Replacement:"$2\?tab=repositories", KeyName:"Github_Repository_Lists_Home"}, {Replacement:"$1/releases", KeyName:"Github_Releases"}, {Replacement:"$2", KeyName:"Github_Profile"}, {Replacement:"$1/archive/refs/heads/master.zip", KeyName:"Github_Repository_Download"}]
 			},
 			{
 				Type:"normal",
 				FindWhat: RegExp("(^https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "$)"),
-				//FindWhat:/(^https?:\/\/github\.com\/(?:(?!(?:about|collections|contact|customer\-stories|features|enterprise|organizations|pricing|readme|sponsors|search|security|signup|solutions|team|topics|trending|orgs)))[A-Za-z0-9\-]+$)/,
 				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Profile"}, {Replacement:"$1\?tab=repositories", KeyName:"Github_Repository_Lists_Home"}]
 			},
 			{
@@ -300,7 +309,6 @@ Sort:
 				//thus [NumberOfPaginationPages = max(ceiling(NumberOfRepositoriesTotal/30), 1)].
 				Type:"pagination",
 				FindWhat: RegExp("(?:(?<=(?:https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\?page=)))\\d+(?=(?:&tab=repositories$))"),
-				//FindWhat:/(?:(?<=(?:https?:\/\/github\.com\/(?:(?!(?:about|collections|contact|customer\-stories|features|enterprise|organizations|pricing|readme|sponsors|search|security|signup|solutions|team|topics|trending|orgs)))[A-Za-z0-9\-]+\?page=)))\d+(?=(?:&tab=repositories$))/,
 				PageNumberStartsAt:1,
 				KeyName:"Github_Repository_Lists"
 			}
