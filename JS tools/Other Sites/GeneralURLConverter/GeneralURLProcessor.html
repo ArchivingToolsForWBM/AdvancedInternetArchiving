@@ -27,8 +27,8 @@
 	</head>
 <body>
 <h1 style="text-align: center;">General URL converter</h1>
-<p>This is a general tool to convert multiple different types of URLs.</p>
-<p>To edit or add converters, open this HTML file using a text editor (such as notepad++), and see <kbd>ListOfConverters</kbd></p>
+<p>This is a general tool to convert, to generate multiple variations of, and to remove blacklisted URLs.</p>
+<p>To edit, add, or remove converters, as well as add new key names to search or to filter, open this HTML file using a text editor (such as notepad++), and CTRL+F <kbd>ListOfConverters</kbd>. See the comments for more info.</p>
 
 <p>Enter text that have URLs in them here</p>
 <label><input type="checkbox" id="AutoUpdate" onchange="Auto_update()" checked>Auto update</label><br>
@@ -123,8 +123,8 @@ Sort:
 	//An array containing a list of objects specifying the replacement.
 	//-When "Type" is "normal": performs a simple replacement (replace a substring or remove a part of the string), the attributes are:
 	//--FindWhat: <Regex>: A regular expression the URLs in the input must match with to identify what appropriate replacement to perform a URL conversion.
-	//  NOTE: I recommend matching the entire string if you do not fully understand how the URL format of a given website work. I've experienced where the converted URL
-	//  wasn't included in the output at all. So make sure as you add more objects, test every one of them!
+	//  NOTE: I recommend matching the entire string (you may have to use ".+$" or ".*$") if you do not fully understand how the URL format of a given website work. I've
+	//  experienced where the converted URL wasn't included in the output at all. So make sure as you add more objects, test every one of them!
 	//--ReplaceWith: An array containing n objects, those objects are formatted: {Replacement:"https://example.com", KeyName:""}. Note: if this attribute omitted, will not include
 	//  the matched URL at all. The KeyName attribute is optional.
 	//-When "Type" is "pagination": This will generate each URL of each page number of the same kind, based on the highest page number of the matching kind that exists in the input,
@@ -144,10 +144,10 @@ Sort:
 	//-When "Type" is "blacklisted", it can be filtered (filter setting). Only "FindWhat" is needed, anything that matches this regex will be labeled as blacklisted. Please note
 	// if a URL matches on matches multiple listed objects with at least one of them not being blacklisted, it will be included.
 	//
-	//The "KeyName" is useful for sorting and filtering, such as to find pagination URLs to extract links from or to remove non-archivable pages.
+	//The "KeyName" is useful for sorting and filtering, such as to find pagination URLs to extract links from or to remove non-archivable pages. They're automatically added to
+	//the filterable list when the HTML loads.
 	//
 	//See quick reference here: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet
-	
 		const ListOfConverters = [
 //			{
 //				//Example 1: Twitter image URLs
