@@ -115,7 +115,7 @@ Sort:
 			const Nitter_Instance_ConvertFrom = Setting_Nitter_Instance_ConvertFrom.replace(/\/$/, "")
 	//Github stuff
 		//This is a string to be RegExp()'ed into a regex. Needed to determine if the part of the URL is a username.
-		const Github_UsernamePart = "(?:(?!(?:about|collections|codespaces|contact|customer\\-stories|features|enterprise|images|organizations|pricing|readme|sponsors|search|security|signup|solutions|team|topics|trending|orgs|users))[A-Za-z0-9\\-]+)"
+		const Github_UsernamePart = "(?:(?!(?:about|codespaces|collections|contact|customer\\-stories|enterprise|features|git\\-guides|images|login|mobile|organizations|orgs|premium-support|pricing|readme|search|security|signup|sitemap|solutions|sponsors|team|topics|trending|users))[A-Za-z0-9\\-]+)"
 	//An array containing a list of objects specifying the replacement.
 	//-When "Type" is "normal": performs a simple replacement (replace a substring or remove a part of the string), the attributes are:
 	//--FindWhat: <Regex>: A regular expression the URLs in the input must match with to identify what appropriate replacement to perform a URL conversion.
