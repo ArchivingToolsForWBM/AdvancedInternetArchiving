@@ -12,6 +12,8 @@
 		const Github_UsernamePart = "(?:(?!(?:about|codespaces|collections|contact|customer\\-stories|enterprise|features|git\\-guides|images|login|mobile|organizations|orgs|premium-support|pricing|readme|search|security|signup|sitemap|solutions|sponsors|team|topics|trending|users))[A-Za-z0-9\\-]+)"
 		const Github_Number_of_Repository_per_page = 30
 			//^Number of repositories per page when viewing the list of repositories. Use to determine what page number is the last page.
+		const Github_Number_of_Releases_per_page = 10
+			//^Same as above but for releases (seen in the front page of the repository)
 		const Github_IntervalScan = 100
 			//^Number of milliseconds between each execution this script runs. Because github doesn't refresh the page and it is a dynamic web page (much like twitter) when clicking on links,
 			// This code NEEDs to run periodically to catch any changes the page when you click on links.
@@ -30,6 +32,10 @@
 			if (RegExp("(?<=https:\\/\\/github\\.com\\/)" + Github_UsernamePart).test(Github_Current_URL)) {
 				Github_Current_URL_Username = Github_Current_URL.match(RegExp("(?<=(?:https:\\/\\/github\\.com\\/))" + Github_UsernamePart))[0] //e.g. https://github.com/ArchLeaders
 			}
+			let Github_Current_URL_RepositoryName = ""
+			if (RegExp("(?<=https:\\/\\/github\\.com\\/)" + Github_UsernamePart + "\\/[A-Za-z0-9_.\-]+").test(Github_Current_URL)) {
+				Github_Current_URL_RepositoryName = Github_Current_URL.match(RegExp("(?<=(?:https:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/))[A-Za-z0-9_.\-]+"))[0]
+			}
 			{
 				//Get number of paginated pages for repositories e.g. https://github.com/ArchLeaders?page=1&tab=repositories
 				if (RegExp("(?<=(https:\\/\\/github\\.com\\/))" + Github_UsernamePart).test(Github_Current_URL)) {
@@ -44,6 +50,26 @@
 							ConsoleLoggingURL("https://github.com/" + Github_Current_URL_Username + "?page=" + (Math.ceil(Github_NumberOfRepositories/Github_Number_of_Repository_per_page)).toString(10) + "&tab=repositories")
 						}
 					}
+				}
+			}
+			{
+				//Get number of paginated pages for releases e.g. https://github.com/adam-p/markdown-here
+				if (RegExp("(?<=(https:\\/\\/github\\.com\\/))" + Github_UsernamePart + "\\/[A-Za-z0-9_.\-]+$").test(Github_Current_URL)) {
+					let Github_NumberOfReleases = -1
+					let LookingForReleasesCount = Array.from(document.getElementsByTagName("a"))
+					let ReleaseCountString = LookingForReleasesCount.find((ArrayElement) => {
+						//Make sure it is an href link and in a way that it is by github rather than finding an a href by the user.
+						return RegExp("https:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z0-9_.\-]+\\/releases").test(ArrayElement.href) && /Releases \d+/.test(ArrayElement.innerText)
+					});
+					
+					if (typeof ReleaseCountString != "undefined") {
+						Github_NumberOfReleases = parseInt(ReleaseCountString.innerText.match(/\d+$/)[0])
+						if (Github_NumberOfReleases != -1) {
+							//https://github.com/adam-p/markdown-here/releases?page=2
+							ConsoleLoggingURL("https://github.com/" + Github_Current_URL_Username + "/" + Github_Current_URL_RepositoryName + "/releases?page=" + Math.ceil(Github_NumberOfReleases/Github_Number_of_Releases_per_page).toString(10))
+						}
+					}
+					
 				}
 			}
 			{
