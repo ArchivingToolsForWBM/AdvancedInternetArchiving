@@ -22,18 +22,23 @@
 		function MainCode() {
 			if (!RaceConditionLock) {
 				RaceConditionLock = true
+				let Github_Current_URL = window.location.href
 				
-				let ArrayOfAHref = Array.from(document.getElementsByTagName("a"))
-				let NextButton = ArrayOfAHref.find((HTMLElement) => {
-					if (HTMLElement.hasAttribute("href")) {
-						if (RegExp("^https:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z0-9_.\\-]+\\/tags\\?after=").test(HTMLElement.href) && HTMLElement.innerText == "Next") {
-							return true
+				if (RegExp("https:\\/\\/github.com\\/"+Github_UsernamePart+"\\/[A-Za-z0-9_.\-]+\\/tags").test(Github_Current_URL)) {
+					let ArrayOfAHref = Array.from(document.getElementsByTagName("a"))
+					let NextButton = ArrayOfAHref.find((HTMLElement) => {
+						if (HTMLElement.hasAttribute("href")) {
+							if (RegExp("^https:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z0-9_.\\-]+\\/tags\\?after=").test(HTMLElement.href) && HTMLElement.innerText == "Next") {
+								return true
+							}
+						} else {
+							return false
 						}
-					} else {
-						return false
+					})
+					if (typeof NextButton != "undefined") {
+						NextButton.click()
 					}
-				})
-				NextButton.click()
+				}
 				RaceConditionLock = false
 			}
 		}
