@@ -276,6 +276,7 @@ Sort:
 			//https://github.com/Username/RepositoryName/releases/download/v01/filename.extension
 			//https://github.com/Username?tab=repositories
 			//https://github.com/Username?page=2&tab=repositories
+			//https://github.com/Username/RepositoryName/releases?page=2
 			//
 			{
 				Type:"normal",
@@ -311,6 +312,13 @@ Sort:
 				FindWhat: RegExp("(?:(?<=(?:https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\?page=)))\\d+(?=(?:&tab=repositories$))"),
 				PageNumberStartsAt:1,
 				KeyName:"Github_Repository_Lists"
+			},
+			{
+				//https://github.com/adam-p/markdown-here/releases?page=2
+				Type:"pagination",
+				FindWhat: RegExp("(?:(?<=(?:https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z0-9_.\-]+\\/releases\\?page=)))\\d+(?:$)"),
+				PageNumberStartsAt:1,
+				KeyName:"Github_Repository_ReleasesList"
 			}
 		]
 	window.onload = LoadCustomToggableFilters
