@@ -306,6 +306,12 @@ Sort:
 				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Profile"}, {Replacement:"$1\?tab=repositories", KeyName:"Github_Repository_Lists_Home"}]
 			},
 			{
+				//https://github.com/UserName/RepositoryName/releases/tag/VersionName -> https://github.com/UserName/RepositoryName/releases/expanded_assets/VersionName
+				Type:"normal",
+				FindWhat: RegExp("^(https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z0-9_.\\-]+\\/releases)\\/tag\\/([A-Za-z0-9_.\\-]+)"),
+				ReplaceWith:[{Replacement:"$1/expanded_assets/$2", KeyName:"Github_ReleasesTag_DownloadPage"}]
+			},
+			{
 				//Github didn't provide a way to find the last page of a repository pagination, however, it does tell you how many total repositories and that there is a max of 30 repositories per page,
 				//thus [NumberOfPaginationPages = max(ceiling(NumberOfRepositoriesTotal/30), 1)].
 				Type:"pagination",

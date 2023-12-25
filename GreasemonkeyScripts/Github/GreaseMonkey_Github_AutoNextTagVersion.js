@@ -22,7 +22,12 @@
 		function MainCode() {
 			if (!RaceConditionLock) {
 				RaceConditionLock = true
+				
 				let Github_Current_URL = window.location.href
+				//let Github_SomethingLoading = false
+					//^Currently, checking for the presence of visible loading circles is quite difficult as
+					//the HTML uses shadow root and not something as simple as using the "hidden" attribute
+					//nor obviously named tags/attribute.
 				
 				if (RegExp("https:\\/\\/github.com\\/"+Github_UsernamePart+"\\/[A-Za-z0-9_.\-]+\\/tags").test(Github_Current_URL)) {
 					let ArrayOfAHref = Array.from(document.getElementsByTagName("a"))
