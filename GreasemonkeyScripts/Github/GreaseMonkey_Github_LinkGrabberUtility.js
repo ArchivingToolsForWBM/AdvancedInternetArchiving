@@ -25,7 +25,7 @@
 	window.onload = setInterval(MainCode, Github_IntervalScan)
 	
 	function MainCode() {
-		if (RaceConditionLock != true) {
+		if (!RaceConditionLock) {
 			RaceConditionLock = true
 			let Github_Current_URL = window.location.href
 			let Github_Current_URL_Username = ""
