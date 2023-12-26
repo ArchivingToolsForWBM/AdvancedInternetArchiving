@@ -275,6 +275,7 @@ Sort:
 			//https://github.com/Username/RepositoryName/archive/refs/tags/filename.zip
 			//https://github.com/Username/RepositoryName/releases/download/v01/filename.extension
 			//https://github.com/Username?tab=repositories
+			//https://github.com/orgs/UserName/repositories //Well-known organization when viewing the tabs of this user other than "overview"
 			//https://github.com/Username?page=2&tab=repositories
 			//https://github.com/Username/RepositoryName/releases?page=2
 			//
@@ -297,8 +298,8 @@ Sort:
 				//removing empty repositories using WBGS's "Check if URLs are available in the Live Web" feature, and filter out URLs with 401s (or
 				//potentially any 4XX errors).
 				Type:"normal",
-				FindWhat: RegExp("(^(https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z0-9_.\\-]+)).*$"),
-				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Repository"}, {Replacement:"$2\?tab=repositories", KeyName:"Github_Repository_Lists_Home"}, {Replacement:"$1/releases", KeyName:"Github_Releases"}, {Replacement:"$2", KeyName:"Github_Profile"}, {Replacement:"$1/archive/refs/heads/master.zip", KeyName:"Github_Repository_Download"}]
+				FindWhat: RegExp("^(((https?:\\/\\/github\\.com\\/" + Github_UsernamePart + ")\\/[A-Za-z0-9_.\\-]+).*$)"),
+				ReplaceWith:[{Replacement:"$2", KeyName:"Github_Repository"}, {Replacement:"$3\?tab=repositories", KeyName:"Github_Repository_Lists_Home"}, {Replacement:"$2/releases", KeyName:"Github_Releases"}, {Replacement:"$2", KeyName:"Github_Profile"}, {Replacement:"$2/archive/refs/heads/master.zip", KeyName:"Github_Repository_Download"}]
 			},
 			{
 				Type:"normal",
@@ -333,6 +334,13 @@ Sort:
 				FindWhat: RegExp("(?:(?<=(?:https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\?page=)))\\d+(?=(?:&tab=repositories$))"),
 				PageNumberStartsAt:1,
 				KeyName:"Github_Repository_Lists"
+			},
+			{
+				//https://github.com/orgs/Username/repositories?page=2
+				Type:"pagination",
+				FindWhat: RegExp("(?:(?<=(?:https?:\\/\\/github\\.com\\/orgs\\/" + Github_UsernamePart + "\\/repositories\\?page=)))\\d+"),
+				PageNumberStartsAt:1,
+				KeyName:"Github_Repository_OrgsLists"
 			},
 			{
 				//https://github.com/adam-p/markdown-here/releases?page=2

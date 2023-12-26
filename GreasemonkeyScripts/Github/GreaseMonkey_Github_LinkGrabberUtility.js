@@ -49,7 +49,8 @@
 			}
 			{ //User home page
 				//Get number of paginated pages for repositories e.g. https://github.com/ArchLeaders?page=1&tab=repositories
-				if (RegExp("(?<=(https:\\/\\/github\\.com\\/))" + Github_UsernamePart).test(Github_Current_URL)) {
+				//also another format: https://github.com/orgs/Psiphon-Inc/repositories?page=2
+				if (RegExp("(?<=(https:\\/\\/github\\.com\\/))" + Github_UsernamePart + "$").test(Github_Current_URL)) {
 					let Github_NumberOfRepositories = -1
 					let LookingForRepositoryCount = Array.from(document.getElementsByTagName("a"))
 					let RepositoryCountString = LookingForRepositoryCount.find((ArrayElement) => {
@@ -59,6 +60,7 @@
 						Github_NumberOfRepositories = parseInt((RepositoryCountString.innerText).match("(?<=(Repositories\n))\\d+")[0])
 						if (Github_NumberOfRepositories != -1) {
 							ConsoleLoggingURL("https://github.com/" + Github_Current_URL_Username + "?page=" + (Math.ceil(Github_NumberOfRepositories/Github_Number_of_Repository_per_page)).toString(10) + "&tab=repositories")
+							ConsoleLoggingURL("https://github.com/orgs/" + Github_Current_URL_Username + "/repositories?page=" + (Math.ceil(Github_NumberOfRepositories/Github_Number_of_Repository_per_page)).toString(10))
 						}
 					}
 				}
