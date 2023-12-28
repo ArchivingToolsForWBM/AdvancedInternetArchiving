@@ -103,9 +103,10 @@
 						//Get number of paginated opened issues
 						let Github_NumberOfOpenedIssues = -1
 						let Github_NumberOfOpenedIssuesPageCount = -1
-						if (document.getElementById("issues-tab") != null) {
-							if ((/Issues\n\d+/).test(document.getElementById("issues-tab").innerText)) {
-								Github_NumberOfOpenedIssues = parseInt(document.getElementById("issues-tab").innerText.match(/(?<=Issues\n)\d+$/))
+						let Element_IssuesTab = document.getElementById("issues-tab")
+						if (Element_IssuesTab != null) {
+							if ((/Issues\n\d+/).test(Element_IssuesTab.innerText)) {
+								Github_NumberOfOpenedIssues = parseInt(Element_IssuesTab.innerText.match(/(?<=Issues\n)\d+$/))
 								Github_NumberOfOpenedIssuesPageCount = Math.ceil(Github_NumberOfOpenedIssues/Github_Number_of_Issues_per_page)
 								
 								//https://github.com/UserName/RepositoryName/issues?page=2&q=is%3Aissue+is%3Aopen
