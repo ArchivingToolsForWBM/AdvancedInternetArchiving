@@ -280,16 +280,20 @@ Sort:
 			//https://github.com/Username/RepositoryName/releases?page=2
 			//
 			{
+				//Repository download links
 				Type:"normal",
 				FindWhat:/(^https?:\/\/github\.com\/([A-Za-z0-9\-]+)\/([A-Za-z0-9_.\-]+)\/archive\/refs\/(?:(heads|tags))\/[^\/]+).*$/,
 				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Repository_Download"}, {Replacement:"https://github.com/$2", KeyName:"Github_Profile"}, {Replacement:"https://github.com/$2/$3", KeyName:"Github_Repository"}]
 			},
 			{
+				//Github releases
 				Type:"normal",
 				FindWhat:/(https?:\/\/github\.com\/[A-Za-z0-9\-]+\/[A-Za-z0-9_.\-]+\/releases\/download\/.+$)/,
 				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Releases_Download"}]
 			},
 			{
+				//Github repository
+				//
 				//Note: repositories may be empty, so a download link generated from "https://github.com/Username/RepositoryName" may instead open a
 				//page with "This repository is empty." with a 401 error instead of bringing up the save as prompt to download.
 				//Example: https://github.com/24qwert/riaa will generate various URLs, one of them is
@@ -299,20 +303,23 @@ Sort:
 				//potentially any 4XX errors).
 				Type:"normal",
 				FindWhat: RegExp("^(((https?:\\/\\/github\\.com\\/" + Github_UsernamePart + ")\\/[A-Za-z0-9_.\\-]+).*$)"),
-				ReplaceWith:[{Replacement:"$2", KeyName:"Github_Repository"}, {Replacement:"$3\?tab=repositories", KeyName:"Github_Repository_Lists_Home"}, {Replacement:"$2/releases", KeyName:"Github_Releases"}, {Replacement:"$2", KeyName:"Github_Profile"}, {Replacement:"$2/archive/refs/heads/master.zip", KeyName:"Github_Repository_Download"}]
+				ReplaceWith:[{Replacement:"$2", KeyName:"Github_Repository"}, {Replacement:"$2/releases", KeyName:"Github_Releases"}, {Replacement:"$2", KeyName:"Github_Profile"}, {Replacement:"$2/archive/refs/heads/master.zip", KeyName:"Github_Repository_Download"}]
 			},
 			{
+				//Github user account
 				Type:"normal",
 				FindWhat: RegExp("(^https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "$)"),
-				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Profile"}, {Replacement:"$1\?tab=repositories", KeyName:"Github_Repository_Lists_Home"}]
+				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Profile"}]
 			},
 			{
+				//Github releases tag
 				//https://github.com/UserName/RepositoryName/releases/tag/VersionName -> https://github.com/UserName/RepositoryName/releases/expanded_assets/VersionName
 				Type:"normal",
 				FindWhat: RegExp("^(https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z0-9_.\\-]+\\/releases)\\/tag\\/([A-Za-z0-9_.\\-]+)"),
 				ReplaceWith:[{Replacement:"$1/expanded_assets/$2", KeyName:"Github_ReleasesTag_DownloadPage"}]
 			},
 			{
+				//Github issues
 				//https://github.com/UserName/RepositoryName/issues?page=6&q=
 				//https://github.com/UserName/RepositoryName/issues?page=2&q=is%3Aissue+is%3Aopen
 				Type:"pagination",
@@ -321,13 +328,16 @@ Sort:
 				KeyName:"Github_Repository_IssueForum"
 			},
 			{
-				//issues https://github.com/UserName/RepositoryName/issues/12345
+				//issues
+				//https://github.com/UserName/RepositoryName/issues/12345
 				//https://github.com/UserName/RepositoryName/issues/12
 				Type:"normal",
 				FindWhat: RegExp("^(https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z0-9_.\\-]+\\/issues\\/\\d+).*$"),
 				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Repository_IssueThread"}]
 			},
 			{
+				//Github repository list
+				//https://github.com/UserName?page=123&tab=repositories
 				//Github didn't provide a way to find the last page of a repository pagination, however, it does tell you how many total repositories and that there is a max of 30 repositories per page,
 				//thus [NumberOfPaginationPages = max(ceiling(NumberOfRepositoriesTotal/30), 1)].
 				Type:"pagination",
@@ -336,6 +346,7 @@ Sort:
 				KeyName:"Github_Repository_Lists"
 			},
 			{
+				//Github repository list (organizations)
 				//https://github.com/orgs/Username/repositories?page=2
 				Type:"pagination",
 				FindWhat: RegExp("(?:(?<=(?:https?:\\/\\/github\\.com\\/orgs\\/" + Github_UsernamePart + "\\/repositories\\?page=)))\\d+"),

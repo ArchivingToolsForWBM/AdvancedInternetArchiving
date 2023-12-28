@@ -42,6 +42,8 @@
 			let Github_Current_URL_Username = ""
 			if (RegExp("(?<=https:\\/\\/github\\.com\\/)" + Github_UsernamePart).test(Github_Current_URL)) {
 				Github_Current_URL_Username = Github_Current_URL.match(RegExp("(?<=(?:https:\\/\\/github\\.com\\/))" + Github_UsernamePart))[0] //e.g. https://github.com/ArchLeaders
+			} else if (RegExp("(?<=https:\\/\\/github\\.com\\/orgs\\/)" + Github_UsernamePart).test(Github_Current_URL)) {
+				Github_Current_URL_Username = Github_Current_URL.match(RegExp("(?<=(?:https:\\/\\/github\\.com\\/orgs\\/))" + Github_UsernamePart))[0] //e.g. https://github.com/orgs/Psiphon-Inc/repositories?page=2
 			}
 			let Github_Current_URL_RepositoryName = ""
 			if (RegExp("(?<=https:\\/\\/github\\.com\\/)" + Github_UsernamePart + "\\/[A-Za-z0-9_.\-]+").test(Github_Current_URL)) {
@@ -50,17 +52,27 @@
 			{ //User home page
 				//Get number of paginated pages for repositories e.g. https://github.com/ArchLeaders?page=1&tab=repositories
 				//also another format: https://github.com/orgs/Psiphon-Inc/repositories?page=2
-				if (RegExp("(?<=(https:\\/\\/github\\.com\\/))" + Github_UsernamePart + "$").test(Github_Current_URL)) {
+				if (RegExp("(?<=(https:\\/\\/github\\.com\\/(orgs\\/)?))" + Github_UsernamePart).test(Github_Current_URL)) {
 					let Github_NumberOfRepositories = -1
-					let LookingForRepositoryCount = Array.from(document.getElementsByTagName("a"))
-					let RepositoryCountString = LookingForRepositoryCount.find((ArrayElement) => {
+					let Github_NumberOfPagesOfRepositories = -1
+					let Github_UserIsOrganization = false
+					
+					let ElementOfRepositoryCount = Array.from(document.getElementsByTagName("a")).find((ArrayElement) => {
 						return /Repositories\n\d+/.test(ArrayElement.innerText)
 					});
-					if (typeof RepositoryCountString != "undefined") {
-						Github_NumberOfRepositories = parseInt((RepositoryCountString.innerText).match("(?<=(Repositories\n))\\d+")[0])
-						if (Github_NumberOfRepositories != -1) {
-							ConsoleLoggingURL("https://github.com/" + Github_Current_URL_Username + "?page=" + (Math.ceil(Github_NumberOfRepositories/Github_Number_of_Repository_per_page)).toString(10) + "&tab=repositories")
-							ConsoleLoggingURL("https://github.com/orgs/" + Github_Current_URL_Username + "/repositories?page=" + (Math.ceil(Github_NumberOfRepositories/Github_Number_of_Repository_per_page)).toString(10))
+					
+					if (typeof ElementOfRepositoryCount != "undefined") {
+						if (/Repositories\n\d+/.test(ElementOfRepositoryCount.innerText) && RegExp("https:\\/\\/github\\.com\\/(" + Github_UsernamePart + "\\?tab=repositories|orgs\\/" + Github_UsernamePart + "\\/repositories)").test(ElementOfRepositoryCount.href)) {
+							Github_NumberOfRepositories = parseInt(ElementOfRepositoryCount.innerText.match(/(?<=(Repositories\n))\d+/)[0])
+							Github_NumberOfPagesOfRepositories = Math.ceil(Github_NumberOfRepositories/Github_Number_of_Repository_per_page)
+							
+							Github_UserIsOrganization = (RegExp("https:\\/\\/github\\.com\\/orgs\\/").test(ElementOfRepositoryCount))
+							
+							if (!Github_UserIsOrganization) {
+								ConsoleLoggingURL("https://github.com/" + Github_Current_URL_Username + "?page=" + (Github_NumberOfPagesOfRepositories).toString(10) + "&tab=repositories")
+							} else {
+								ConsoleLoggingURL("https://github.com/orgs/" + Github_Current_URL_Username + "/repositories?page=" + (Github_NumberOfPagesOfRepositories).toString(10))
+							}
 						}
 					}
 				}
@@ -70,6 +82,7 @@
 					{
 						//Get number of paginated pages for releases e.g. https://github.com/adam-p/markdown-here
 						let Github_NumberOfReleases = -1
+						let Github_NumberOfReleasesPageCount = -1
 						let LookingForReleasesCount = Array.from(document.getElementsByTagName("a"))
 						let ReleaseCountString = LookingForReleasesCount.find((ArrayElement) => {
 							//Make sure it is an href link and in a way that it is by github rather than finding an a href by the user.
@@ -78,20 +91,27 @@
 						
 						if (typeof ReleaseCountString != "undefined") {
 							Github_NumberOfReleases = parseInt(ReleaseCountString.innerText.match(/\d+$/)[0])
-							if (Github_NumberOfReleases != -1) {
+							Github_NumberOfReleasesPageCount = Math.ceil(Github_NumberOfReleases/Github_Number_of_Releases_per_page)
+							
+							if (Github_NumberOfReleasesPageCount > 0) {
 								//https://github.com/adam-p/markdown-here/releases?page=2
-								ConsoleLoggingURL("https://github.com/" + Github_Current_URL_Username + "/" + Github_Current_URL_RepositoryName + "/releases?page=" + Math.ceil(Github_NumberOfReleases/Github_Number_of_Releases_per_page).toString(10))
+								ConsoleLoggingURL("https://github.com/" + Github_Current_URL_Username + "/" + Github_Current_URL_RepositoryName + "/releases?page=" + (Github_NumberOfReleasesPageCount).toString(10))
 							}
 						}
 					}
 					{
 						//Get number of paginated opened issues
 						let Github_NumberOfOpenedIssues = -1
+						let Github_NumberOfOpenedIssuesPageCount = -1
 						if (document.getElementById("issues-tab") != null) {
 							if ((/Issues\n\d+/).test(document.getElementById("issues-tab").innerText)) {
 								Github_NumberOfOpenedIssues = parseInt(document.getElementById("issues-tab").innerText.match(/(?<=Issues\n)\d+$/))
+								Github_NumberOfOpenedIssuesPageCount = Math.ceil(Github_NumberOfOpenedIssues/Github_Number_of_Issues_per_page)
+								
 								//https://github.com/UserName/RepositoryName/issues?page=2&q=is%3Aissue+is%3Aopen
-								ConsoleLoggingURL("https://github.com/" + Github_Current_URL_Username + "/" + Github_Current_URL_RepositoryName + "/issues?page=" + (Math.ceil(Github_NumberOfOpenedIssues/Github_Number_of_Issues_per_page)).toString(10) + "&q=is%3Aissue+is%3Aopen")
+								if (Github_NumberOfOpenedIssuesPageCount > 0) {
+									ConsoleLoggingURL("https://github.com/" + Github_Current_URL_Username + "/" + Github_Current_URL_RepositoryName + "/issues?page=" + (Github_NumberOfOpenedIssuesPageCount).toString(10) + "&q=is%3Aissue+is%3Aopen")
+								}
 							}
 						}
 					}
