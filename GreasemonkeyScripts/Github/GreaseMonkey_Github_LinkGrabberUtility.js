@@ -61,9 +61,18 @@
 						return /Repositories\n\d+/.test(ArrayElement.innerText)
 					});
 					
+					
 					if (typeof ElementOfRepositoryCount != "undefined") {
 						if (/Repositories\n\d+/.test(ElementOfRepositoryCount.innerText) && RegExp("https:\\/\\/github\\.com\\/(" + Github_UsernamePart + "\\?tab=repositories|orgs\\/" + Github_UsernamePart + "\\/repositories)").test(ElementOfRepositoryCount.href)) {
-							Github_NumberOfRepositories = parseInt(ElementOfRepositoryCount.innerText.match(/(?<=(Repositories\n))\d+/)[0])
+							//Report anomoly (failsafe)
+								if (typeof ElementOfRepositoryCount.childNodes[3].title == "undefined") {
+									alert("Detected an anomaly in the repository count number on this page (title missing). Please edit this userscript to read the postcount number properly.")
+								} else if (!/(^\d{1,3},(\d{3,3},)*(\d{3,3})$|^\d{1,3}$)/.test(ElementOfRepositoryCount.childNodes[3].title)) {
+									alert("Detected an anomaly in the repository count number on this page (invalid commas and decimals placement, invalid digit grouping, or invalid symbols). Please edit this userscript to read the postcount number properly.")
+								}
+							
+							Github_NumberOfRepositories = parseInt((ElementOfRepositoryCount.childNodes[3].title).replace(",", ""))
+							
 							Github_NumberOfPagesOfRepositories = Math.ceil(Github_NumberOfRepositories/Github_Number_of_Repository_per_page)
 							
 							Github_UserIsOrganization = (RegExp("https:\\/\\/github\\.com\\/orgs\\/").test(ElementOfRepositoryCount))
