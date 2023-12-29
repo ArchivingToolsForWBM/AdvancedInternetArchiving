@@ -31,6 +31,8 @@
 	//Stuff you don't touch unless you know what you're doing.
 		let RaceConditionLock = false
 			//^This prevents concurrent runs of the code as a failsafe.
+		
+		let AnomolyBadNumberAlerted = false
 	
 	const SetOfURLs = new Set()
 	window.onload = setInterval(MainCode, Github_IntervalScan)
@@ -64,14 +66,8 @@
 					
 					if (typeof ElementOfRepositoryCount != "undefined") {
 						if (/Repositories\n\d+/.test(ElementOfRepositoryCount.innerText) && RegExp("https:\\/\\/github\\.com\\/(" + Github_UsernamePart + "\\?tab=repositories|orgs\\/" + Github_UsernamePart + "\\/repositories)").test(ElementOfRepositoryCount.href)) {
-							//Report anomoly (failsafe)
-								if (typeof ElementOfRepositoryCount.childNodes[3].title == "undefined") {
-									alert("Detected an anomaly in the repository count number on this page (title missing). Please edit this userscript to read the postcount number properly.")
-								} else if (!/(^\d{1,3},(\d{3,3},)*(\d{3,3})$|^\d{1,3}$)/.test(ElementOfRepositoryCount.childNodes[3].title)) {
-									alert("Detected an anomaly in the repository count number on this page (invalid commas and decimals placement, invalid digit grouping, or invalid symbols). Please edit this userscript to read the postcount number properly.")
-								}
 							
-							Github_NumberOfRepositories = parseInt((ElementOfRepositoryCount.childNodes[3].title).replace(",", ""))
+							Github_NumberOfRepositories = ParseInt_WithDetection(ElementOfRepositoryCount.childNodes[3].title)
 							
 							Github_NumberOfPagesOfRepositories = Math.ceil(Github_NumberOfRepositories/Github_Number_of_Repository_per_page)
 							
@@ -93,13 +89,13 @@
 						let Github_NumberOfReleases = -1
 						let Github_NumberOfReleasesPageCount = -1
 						let LookingForReleasesCount = Array.from(document.getElementsByTagName("a"))
-						let ReleaseCountString = LookingForReleasesCount.find((ArrayElement) => {
+						let ReleaseCountHTMLElement = LookingForReleasesCount.find((ArrayElement) => {
 							//Make sure it is an href link and in a way that it is by github rather than finding an a href by the user.
 							return RegExp("https:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z0-9_.\-]+\\/releases").test(ArrayElement.href) && /Releases \d+/.test(ArrayElement.innerText)
 						});
 						
-						if (typeof ReleaseCountString != "undefined") {
-							Github_NumberOfReleases = parseInt(ReleaseCountString.innerText.match(/\d+$/)[0])
+						if (typeof ReleaseCountHTMLElement != "undefined") {
+							Github_NumberOfReleases = ParseInt_WithDetection(ReleaseCountHTMLElement.children[0].title)
 							Github_NumberOfReleasesPageCount = Math.ceil(Github_NumberOfReleases/Github_Number_of_Releases_per_page)
 							
 							if (Github_NumberOfReleasesPageCount > 0) {
@@ -115,7 +111,7 @@
 						let Element_IssuesTab = document.getElementById("issues-tab")
 						if (Element_IssuesTab != null) {
 							if ((/Issues\n\d+/).test(Element_IssuesTab.innerText)) {
-								Github_NumberOfOpenedIssues = parseInt(Element_IssuesTab.innerText.match(/(?<=Issues\n)\d+$/))
+								Github_NumberOfOpenedIssues = ParseInt_WithDetection(Element_IssuesTab.children[2].title)
 								Github_NumberOfOpenedIssuesPageCount = Math.ceil(Github_NumberOfOpenedIssues/Github_Number_of_Issues_per_page)
 								
 								//https://github.com/UserName/RepositoryName/issues?page=2&q=is%3Aissue+is%3Aopen
@@ -143,6 +139,18 @@
 				}
 			}
 			RaceConditionLock = false
+		}
+	}
+	
+	function ParseInt_WithDetection(Input_string) {
+		if (/(^\d{1,3},(\d{3,3},)*(\d{3,3})$|^\d{1,3}$|^\d+$)/.test(Input_string)) {
+			return parseInt(Input_string.replaceAll(",", ""))
+		} else {
+			if (!AnomolyBadNumberAlerted) {
+				alert("Error parsing a number from a string in the document.")
+				AnomolyBadNumberAlerted = true
+			}
+			return NaN
 		}
 	}
 	
