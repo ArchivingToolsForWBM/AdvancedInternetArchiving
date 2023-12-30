@@ -26,5 +26,5 @@ To get an element that has a specified string (regex), use this (this gets the e
 	//RegexText = Regular expression to match
 	//Tag = HTML tag name to search by. "*" means to search any.
 	function getElementsByText(ObjReference, RegexText, Tag) {
-		return Array.prototype.slice.call(ObjReference.getElementsByTagName(Tag)).filter(el => RegexText.test(el.textContent.trim())).filter((el) => el.children.length == 0);
+		return Array.prototype.slice.call(ObjReference.getElementsByTagName(Tag)).filter(el => RegexText.test(el.textContent.trim())).filter((el) => (el.children.length == 0)&&(el.tagName != "SCRIPT"));
 	}
