@@ -17,7 +17,7 @@ must be this instead:
 		document.getElementsByTagName("button")[<number>].click()
 	}
 
-To get an element that has a specified string (regex), use this (this gets the element of the lowest descendants). NOTE: returns a shallow copied array from the live HTMLcollection:
+To get an element that has a specified string (regex), use this (this gets the element that lacks any inner elements/children). NOTE: returns a shallow copied array from the live HTMLcollection:
 
 	//Credit: https://stackoverflow.com/a/45089849/11030779
 	//I edited to make it match via regex
