@@ -67,7 +67,7 @@ SentURL3	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	Fir
 	</li><br>
 	<li>
 		If you run into process duplicating itself and both are done, I would rather have you filter only URLs flagged as &ldquo;success&rdquo; on all save result sheets, have them all formatted as <kbd>Display just entered URLs in the plaintext</kbd>, copy that, open the list cleaner tool (provided here)
-		paste them into the blacklist, and copy all the URLs you entered and paste them into the first textarea (make sure no tabs and one URL per line on both textareas). This will remove any URLs that have been successfully saved at least once of all the processes including duplicates. Then re-attempt
+		paste them into the blacklist, and copy all the URLs you entered and paste them into the first textarea (make sure no tabs and one URL per line on both textareas). This will remove any URLs that have been successfully saved at least once of any processes including duplicates. Then re-attempt
 		saving the URLs output from the list cleaner.
 	</li>
 </ol>
@@ -76,6 +76,11 @@ SentURL3	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	Fir
 Paste your google sheet result here:<br><br>
 <input type="checkbox" id="AutoUpdate" checked onchange="AutoUpdate()"><label for="AutoUpdate">Auto update</label><br>
 <textarea id="GsheetInput" cols="100" rows="30" oninput="SaveStatusesChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br><br>
+Preset settings:<br>
+<ul>
+	<li><button onclick="PresetSetting_UnsureSaved(); AutoUpdate()">Filter by unsure saved</button></li>
+	<li><button onclick="PresetSetting_DuplicatedProcess(); AutoUpdate()">Filter by sure-saved and only entered URLs as plaintext</button> &leftarrow; Use this option if your process duplicates, in conjunction of a list cleaner.</li>
+</ul>
 
 Filters:<button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 2); AutoUpdate()">Invert</button>
 <ul>
@@ -101,7 +106,7 @@ Filters:<button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 1)
 		<li><label><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_CantResolve" checked class="FilterSettings_ArchiveStatus CantSave" data-status_list_name="CantSave_CantResolve">&ldquo;Cannot resolve host &lt;URL&gt;&rdquo; (dark red)</label></li>
 	</ul>
 </ul>
-<p>Please note that pages can change between being able to be save or not. That's why they're checked by default.</p>
+<p>Please note that pages flagged as "can't save" can change between being able to be save or not. That's why they're checked by default.</p>
 Sort:<br>
 <ul>
 <li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_UserSentURLOrder" name="Sort_Output">Same order of URLs you set (not sorting at all)</label></li>
@@ -120,8 +125,8 @@ Plaintext format settings (post-filter):<br>
 Misc:
 <p hidden>dev comment: These NEED to call SaveStatusesChanged, which sets IsListOrModeChanged to true, so the system correctly realizes it is in fact a change on treating certain things (http and https for example, have different results depending on the ignore for that) </p>
 <ul>
-	<li><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" id="MiscSetting_IgnoreFragment" checked>Ignore </label><a href="https://en.wikipedia.org/wiki/URI_fragment">URI fragment</a><label for="MiscSetting_IgnoreFragment"> (the # and everything after it will be ignored when checking for a match)</label></li>
-	<li><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" id="MiscSetting_IgnoreHttpHttpsDifference" checked>Ignore difference between HTTP/HTTPS versions.</label></li>
+	<li><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" class="MiscCheckboxSetting" id="MiscSetting_IgnoreFragment" checked>Ignore </label><a href="https://en.wikipedia.org/wiki/URI_fragment">URI fragment</a><label for="MiscSetting_IgnoreFragment"> (the # and everything after it will be ignored when checking for a match)</label></li>
+	<li><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" class="MiscCheckboxSetting" id="MiscSetting_IgnoreHttpHttpsDifference" checked>Ignore difference between HTTP/HTTPS versions.</label></li>
 </ul>
 <button onclick="CheckURLs()">Submit</button><button onclick="Reset()">Reset</button><br><br>
 <hr>
@@ -644,17 +649,37 @@ Misc:
 	}
 	function Reset() {
 		document.getElementById("GsheetInput").value = ""
-		document.getElementById("Filter_Success_SavedBefore").checked = false
-		document.getElementById("Filter_Success_FirstArchive").checked = false
-		document.getElementById("Filter_Unsure_NoIAResult").checked = true
-		document.getElementById("Filter_Unsure_BlankColumnD").checked = true
-		document.getElementById("Filter_Unsure_Redirected").checked = true
-		document.getElementById("Filter_Unsure_Error").checked = true
-		document.getElementById("Filter_Unsure_SavedANon2XX").checked = true
-		
+		SetAllFilterSpecificValue(false, true, true)
+		document.getElementById("PlainText_DisplayInfo_WBGSInfo").checked = true
 		document.getElementById("Sort_Output_SaveStatusResponse").checked = true
-		
+		{
+			let MiscSettings = Array.from(document.getElementsByClassName("MiscCheckboxSetting"))
+			MiscSettings.forEach((Element) => {
+				Element.checked = true
+			})
+		}
 		ClearOutputs()
+	}
+	function PresetSetting_UnsureSaved() {
+		SetAllFilterSpecificValue(false, true, true)
+	}
+	function PresetSetting_DuplicatedProcess() {
+		SetAllFilterSpecificValue(true, false, false)
+		document.getElementById("PlainText_DisplayInfo_EnteredURLsOnly").checked = true
+	}
+	function SetAllFilterSpecificValue(SureSaved, UnsureSaved, CantSave) {
+		let ListOfSureSaved = Array.from(document.getElementsByClassName("SureSaved"))
+		ListOfSureSaved.forEach((Element) => {
+			Element.checked = SureSaved
+		})
+		let ListOfUnsureSaved = Array.from(document.getElementsByClassName("UnsureSaved"))
+		ListOfUnsureSaved.forEach((Element) => {
+			Element.checked = UnsureSaved
+		})
+		let ListOfCantSave = Array.from(document.getElementsByClassName("CantSave"))
+		ListOfCantSave.forEach((Element) => {
+			Element.checked = CantSave
+		})
 	}
 	function ClearOutputs() {
 		//Total
