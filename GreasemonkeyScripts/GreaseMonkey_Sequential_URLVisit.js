@@ -25,6 +25,8 @@
 	const TimeBeforeOrAfterLoad = 0
 		//0 = Start timer to load next URL after page fully loads
 		//1 = Start timer to load next URL before page fully loads.
+//Don't touch unless you know what you're doing
+	let RaceConditionLock = false
 //-----------------------------------------------------------
 	const ListOfURLs = `
 https://google.com
@@ -58,18 +60,23 @@ https://wikipedia.org
 	async function LoadAnotherPage() {
 		let IsSequenceOn = await GM.getValue("URLSequence", false);
 		if (IsSequenceOn) {
-			let URL_index = await GM.getValue("URLIndex", -1);
-			URL_index++
-			if (Number.isNaN(URL_index)||URL_index>=ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length) {
-				URL_index = -1
-			}
-			await GM.setValue("URLIndex", URL_index);
-			if (URL_index < ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length&&URL_index>=0) {
-				console.log("Sequence URL progress: " + BigInt(URL_index+1).toString(10) + "/" + BigInt(ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length).toString(10) + " (" + clamp(((URL_index+1)*100)/ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length).toFixed(2) + "%, " + BigInt(ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length-URL_index-1).toString(10) + " remaining, Visiting: " + ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g)[URL_index] + " )")
-				location.href = ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g)[URL_index] //Code stops executing after this executes.
-			} else {
-				alert("Done!")
-				Reset()
+			if (!RaceConditionLock) {
+				RaceConditionLock = true
+				let URL_index = await GM.getValue("URLIndex", -1);
+				URL_index++
+				if (Number.isNaN(URL_index)||URL_index>=ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length) {
+					URL_index = -1
+				}
+				await GM.setValue("URLIndex", URL_index);
+				if (URL_index < ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length&&URL_index>=0) {
+					console.log("Sequence URL progress: " + BigInt(URL_index+1).toString(10) + "/" + BigInt(ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length).toString(10) + " (" + clamp(((URL_index+1)*100)/ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length).toFixed(2) + "%, " + BigInt(ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g).length-URL_index-1).toString(10) + " remaining, Visiting: " + ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g)[URL_index] + " )")
+					RaceConditionLock = false
+					location.href = ListOfURLs.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g)[URL_index] //Code stops executing after this executes.
+				} else {
+					alert("Done!")
+					Reset()
+					RaceConditionLock = false
+				}
 			}
 		}
 	}
