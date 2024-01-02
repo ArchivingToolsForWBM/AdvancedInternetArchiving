@@ -27,7 +27,9 @@
 	</head>
 <body>
 <h1 style="text-align: center;">General URL converter</h1>
-<p>This is a general tool to convert, to generate multiple variations of, and to remove blacklisted URLs.</p>
+<p>This is a general tool to convert, to generate multiple variations of, and to remove blacklisted URLs. Useful if you want to obtain URLs for full-resolution images, download links, etc. when you have URLs that are downsized version, a page linking to the download, etc.
+As well as each page number of a paginated web page. This only works when websites have URL patterns or consistent format, that the URLs to be converted to don't have unknown substrings that is not being present in the URLs you are converted from, such as random hashes, image URLs having an entirely
+different filename for full resolution compared to the downsized version, etc.</p>
 <p>To edit, add, or remove converters, as well as add new key names to search or to filter, open this HTML file using a text editor (such as notepad++), and CTRL+F <kbd>ListOfConverters</kbd>. See the comments for more info.</p>
 
 <p>Enter text that have URLs in them here</p>
@@ -132,8 +134,9 @@ Sort:
 	//--https://example.com/test?page=1 (usually "?page=1" is omitted but still works)
 	//--https://example.com/test?page=4
 	//--https://example.com/test?page=10
-	// It will generate from page 1 to page 10. If you also have a similar thing but different numbers and have "test" be a different string, it will
-	// generate all of them each with their OWN (no mixup, string before and after the page number must match) maximum numbers.
+	//
+	//  It will generate from page 1 to page 10. If you also have a similar thing but different numbers and have "test" be a different string, it will
+	//  generate all of them each with their OWN (no mixup, string before and after the page number must match) maximum numbers.
 	//--FindWhat: <Regex>: Same as above, but must match only the page number (in addition to making sure the URL pattern match), as string.split is being used.
 	//---Make sure you use non-capturing group "(?:noncapturing)") since the array it split into (string.split) should only contain URL string before and after the number.
 	//---Must use in a way that it only matches the number in the substring, it must avoid matching/including any characters that aren't page numbers (else an error occurs).
@@ -141,6 +144,17 @@ Sort:
 	//  let me know if you found pages that uses negative numbers (I never seen websites ever use negative page numbers), or fork this with the adoption of negative values.
 	//--KeyName does the same thing as "normal" except that you have to have this be placed on the main object converter instead of an object inside an array inside a main
 	//  object converter. This will apply on each page number of the URL.
+	//
+	//  Protip(s):
+	//---Some sites may not display the final page number to jump to when there are a large enough number of pages (only shows the few page numbers around the page number
+	//   you're currently on). If this is the case, you may be lucky that if the site shows the non-rounded total number of individual posts, and have a fixed number of post
+	//   per page at maximum, you can find out the last page via mathematics: LastPageNumber = Math.ceil(TotalPosts/MaxPostPerPage). For example, if the user have 123 posts,
+	//   and is paginated at a maximum of 50 posts per page, then the last page number is 3 because ceiling(123/50) = 3; first page is 1st to 50th posts containing 50 posts,
+	//   second is 51st to 100th also 50, and the 3rd and last is 101st to 123rd containing a remainder of 23 posts. I have several "utility" userscripts that does that
+	//   (such as github). Feel free to copy, make changes or create new ones for other websites.
+	//----If the page number starts at 0 instead of 1, and still increments by 1, then it is Math.ceil(TotalPosts/MaxPostPerPage)-1, since the page number ranging is
+	//    basically shifted by -1.
+	//
 	//-When "Type" is "blacklisted", it can be filtered (filter setting). Only "FindWhat" is needed, anything that matches this regex will be labeled as blacklisted. Please note
 	// if a URL matches on matches multiple listed objects with at least one of them not being blacklisted, it will be included.
 	//

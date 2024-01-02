@@ -1,3 +1,17 @@
+These contains several userscripts to automate getting URLs from a webpage.
+
+I strongly recommend using "GreaseMonkey_GeneralLinksRecursiveWindow.js" (open via text editor, copy it, and paste it in greasemonkey or any userscript manager). I kept the old ones just in case for
+reference. It extract all image, a-href, and some css URLs loaded on the main window (including through iframes). It is designed in a way it doesn't miss any links that is currently loaded in the
+HTML. Just to warn you that it only gets what is currently loaded in the HTML, as JS-heavy sites like twitter/x will not have some posts or any content until you either scroll down far enough or
+click on a certain element that will load additional content (like "click to show more" that sends a request to the server to load a piece of content) without necessarily (re)loading the entire page.
+
+To load all of its content onto the page to obtain links from those, obviously you have to click or scroll down. But thankfully this can be automated via userscripts. The provided ones are github.
+Others simply will autoclick the "next" button.
+
+Most will output desired stuff into the console log, preferably I use firefox's "Multiprocess Browser Console", so I can have all the data from multiple tabs in one place. After extracting URLs this way,
+then use GeneralURLProcessor.html (located in "AdvancedInternetArchiving/JS tools/Other Sites/GeneralURLConverter/GeneralURLProcessor.html").
+
+
 If Links are not in the HTML itself but is inside a JS code that writes the link into a clipboard (that probably social media sites do for links to the posts), I would strongly recommend monkey-patch this:
 
 	navigator.clipboard.writeText = async function(data) {
