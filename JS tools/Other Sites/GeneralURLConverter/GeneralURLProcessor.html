@@ -122,6 +122,18 @@ Sort:
 		//- "[\r\n]" with "|" to convert it into  vertical-bar-separated words.
 		//It must be "(?:(?!(?:" + <vertical-bar-separated words> + "))[A-Za-z0-9\\-]+)" to ensure no capturing groups.
 		const Github_UsernamePart = "(?:(?!(?:about|codespaces|collections|contact|customer\\-stories|enterprise|features|git\\-guides|images|login|mobile|organizations|orgs|premium-support|pricing|readme|search|security|signup|sitemap|solutions|sponsors|team|topics|trending|users))[A-Za-z0-9\\-]+)"
+	//Bluesky stuff
+		//Bluesky instances (URL format as far as I know:
+		//https://bsky.app/profile/Username.bsky.social )
+		//https://bsky.app/profile/Username.bsky.social/post/<hash>
+			const BSkyDomainName = "(?:https:\\/\\/(?:bsky\\.app))"
+			const UsernameHandle = "[^\\/\\.]+"
+			const BSkyInstances = "(?:bsky\\.social)"
+			const BskyPostHash = "[a-zA-Z\\d]+"
+		//https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:<hash1>/<hash2>4@jpeg
+		//https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:<hash1>/<hash2>@jpeg
+		//https://cdn.bsky.app/img/avatar/plain/did:plc:<hash1>/<hash2>@jpeg
+			const BSkyDomainName_CDN_Domain = "(?:https:\\/\\/(?:cdn.bsky.app))"
 	//An array containing a list of objects specifying the replacement.
 	//-When "Type" is "normal": performs a simple replacement (replace a substring or remove a part of the string), the attributes are:
 	//--FindWhat: <Regex>: A regular expression the URLs in the input must match with to identify what appropriate replacement to perform a URL conversion.
@@ -373,6 +385,31 @@ Sort:
 				FindWhat: RegExp("(?:(?<=(?:https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z0-9_.\-]+\\/releases\\?page=)))\\d+(?:$)"),
 				PageNumberStartsAt:1,
 				KeyName:"Github_Repository_ReleasesList"
+			},
+			//Project bluesky (YAY it is open to public!!) Right now WBM have trouble saving them (white blank page)
+			{
+				//Userpage
+				Type:"normal",
+				FindWhat: RegExp("(" + BSkyDomainName + "\\/profile\\/" + UsernameHandle + "\\." + BSkyInstances + ").*$"),
+				ReplaceWith:[{Replacement:"$1", KeyName:"Bsky_Userpage"}]
+			},
+			{
+				//Post
+				Type:"normal",
+				FindWhat: RegExp("(" + BSkyDomainName + "\\/profile\\/" + UsernameHandle + "\\." + BSkyInstances + "\\/post\\/" + BskyPostHash + ")"),
+				ReplaceWith:[{Replacement:"$1", KeyName:"Bsky_Post"}]
+			},
+			{
+				//Images
+				Type:"normal",
+				FindWhat: RegExp("(" + BSkyDomainName_CDN_Domain + ")\\/img\\/feed_(?:thumbnail|fullsize)(\\/.*$)"),
+				ReplaceWith:[{Replacement:"$1/img/feed_thumbnail$2",KeyName:"Bsky_Img_thumb"},{Replacement:"$1/img/feed_fullsize$2",KeyName:"Bsky_Img_FullSize"}]
+			},
+			{
+				//Avatar
+				Type:"normal",
+				FindWhat: RegExp("(" + BSkyDomainName_CDN_Domain + "\\/img\\/avatar\\/plain\\/.*$)"),
+				ReplaceWith:[{Replacement:"$1",KeyName:"Bsky_Avatar"}]
 			}
 		]
 	window.onload = LoadCustomToggableFilters
