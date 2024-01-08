@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         WBGS - Auto-check "Save results in a new Sheet."
+// @name         WBGS - utility
 // @namespace    WBGS_autocheck
 // @version      0.1
 // @description  So duped processes don't overwrite save results.
@@ -18,7 +18,7 @@
 	
 		const MaxClickAllAborts = 1
 			//^Number of times each abort button is clicked on, per page refresh. Purpose if the system isn't responding and you need
-			// repeated clicks.
+			// repeated clicks. Set to 0 to disable.
 	//Don't touch unless you know what you're doing
 		setInterval(Code, IntervalDelay)
 		const ListOfTrackingURLs = new Set()
@@ -46,10 +46,9 @@
 						}
 					}
 				}
-				if (/https:\/\/archive\.org\/services\/wayback-gsheets\/options.*/.test(CurrentWBGSURL) && KillFinishLockedProcesses) { //WBGS home page
-					let TableListingProcess = document.getElementsByClassName("table table-bordered table-sm")[0]
-					let ListOfProcesses = Array.from(TableListingProcess.getElementsByTagName("tr"))
-					ListOfProcesses = ListOfProcesses.filter((WBGSProcess) => {
+				if (/https:\/\/archive\.org\/services\/wayback-gsheets\/options.*/.test(CurrentWBGSURL)) { //While on WBGS home page
+					let TableListingProcess = document.getElementsByClassName("table table-bordered table-sm")[0] //Get table of running processes
+					let ListOfProcesses = Array.from(TableListingProcess.getElementsByTagName("tr")).filter((WBGSProcess) => { //Get the running processes
 						let ColCountCorrect = WBGSProcess.childNodes.length == 6 //Get only items that have 6 columns (exclude row with "There are no running processes.")
 						let IsRowAProcess = /https:\/\/docs\.google\.com\/spreadsheets\//.test(WBGSProcess.childNodes[0].innerText) //Exclude the table headers row
 						return (ColCountCorrect && IsRowAProcess)
