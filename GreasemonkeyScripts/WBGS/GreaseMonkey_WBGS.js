@@ -16,11 +16,14 @@
 		const KillFinishLockedProcesses = false
 			//^Set this to true to automatically autoclick "abort" on processes that are labeled "SUCCESS" but still remains on the list.
 	
-	
+		const MaxClickAllAborts = 1
+			//^Number of times each abort button is clicked on, per page refresh. Purpose if the system isn't responding and you need
+			// repeated clicks.
 	//Don't touch unless you know what you're doing
 		setInterval(Code, IntervalDelay)
 		const ListOfTrackingURLs = new Set()
 		let RaceConditionLock = false
+		let ClickAllAbortsCount = 0
 		
 		
 		function Code() {
@@ -47,20 +50,21 @@
 					let TableListingProcess = document.getElementsByClassName("table table-bordered table-sm")[0]
 					let ListOfProcesses = Array.from(TableListingProcess.getElementsByTagName("tr"))
 					ListOfProcesses = ListOfProcesses.filter((WBGSProcess) => {
-						let ColCountCorrect = WBGSProcess.childNodes.length == 6 //Get only items that have 6 columns (row with "There are no running processes.")
+						let ColCountCorrect = WBGSProcess.childNodes.length == 6 //Get only items that have 6 columns (exclude row with "There are no running processes.")
 						let IsRowAProcess = /https:\/\/docs\.google\.com\/spreadsheets\//.test(WBGSProcess.childNodes[0].innerText) //Exclude the table headers row
-						let StatusIsSuccess = false
-						if (IsRowAProcess) {
-							StatusIsSuccess = WBGSProcess.childNodes[4].innerText == "SUCCESS" //Find only processes that are labeled "SUCCESS"
-						}
-						
-						return (ColCountCorrect && IsRowAProcess && StatusIsSuccess)
+						return (ColCountCorrect && IsRowAProcess)
 					})
 					
-					ListOfProcesses.forEach((WBGSProcess) => {
-						let AbortButton = WBGSProcess.childNodes[5].childNodes[1]
-						AbortButton.click()
+					let ListOfFinishLockedProcesses = ListOfProcesses.filter((WBGSProcess) => {
+						return WBGSProcess.childNodes[4].innerText == "SUCCESS" //Find only processes that are labeled "SUCCESS"
 					})
+					if ((ClickAllAbortsCount < MaxClickAllAborts)&&(ListOfFinishLockedProcesses.length != 0)) {
+						ListOfFinishLockedProcesses.forEach((WBGSProcess) => {
+							let AbortButton = WBGSProcess.childNodes[5].childNodes[1]
+							AbortButton.click()
+						})
+						ClickAllAbortsCount++
+					}
 				}
 				RaceConditionLock = false
 			}
