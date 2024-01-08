@@ -13,17 +13,19 @@
 			//^Had to be an interval instead of a timeout because when you click on links to another WBGS page, that isn't a page refresh
 			// rather a dynamic page (https://en.wikipedia.org/wiki/Dynamic_web_page ) similar to being on twitter and clicking on links
 			// to another twitter page, which result in this JS code not executing until you refresh the page.
-		const KillFinishLockedProcesses = false
-			//^Set this to true to automatically autoclick "abort" on processes that are labeled "SUCCESS" but still remains on the list.
-	
-		const MaxClickAllAborts = 1
-			//^Number of times each abort button is clicked on, per page refresh. Purpose if the system isn't responding and you need
-			// repeated clicks. Set to 0 to disable.
+		const MaxClickAllAborts = 0
+			//^Option to auto-click each "abort" button on processes that finished-locked - processes that have finished but didn't
+			// disappear on the WBGS home page. 0 = no, 1 = yes, 2+ = number of times to click each abort button (if it doesn't
+			// respond).
+		const DisplayEasyCopyableListOfProcess = true
+			//^false = no, true = yes (will print out a statement once per page refresh on the console log that you can copy in case of a
+			// bug of some sort on processes)
 	//Don't touch unless you know what you're doing
 		setInterval(Code, IntervalDelay)
 		const ListOfTrackingURLs = new Set()
 		let RaceConditionLock = false
 		let ClickAllAbortsCount = 0
+		let HavePrintedListOfProcess = false
 		
 		
 		function Code() {
@@ -53,6 +55,17 @@
 						let IsRowAProcess = /https:\/\/docs\.google\.com\/spreadsheets\//.test(WBGSProcess.childNodes[0].innerText) //Exclude the table headers row
 						return (ColCountCorrect && IsRowAProcess)
 					})
+					if (DisplayEasyCopyableListOfProcess && (!HavePrintedListOfProcess) && ListOfProcesses.length != 0) {
+						let OBJ_WBGS_Info = ListOfProcesses.map((WBGSProcess) => {
+							return {
+								TrackingURL: WBGSProcess.childNodes[5].childNodes[0].href,
+								StartedTime: WBGSProcess.childNodes[1].innerText,
+								Status: WBGSProcess.childNodes[4].innerText
+							}
+						})
+						console.log(JSON.stringify(OBJ_WBGS_Info, "", " "))
+						HavePrintedListOfProcess = true
+					}
 					
 					let ListOfFinishLockedProcesses = ListOfProcesses.filter((WBGSProcess) => {
 						return WBGSProcess.childNodes[4].innerText == "SUCCESS" //Find only processes that are labeled "SUCCESS"
