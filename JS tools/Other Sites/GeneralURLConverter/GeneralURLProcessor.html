@@ -166,6 +166,9 @@ Sort:
 	//   (such as github). Feel free to copy, make changes or create new ones for other websites.
 	//----If the page number starts at 0 instead of 1, and still increments by 1, then it is Math.ceil(TotalPosts/MaxPostPerPage)-1, since the page number ranging is
 	//    basically shifted by -1.
+	//---If you want to match a URL string up to but not including a specific substring ("NotInclude") and everything after, use regex:
+	//   (https:\/\/example\.com(?:(?!NotInclude).)*).*$
+	//   credit to Tim Pietzcker - https://stackoverflow.com/a/3850095/11030779
 	//
 	//-When "Type" is "blacklisted", it can be filtered (filter setting). Only "FindWhat" is needed, anything that matches this regex will be labeled as blacklisted. Please note
 	// if a URL matches on matches multiple listed objects with at least one of them not being blacklisted, it will be included.
