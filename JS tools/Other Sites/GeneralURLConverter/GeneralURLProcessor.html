@@ -517,6 +517,10 @@ Sort:
 				if (ListOfURLs == null) {
 					ListOfURLs = [] //failsafe, prevents Array.map from performing a null which on the browser, would do nothing (if user enters a string with no valid URL).
 				}
+				ListOfURLs = ListOfURLs.filter((URL) => { //Remove URLs that aren't web pages
+					return (!/^ttps?:\/\/(mailto|file|data|irc)/.test(URL))
+				})
+				
 				ListOfURLs = ListOfURLs.map(ArrayElement => {
 					let ConvertedURL = ArrayElement.replace(/^ttp(s)?/, "http$1").replace(/https?:\/\/web\.archive\.org\/web\/\d+(im_)?\//, "").replace(/#.*$/, "").replace(/\.$/, "")
 					if (document.getElementById("Checkbox_HTTPS").checked) {
