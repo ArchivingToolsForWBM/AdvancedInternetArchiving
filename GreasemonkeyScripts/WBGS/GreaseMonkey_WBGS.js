@@ -32,8 +32,15 @@
 			if (!RaceConditionLock) {
 				RaceConditionLock = true
 				let CurrentWBGSURL = window.location.href
-				if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=archive" && document.querySelectorAll('input[type=checkbox]')[2].checked == false) {
-					document.querySelectorAll('input[type=checkbox]')[2].click()
+				if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=archive") {
+					let Element_SaveInNewSheetOption = Array.from(document.querySelectorAll('input[type=checkbox]')).find((CheckBox) => {
+						return CheckBox.parentElement.innerText == "Save results in a new Sheet."
+					});
+					if (typeof Element_SaveInNewSheetOption != "undefined") {
+						if (!Element_SaveInNewSheetOption.checked) {
+							Element_SaveInNewSheetOption.click()
+						}
+					}
 					//^Had to use .click() instead of just directly setting the checked state to true bc if user interacts with other inputs, it will uncheck it.
 					// Probably because of this: https://stackoverflow.com/questions/30488218/checkbox-onchange-event-not-firing that JS setting checked to true
 					// does not fire the onchange event because it is changing the attribute.

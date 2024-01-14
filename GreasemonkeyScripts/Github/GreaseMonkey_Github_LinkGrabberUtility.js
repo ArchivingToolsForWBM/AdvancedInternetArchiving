@@ -31,8 +31,6 @@
 	//Stuff you don't touch unless you know what you're doing.
 		let RaceConditionLock = false
 			//^This prevents concurrent runs of the code as a failsafe.
-		
-		let AnomolyBadNumberAlerted = false
 	
 	const SetOfURLs = new Set()
 	window.onload = setInterval(MainCode, Github_IntervalScan)
@@ -67,7 +65,7 @@
 					if (typeof ElementOfRepositoryCount != "undefined") {
 						if (/Repositories\n\d+/.test(ElementOfRepositoryCount.innerText) && RegExp("https:\\/\\/github\\.com\\/(" + Github_UsernamePart + "\\?tab=repositories|orgs\\/" + Github_UsernamePart + "\\/repositories)").test(ElementOfRepositoryCount.href)) {
 							
-							Github_NumberOfRepositories = ParseInt_WithDetection(ElementOfRepositoryCount.childNodes[3].title)
+							Github_NumberOfRepositories = ParseInt_WithDetection(ElementOfRepositoryCount.childNodes[3].title) //Experienced occasional "Not available" on its title value on certain repositories.
 							
 							Github_NumberOfPagesOfRepositories = Math.ceil(Github_NumberOfRepositories/Github_Number_of_Repository_per_page)
 							
@@ -146,11 +144,8 @@
 		if (/(^\d{1,3},(\d{3,3},)*(\d{3,3})$|^\d{1,3}$|^\d+$)/.test(Input_string)) {
 			return parseInt(Input_string.replaceAll(",", ""))
 		} else {
-			if (!AnomolyBadNumberAlerted) {
-				alert("Error parsing a number from a string in the document.")
-				AnomolyBadNumberAlerted = true
-			}
 			return NaN
+			console.log("Detected an anomaly with the counter for pagination at URL " + (window.location.href).replace(/^http/, "ttp"))
 		}
 	}
 	
