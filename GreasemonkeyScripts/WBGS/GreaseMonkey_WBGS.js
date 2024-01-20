@@ -56,33 +56,36 @@
 					}
 				}
 				if (/https:\/\/archive\.org\/services\/wayback-gsheets\/options.*/.test(CurrentWBGSURL)) { //While on WBGS home page
-					let TableListingProcess = document.getElementsByClassName("table table-bordered table-sm")[0] //Get table of running processes
-					let ListOfProcesses = Array.from(TableListingProcess.getElementsByTagName("tr")).filter((WBGSProcess) => { //Get the running processes
-						let ColCountCorrect = WBGSProcess.childNodes.length == 6 //Get only items that have 6 columns (exclude row with "There are no running processes.")
-						let IsRowAProcess = /https:\/\/docs\.google\.com\/spreadsheets\//.test(WBGSProcess.childNodes[0].innerText) //Exclude the table headers row
-						return (ColCountCorrect && IsRowAProcess)
-					})
-					if (DisplayEasyCopyableListOfProcess && (!HavePrintedListOfProcess) && ListOfProcesses.length != 0) {
-						let OBJ_WBGS_Info = ListOfProcesses.map((WBGSProcess) => {
-							return {
-								TrackingURL: WBGSProcess.childNodes[5].childNodes[0].href,
-								StartedTime: WBGSProcess.childNodes[1].innerText,
-								Status: WBGSProcess.childNodes[4].innerText
-							}
+					let TableListingProcess = document.getElementsByClassName("table table-bordered table-sm") //Get entire table of running processes
+					if (TableListingProcess.length != 0) {
+						let ListOfProcesses = TableListingProcess[0]
+						let ListOfProcessesItems = Array.from(ListOfProcesses.getElementsByTagName("tr")).filter((WBGSProcess) => { //Get the running processes
+							let ColCountCorrect = WBGSProcess.childNodes.length == 6 //Get only items that have 6 columns (exclude row with "There are no running processes.")
+							let IsRowAProcess = /https:\/\/docs\.google\.com\/spreadsheets\//.test(WBGSProcess.childNodes[0].innerText) //Exclude the table headers row
+							return (ColCountCorrect && IsRowAProcess)
 						})
-						console.log(JSON.stringify(OBJ_WBGS_Info, "", " "))
-						HavePrintedListOfProcess = true
-					}
-					
-					let ListOfFinishLockedProcesses = ListOfProcesses.filter((WBGSProcess) => {
-						return WBGSProcess.childNodes[4].innerText == "SUCCESS" //Find only processes that are labeled "SUCCESS"
-					})
-					if ((ClickAllAbortsCount < MaxClickAllAborts)&&(ListOfFinishLockedProcesses.length != 0)) {
-						ListOfFinishLockedProcesses.forEach((WBGSProcess) => {
-							let AbortButton = WBGSProcess.childNodes[5].childNodes[1]
-							AbortButton.click()
+						if (DisplayEasyCopyableListOfProcess && (!HavePrintedListOfProcess) && ListOfProcessesItems.length != 0) {
+							let OBJ_WBGS_Info = ListOfProcessesItems.map((WBGSProcess) => {
+								return {
+									TrackingURL: WBGSProcess.childNodes[5].childNodes[0].href,
+									StartedTime: WBGSProcess.childNodes[1].innerText,
+									Status: WBGSProcess.childNodes[4].innerText
+								}
+							})
+							console.log(JSON.stringify(OBJ_WBGS_Info, "", " "))
+							HavePrintedListOfProcess = true
+						}
+						
+						let ListOfFinishLockedProcesses = ListOfProcessesItems.filter((WBGSProcess) => {
+							return WBGSProcess.childNodes[4].innerText == "SUCCESS" //Find only processes that are labeled "SUCCESS"
 						})
-						ClickAllAbortsCount++
+						if ((ClickAllAbortsCount < MaxClickAllAborts)&&(ListOfFinishLockedProcesses.length != 0)) {
+							ListOfFinishLockedProcesses.forEach((WBGSProcess) => {
+								let AbortButton = WBGSProcess.childNodes[5].childNodes[1]
+								AbortButton.click()
+							})
+							ClickAllAbortsCount++
+						}
 					}
 				}
 				RaceConditionLock = false
