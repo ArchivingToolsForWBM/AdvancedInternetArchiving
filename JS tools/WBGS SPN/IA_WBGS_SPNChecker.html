@@ -301,6 +301,9 @@ Misc:
 			Count_CantSave_Error403 = 0
 			Count_CantSave_CantResolve = 0
 			
+			Date_Earliest = "?"
+			Date_Latest = "?"
+			
 			//Note to self:
 			//Column[0] = (Google sheets' column A) SentURL (the URLs you entered)
 			//Column[1] = (Google sheets' column B) YES/NO (it is now the status indicating if it had saved before)
@@ -682,42 +685,16 @@ Misc:
 		})
 	}
 	function ClearOutputs() {
-		//Total
-			document.getElementById("Statistic_NumberOfItems_TotalURLs").innerHTML = "0"
-		//Displayed
-			document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").innerHTML = "0"
-			document.getElementById("StatisticPercentage_NumberOfItems_RemainingAfterFilter").style = ""
-		//How many removed
-			document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").innerHTML = "0"
-			document.getElementById("StatisticPercentage_NumberOfItems_RemovedAfterFilter").style = ""
-		//Saved before
-			document.getElementById("Statistic_NumberOfItems_Success_SavedBefore").innerHTML = "0"
-			document.getElementById("StatisticPercentage_NumberOfItems_Success_SavedBefore").style = ""
-		//First archives
-			document.getElementById("Statistic_NumberOfItems_Success_FirstArchive").innerHTML = "0"
-			document.getElementById("StatisticPercentage_NumberOfItems_Success_FirstArchive").style = ""
-		//No IA results
-			document.getElementById("Statistic_NumberOfItems_Unsure_NoIAResult").innerHTML = "0"
-			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_NoIAResult").style = ""
-		//Blank column D
-			document.getElementById("Statistic_NumberOfItems_Unsure_BlankColumnD").innerHTML = "0"
-			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_BlankColumnD").style = ""
-		//Redirected
-			document.getElementById("Statistic_NumberOfItems_Unsure_Redirected").innerHTML = "0"
-			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Redirected").style = ""
-		//Error
-			document.getElementById("Statistic_NumberOfItems_Unsure_Error").innerHTML = "0"
-			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Error").style = ""
-		//Non 2XX
-			document.getElementById("Statistic_NumberOfItems_Unsure_SavedANon2XX").innerHTML = "0"
-			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_SavedANon2XX").style = ""
-		//Total success and unsures
-			document.getElementById("Statistic_NumberOfItems_Success_Total").innerHTML = "0"
-			document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style = ""
-			
-			document.getElementById("Statistic_NumberOfItems_Unsure_Total").innerHTML = "0"
-			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style = ""
-			
+		Array.from(document.getElementsByTagName("span")).filter((ArrayElement) => { //Clear Statistic table
+			return /^Statistic_/.test(ArrayElement.id)
+		}).forEach(ArrayElement => {
+			ArrayElement.innerHTML = "0"
+			ArrayElement.parentElement.parentElement.style = ""
+		})
+
+		//Earliest and latest date
+			document.getElementById("StatisticDate_Earliest").innerHTML = "?"
+			document.getElementById("StatisticDate_Latest").innerHTML = "?"
 		document.getElementById("OutputPlaintextItemCount").innerHTML = "0"
 		document.getElementById("Output_Plaintext").value = ""
 		document.getElementById("Output_table").innerHTML = ""
