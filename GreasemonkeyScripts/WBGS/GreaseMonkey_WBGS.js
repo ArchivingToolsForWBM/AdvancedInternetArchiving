@@ -68,6 +68,7 @@
 							let OBJ_WBGS_Info = ListOfProcessesItems.map((WBGSProcess) => {
 								return {
 									TrackingURL: WBGSProcess.childNodes[5].childNodes[0].href,
+									JobID: WBGSProcess.childNodes[5].childNodes[0].href.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
 									StartedTime: WBGSProcess.childNodes[1].innerText,
 									Status: WBGSProcess.childNodes[4].innerText
 								}
