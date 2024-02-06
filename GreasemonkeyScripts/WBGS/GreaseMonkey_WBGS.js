@@ -10,10 +10,11 @@
 (function() {
 	//Settings
 		const IntervalDelay = 100
-			//^Had to be an interval instead of a timeout because when you click on links to another WBGS page, that isn't a page refresh
+			//^How many milliseconds between each "scan" of the WBGS page.
+			// Had to be an interval instead of a timeout because when you click on links to another WBGS page, that isn't a page refresh
 			// rather a dynamic page (https://en.wikipedia.org/wiki/Dynamic_web_page ) similar to being on twitter and clicking on links
 			// to another twitter page, which result in this JS code not executing until you refresh the page.
-		const MaxClickAllAborts = 0
+		const MaxClickAllAborts = 1
 			//^Option to auto-click each "abort" button on processes that finished-locked - processes that have finished but didn't
 			// disappear on the WBGS home page. 0 = no, 1 = yes, 2+ = number of times to click each abort button (if it doesn't
 			// respond).
@@ -22,7 +23,7 @@
 			// bug of some sort on processes)
 	//Don't touch unless you know what you're doing
 		setInterval(Code, IntervalDelay)
-		const ListOfTrackingURLs = new Set()
+		const ListOfTrackingURLs = new Set() //If you leave the start process page and somehow return without resetting the page, this script will remember it.
 		let RaceConditionLock = false
 		let ClickAllAbortsCount = 0
 		let HavePrintedListOfProcess = false
@@ -50,7 +51,14 @@
 					if (/^Tracking URL/.test(document.querySelectorAll("small")[1].innerText)) {
 						ProcessTrackingURLString = document.querySelectorAll("small")[1].innerText.match(/https:\/\/archive\.org\/services\/wayback-gsheets\/check[^\s]+$/)[0]
 						if (ListOfTrackingURLs.has(ProcessTrackingURLString)==false) {
-							console.log("Tracking URL: " + ProcessTrackingURLString.replace(/^https/, "ttps")) //URLs in the console log gets truncated and the text may not be preserved depending on browser.
+							//console.log("Tracking URL: " + ProcessTrackingURLString.replace(/^https/, "ttps")) //URLs in the console log gets truncated and the text may not be preserved depending on browser.
+							let OBJ_WBGS_TrackingURL = {
+								TrackingURL: ProcessTrackingURLString.replace(/^https/, "ttps"), //URLs in the console log gets truncated and the text may not be preserved depending on browser.
+								JobID: ProcessTrackingURLString.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
+								TimestampOfInitalProcess: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
+							}
+							
+							console.log(JSON.stringify(OBJ_WBGS_TrackingURL, "", " "))
 							ListOfTrackingURLs.add(ProcessTrackingURLString)
 						}
 					}
@@ -66,15 +74,16 @@
 						})
 						if (DisplayEasyCopyableListOfProcess && (!HavePrintedListOfProcess) && ListOfProcessesItems.length != 0) {
 							let OBJ_WBGS_Info = ListOfProcessesItems.map((WBGSProcess) => {
+								let TrackingURL = WBGSProcess.childNodes[5].childNodes[0].href
 								return {
-									TrackingURL: WBGSProcess.childNodes[5].childNodes[0].href,
-									JobID: WBGSProcess.childNodes[5].childNodes[0].href.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
-									GSheetURL: WBGSProcess.childNodes[0].innerText,
+									TrackingURL: TrackingURL.replace(/^https/, "ttps"),
+									JobID: TrackingURL.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
+									GSheetURL: WBGSProcess.childNodes[0].innerText.replace(/^https/, "ttps"),
 									StartedTime: WBGSProcess.childNodes[1].innerText,
 									Status: WBGSProcess.childNodes[4].innerText
 								}
 							})
-							console.log(JSON.stringify(OBJ_WBGS_Info, "", " "))
+							console.log("WBGS homepage info obtained on " + ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString()) + " \n" + JSON.stringify(OBJ_WBGS_Info, "", " "))
 							HavePrintedListOfProcess = true
 						}
 						
@@ -92,5 +101,9 @@
 				}
 				RaceConditionLock = false
 			}
+		}
+		function ISOString_to_YYYY_MM_DD_HH_MM_SS(ISOString) {
+			//YYYY-MM-DDTHH:mm:ss.sssZ or ±YYYYYY-MM-DDTHH:mm:ss.sssZ
+			return ISOString.replace("T", " ").replace(/\.\d{3}Z$/, "") + " UTC"
 		}
 })();
