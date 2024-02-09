@@ -65,6 +65,12 @@
 						let LinksToAnotherPage = []
 						let MediaList = []
 						
+						//template:
+						//DescendNode(ArrayElement, []).OutputNode
+						//MediaList = GetMediaURLs(DescendNode(ArrayElement, []).OutputNode)
+						
+						//This area handles different post dom tree structures. They very depending if it is a repost,
+						//a reply to a post, or the current post being replied.
 						if (ArrayElement.childNodes[0].innerText == "") { //Gap above top post
 							UserTitle = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 0]).OutputNode.textContent
 							Username = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 2]).OutputNode.innerText
@@ -72,13 +78,25 @@
 							PostText = DescendNode(ArrayElement, [1, 1, 1]).OutputNode.innerText
 							MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 1]).OutputNode)
 							
-						} else { //Reposts
+							let a = 0
+						} else if (!/@[a-zA-Z\d\-]+.[a-zA-Z\d\-]+.[a-zA-Z\d\-]+/.test(DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText)) { //Reposts
 							RepostedByUserTitle = DescendNode(ArrayElement, [0, 1, 0, 1, 1]).OutputNode.textContent
 							UserTitle = DescendNode(ArrayElement, [1, 1, 0, 0 ,0 ,0]).OutputNode.textContent
 							Username = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 2]).OutputNode.innerText
 							PostTimeStamp = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode.dataset.tooltip
 							PostText = DescendNode(ArrayElement, [1, 1, 1, 0]).OutputNode.innerText
 							MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 1, 1]).OutputNode)
+							
+							let a = 0
+						} else if (/@[a-zA-Z\d\-]+.[a-zA-Z\d\-]+.[a-zA-Z\d\-]+/.test(DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText)) {
+							//Here seems to only happen if you are on a post URL
+							UserTitle = DescendNode(ArrayElement, [0, 1, 0, 0, 0, 0, 0]).OutputNode.textContent
+							Username = DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText
+							PostTimeStamp = DescendNode(ArrayElement, [0, 1, 0, 0, 1]).OutputNode.dataset.tooltip
+							PostText = DescendNode(ArrayElement, [1, 0, 0]).OutputNode.innerText
+							MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 0]).OutputNode)
+							
+							let a = 0
 						}
 						return {
 							RepostedByUserTitle: RepostedByUserTitle,
@@ -156,7 +174,7 @@
 					URLOfSource = HTMLTag.src
 				}
 				
-				return URLOfSource
+				return URLOfSource.replace(/^http/, "ttp")
 			});
 			//May need to filter to remove unwanted tags once we use the "*" for getting other media besides images
 			return Output
