@@ -18,7 +18,7 @@
 		//Run code periodically (recommended for dynamic web pages, infinite scrolling)
 			window.onload = setInterval(MainCode, Setting_Delay)
 	//MainCode, runs periodically and used to extract page content.
-		MainCode() {
+		function MainCode() {
 			if (!RaceConditionLock) {
 				RaceConditionLock = true
 				//Code here
