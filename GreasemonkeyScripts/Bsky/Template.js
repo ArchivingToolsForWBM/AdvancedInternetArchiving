@@ -30,51 +30,66 @@
 						let FollowUserButtonExist = false
 						let CurrentParentNode = ImgSrc
 						
-						let i = 0
-						for (i=0; i<5;i++) {
-							if (typeof CurrentParentNode.parentNode != "undefined") {
-								CurrentParentNode = CurrentParentNode.parentNode
-							} else {
-								break
-							}
-						}
-						let FollowUserButton = Array.from(CurrentParentNode.getElementsByTagName("button")).find((ArrayElement) => {
-							return ArrayElement.innerText == "Follow"
+//						let i = 0
+//						for (i=0; i<5;i++) {
+//							if (typeof CurrentParentNode.parentNode != "undefined") {
+//								CurrentParentNode = CurrentParentNode.parentNode
+//							} else {
+//								break
+//							}
+//						}
+						let OuterNodesOfPost = AscendNode(ImgSrc, 5)
+
+						let FollowUserButton = Array.from(OuterNodesOfPost.OutputNode.getElementsByTagName("button")).find((ArrayElement) => {
+							return /^Follow/.test(ArrayElement.innerText)
 						});
-						if (typeof FollowUserButton != "undefined" && i == 5) {
+						if (typeof FollowUserButton != "undefined" && OuterNodesOfPost.LevelsPassed == 5) {
 							FollowUserButtonExist = true
 						}
 						
 						return IsUserAvatar && (!FollowUserButtonExist)
 					})
 					ListOfPosts = ListOfPosts.map((ArrayElement) => { //Get entire post
-						return ArrayElement.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode
+						//return ArrayElement.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode
+						return AscendNode(ArrayElement, 6).OutputNode
 					})
-					let a = 0
 					ListOfPosts = ListOfPosts.map((ArrayElement) => {
+						let RepostedByUserTitle = ""
+						let CurrentPostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
+						let ReplyToURL = "" //Reply to post above
+						let RepliesURL = "" //Replies of the current post
 						let UserTitle = ""
 						let Username = ""
 						let PostTimeStamp = ""
 						let PostText = ""
+						let LinksToAnotherPage = []
 						let MediaList = []
 						
 						if (ArrayElement.childNodes[0].innerText == "") { //Gap above top post
-							UserTitle = ArrayElement.childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
-							Username = ArrayElement.childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[2].innerText
-							PostTimeStamp = ArrayElement.childNodes[1].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
-							PostText = ArrayElement.childNodes[1].childNodes[1].childNodes[1].innerText
-							MediaList = Array.from(ArrayElement.childNodes[1].childNodes[1].getElementsByTagName("img")).map((Images) => {
-								return Images.src
-							})
-						} else {
+							UserTitle = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 0]).OutputNode.textContent
+							Username = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 2]).OutputNode.innerText
+							PostTimeStamp = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode.dataset.tooltip
+							PostText = DescendNode(ArrayElement, [1, 1, 1]).OutputNode.innerText
+							MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 1]).OutputNode)
 							
-							let a = 0
+						} else { //Reposts
+							RepostedByUserTitle = DescendNode(ArrayElement, [0, 1, 0, 1, 1]).OutputNode.textContent
+							UserTitle = DescendNode(ArrayElement, [1, 1, 0, 0 ,0 ,0]).OutputNode.textContent
+							Username = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 2]).OutputNode.innerText
+							PostTimeStamp = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode.dataset.tooltip
+							PostText = DescendNode(ArrayElement, [1, 1, 1, 0]).OutputNode.innerText
+							MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 1, 1]).OutputNode)
 						}
 						return {
+							RepostedByUserTitle: RepostedByUserTitle,
+							CurrentPostURL: CurrentPostURL,
+							ReplyToURL: ReplyToURL,
+							RepliesURL: RepliesURL,
 							UserTitle: UserTitle,
 							Username: Username,
 							PostTimeStamp: PostTimeStamp,
 							PostText: PostText,
+							LinksToAnotherPage: LinksToAnotherPage,
 							MediaList: MediaList
 						}
 					})
@@ -89,5 +104,61 @@
 				console.log(URL_truncateProof)
 				SetOfURLs.add(URL_truncateProof)
 			}
+		}
+		function AscendNode(Node, Levels) {
+			//Instead of Node.parentNode.parentNode.parentNode... which is prone to errors if there is no parent, this has a check to prevent it.
+			//Arguments:
+			//-Node: The node in the HTML
+			//-Levels: A number, representing how many levels to ascend
+			//Will return:
+			//-the parent node at "Levels" up, unless it cannot go up any further, then the highest
+			//-the number of successful levels it goes up.
+			let CurrentNode = Node
+			
+			let i = 0
+			for (i = 0; i < Levels; i++) {
+				if (typeof CurrentNode.parentNode != "undefined") {
+					CurrentNode = CurrentNode.parentNode
+				} else {
+					break
+				}
+			}
+			return {
+				OutputNode: CurrentNode,
+				LevelsPassed: i
+			}
+		}
+		function DescendNode(Node, LevelsArray) {
+			//Opposite of AscendNode, descends a node without errors. LevelsArray is an array that contains
+			//only numbers on what child to descend on.
+			let CurrentNode = Node
+			let LevelsDown = LevelsArray.length
+			let i = 0
+			for (i = 0; i < LevelsDown; i++) {
+				if (typeof CurrentNode.childNodes != "undefined") {
+					if (typeof CurrentNode.childNodes[LevelsArray[i]] != "undefined") {
+						CurrentNode = CurrentNode.childNodes[LevelsArray[i]]
+					}
+				} else {
+					break
+				}
+			}
+			return {
+				OutputNode: CurrentNode,
+				LevelsPassed: i
+			}
+		}
+		function GetMediaURLs(Node) {
+			//Returns an array listing URLs of media
+			let Output = Array.from(Node.getElementsByTagName("img")).map((HTMLTag) => {
+				let URLOfSource = ""
+				if (HTMLTag.tagName == "IMG") {
+					URLOfSource = HTMLTag.src
+				}
+				
+				return URLOfSource
+			});
+			//May need to filter to remove unwanted tags once we use the "*" for getting other media besides images
+			return Output
 		}
 })();
