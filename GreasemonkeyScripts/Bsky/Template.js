@@ -55,7 +55,7 @@
 					})
 					ListOfPosts = ListOfPosts.map((ArrayElement) => {
 						let RepostedByUserTitle = ""
-						let CurrentPostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
+						let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
 						let ReplyToURL = "" //Reply to post above
 						let RepliesURL = "" //Replies of the current post
 						let UserTitle = ""
@@ -75,6 +75,11 @@
 							UserTitle = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 0]).OutputNode.textContent
 							Username = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 2]).OutputNode.innerText
 							PostTimeStamp = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode.dataset.tooltip
+							
+							let NodeOfLink = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode
+							if (typeof NodeOfLink != "undefined") {
+								PostURL = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode.href.replace(/^http/, "ttp")
+							}
 							PostText = DescendNode(ArrayElement, [1, 1, 1]).OutputNode.innerText
 							MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 1]).OutputNode)
 							
@@ -84,6 +89,11 @@
 							UserTitle = DescendNode(ArrayElement, [1, 1, 0, 0 ,0 ,0]).OutputNode.textContent
 							Username = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 2]).OutputNode.innerText
 							PostTimeStamp = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode.dataset.tooltip
+							let NodeOfLink = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode
+							if (typeof NodeOfLink != "undefined") {
+								PostURL = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode.href.replace(/^http/, "ttp")
+							}
+							
 							PostText = DescendNode(ArrayElement, [1, 1, 1, 0]).OutputNode.innerText
 							MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 1, 1]).OutputNode)
 							
@@ -100,7 +110,7 @@
 						}
 						return {
 							RepostedByUserTitle: RepostedByUserTitle,
-							CurrentPostURL: CurrentPostURL,
+							PostURL: PostURL,
 							ReplyToURL: ReplyToURL,
 							RepliesURL: RepliesURL,
 							UserTitle: UserTitle,
