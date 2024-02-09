@@ -50,7 +50,6 @@
 						return IsUserAvatar && (!FollowUserButtonExist)
 					})
 					ListOfPosts = ListOfPosts.map((ArrayElement) => { //Get entire post
-						//return ArrayElement.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode
 						return AscendNode(ArrayElement, 6).OutputNode
 					})
 					ListOfPosts = ListOfPosts.map((ArrayElement) => {
@@ -68,10 +67,12 @@
 						//template:
 						//DescendNode(ArrayElement, []).OutputNode
 						//MediaList = GetMediaURLs(DescendNode(ArrayElement, []).OutputNode)
+						//LinksToAnotherPage = GetLinksURLs(DescendNode(ArrayElement, []).OutputNode)
 						
 						//This area handles different post dom tree structures. They very depending if it is a repost,
 						//a reply to a post, or the current post being replied.
 						if (ArrayElement.childNodes[0].innerText == "") { //Gap above top post
+							//The majority of posts when being on the profile page
 							UserTitle = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 0]).OutputNode.textContent
 							Username = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 2]).OutputNode.innerText
 							PostTimeStamp = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode.dataset.tooltip
@@ -81,10 +82,13 @@
 								PostURL = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode.href.replace(/^http/, "ttp")
 							}
 							PostText = DescendNode(ArrayElement, [1, 1, 1]).OutputNode.innerText
+							LinksToAnotherPage = GetLinksURLs(DescendNode(ArrayElement, [1, 1, 1]).OutputNode)
+							
 							MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 1]).OutputNode)
 							
 							let a = 0
-						} else if (!/@[a-zA-Z\d\-]+.[a-zA-Z\d\-]+.[a-zA-Z\d\-]+/.test(DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText)) { //Reposts
+						} else if (!/@[a-zA-Z\d\-]+.[a-zA-Z\d\-]+.[a-zA-Z\d\-]+/.test(DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText)) {
+							//Reposts (found on user home page)
 							RepostedByUserTitle = DescendNode(ArrayElement, [0, 1, 0, 1, 1]).OutputNode.textContent
 							UserTitle = DescendNode(ArrayElement, [1, 1, 0, 0 ,0 ,0]).OutputNode.textContent
 							Username = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 2]).OutputNode.innerText
@@ -95,18 +99,23 @@
 							}
 							
 							PostText = DescendNode(ArrayElement, [1, 1, 1, 0]).OutputNode.innerText
+							LinksToAnotherPage = GetLinksURLs(DescendNode(ArrayElement, [1, 1, 1, 0 ]).OutputNode)
 							MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 1, 1]).OutputNode)
 							
 							let a = 0
 						} else if (/@[a-zA-Z\d\-]+.[a-zA-Z\d\-]+.[a-zA-Z\d\-]+/.test(DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText)) {
-							//Here seems to only happen if you are on a post URL
+							//Here seems to only happen to posts that you are on, where it lacks the a href link to the post (because it is not necessary).
 							UserTitle = DescendNode(ArrayElement, [0, 1, 0, 0, 0, 0, 0]).OutputNode.textContent
 							Username = DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText
 							PostTimeStamp = DescendNode(ArrayElement, [0, 1, 0, 0, 1]).OutputNode.dataset.tooltip
+							PostURL = window.location.href.replace(/^http/, "ttp")
 							PostText = DescendNode(ArrayElement, [1, 0, 0]).OutputNode.innerText
+							LinksToAnotherPage = GetLinksURLs(DescendNode(ArrayElement, [1, 0, 0]).OutputNode)
 							MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 0]).OutputNode)
 							
 							let a = 0
+						} else {
+							let a = 0 //In case there is another format I haven't discovered
 						}
 						return {
 							RepostedByUserTitle: RepostedByUserTitle,
@@ -185,8 +194,16 @@
 				}
 				
 				return URLOfSource.replace(/^http/, "ttp")
+			}).filter((ArrayElement) => {
+				return (ArrayElement != "")
 			});
-			//May need to filter to remove unwanted tags once we use the "*" for getting other media besides images
+			return Output
+		}
+		function GetLinksURLs(Node) {
+			//Returns an array listing URLs of media
+			let Output = Array.from(Node.getElementsByTagName("a")).map((Links) => {
+				return Links.href.replace(/^http/, "ttp")
+			});
 			return Output
 		}
 })();
