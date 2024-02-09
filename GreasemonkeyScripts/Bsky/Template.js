@@ -8,6 +8,11 @@
 // @grant       GM.getValue
 // ==/UserScript==
 (function() {
+	//NOTES:
+	//Best works on firefox because of my testing:
+	//-URLs have the "http" substring replaced with "ttps" because firefox truncate links and doesn't keep the original full URL when copying them (the middle is replaced with ellipsis).
+	//-Chrome will truncate object parts printed on the console log, and those aren't preserved
+	//
 	//Settings
 		const Setting_Delay = 1000
 		const Setting_ParentElementCount = 3
@@ -56,7 +61,7 @@
 						let RepostedByUserTitle = ""
 						let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
 						let ReplyToURL = "" //Reply to post above
-						let RepliesURL = "" //Replies of the current post
+						let RepliesURL = [] //Replies of the current post
 						let UserTitle = ""
 						let Username = ""
 						let PostTimeStamp = ""
