@@ -10,7 +10,8 @@
 (function() {
 	//NOTES:
 	//Best works on firefox because of my testing:
-	//-URLs have the "http" substring replaced with "ttps" because firefox truncate links and doesn't keep the original full URL when copying them (the middle is replaced with ellipsis).
+	//-URLs have the "http" substring replaced with "ttps" because firefox truncate long links and doesn't keep the original full URL when copying them (the middle is replaced with
+	// ellipsis).
 	//-Chrome will truncate object parts printed on the console log, and those aren't preserved
 	//-If you navigate to (click on links) another bsky page, the list of process stored here will not unload posts that are no longer visible that were once visible before you navigate
 	// due to the entire page not refreshing. This means that if you say navigate from the user profile page to a posts, several posts from the profile page persist while being on a
@@ -18,7 +19,12 @@
 	// 
 	//Settings
 		const Setting_Delay = 1000
-		const Setting_ParentElementCount = 3
+		const Setting_http_ttp = true
+			//^true = All URLs in the output start with "ttp" instead of "http" (to avoid URL truncation like what firefox does; replacing the middle of string with ellipsis).
+			// false = leave it as http
+		const Setting_PostImageFullRes = true
+			//^true = all image URLs in the post will be full resolution versions
+			// false = use resolution from the HTML.
 
 	//Stuff you don't touch unless you know what you're doing.
 		let RaceConditionLock = false
@@ -58,13 +64,16 @@
 					ListOfPosts = ListOfPosts.map((ArrayElement) => { //On each post, create an object with the data extracted
 						let RepostedByUserTitle = ""
 						let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
+						
 						let PostHasRepliesLineBelow = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
 						let PostIsAReplyLineToAbove = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
 						let IsCurrentPostURL = false //Used to determine the post that doesn't have a href link to determine the post below it is a reply to it
+						
 						let ReplyToURL = "" //Reply to post above
 						let RepliesURLs = [] //Replies of the current post
 						let UserTitle = ""
 						let Username = ""
+						let UserAvatar = ""
 						let PostTimeStamp = ""
 						let PostText = ""
 						let LinksToAnotherPage = []
@@ -88,12 +97,20 @@
 							//The majority of posts when being on the profile page
 							UserTitle = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 0]).OutputNode.textContent
 							Username = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 2]).OutputNode.innerText
+							
+							let NodeOfAvatar = DescendNode(ArrayElement, [1, 0])
+							if (NodeOfAvatar.LevelsPassed == 2) {
+								let AvatarImgTag = Array.from(NodeOfAvatar.OutputNode.getElementsByTagName("IMG"))
+								if (AvatarImgTag.length != 0) {
+									UserAvatar = HttpToTtp(AvatarImgTag[0].src)
+								}
+							}
 
 							let NodeOfLink = DescendNode(ArrayElement, [1, 1, 0, 2])
 							PostTimeStamp = NodeOfLink.OutputNode.dataset.tooltip
 							
 							if (typeof NodeOfLink != "undefined" && typeof NodeOfLink.OutputNode.href != "undefined") {
-								PostURL = NodeOfLink.OutputNode.href.replace(/^http/, "ttp")
+								PostURL = HttpToTtp(NodeOfLink.OutputNode.href)
 							}
 							PostText = DescendNode(ArrayElement, [1, 1, 1]).OutputNode.innerText
 							LinksToAnotherPage = GetLinksURLs(DescendNode(ArrayElement, [1, 1, 1]).OutputNode)
@@ -112,12 +129,20 @@
 							RepostedByUserTitle = DescendNode(ArrayElement, [0, 1, 0, 1, 1]).OutputNode.textContent
 							UserTitle = DescendNode(ArrayElement, [1, 1, 0, 0 ,0 ,0]).OutputNode.textContent
 							Username = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 2]).OutputNode.innerText
-							let NodeOfLink = DescendNode(ArrayElement, [1, 1, 0, 2])
 							
+							let NodeOfAvatar = DescendNode(ArrayElement, [1, 0])
+							if (NodeOfAvatar.LevelsPassed == 2) {
+								let AvatarImgTag = Array.from(NodeOfAvatar.OutputNode.getElementsByTagName("IMG"))
+								if (AvatarImgTag.length != 0) {
+									UserAvatar = HttpToTtp(AvatarImgTag[0].src)
+								}
+							}
+							
+							let NodeOfLink = DescendNode(ArrayElement, [1, 1, 0, 2])
 							PostTimeStamp = NodeOfLink.OutputNode.dataset.tooltip
-							if (typeof NodeOfLink != "undefined") {
-								if (NodeOfLink.tagName == "A" && typeof NodeOfLink.OutputNode.href != "undefined") {
-									PostURL = NodeOfLink.OutputNode.href.replace(/^http/, "ttp")
+							if (typeof NodeOfLink.OutputNode != "undefined") {
+								if (NodeOfLink.OutputNode.tagName == "A" && typeof NodeOfLink.OutputNode.href != "undefined") {
+									PostURL = HttpToTtp(NodeOfLink.OutputNode.href)
 								}
 							}
 							PostText = DescendNode(ArrayElement, [1, 1, 1, 0]).OutputNode.innerText
@@ -136,7 +161,7 @@
 								UserTitle = UserTitleOfQuoted
 								Username = DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText
 								PostTimeStamp = DescendNode(ArrayElement, [0, 1, 0, 0, 1]).OutputNode.dataset.tooltip
-								PostURL = window.location.href.replace(/^http/, "ttp") //Post lacks a a href link to post
+								PostURL = HttpToTtp(window.location.href) //Post lacks a a href link to post
 								IsCurrentPostURL = true
 								PostText = DescendNode(ArrayElement, [1, 0, 0]).OutputNode.innerText
 								LinksToAnotherPage = GetLinksURLs(DescendNode(ArrayElement, [1, 0, 0]).OutputNode)
@@ -160,7 +185,7 @@
 								UserTitle = DescendNode(ArrayElement, [0, 0, 1, 0, 0]).OutputNode.textContent
 								Username = DescendNode(ArrayElement, [0, 0, 1, 0, 2]).OutputNode.innerText
 								PostTimeStamp = DescendNode(ArrayElement, [0, 0, 3]).OutputNode.dataset.tooltip
-								PostURL = DescendNode(ArrayElement, [0, 0, 3]).OutputNode.href.replace(/^http/, "ttp")
+								PostURL = HttpToTtp(DescendNode(ArrayElement, [0, 0, 3]).OutputNode.href)
 								PostText = DescendNode(ArrayElement, [1]).OutputNode.innerText
 								LinksToAnotherPage = GetLinksURLs(ArrayElement)
 								MediaList = GetMediaURLs(ArrayElement)
@@ -182,6 +207,7 @@
 							RepliesURLs: RepliesURLs,
 							UserTitle: UserTitle,
 							Username: Username,
+							UserAvatar: UserAvatar,
 							PostTimeStamp: PostTimeStamp,
 							PostText: PostText,
 							LinksToAnotherPage: LinksToAnotherPage,
@@ -232,6 +258,7 @@
 							}
 						}
 					}
+				//Set a breakpoint here after everything loads to test the results stored in "ListOfPosts".
 				RaceConditionLock = false
 			}
 		}
@@ -297,7 +324,7 @@
 						URLOfSource = HTMLTag.src
 					}
 					
-					return URLOfSource.replace(/^http/, "ttp")
+					return HttpToTtp(FullResConvert(URLOfSource))
 				}).filter((ArrayElement) => {
 					return (ArrayElement != "")
 				});
@@ -309,10 +336,22 @@
 			let Output = []
 			if (Node.childNodes.length != 0) { //Quoted posts
 				Output = Array.from(Node.getElementsByTagName("a")).map((Links) => {
-					return Links.href.replace(/^http/, "ttp")
+					return HttpToTtp(Links.href)
 				});
 			}
 			return Output
+		}
+		function HttpToTtp(URLString) {
+			if (Setting_http_ttp) {
+				return URLString.replace(/^http/, "ttp")
+			}
+			return URLString
+		}
+		function FullResConvert(URLString) {
+			//https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:<random_string>/<random_string>@<extension>
+			if (Setting_PostImageFullRes) {
+				return URLString.replace(/(https?:\/\/cdn\.bsky\.app\/img\/)feed_thumbnail(.*$)/, "$1feed_fullsize$2")
+			}
 		}
 		// Where el is the DOM element you'd like to test for visibility
 		function isHidden(el) { //Thanks https://stackoverflow.com/questions/19669786/check-if-element-is-visible-in-dom -> 7ochem
