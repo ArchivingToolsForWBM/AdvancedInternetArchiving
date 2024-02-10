@@ -59,6 +59,9 @@
 						let PostText = ""
 						let LinksToAnotherPage = []
 						let MediaList = []
+						let CommentsCount = ""
+						let RepostCount = ""
+						let LikesCount = ""
 						
 						//template:
 						//DescendNode(ArrayElement, []).OutputNode
@@ -82,6 +85,9 @@
 							
 							MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 1]).OutputNode)
 							
+							CommentsCount = DescendNode(ArrayElement, [1, 1, 2, 0]).OutputNode.innerText
+							RepostCount = DescendNode(ArrayElement, [1, 1, 2, 1]).OutputNode.innerText
+							LikesCount =  DescendNode(ArrayElement, [1, 1, 2, 2]).OutputNode.innerText
 							let a = 0
 						} else if (!/@[a-zA-Z\d\-]+.[a-zA-Z\d\-]+.[a-zA-Z\d\-]+/.test(DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText)) {
 							//Reposts (found on user home page)
@@ -91,12 +97,17 @@
 							PostTimeStamp = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode.dataset.tooltip
 							let NodeOfLink = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode
 							if (typeof NodeOfLink != "undefined") {
-								PostURL = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode.href.replace(/^http/, "ttp")
+								if (NodeOfLink.tagName == "A") {
+									PostURL = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode.href.replace(/^http/, "ttp")
+								}
 							}
-							
 							PostText = DescendNode(ArrayElement, [1, 1, 1, 0]).OutputNode.innerText
 							LinksToAnotherPage = GetLinksURLs(DescendNode(ArrayElement, [1, 1, 1, 0 ]).OutputNode)
 							MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 1, 1]).OutputNode)
+							
+							CommentsCount = DescendNode(ArrayElement, [1, 1, 2, 0]).OutputNode.innerText
+							RepostCount = DescendNode(ArrayElement, [1, 1, 2, 1]).OutputNode.innerText
+							LikesCount =  DescendNode(ArrayElement, [1, 1, 2, 2]).OutputNode.innerText
 							
 							let a = 0
 						} else if (/@[a-zA-Z\d\-]+.[a-zA-Z\d\-]+.[a-zA-Z\d\-]+/.test(DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText)) {
@@ -111,6 +122,12 @@
 								PostText = DescendNode(ArrayElement, [1, 0, 0]).OutputNode.innerText
 								LinksToAnotherPage = GetLinksURLs(DescendNode(ArrayElement, [1, 0, 0]).OutputNode)
 								MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 0]).OutputNode)
+								
+								CommentsCount = DescendNode(ArrayElement, [1, 3, 0, 0]).OutputNode.innerText
+								RepostCount = DescendNode(ArrayElement, [1, 3, 0, 1]).OutputNode.innerText
+								LikesCount =  DescendNode(ArrayElement, [1, 3, 0, 2]).OutputNode.innerText
+								
+								let a = 0
 							} else {
 								//Quoted post
 								UserTitle = DescendNode(ArrayElement, [0, 0, 1, 0, 0]).OutputNode.textContent
@@ -122,7 +139,6 @@
 								MediaList = GetMediaURLs(ArrayElement)
 								let a = 0
 							}
-							let a = 0
 						} else {
 							let a = 0 //In case there is another format I haven't discovered
 						}
@@ -136,7 +152,10 @@
 							PostTimeStamp: PostTimeStamp,
 							PostText: PostText,
 							LinksToAnotherPage: LinksToAnotherPage,
-							MediaList: MediaList
+							MediaList: MediaList,
+							CommentsCount: CommentsCount,
+							RepostCount: RepostCount,
+							LikesCount: LikesCount
 						}
 					})
 					
