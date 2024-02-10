@@ -46,7 +46,8 @@
 							FollowUserButtonExist = true
 						}
 						
-						return IsUserAvatar && (!FollowUserButtonExist)
+						
+						return IsUserAvatar && (!FollowUserButtonExist) && (!isHidden(ImgSrc))
 					})
 					ListOfPosts = ListOfPosts.map((ArrayElement) => { //Get outermost of the post
 						return AscendNode(ArrayElement, 6).OutputNode
@@ -249,5 +250,9 @@
 				});
 			}
 			return Output
+		}
+		// Where el is the DOM element you'd like to test for visibility
+		function isHidden(el) { //Thanks https://stackoverflow.com/questions/19669786/check-if-element-is-visible-in-dom -> 7ochem
+			return (el.offsetParent === null)
 		}
 })();
