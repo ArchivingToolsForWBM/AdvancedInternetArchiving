@@ -55,8 +55,9 @@
 					ListOfPosts = ListOfPosts.map((ArrayElement) => { //On each post, create an object with the data extracted
 						let RepostedByUserTitle = ""
 						let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
-						let PostHasRepliesBelow = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
-						let PostIsAReplyToAbove = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
+						let PostHasRepliesLineBelow = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
+						let PostIsAReplyLineToAbove = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
+						let IsCurrentPostURL = false //Used to determine the post that doesn't have a href link to determine the post below it is a reply to it
 						let ReplyToURL = "" //Reply to post above
 						let RepliesURLs = [] //Replies of the current post
 						let UserTitle = ""
@@ -65,7 +66,7 @@
 						let PostText = ""
 						let LinksToAnotherPage = []
 						let MediaList = []
-						let CommentsCount = ""
+						let ReplyCount = ""
 						let RepostCount = ""
 						let LikesCount = ""
 						
@@ -95,12 +96,12 @@
 							
 							MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 1]).OutputNode)
 							
-							CommentsCount = DescendNode(ArrayElement, [1, 1, 2, 0]).OutputNode.innerText
+							ReplyCount = DescendNode(ArrayElement, [1, 1, 2, 0]).OutputNode.innerText
 							RepostCount = DescendNode(ArrayElement, [1, 1, 2, 1]).OutputNode.innerText
 							LikesCount =  DescendNode(ArrayElement, [1, 1, 2, 2]).OutputNode.innerText
 							
-							PostIsAReplyToAbove = (DescendNode(ArrayElement, [0, 0, 0]).LevelsPassed == 3) //Line connector up
-							PostHasRepliesBelow = (DescendNode(ArrayElement, [1, 0, 1]).LevelsPassed == 3) //Line connector down
+							PostIsAReplyLineToAbove = (DescendNode(ArrayElement, [0, 0, 0]).LevelsPassed == 3) //Line connector up
+							PostHasRepliesLineBelow = (DescendNode(ArrayElement, [1, 0, 1]).LevelsPassed == 3) //Line connector down
 							let a = 0
 						} else if (!/@[a-zA-Z\d\-]+.[a-zA-Z\d\-]+.[a-zA-Z\d\-]+/.test(DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText)) {
 							//Reposts (found on user home page)
@@ -118,7 +119,7 @@
 							LinksToAnotherPage = GetLinksURLs(DescendNode(ArrayElement, [1, 1, 1, 0 ]).OutputNode)
 							MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 1, 1]).OutputNode)
 							
-							CommentsCount = DescendNode(ArrayElement, [1, 1, 2, 0]).OutputNode.innerText
+							ReplyCount = DescendNode(ArrayElement, [1, 1, 2, 0]).OutputNode.innerText
 							RepostCount = DescendNode(ArrayElement, [1, 1, 2, 1]).OutputNode.innerText
 							LikesCount =  DescendNode(ArrayElement, [1, 1, 2, 2]).OutputNode.innerText
 							
@@ -130,14 +131,23 @@
 								UserTitle = UserTitleOfQuoted
 								Username = DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText
 								PostTimeStamp = DescendNode(ArrayElement, [0, 1, 0, 0, 1]).OutputNode.dataset.tooltip
-								PostURL = window.location.href.replace(/^http/, "ttp")
+								PostURL = window.location.href.replace(/^http/, "ttp") //Post lacks a a href link to post
+								IsCurrentPostURL = true
 								PostText = DescendNode(ArrayElement, [1, 0, 0]).OutputNode.innerText
 								LinksToAnotherPage = GetLinksURLs(DescendNode(ArrayElement, [1, 0, 0]).OutputNode)
 								MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 0]).OutputNode)
 								
-								CommentsCount = DescendNode(ArrayElement, [1, 3, 0, 0]).OutputNode.innerText
-								RepostCount = DescendNode(ArrayElement, [1, 3, 0, 1]).OutputNode.innerText
-								LikesCount =  DescendNode(ArrayElement, [1, 3, 0, 2]).OutputNode.innerText
+								let CommentsRepostLikes = DescendNode(ArrayElement, [1, 3, 0])
+								if (CommentsRepostLikes.LevelsPassed == 3) {
+									ReplyCount = DescendNode(CommentsRepostLikes.OutputNode, [0]).OutputNode.innerText
+									RepostCount = DescendNode(CommentsRepostLikes.OutputNode, [1]).OutputNode.innerText
+									LikesCount =  DescendNode(CommentsRepostLikes.OutputNode, [2]).OutputNode.innerText
+								} else {
+									CommentsRepostLikes = DescendNode(ArrayElement, [1, 2, 0])
+									ReplyCount = DescendNode(CommentsRepostLikes.OutputNode, [0]).OutputNode.innerText
+									RepostCount = DescendNode(CommentsRepostLikes.OutputNode, [1]).OutputNode.innerText
+									LikesCount =  DescendNode(CommentsRepostLikes.OutputNode, [2]).OutputNode.innerText
+								}
 								
 								let a = 0
 							} else {
@@ -149,6 +159,7 @@
 								PostText = DescendNode(ArrayElement, [1]).OutputNode.innerText
 								LinksToAnotherPage = GetLinksURLs(ArrayElement)
 								MediaList = GetMediaURLs(ArrayElement)
+								
 								let a = 0
 							}
 						} else {
@@ -157,8 +168,11 @@
 						return {
 							RepostedByUserTitle: RepostedByUserTitle,
 							PostURL: PostURL,
-							PostHasRepliesBelow: PostHasRepliesBelow,
-							PostIsAReplyToAbove: PostIsAReplyToAbove,
+							ReplyConnections: {
+								PostHasRepliesLineBelow: PostHasRepliesLineBelow,
+								PostIsAReplyLineToAbove: PostIsAReplyLineToAbove,
+								IsCurrentPostURL: IsCurrentPostURL
+							},
 							ReplyToURL: ReplyToURL,
 							RepliesURLs: RepliesURLs,
 							UserTitle: UserTitle,
@@ -167,7 +181,7 @@
 							PostText: PostText,
 							LinksToAnotherPage: LinksToAnotherPage,
 							MediaList: MediaList,
-							CommentsCount: CommentsCount,
+							ReplyCount: ReplyCount,
 							RepostCount: RepostCount,
 							LikesCount: LikesCount
 						}
@@ -175,8 +189,8 @@
 					//Connect replies
 					let ForLoopCache = ListOfPosts.length
 					for (let i = 0; i < ForLoopCache; i++) {
-						if (i+1 < ForLoopCache) {
-							if (ListOfPosts[i].PostHasRepliesBelow && ListOfPosts[i+1].PostIsAReplyToAbove) {
+						if (i+1 < ForLoopCache) { //adjacent posts and that "i" is not beyond the last element
+							if (ListOfPosts[i].ReplyConnections.PostHasRepliesLineBelow && ListOfPosts[i+1].ReplyConnections.PostIsAReplyLineToAbove) {
 								//If two adjacent posts have a line connecting the two, have the former's replies list added a URL of the replying post
 								//and the reply post have the URL it is replying to.
 								if (!ListOfPosts[i].RepliesURLs.includes(ListOfPosts[i+1].PostURL)) { //Can't use "new Set()" bc firefox glitch
@@ -184,6 +198,31 @@
 								}
 								if (ListOfPosts[i+1].ReplyToURL == ""){
 									ListOfPosts[i+1].ReplyToURL = ListOfPosts[i].PostURL
+								}
+							}
+							if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/post\//.test(window.location.href)) { //While being on a post page
+								if (ListOfPosts[i].ReplyConnections.PostHasRepliesLineBelow && (!ListOfPosts[i+1].ReplyConnections.PostIsAReplyLineToAbove)) {
+									//A post that is a reply to above in which the above's vertical line gets cut off.
+									if (!ListOfPosts[i].RepliesURLs.includes(ListOfPosts[i+1].PostURL)) { //Can't use "new Set()" bc firefox glitch
+										ListOfPosts[i].RepliesURLs.push(ListOfPosts[i+1].PostURL)
+									}
+									if (ListOfPosts[i+1].ReplyToURL == ""){
+										ListOfPosts[i+1].ReplyToURL = ListOfPosts[i].PostURL
+									}
+								}
+								if (ListOfPosts[i].ReplyConnections.IsCurrentPostURL) {
+									//Get posts below it that has no line above the avatar picture
+									for (let j = i+1; j < ForLoopCache; j++) { //The posts below the current post
+										if (!ListOfPosts[j].ReplyConnections.PostIsAReplyLineToAbove) { //Not have a connecting line above it (not even a cutoff line)
+											if (!ListOfPosts[i].RepliesURLs.includes(ListOfPosts[j].PostURL)) { //Can't use "new Set()" bc firefox glitch
+												ListOfPosts[i].RepliesURLs.push(ListOfPosts[j].PostURL)
+											}
+											if (ListOfPosts[j].ReplyToURL == ""){
+												ListOfPosts[j].ReplyToURL = ListOfPosts[i].PostURL
+											}
+										}
+										
+									}
 								}
 							}
 						}
