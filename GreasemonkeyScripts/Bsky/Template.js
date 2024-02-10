@@ -58,7 +58,7 @@
 						let PostHasRepliesBelow = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
 						let PostIsAReplyToAbove = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
 						let ReplyToURL = "" //Reply to post above
-						let RepliesURL = [] //Replies of the current post
+						let RepliesURLs = [] //Replies of the current post
 						let UserTitle = ""
 						let Username = ""
 						let PostTimeStamp = ""
@@ -68,6 +68,10 @@
 						let CommentsCount = ""
 						let RepostCount = ""
 						let LikesCount = ""
+						
+						//Although I could use set, but then there is a bug with mozilla that made me use array instead: If printed to the console log
+						//and you try to copy, it will appear as "{}", and if you try to copy just this set, "Copy Message" is greyed out. So for some
+						//I can't copy a set from the console log. Tested on version 122.0.1 (64-bit).
 						
 						//template:
 						//DescendNode(ArrayElement, []).OutputNode
@@ -156,7 +160,7 @@
 							PostHasRepliesBelow: PostHasRepliesBelow,
 							PostIsAReplyToAbove: PostIsAReplyToAbove,
 							ReplyToURL: ReplyToURL,
-							RepliesURL: RepliesURL,
+							RepliesURLs: RepliesURLs,
 							UserTitle: UserTitle,
 							Username: Username,
 							PostTimeStamp: PostTimeStamp,
@@ -168,7 +172,22 @@
 							LikesCount: LikesCount
 						}
 					})
-					
+					//Connect replies
+					let ForLoopCache = ListOfPosts.length
+					for (let i = 0; i < ForLoopCache; i++) {
+						if (i+1 < ForLoopCache) {
+							if (ListOfPosts[i].PostHasRepliesBelow && ListOfPosts[i+1].PostIsAReplyToAbove) {
+								//If two adjacent posts have a line connecting the two, have the former's replies list added a URL of the replying post
+								//and the reply post have the URL it is replying to.
+								if (!ListOfPosts[i].RepliesURLs.includes(ListOfPosts[i+1].PostURL)) { //Can't use "new Set()" bc firefox glitch
+									ListOfPosts[i].RepliesURLs.push(ListOfPosts[i+1].PostURL)
+								}
+								if (ListOfPosts[i+1].ReplyToURL == ""){
+									ListOfPosts[i+1].ReplyToURL = ListOfPosts[i].PostURL
+								}
+							}
+						}
+					}
 				RaceConditionLock = false
 			}
 		}
