@@ -51,6 +51,8 @@
 					ListOfPosts = ListOfPosts.map((ArrayElement) => { //On each post, create an object with the data extracted
 						let RepostedByUserTitle = ""
 						let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
+						let PostHasRepliesBelow = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
+						let PostIsAReplyToAbove = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
 						let ReplyToURL = "" //Reply to post above
 						let RepliesURL = [] //Replies of the current post
 						let UserTitle = ""
@@ -88,6 +90,9 @@
 							CommentsCount = DescendNode(ArrayElement, [1, 1, 2, 0]).OutputNode.innerText
 							RepostCount = DescendNode(ArrayElement, [1, 1, 2, 1]).OutputNode.innerText
 							LikesCount =  DescendNode(ArrayElement, [1, 1, 2, 2]).OutputNode.innerText
+							
+							PostIsAReplyToAbove = (DescendNode(ArrayElement, [0, 0, 0]).LevelsPassed == 3) //Line connector up
+							PostHasRepliesBelow = (DescendNode(ArrayElement, [1, 0, 1]).LevelsPassed == 3) //Line connector down
 							let a = 0
 						} else if (!/@[a-zA-Z\d\-]+.[a-zA-Z\d\-]+.[a-zA-Z\d\-]+/.test(DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText)) {
 							//Reposts (found on user home page)
@@ -112,7 +117,6 @@
 							let a = 0
 						} else if (/@[a-zA-Z\d\-]+.[a-zA-Z\d\-]+.[a-zA-Z\d\-]+/.test(DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText)) {
 							//Here seems to only happen to posts that you are on, where it lacks the a href link to the post (because it is not necessary).
-							//Also quoted posts
 							let UserTitleOfQuoted = DescendNode(ArrayElement, [0, 1, 0, 0, 0, 0, 0]).OutputNode.textContent
 							if (UserTitleOfQuoted != "") {
 								UserTitle = UserTitleOfQuoted
@@ -129,7 +133,7 @@
 								
 								let a = 0
 							} else {
-								//Quoted post
+								//Quoted post (I think never have vertical lines connecting avatar pic unless you visit the post directly)
 								UserTitle = DescendNode(ArrayElement, [0, 0, 1, 0, 0]).OutputNode.textContent
 								Username = DescendNode(ArrayElement, [0, 0, 1, 0, 2]).OutputNode.innerText
 								PostTimeStamp = DescendNode(ArrayElement, [0, 0, 3]).OutputNode.dataset.tooltip
@@ -145,6 +149,8 @@
 						return {
 							RepostedByUserTitle: RepostedByUserTitle,
 							PostURL: PostURL,
+							PostHasRepliesBelow: PostHasRepliesBelow,
+							PostIsAReplyToAbove: PostIsAReplyToAbove,
 							ReplyToURL: ReplyToURL,
 							RepliesURL: RepliesURL,
 							UserTitle: UserTitle,
@@ -198,11 +204,12 @@
 			//only numbers on what child to descend on.
 			let CurrentNode = Node
 			let LevelsDown = LevelsArray.length
-			let i = 0
-			for (i = 0; i < LevelsDown; i++) {
+			let ParentCount = 0
+			for (let i = 0; i < LevelsDown; i++) {
 				if (typeof CurrentNode.childNodes != "undefined") {
 					if (typeof CurrentNode.childNodes[LevelsArray[i]] != "undefined") {
 						CurrentNode = CurrentNode.childNodes[LevelsArray[i]]
+						ParentCount++
 					}
 				} else {
 					break
@@ -210,7 +217,7 @@
 			}
 			return {
 				OutputNode: CurrentNode,
-				LevelsPassed: i
+				LevelsPassed: ParentCount
 			}
 		}
 		function GetMediaURLs(Node) {
