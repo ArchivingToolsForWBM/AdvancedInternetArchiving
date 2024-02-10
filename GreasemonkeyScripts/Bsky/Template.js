@@ -12,7 +12,10 @@
 	//Best works on firefox because of my testing:
 	//-URLs have the "http" substring replaced with "ttps" because firefox truncate links and doesn't keep the original full URL when copying them (the middle is replaced with ellipsis).
 	//-Chrome will truncate object parts printed on the console log, and those aren't preserved
-	//
+	//-If you navigate to (click on links) another bsky page, the list of process stored here will not unload posts that are no longer visible that were once visible before you navigate
+	// due to the entire page not refreshing. This means that if you say navigate from the user profile page to a posts, several posts from the profile page persist while being on a
+	// post page.
+	// 
 	//Settings
 		const Setting_Delay = 1000
 		const Setting_ParentElementCount = 3
