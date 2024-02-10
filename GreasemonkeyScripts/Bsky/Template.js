@@ -21,12 +21,13 @@
 	// a list of replies to the post.
 	//Settings
 		const Setting_Delay = 1000
+			//^Number of milliseconds between each re-execution of this script.
 		const Setting_http_ttp = true
 			//^true = All URLs in the output start with "ttp" instead of "http" (to avoid URL truncation like what firefox does; replacing the middle of string with ellipsis).
 			// false = leave it as http
 		const Setting_PostImageFullRes = true
 			//^true = all image URLs in the post will be full resolution versions
-			// false = use resolution from the HTML.
+			// false = use potentially downsized resolution from the HTML.
 
 	//Stuff you don't touch unless you know what you're doing.
 		let RaceConditionLock = false
@@ -87,6 +88,8 @@
 						//Although I could use set, but then there is a bug with mozilla that made me use array instead: If printed to the console log
 						//and you try to copy, it will appear as "{}", and if you try to copy just this set, "Copy Message" is greyed out. So for some
 						//I can't copy a set from the console log. Tested on version 122.0.1 (64-bit).
+						//
+						//EDIT: Actually, js's stringify a set is broken: https://stackoverflow.com/questions/31190885/json-stringify-a-set
 						
 						//template:
 						//DescendNode(ArrayElement, []).OutputNode
