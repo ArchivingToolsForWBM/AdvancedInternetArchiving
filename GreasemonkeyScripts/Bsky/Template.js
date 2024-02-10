@@ -33,22 +33,25 @@
 			if (!RaceConditionLock) {
 				RaceConditionLock = true
 				//Code here
-					let ListOfPosts = Array.from(document.getElementsByTagName("img")).filter((ImgSrc) => { //Get post by avatar images
-						let IsUserAvatar = /https:\/\/cdn\.bsky\.app\/img\/avatar\//.test(ImgSrc.src)
-						let FollowUserButtonExist = false
-						let CurrentParentNode = ImgSrc
-						let OuterNodesOfPost = AscendNode(ImgSrc, 5)
-
-						let FollowUserButton = Array.from(OuterNodesOfPost.OutputNode.getElementsByTagName("button")).find((ArrayElement) => {
-							return /^Follow/.test(ArrayElement.innerText)
-						});
-						if (typeof FollowUserButton != "undefined" && OuterNodesOfPost.LevelsPassed == 5) {
-							FollowUserButtonExist = true
-						}
-						
-						
-						return IsUserAvatar && (!FollowUserButtonExist) && (!isHidden(ImgSrc))
-					})
+					let ListOfPosts = []
+					if (!/https:\/\/bsky\.app\/feeds.*$/.test(window.location.href)) {
+						ListOfPosts = Array.from(document.getElementsByTagName("img")).filter((ImgSrc) => { //Get post by avatar images
+							let IsUserAvatar = /https:\/\/cdn\.bsky\.app\/img\/avatar\//.test(ImgSrc.src)
+							let FollowUserButtonExist = false
+							let CurrentParentNode = ImgSrc
+							let OuterNodesOfPost = AscendNode(ImgSrc, 5)
+	
+							let FollowUserButton = Array.from(OuterNodesOfPost.OutputNode.getElementsByTagName("button")).find((ArrayElement) => {
+								return /^Follow/.test(ArrayElement.innerText)
+							});
+							if (typeof FollowUserButton != "undefined" && OuterNodesOfPost.LevelsPassed == 5) {
+								FollowUserButtonExist = true
+							}
+							
+							
+							return IsUserAvatar && (!FollowUserButtonExist) && (!isHidden(ImgSrc))
+						})
+					}
 					ListOfPosts = ListOfPosts.map((ArrayElement) => { //Get outermost of the post
 						return AscendNode(ArrayElement, 6).OutputNode
 					})
@@ -85,11 +88,12 @@
 							//The majority of posts when being on the profile page
 							UserTitle = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 0]).OutputNode.textContent
 							Username = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 2]).OutputNode.innerText
-							PostTimeStamp = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode.dataset.tooltip
+
+							let NodeOfLink = DescendNode(ArrayElement, [1, 1, 0, 2])
+							PostTimeStamp = NodeOfLink.OutputNode.dataset.tooltip
 							
-							let NodeOfLink = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode
-							if (typeof NodeOfLink != "undefined") {
-								PostURL = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode.href.replace(/^http/, "ttp")
+							if (typeof NodeOfLink != "undefined" && typeof NodeOfLink.OutputNode.href != "undefined") {
+								PostURL = NodeOfLink.OutputNode.href.replace(/^http/, "ttp")
 							}
 							PostText = DescendNode(ArrayElement, [1, 1, 1]).OutputNode.innerText
 							LinksToAnotherPage = GetLinksURLs(DescendNode(ArrayElement, [1, 1, 1]).OutputNode)
@@ -108,11 +112,12 @@
 							RepostedByUserTitle = DescendNode(ArrayElement, [0, 1, 0, 1, 1]).OutputNode.textContent
 							UserTitle = DescendNode(ArrayElement, [1, 1, 0, 0 ,0 ,0]).OutputNode.textContent
 							Username = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 2]).OutputNode.innerText
-							PostTimeStamp = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode.dataset.tooltip
-							let NodeOfLink = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode
+							let NodeOfLink = DescendNode(ArrayElement, [1, 1, 0, 2])
+							
+							PostTimeStamp = NodeOfLink.OutputNode.dataset.tooltip
 							if (typeof NodeOfLink != "undefined") {
-								if (NodeOfLink.tagName == "A") {
-									PostURL = DescendNode(ArrayElement, [1, 1, 0, 2]).OutputNode.href.replace(/^http/, "ttp")
+								if (NodeOfLink.tagName == "A" && typeof NodeOfLink.OutputNode.href != "undefined") {
+									PostURL = NodeOfLink.OutputNode.href.replace(/^http/, "ttp")
 								}
 							}
 							PostText = DescendNode(ArrayElement, [1, 1, 1, 0]).OutputNode.innerText
