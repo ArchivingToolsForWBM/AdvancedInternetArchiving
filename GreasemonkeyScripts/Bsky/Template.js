@@ -337,7 +337,7 @@
 			return Output
 		}
 		function GetLinksURLs(Node) {
-			//Returns an array listing URLs of media
+			//Returns an array listing URLs of outlinks
 			let Output = []
 			if (Node.childNodes.length != 0) { //Quoted posts
 				Output = Array.from(Node.getElementsByTagName("a")).map((Links) => {
