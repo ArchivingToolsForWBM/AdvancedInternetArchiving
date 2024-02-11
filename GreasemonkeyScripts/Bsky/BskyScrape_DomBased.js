@@ -86,7 +86,7 @@
 									let ReplyToURL = "" //Reply to post above
 									let RepliesURLs = [] //Replies of the current post
 									let UserTitle = ""
-									let Username = ""
+									let UserHandle = ""
 									let UserAvatar = ""
 									let PostTimeStamp = ""
 									let PostText = ""
@@ -132,6 +132,73 @@
 											PostHasRepliesLineBelow = true
 										}
 									}
+									//User title
+									{
+										let UserTitleElement = DescendNode(Post, [0, 1, 1, 0, 0, 0, 0])
+										if (UserTitleElement.LevelsPassed == 7) {
+											UserTitle = UserTitleElement.OutputNode.textContent
+										}
+									}
+									//User handle
+									{
+										let UserHandleElement = DescendNode(Post, [0, 1, 1, 0, 0, 0, 2])
+										if (UserHandleElement.LevelsPassed == 7) {
+											UserTitle = UserHandleElement.OutputNode.innerText
+										}
+									}
+									//User Avatar
+									{
+										//Post.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1]
+										let AvatarImgElement = DescendNode(Post, [0, 1, 0, 0, 0, 0, 1])
+										if (AvatarImgElement.LevelsPassed == 7) {
+											if (typeof AvatarImgElement.OutputNode.src != "undefined") {
+												UserAvatar = HttpToTtp(AvatarImgElement.OutputNode.src)
+											}
+										}
+									}
+									//Post time stamp
+									{
+										let PostTimeStampElement = DescendNode(Post, [0, 1, 1, 0, 2])
+										if (PostTimeStampElement.LevelsPassed == 5) {
+											if (typeof PostTimeStampElement.OutputNode.dataset.tooltip != "undefined") {
+												PostTimeStamp = HttpToTtp(PostTimeStampElement.OutputNode.dataset.tooltip)
+											}
+										}
+									}
+									//Post text
+									{
+										let PostTextElement = DescendNode(Post, [0, 1, 1, 1, 0, 0])
+										if (PostTextElement.LevelsPassed == 6) {
+											PostText = PostTextElement.OutputNode.textContent
+										}
+									}
+									//Links to another page
+									{
+										let PostAreaToFindLinks = DescendNode(Post, [0, 1, 1, 1])
+										if (PostAreaToFindLinks.LevelsPassed == 4) {
+											LinksToAnotherPage = GetLinksURLs(PostAreaToFindLinks.OutputNode)
+										}
+										
+									}
+									//Media list
+									{
+										let PostAreaToFindImgs = DescendNode(Post, [0, 1, 1, 1])
+										if (PostAreaToFindImgs.LevelsPassed == 4) {
+											MediaList = GetMediaURLs(PostAreaToFindImgs.OutputNode)
+										}
+									}
+									//Reply, repost, and likes
+									{
+										let ReplyRepostLikesElement = DescendNode(Post, [0, 1, 1, 2])
+										if (ReplyRepostLikesElement.LevelsPassed == 4) {
+											let NodesOfReplyRepostLikes = Array.from(ReplyRepostLikesElement.OutputNode.childNodes)
+											if (NodesOfReplyRepostLikes.length >= 3) {
+												ReplyCount = NodesOfReplyRepostLikes[0].innerText
+												RepostCount = NodesOfReplyRepostLikes[1].innerText
+												LikesCount = NodesOfReplyRepostLikes[2].innerText
+											}
+										}
+									}
 									PostGroup.push({
 										RepostedByUserTitle: RepostedByUserTitle,
 										PostURL: PostURL,
@@ -143,7 +210,7 @@
 										ReplyToURL: ReplyToURL,
 										RepliesURLs: RepliesURLs,
 										UserTitle: UserTitle,
-										Username: Username,
+										UserHandle: UserHandle,
 										UserAvatar: UserAvatar,
 										PostTimeStamp: PostTimeStamp,
 										PostText: PostText,
@@ -152,7 +219,6 @@
 										ReplyCount: ReplyCount,
 										RepostCount: RepostCount,
 										LikesCount: LikesCount
-										
 									})
 								}
 								//Now fill out the reply to and from that are inside a box
@@ -230,7 +296,7 @@
 //						let ReplyToURL = "" //Reply to post above
 //						let RepliesURLs = [] //Replies of the current post
 //						let UserTitle = ""
-//						let Username = ""
+//						let UserHandle = ""
 //						let UserAvatar = ""
 //						let PostTimeStamp = ""
 //						let PostText = ""
@@ -256,7 +322,7 @@
 //						if (ArrayElement.childNodes[0].innerText == "") { //Gap above top post
 //							//The majority of posts when being on the profile page
 //							UserTitle = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 0]).OutputNode.textContent
-//							Username = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 2]).OutputNode.innerText
+//							UserHandle = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 2]).OutputNode.innerText
 //							
 //							let NodeOfAvatar = DescendNode(ArrayElement, [1, 0])
 //							if (NodeOfAvatar.LevelsPassed == 2) {
@@ -288,7 +354,7 @@
 //							//Reposts (found on user home page)
 //							RepostedByUserTitle = DescendNode(ArrayElement, [0, 1, 0, 1, 1]).OutputNode.textContent
 //							UserTitle = DescendNode(ArrayElement, [1, 1, 0, 0 ,0 ,0]).OutputNode.textContent
-//							Username = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 2]).OutputNode.innerText
+//							UserHandle = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 2]).OutputNode.innerText
 //							
 //							let NodeOfAvatar = DescendNode(ArrayElement, [1, 0])
 //							if (NodeOfAvatar.LevelsPassed == 2) {
@@ -319,7 +385,7 @@
 //							let UserTitleOfQuoted = DescendNode(ArrayElement, [0, 1, 0, 0, 0, 0, 0]).OutputNode.textContent
 //							if (UserTitleOfQuoted != "") {
 //								UserTitle = UserTitleOfQuoted
-//								Username = DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText
+//								UserHandle = DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText
 //								PostTimeStamp = DescendNode(ArrayElement, [0, 1, 0, 0, 1]).OutputNode.dataset.tooltip
 //								PostURL = HttpToTtp(window.location.href) //Post lacks a a href link to post
 //								IsCurrentPostURL = true
@@ -343,7 +409,7 @@
 //							} else {
 //								//Quoted post (I think never have vertical lines connecting avatar pic unless you visit the post directly)
 //								UserTitle = DescendNode(ArrayElement, [0, 0, 1, 0, 0]).OutputNode.textContent
-//								Username = DescendNode(ArrayElement, [0, 0, 1, 0, 2]).OutputNode.innerText
+//								UserHandle = DescendNode(ArrayElement, [0, 0, 1, 0, 2]).OutputNode.innerText
 //								PostTimeStamp = DescendNode(ArrayElement, [0, 0, 3]).OutputNode.dataset.tooltip
 //								PostURL = HttpToTtp(DescendNode(ArrayElement, [0, 0, 3]).OutputNode.href)
 //								PostText = DescendNode(ArrayElement, [1]).OutputNode.innerText
@@ -366,7 +432,7 @@
 //							ReplyToURL: ReplyToURL,
 //							RepliesURLs: RepliesURLs,
 //							UserTitle: UserTitle,
-//							Username: Username,
+//							UserHandle: UserHandle,
 //							UserAvatar: UserAvatar,
 //							PostTimeStamp: PostTimeStamp,
 //							PostText: PostText,
