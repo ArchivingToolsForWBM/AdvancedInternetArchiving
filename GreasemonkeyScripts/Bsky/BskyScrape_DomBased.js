@@ -45,7 +45,7 @@
 					let UserPostArea = []
 					let ListOfPosts = [] //List of each individual posts
 					if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/?$/.test(window.location.href)) { //profile page
-						//First, find an a href link to a profile as a reference
+						//First, find an a href link to a profile as a reference. We get a node that at least has all the posts
 						let ListOfLinks = Array.from(document.getElementsByTagName("A"))
 						ListOfLinks.find((ArrayElement) => { //Search all the a href
 							if (ArrayElement.hasAttribute("href")) { //failsafe, does it has the href attribute?
@@ -189,9 +189,9 @@
 									}
 									//Reply, repost, and likes
 									{
-										let ReplyRepostLikesElement = DescendNode(Post, [0, 1, 1, 2])
-										if (ReplyRepostLikesElement.LevelsPassed == 4) {
-											let NodesOfReplyRepostLikes = Array.from(ReplyRepostLikesElement.OutputNode.childNodes)
+										let ReplyRepostLikesNode = DescendNode(Post, [0, 1, 1, 2])
+										if (ReplyRepostLikesNode.LevelsPassed == 4) {
+											let NodesOfReplyRepostLikes = Array.from(ReplyRepostLikesNode.OutputNode.childNodes)
 											if (NodesOfReplyRepostLikes.length >= 3) {
 												ReplyCount = NodesOfReplyRepostLikes[0].innerText
 												RepostCount = NodesOfReplyRepostLikes[1].innerText
@@ -225,12 +225,12 @@
 								let PostGroupLengthCache = PostGroup.length
 								for (let i = 0; i < PostGroupLengthCache; i++) {
 									if (PostGroup[i].ReplyConnections.PostHasRepliesLineBelow) {
-										for (let j = i+1; j < PostGroupLengthCache; j++) {
-											if (!PostGroup[i].RepliesURLs.includes(PostGroup[j].PostURL)) {
-												PostGroup[i].RepliesURLs.push(PostGroup[j].PostURL)
+										if (i+1 < PostGroupLengthCache) {
+											if (!PostGroup[i].RepliesURLs.includes(PostGroup[i+1].PostURL)) {
+												PostGroup[i].RepliesURLs.push(PostGroup[i+1].PostURL) //Current post has reply
 											}
-											if (PostGroup[j].ReplyToURL == "") {
-												PostGroup[j].ReplyToURL = PostGroup[i].PostURL
+											if (PostGroup[i+1].ReplyToURL == "") {
+												PostGroup[i+1].ReplyToURL = PostGroup[i].PostURL //In reply to a post above
 											}
 										}
 									}
@@ -243,7 +243,7 @@
 						})
 						
 					} else if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/post\/[a-zA-Z\d\-]+\/?/.test(window.location.href)) { //Post page
-						//First, find an a href link to a profile as a reference
+						//First, find an a href link to a profile as a reference. We get a node that at least has all the posts
 						let ListOfLinks = Array.from(document.getElementsByTagName("A"))
 						ListOfLinks.find((ArrayElement) => { //Search all the a href
 							if (ArrayElement.hasAttribute("href")) { //failsafe, does it has the href attribute?
@@ -259,231 +259,232 @@
 							}
 							return false
 						});
+						UserPostArea.filter((Box) => { //Rid out hidden elements
+							return (!isHidden(Box))
+						})
 						//"UserPostArea" will now contain "boxes" that contains 0 or 1 posts (even if it is a reply post, there is no div that surround 2 posts)
+						
+						
+						let PostsSeperator = ""
+						//^Now, in some time in the future, bsky may be updated to include recommended posts that aren't necessarily a reply to posts above,
+						// so this text here serves as a placeholder as the following foreach determine that the adjacent posts are something like "for you"
+						// (if such a separator exists, PostsSeperator will update and future boxes in this array will reflect on it (anthing after "for you"))
+						
+						let PostGroup = []
+						UserPostArea.forEach((Box, BoxIndex) => { //Loop each box
+							let RepostedByUserTitle = ""
+							let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
+							
+							let PostHasRepliesLineBelow = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
+							let PostIsAReplyLineToAbove = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
+							let IsCurrentPostURL = false //Used to determine the post that doesn't have a href link to determine the post below it is a reply to it
+							let Type = "" //Stuff in the column could be a post, a non-post like "Write your Reply"
+							
+							let ReplyToURL = "" //Reply to post above
+							let RepliesURLs = [] //Replies of the current post
+							let UserTitle = ""
+							let UserHandle = ""
+							let UserAvatar = ""
+							let PostTimeStamp = ""
+							let PostText = ""
+							let LinksToAnotherPage = []
+							let MediaList = []
+							let ReplyCount = ""
+							let RepostCount = ""
+							let LikesCount = ""
+							
+							let BoxChildrenNodes = Array.from(Box.childNodes) //As far as my testing, these boxes either have no child nodes or one child nodes.
+							if (BoxChildrenNodes.length == 0) {
+								Type = "NonPost_BlankZone"
+							} else if (BoxChildrenNodes.length == 1) {
+								//Figure out the node tree type of each posts on the post page
+								let a = 0
+								let NodeToLookAt_ReplyButton = DescendNode(Box, [0, 0])
+								let NodeToLookAt_BlankBottom = DescendNode(Box, [0])
+								let NodeToLookAt_TimeStampCurrentlyViewedPostTop = DescendNode(Box, [0,0,0,1,0,0,1])
+								let NodeToLookAt_TimeStampCurrentlyViewedPostNotTop = DescendNode(Box, [0,1,0,1,0,0,1])
+								let NodeToLookAt_TimeStampOtherThanCurrentPost = DescendNode(Box, [0,0,0,0,1,1,0,2])
+								
+								
+								//Now I have to use (Type == "") because the inner if statement could cause an error for trying to assess properties of potentially
+								//a nonexistent attribute. This means if this is an elseif on the outer, failing the inner if statement would skip all the later checks
+								//which I do not want.
+								if ((Type == "") && NodeToLookAt_ReplyButton.LevelsPassed == 2) {
+									if (NodeToLookAt_ReplyButton.OutputNode.tagName == "BUTTON") {
+										Type = "NonPost_ReplyButton"
+									}
+								}
+								if ((Type == "") && NodeToLookAt_BlankBottom.LevelsPassed == 1) {
+									if (NodeToLookAt_BlankBottom.OutputNode.innerHTML == "") {
+										Type = "NonPost_BlankBottom"
+									}
+								}
+								if ((Type == "") && NodeToLookAt_TimeStampCurrentlyViewedPostTop.LevelsPassed == 7) {
+									if (typeof NodeToLookAt_TimeStampCurrentlyViewedPostTop.OutputNode.dataset != "undefined") {
+										let IsPotentialAhref = Array.from(NodeToLookAt_TimeStampCurrentlyViewedPostTop.OutputNode.getElementsByTagName("a")).find((ArrayElement) => {
+											return ArrayElement.hasAttribute("href")
+										})
+										if (typeof IsPotentialAhref == "undefined"){
+											Type = "Post_CurrentlyViewedAtTop"
+										}
+									}
+								}
+								if ((Type =="") && NodeToLookAt_TimeStampCurrentlyViewedPostNotTop.LevelsPassed == 7) {
+										let IsPotentialAhref = Array.from(NodeToLookAt_TimeStampCurrentlyViewedPostNotTop.OutputNode.getElementsByTagName("a")).find((ArrayElement) => {
+											return ArrayElement.hasAttribute("href")
+										})
+										if (typeof IsPotentialAhref == "undefined"){
+											Type = "Post_CurrentlyViewedNotAtTop"
+										}
+								}
+								if ((Type == "") && NodeToLookAt_TimeStampOtherThanCurrentPost.LevelsPassed == 8) {
+									if (typeof NodeToLookAt_TimeStampOtherThanCurrentPost.OutputNode.href != "undefined") {
+										Type = "Post_NotCurrentlyViewed"
+									}
+								}
+							}
+							let ChildIngToUserTitle = []
+							let ChildIngToUserHandle = []
+							let ChildingToAvatar = []
+							let ChildingToTimeStamp = []
+							let ChildingToTimeStampLinkToPostUrl = []
+							let ChildingToPostText = []
+							let ChildingToMedia = []
+							let ChildingToReplyRepostLike = []
+							
+							switch (Type) {
+								case "Post_CurrentlyViewedAtTop":
+									ChildIngToUserTitle = [0,0,0,1,0,0,0,0]
+									ChildIngToUserHandle = [0,0,0,1,1]
+									ChildingToAvatar = [0,0,0,0,0,0,0,1]
+									ChildingToTimeStamp = [0,0,0,1,0,0,1]
+									ChildingToPostText = [0,0,1,0,0]
+									ChildingToMedia = [0,0,1,0]
+									ChildingToReplyRepostLike = [0,0,1,3,0]
+									break
+								case "Post_CurrentlyViewedNotAtTop":
+									ChildIngToUserTitle = [0,1,0,1,0,0,0]
+									ChildIngToUserHandle = [0,1,0,1,1,0]
+									ChildingToAvatar = [0,1,0,0,0,0,0,1]
+									ChildingToTimeStamp = [0,1,0,1,0,0,1]
+									ChildingToPostText = [0,1,1,0,0]
+									ChildingToMedia = [0,1,1,0]
+									ChildingToReplyRepostLike = [0,1,1,3,0]
+									break
+								case "Post_NotCurrentlyViewed":
+									ChildIngToUserTitle = [0,0,0,0,1,1,0,0,0,0]
+									ChildIngToUserHandle = [0,0,0,0,1,1,0,0,0,2]
+									ChildingToAvatar = [0,0,0,0,1,0,0,0,0,1]
+									ChildingToTimeStamp = [0,0,0,0,1,1,0,2]
+									ChildingToTimeStampLinkToPostUrl = [0,0,0,0,1,1,0,2]
+									ChildingToPostText = [0,0,0,0,1,1,1]
+									ChildingToMedia = [0,0,0,0,1,1]
+									ChildingToReplyRepostLike = [0,0,0,0,1,1,2]
+									break
+							}
+							if (/^Post_/.test(Type)) {
+								if (/^Post_CurrentlyViewed/.test(Type)) {
+									PostURL = HttpToTtp(window.location.href)
+								} else {
+									let NodeToLookAt_LinkInTimestamp = DescendNode(Box, ChildingToTimeStampLinkToPostUrl)
+									if (NodeToLookAt_LinkInTimestamp.LevelsPassed == ChildingToTimeStampLinkToPostUrl.length) {
+										if (typeof NodeToLookAt_LinkInTimestamp.OutputNode.href != "undefined") {
+											PostURL = HttpToTtp(NodeToLookAt_LinkInTimestamp.OutputNode.href)
+										}
+										
+									}
+								}
+								UserTitle = DescendNode(Box, ChildIngToUserTitle).OutputNode.textContent
+								UserHandle = DescendNode(Box, ChildIngToUserHandle).OutputNode.innerText
+								{
+									//Check for avatar
+									//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+									let NodeToLookAt_AvatarImg = DescendNode(Box, ChildingToAvatar)
+									if (NodeToLookAt_AvatarImg.LevelsPassed == ChildingToAvatar.length) {
+										UserAvatar = HttpToTtp(NodeToLookAt_AvatarImg.OutputNode.src)
+									}
+								}
+								{
+									let NodeToLookAt_TimeStamp = DescendNode(Box, ChildingToTimeStamp)
+									if (NodeToLookAt_TimeStamp.LevelsPassed == ChildingToTimeStamp.length) {
+										if (typeof NodeToLookAt_TimeStamp.OutputNode.dataset != "undefined") {
+											if (typeof NodeToLookAt_TimeStamp.OutputNode.dataset.tooltip != "undefined"){
+												PostTimeStamp = NodeToLookAt_TimeStamp.OutputNode.dataset.tooltip
+											}
+										}
+									}
+								}
+								{
+									let PostTextArea = DescendNode(Box, ChildingToPostText)
+									if (PostTextArea.LevelsPassed == ChildingToPostText.length) {
+										PostText = PostTextArea.OutputNode.textContent
+										LinksToAnotherPage = GetLinksURLs(PostTextArea.OutputNode)
+									}
+								}
+								{
+									let MediaArea = DescendNode(Box, ChildingToMedia)
+									if (MediaArea.LevelsPassed == ChildingToMedia.length) {
+										MediaList = GetMediaURLs(MediaArea.OutputNode)
+									}
+								}
+								{
+									//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[3].childNodes[0].childNodes 
+									let ReplyRepostLikesNode = DescendNode(Box, ChildingToReplyRepostLike)
+									if (ReplyRepostLikesNode.LevelsPassed == ChildingToReplyRepostLike.length) {
+										let ReplyRepostLikesNodeBoxes = Array.from(ReplyRepostLikesNode.OutputNode.childNodes)
+										ReplyCount = ReplyRepostLikesNodeBoxes[0].innerText
+										RepostCount = ReplyRepostLikesNodeBoxes[1].innerText
+										LikesCount = ReplyRepostLikesNodeBoxes[2].innerText
+									}
+								}
+								
+								
+								PostGroup.push({
+									RepostedByUserTitle: RepostedByUserTitle,
+									PostURL: PostURL,
+									ReplyConnections: {
+										PostHasRepliesLineBelow: PostHasRepliesLineBelow,
+										PostIsAReplyLineToAbove: PostIsAReplyLineToAbove,
+										IsCurrentPostURL: IsCurrentPostURL,
+										Type: Type
+									},
+									ReplyToURL: ReplyToURL,
+									RepliesURLs: RepliesURLs,
+									UserTitle: UserTitle,
+									UserHandle: UserHandle,
+									UserAvatar: UserAvatar,
+									PostTimeStamp: PostTimeStamp,
+									PostText: PostText,
+									LinksToAnotherPage: LinksToAnotherPage,
+									MediaList: MediaList,
+									ReplyCount: ReplyCount,
+									RepostCount: RepostCount,
+									LikesCount: LikesCount
+								})
+							}
+						})
+						let a = 0
+						//Connect replies
 					}
-					let a = 0
 					
-//					let ListOfPosts = []
-//					if (!/https:\/\/bsky\.app\/feeds.*$/.test(window.location.href)) {
-//						ListOfPosts = Array.from(document.getElementsByTagName("img")).filter((ImgSrc) => { //Get post by avatar images
-//							let IsUserAvatar = /https:\/\/cdn\.bsky\.app\/img\/avatar\//.test(ImgSrc.src)
-//							let FollowUserButtonExist = false
-//							let CurrentParentNode = ImgSrc
-//							let OuterNodesOfPost = AscendNode(ImgSrc, 5)
-//	
-//							let FollowUserButton = Array.from(OuterNodesOfPost.OutputNode.getElementsByTagName("button")).find((ArrayElement) => {
-//								return /^Follow/.test(ArrayElement.innerText)
-//							});
-//							if (typeof FollowUserButton != "undefined" && OuterNodesOfPost.LevelsPassed == 5) {
-//								FollowUserButtonExist = true
-//							}
-//							
-//							
-//							return IsUserAvatar && (!FollowUserButtonExist) && (!isHidden(ImgSrc))
-//						})
-//					}
-//					ListOfPosts = ListOfPosts.map((ArrayElement) => { //Get outermost of the post
-//						return AscendNode(ArrayElement, 6).OutputNode
-//					})
-//					ListOfPosts = ListOfPosts.map((ArrayElement) => { //On each post, create an object with the data extracted
-//						let RepostedByUserTitle = ""
-//						let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
-//						
-//						let PostHasRepliesLineBelow = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
-//						let PostIsAReplyLineToAbove = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
-//						let IsCurrentPostURL = false //Used to determine the post that doesn't have a href link to determine the post below it is a reply to it
-//						
-//						let ReplyToURL = "" //Reply to post above
-//						let RepliesURLs = [] //Replies of the current post
-//						let UserTitle = ""
-//						let UserHandle = ""
-//						let UserAvatar = ""
-//						let PostTimeStamp = ""
-//						let PostText = ""
-//						let LinksToAnotherPage = []
-//						let MediaList = []
-//						let ReplyCount = ""
-//						let RepostCount = ""
-//						let LikesCount = ""
-//						
-//						//Although I could use set, but then there is a bug with mozilla that made me use array instead: If printed to the console log
-//						//and you try to copy, it will appear as "{}", and if you try to copy just this set, "Copy Message" is greyed out. So for some
-//						//I can't copy a set from the console log. Tested on version 122.0.1 (64-bit).
-//						//
-//						//EDIT: Actually, js's stringify a set is broken: https://stackoverflow.com/questions/31190885/json-stringify-a-set
-//						
-//						//template:
-//						//DescendNode(ArrayElement, []).OutputNode
-//						//MediaList = GetMediaURLs(DescendNode(ArrayElement, []).OutputNode)
-//						//LinksToAnotherPage = GetLinksURLs(DescendNode(ArrayElement, []).OutputNode)
-//						
-//						//This area handles different post dom tree structures. They very depending if it is a repost,
-//						//a reply to a post, or the current post being replied.
-//						if (ArrayElement.childNodes[0].innerText == "") { //Gap above top post
-//							//The majority of posts when being on the profile page
-//							UserTitle = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 0]).OutputNode.textContent
-//							UserHandle = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 2]).OutputNode.innerText
-//							
-//							let NodeOfAvatar = DescendNode(ArrayElement, [1, 0])
-//							if (NodeOfAvatar.LevelsPassed == 2) {
-//								let AvatarImgTag = Array.from(NodeOfAvatar.OutputNode.getElementsByTagName("IMG"))
-//								if (AvatarImgTag.length != 0) {
-//									UserAvatar = HttpToTtp(AvatarImgTag[0].src)
-//								}
-//							}
-//							
-//							let NodeOfLink = DescendNode(ArrayElement, [1, 1, 0, 2])
-//							PostTimeStamp = NodeOfLink.OutputNode.dataset.tooltip
-//							
-//							if (typeof NodeOfLink != "undefined" && typeof NodeOfLink.OutputNode.href != "undefined") {
-//								PostURL = HttpToTtp(NodeOfLink.OutputNode.href)
-//							}
-//							PostText = DescendNode(ArrayElement, [1, 1, 1]).OutputNode.innerText
-//							LinksToAnotherPage = GetLinksURLs(DescendNode(ArrayElement, [1, 1, 1]).OutputNode)
-//							
-//							MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 1]).OutputNode)
-//							
-//							ReplyCount = DescendNode(ArrayElement, [1, 1, 2, 0]).OutputNode.innerText
-//							RepostCount = DescendNode(ArrayElement, [1, 1, 2, 1]).OutputNode.innerText
-//							LikesCount =  DescendNode(ArrayElement, [1, 1, 2, 2]).OutputNode.innerText
-//							
-//							PostIsAReplyLineToAbove = (DescendNode(ArrayElement, [0, 0, 0]).LevelsPassed == 3) //Line connector up
-//							PostHasRepliesLineBelow = (DescendNode(ArrayElement, [1, 0, 1]).LevelsPassed == 3) //Line connector down
-//							let a = 0
-//						} else if (!/@[a-zA-Z\d\-]+.[a-zA-Z\d\-]+.[a-zA-Z\d\-]+/.test(DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText)) {
-//							//Reposts (found on user home page)
-//							RepostedByUserTitle = DescendNode(ArrayElement, [0, 1, 0, 1, 1]).OutputNode.textContent
-//							UserTitle = DescendNode(ArrayElement, [1, 1, 0, 0 ,0 ,0]).OutputNode.textContent
-//							UserHandle = DescendNode(ArrayElement, [1, 1, 0, 0, 0, 2]).OutputNode.innerText
-//							
-//							let NodeOfAvatar = DescendNode(ArrayElement, [1, 0])
-//							if (NodeOfAvatar.LevelsPassed == 2) {
-//								let AvatarImgTag = Array.from(NodeOfAvatar.OutputNode.getElementsByTagName("IMG"))
-//								if (AvatarImgTag.length != 0) {
-//									UserAvatar = HttpToTtp(AvatarImgTag[0].src)
-//								}
-//							}
-//							
-//							let NodeOfLink = DescendNode(ArrayElement, [1, 1, 0, 2])
-//							PostTimeStamp = NodeOfLink.OutputNode.dataset.tooltip
-//							if (typeof NodeOfLink.OutputNode != "undefined") {
-//								if (NodeOfLink.OutputNode.tagName == "A" && typeof NodeOfLink.OutputNode.href != "undefined") {
-//									PostURL = HttpToTtp(NodeOfLink.OutputNode.href)
-//								}
-//							}
-//							PostText = DescendNode(ArrayElement, [1, 1, 1, 0]).OutputNode.innerText
-//							LinksToAnotherPage = GetLinksURLs(DescendNode(ArrayElement, [1, 1, 1, 0 ]).OutputNode)
-//							MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 1, 1]).OutputNode)
-//							
-//							ReplyCount = DescendNode(ArrayElement, [1, 1, 2, 0]).OutputNode.innerText
-//							RepostCount = DescendNode(ArrayElement, [1, 1, 2, 1]).OutputNode.innerText
-//							LikesCount =  DescendNode(ArrayElement, [1, 1, 2, 2]).OutputNode.innerText
-//							
-//							let a = 0
-//						} else if (/@[a-zA-Z\d\-]+.[a-zA-Z\d\-]+.[a-zA-Z\d\-]+/.test(DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText)) {
-//							//Here seems to only happen to posts that you are on, where it lacks the a href link to the post (because it is not necessary).
-//							let UserTitleOfQuoted = DescendNode(ArrayElement, [0, 1, 0, 0, 0, 0, 0]).OutputNode.textContent
-//							if (UserTitleOfQuoted != "") {
-//								UserTitle = UserTitleOfQuoted
-//								UserHandle = DescendNode(ArrayElement, [0, 1, 1, 0]).OutputNode.innerText
-//								PostTimeStamp = DescendNode(ArrayElement, [0, 1, 0, 0, 1]).OutputNode.dataset.tooltip
-//								PostURL = HttpToTtp(window.location.href) //Post lacks a a href link to post
-//								IsCurrentPostURL = true
-//								PostText = DescendNode(ArrayElement, [1, 0, 0]).OutputNode.innerText
-//								LinksToAnotherPage = GetLinksURLs(DescendNode(ArrayElement, [1, 0, 0]).OutputNode)
-//								MediaList = GetMediaURLs(DescendNode(ArrayElement, [1, 0]).OutputNode)
-//								
-//								let CommentsRepostLikes = DescendNode(ArrayElement, [1, 3, 0])
-//								if (CommentsRepostLikes.LevelsPassed == 3) {
-//									ReplyCount = DescendNode(CommentsRepostLikes.OutputNode, [0]).OutputNode.innerText
-//									RepostCount = DescendNode(CommentsRepostLikes.OutputNode, [1]).OutputNode.innerText
-//									LikesCount =  DescendNode(CommentsRepostLikes.OutputNode, [2]).OutputNode.innerText
-//								} else {
-//									CommentsRepostLikes = DescendNode(ArrayElement, [1, 2, 0])
-//									ReplyCount = DescendNode(CommentsRepostLikes.OutputNode, [0]).OutputNode.innerText
-//									RepostCount = DescendNode(CommentsRepostLikes.OutputNode, [1]).OutputNode.innerText
-//									LikesCount =  DescendNode(CommentsRepostLikes.OutputNode, [2]).OutputNode.innerText
-//								}
-//								
-//								let a = 0
-//							} else {
-//								//Quoted post (I think never have vertical lines connecting avatar pic unless you visit the post directly)
-//								UserTitle = DescendNode(ArrayElement, [0, 0, 1, 0, 0]).OutputNode.textContent
-//								UserHandle = DescendNode(ArrayElement, [0, 0, 1, 0, 2]).OutputNode.innerText
-//								PostTimeStamp = DescendNode(ArrayElement, [0, 0, 3]).OutputNode.dataset.tooltip
-//								PostURL = HttpToTtp(DescendNode(ArrayElement, [0, 0, 3]).OutputNode.href)
-//								PostText = DescendNode(ArrayElement, [1]).OutputNode.innerText
-//								LinksToAnotherPage = GetLinksURLs(ArrayElement)
-//								MediaList = GetMediaURLs(ArrayElement)
-//								
-//								let a = 0
-//							}
-//						} else {
-//							let a = 0 //In case there is another format I haven't discovered
-//						}
-//						return {
-//							RepostedByUserTitle: RepostedByUserTitle,
-//							PostURL: PostURL,
-//							ReplyConnections: {
-//								PostHasRepliesLineBelow: PostHasRepliesLineBelow,
-//								PostIsAReplyLineToAbove: PostIsAReplyLineToAbove,
-//								IsCurrentPostURL: IsCurrentPostURL
-//							},
-//							ReplyToURL: ReplyToURL,
-//							RepliesURLs: RepliesURLs,
-//							UserTitle: UserTitle,
-//							UserHandle: UserHandle,
-//							UserAvatar: UserAvatar,
-//							PostTimeStamp: PostTimeStamp,
-//							PostText: PostText,
-//							LinksToAnotherPage: LinksToAnotherPage,
-//							MediaList: MediaList,
-//							ReplyCount: ReplyCount,
-//							RepostCount: RepostCount,
-//							LikesCount: LikesCount
-//						}
-//					})
-//					//Connect replies
-//					let ForLoopCache = ListOfPosts.length
-//					for (let i = 0; i < ForLoopCache; i++) {
-//						if (i+1 < ForLoopCache) { //adjacent posts and that "i" is not beyond the last element
-//							if (ListOfPosts[i].ReplyConnections.PostHasRepliesLineBelow && ListOfPosts[i+1].ReplyConnections.PostIsAReplyLineToAbove) {
-//								//If two adjacent posts have a line connecting the two, have the former's replies list added a URL of the replying post
-//								//and the reply post have the URL it is replying to.
-//								if (!ListOfPosts[i].RepliesURLs.includes(ListOfPosts[i+1].PostURL)) { //Can't use "new Set()" bc firefox glitch
-//									ListOfPosts[i].RepliesURLs.push(ListOfPosts[i+1].PostURL)
-//								}
-//								if (ListOfPosts[i+1].ReplyToURL == ""){
-//									ListOfPosts[i+1].ReplyToURL = ListOfPosts[i].PostURL
-//								}
-//							}
-//							if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/post\//.test(window.location.href)) { //While being on a post page
-//								if (ListOfPosts[i].ReplyConnections.PostHasRepliesLineBelow && (!ListOfPosts[i+1].ReplyConnections.PostIsAReplyLineToAbove)) {
-//									//A post that is a reply to above in which the above's vertical line gets cut off.
-//									if (!ListOfPosts[i].RepliesURLs.includes(ListOfPosts[i+1].PostURL)) { //Can't use "new Set()" bc firefox glitch
-//										ListOfPosts[i].RepliesURLs.push(ListOfPosts[i+1].PostURL)
-//									}
-//									if (ListOfPosts[i+1].ReplyToURL == ""){
-//										ListOfPosts[i+1].ReplyToURL = ListOfPosts[i].PostURL
-//									}
-//								}
-//								if (ListOfPosts[i].ReplyConnections.IsCurrentPostURL) {
-//									//Get posts below it that has no line above the avatar picture
-//									for (let j = i+1; j < ForLoopCache; j++) { //The posts below the current post
-//										if (!ListOfPosts[j].ReplyConnections.PostIsAReplyLineToAbove) { //Not have a connecting line above it (not even a cutoff line)
-//											if (!ListOfPosts[i].RepliesURLs.includes(ListOfPosts[j].PostURL)) { //Can't use "new Set()" bc firefox glitch
-//												ListOfPosts[i].RepliesURLs.push(ListOfPosts[j].PostURL)
-//											}
-//											if (ListOfPosts[j].ReplyToURL == ""){
-//												ListOfPosts[j].ReplyToURL = ListOfPosts[i].PostURL
-//											}
-//										}
-//										
-//									}
-//								}
-//							}
-//						}
-//					}
+					let ListOfPosts_Clean = ListOfPosts.map((ArrayElement) => { //Have a version without ReplyConnections attribute since we do not need it if we are just looking at posts
+						return {
+							RepostedByUserTitle: ArrayElement.RepostedByUserTitle,
+							PostURL: ArrayElement.PostURL,
+							ReplyToURL: ArrayElement.ReplyToURL,
+							RepliesURLs: ArrayElement.RepliesURLs,
+							UserTitle: ArrayElement.UserTitle,
+							UserHandle: ArrayElement.UserHandle,
+							UserAvatar: ArrayElement.UserAvatar,
+							PostTimeStamp: ArrayElement.PostTimeStamp,
+							PostText: ArrayElement.PostText,
+							LinksToAnotherPage: ArrayElement.LinksToAnotherPage,
+							MediaList: ArrayElement.MediaList,
+							ReplyCount: ArrayElement.ReplyCount,
+							RepostCount: ArrayElement.RepostCount,
+							LikesCount: ArrayElement.LikesCount
+						}
+					})
 				//Set a breakpoint here after everything loads to test the results stored in "ListOfPosts".
 				RaceConditionLock = false
 			}
