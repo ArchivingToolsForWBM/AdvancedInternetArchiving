@@ -53,17 +53,19 @@
 									if (/@[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+$/.test(ArrayElement.innerText)) { //Is the text the user handle?
 										let ReferenceNode = AscendNode(ArrayElement, 8)
 										if (ReferenceNode.LevelsPassed == 8) {//Did it successfully goes up 8 ancestors so we have all the post in the column?
-											UserPostArea = Array.from(ReferenceNode.OutputNode.childNodes)
-											return true
+											if (!isAncestorsStyleDisplayNone(ReferenceNode.OutputNode)) {
+												UserPostArea = Array.from(ReferenceNode.OutputNode.childNodes)
+												return true
+											}
 										}
 									}
 								}
 							}
 							return false
 						});
-						UserPostArea.filter((Box) => { //Rid out hidden elements
-							return (!isHidden(Box))
-						})
+//						UserPostArea.filter((Box) => { //Rid out hidden elements
+//							return (!isHidden(Box))
+//						})
 						
 						//"UserPostArea" will now contain "boxes" that may either be a horizontal line, containing 1 or 2 posts (2 if it has replies, with a vertical line between 2 avatars)
 						UserPostArea.forEach((Box, BoxIndex) => { // Loop each box
@@ -235,9 +237,6 @@
 										}
 									}
 								}
-								//PostGroup.forEach((ArrayElement) => {
-								//	ListOfPosts.push(ArrayElement)
-								//})
 								ListOfPosts.push(...PostGroup)
 							}
 						})
@@ -250,18 +249,22 @@
 								if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/?/.test(ArrayElement.href)) { //Is it a link to the profile page?
 									if (/@[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+$/.test(ArrayElement.innerText)) { //Is the text the user handle?
 										let ReferenceNode = AscendNode(ArrayElement, 10)
-										if (ReferenceNode.LevelsPassed == 10) {//Did it successfully goes up 10 ancestors so we have all the post in the column?
-											UserPostArea = Array.from(ReferenceNode.OutputNode.childNodes)
-											return true
+										if (!isHidden(ReferenceNode.OutputNode.childNodes)) {
+											if (ReferenceNode.LevelsPassed == 10) {//Did it successfully goes up 10 ancestors so we have all the post in the column?
+												if (!isAncestorsStyleDisplayNone(ReferenceNode.OutputNode)) {
+													UserPostArea = Array.from(ReferenceNode.OutputNode.childNodes)
+													return true
+												}
+											}
 										}
 									}
 								}
 							}
 							return false
 						});
-						UserPostArea.filter((Box) => { //Rid out hidden elements
-							return (!isHidden(Box))
-						})
+//						UserPostArea.filter((Box) => { //Rid out hidden elements
+//							return (!isHidden(Box))
+//						})
 						//"UserPostArea" will now contain "boxes" that contains 0 or 1 posts (even if it is a reply post, there is no div that surround 2 posts)
 						
 						
@@ -583,5 +586,20 @@
 		// Where el is the DOM element you'd like to test for visibility
 		function isHidden(el) { //Thanks https://stackoverflow.com/questions/19669786/check-if-element-is-visible-in-dom -> 7ochem
 			return (el.offsetParent === null)
+		}
+		function isAncestorsStyleDisplayNone(Node) {
+			let isHidden = false
+			let CurrentNode = Node
+			while ((CurrentNode.parentNode != null) && (!isHidden)) {
+				CurrentNode = CurrentNode.parentNode
+				if (typeof CurrentNode.style != "undefined") {
+					if (typeof CurrentNode.style.display != "undefined") {
+						if (CurrentNode.style.display == "none") {
+							isHidden = true
+						}
+					}
+				}
+			}
+			return isHidden
 		}
 })();
