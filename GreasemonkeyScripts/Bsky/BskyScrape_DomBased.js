@@ -228,11 +228,13 @@
 								for (let i = 0; i < PostGroupLengthCache; i++) {
 									if (PostGroup[i].ReplyConnections.PostHasRepliesLineBelow) {
 										if (i+1 < PostGroupLengthCache) {
-											if (!PostGroup[i].RepliesURLs.includes(PostGroup[i+1].PostURL)) {
-												PostGroup[i].RepliesURLs.push(PostGroup[i+1].PostURL) //Current post has reply
-											}
-											if (PostGroup[i+1].ReplyToURL == "") {
-												PostGroup[i+1].ReplyToURL = PostGroup[i].PostURL //In reply to a post above
+											if (PostGroup[i+1].ReplyConnections.PostIsAReplyLineToAbove) {
+												if (!PostGroup[i].RepliesURLs.includes(PostGroup[i+1].PostURL)) {
+													PostGroup[i].RepliesURLs.push(PostGroup[i+1].PostURL) //Current post has reply
+												}
+												if (PostGroup[i+1].ReplyToURL == "") {
+													PostGroup[i+1].ReplyToURL = PostGroup[i].PostURL //In reply to a post above
+												}
 											}
 										}
 									}
@@ -355,6 +357,9 @@
 							let ChildingToMedia = []
 							let ChildingToReplyRepostLike = []
 							
+							let ChildingToReplyLineDown = []
+							let ChildingToReplyLineUp = []
+							
 							switch (Type) {
 								case "Post_CurrentlyViewedAtTop":
 									ChildIngToUserTitle = [0,0,0,1,0,0,0,0]
@@ -364,6 +369,7 @@
 									ChildingToPostText = [0,0,1,0,0]
 									ChildingToMedia = [0,0,1,0]
 									ChildingToReplyRepostLike = [0,0,1,3,0]
+									//Currently viewed at the top never has lines below it as it seems.
 									break
 								case "Post_CurrentlyViewedNotAtTop":
 									ChildIngToUserTitle = [0,1,0,1,0,0,0]
@@ -373,6 +379,7 @@
 									ChildingToPostText = [0,1,1,0,0]
 									ChildingToMedia = [0,1,1,0]
 									ChildingToReplyRepostLike = [0,1,1,3,0]
+									ChildingToReplyLineUp = [0,0,0,0]
 									break
 								case "Post_NotCurrentlyViewed":
 									ChildIngToUserTitle = [0,0,0,0,1,1,0,0,0,0]
@@ -383,9 +390,12 @@
 									ChildingToPostText = [0,0,0,0,1,1,1]
 									ChildingToMedia = [0,0,0,0,1,1]
 									ChildingToReplyRepostLike = [0,0,0,0,1,1,2]
+									
+									ChildingToReplyLineDown = [0,0,0,0,1,0,1]
+									ChildingToReplyLineUp = [0,0,0,0,0,0,0]
 									break
 							}
-							if (/^Post_/.test(Type)) {
+							if (/^Post_/.test(Type)) { //For boxes that are posts.
 								if (/^Post_CurrentlyViewed/.test(Type)) {
 									PostURL = HttpToTtp(window.location.href)
 								} else {
@@ -440,7 +450,25 @@
 										LikesCount = ReplyRepostLikesNodeBoxes[2].innerText
 									}
 								}
-								
+								//Handle vertical lines indicating a reply
+								{
+									let ReplyLineDownNode = DescendNode(Box, ChildingToReplyLineDown)
+									if (ReplyLineDownNode.LevelsPassed == ChildingToReplyLineDown.length) {
+										if (typeof ReplyLineDownNode.OutputNode.style != "undefined") {
+											if (Type == "Post_NotCurrentlyViewed") {
+												PostHasRepliesLineBelow = true
+											}
+										}
+									}
+									let ReplyLineUpNode = DescendNode(Box, ChildingToReplyLineUp)
+									if (ReplyLineUpNode.LevelsPassed == ChildingToReplyLineUp.length) {
+										if (typeof ReplyLineUpNode.OutputNode.style != "undefined") {
+											if (ReplyLineUpNode.OutputNode.style.length > 1) {
+												PostIsAReplyLineToAbove = true
+											}
+										}
+									}
+								}
 								
 								PostGroup.push({
 									RepostedByUserTitle: RepostedByUserTitle,
@@ -468,6 +496,37 @@
 						})
 						let a = 0
 						//Connect replies
+						let PostGroupLengthCache = PostGroup.length
+						let IndexOfPostCurrentlyViewed = -1
+						//^Will be an index value representing the currently viewd post (the one without the a href that you just clicked on)
+						// Any posts below it lacking a line pointing upwards are replies to that post
+						for (let i = 0; i < PostGroupLengthCache; i++) {
+							if (/^Post_CurrentlyViewed/.test(PostGroup[i].ReplyConnections.Type)) {
+								IndexOfPostCurrentlyViewed = i
+							}
+							if ((!PostGroup[i].ReplyConnections.PostIsAReplyLineToAbove) && (i > IndexOfPostCurrentlyViewed) && (IndexOfPostCurrentlyViewed >= 0)) {
+								if (!PostGroup[IndexOfPostCurrentlyViewed].RepliesURLs.includes(PostGroup[i].PostURL)) {
+									PostGroup[IndexOfPostCurrentlyViewed].RepliesURLs.push(PostGroup[i].PostURL) //Add a reply (without the line pointing upwards) to currently viewed post 
+								}
+								if (PostGroup[i].ReplyToURL == "") {
+									PostGroup[i].ReplyToURL = PostGroup[IndexOfPostCurrentlyViewed].PostURL //In reply to a post above
+								}
+							}
+							if (PostGroup[i].ReplyConnections.PostHasRepliesLineBelow) {
+								if (i+1 < PostGroupLengthCache) {
+									if (PostGroup[i+1].ReplyConnections.PostIsAReplyLineToAbove) {
+										if (!PostGroup[i].RepliesURLs.includes(PostGroup[i+1].PostURL)) {
+											PostGroup[i].RepliesURLs.push(PostGroup[i+1].PostURL) //Current post has reply
+										}
+										if (PostGroup[i+1].ReplyToURL == "") {
+											PostGroup[i+1].ReplyToURL = PostGroup[i].PostURL //In reply to a post above
+										}
+										let a = 0
+									}
+								}
+							}
+						}
+						ListOfPosts.push(...PostGroup)
 					}
 					
 					let ListOfPosts_Clean = ListOfPosts.map((ArrayElement) => { //Have a version without ReplyConnections attribute since we do not need it if we are just looking at posts
@@ -588,6 +647,8 @@
 			return (el.offsetParent === null)
 		}
 		function isAncestorsStyleDisplayNone(Node) {
+			//returns true if the ancestors of the node tree contains
+			//"display: none"
 			let isHidden = false
 			let CurrentNode = Node
 			while ((CurrentNode.parentNode != null) && (!isHidden)) {
