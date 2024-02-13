@@ -69,10 +69,6 @@
 						
 						//"UserPostArea" will now contain "boxes" that may either be a horizontal line, containing 1 or 2 posts (2 if it has replies, with a vertical line between 2 avatars)
 						UserPostArea.forEach((Box, BoxIndex) => { // Loop each box
-							if (BoxIndex == 2) {
-								let a = 0
-								
-							}
 							if (typeof Box.childNodes != "undefined") {
 								let BoxListingPosts = Array.from(Box.childNodes)
 								let BoxListingPostsLengthCache = BoxListingPosts.length
@@ -100,9 +96,6 @@
 									
 									let Post = BoxListingPosts[i]
 									
-									if (i == 1) {
-										let a = 0
-									}
 									//RepostedByUser
 									{
 										let RepostElement = DescendNode(Post, [0, 0, 1, 0, 1, 1])
@@ -252,7 +245,7 @@
 									if (/@[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+$/.test(ArrayElement.innerText)) { //Is the text the user handle?
 										let ReferenceNode = AscendNode(ArrayElement, 10)
 										if (!isHidden(ReferenceNode.OutputNode.childNodes)) {
-											if (ReferenceNode.LevelsPassed == 10) {//Did it successfully goes up 10 ancestors so we have all the post in the column?
+											if (ReferenceNode.LevelsPassed == 10) {
 												if (!isAncestorsStyleDisplayNone(ReferenceNode.OutputNode)) {
 													UserPostArea = Array.from(ReferenceNode.OutputNode.childNodes)
 													return true
@@ -396,6 +389,42 @@
 									break
 							}
 							if (/^Post_/.test(Type)) { //For boxes that are posts.
+								//testing
+								//https://bsky.app/profile/kimscaravelli.bsky.social/post/3klaue65stp2x
+								//https://bsky.app/profile/calieber.bsky.social/post/3klauh5v2bi2z
+								//
+								//https://bsky.app/profile/dorris13rabiu.bsky.social/post/3klbbbfyxhw27 (reply to the first link aforementioned above)
+								//Array.from(Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes)
+								//or (Array.from(DescendNode(Box, [0,0,0,0,1,1]).OutputNode.childNodes)) will get the 3 parts:
+								
+								//Will get a variable-length array:
+								//First one (index=0) is the user title, handle and timestamp
+								//Second one is the user text
+								//third is the quoted text
+								//Last one (Array.at(-1)) returns the replies/repost/likes
+								
+								//This only works if the post is "Post_NotCurrentlyViewed" (other than the post that you are viewing directly; you just clicked on, has no a href link to that post)
+								
+								//Other notes
+								//Focused post at the top ("Post_CurrentlyViewedAtTop"):
+								//	Box.childNodes[0].childNodes[0] - the entire post, before branching out...
+								//	Box.childNodes[0].childNodes[0].childNodes[0] - leads to the user info (title, handle, timestamp)
+								//	Box.childNodes[0].childNodes[0].childNodes[1] - posts content and stats
+								//	Box.childNodes[0].childNodes[0].childNodes[1].childNodes[X] - each part of above, text, post, quote, media, including stats
+								//Focused post not at top ("Post_CurrentlyViewedNotAtTop"):
+								//	Box.childNodes[0].childNodes[0] - leads to a vertical line pointing upwards indicating a reply
+								//	Box.childNodes[0].childNodes[1] - the entire post
+								//	Box.childNodes[0].childNodes[1].childNodes[0] - leads to the user info (title, handle, timestamp)
+								//	Box.childNodes[0].childNodes[1].childNodes[1] - posts content and stats
+								//	Box.childNodes[0].childNodes[1].childNodes[1].childNodes[X] - each part of above, text, post, quote, media, including stats
+								//("Post_NotCurrentlyViewed"):
+								//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0] - Entire post
+								//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0] - Blank space above it (probably a horizontal line?)
+								//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1] - entire post
+								//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0] - Avatar and the vertical line
+								//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1] - posts content and stats
+								//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[x] - each part of above, text, post, quote, media, including stats
+								//	
 								if (/^Post_CurrentlyViewed/.test(Type)) {
 									PostURL = HttpToTtp(window.location.href)
 								} else {
@@ -441,7 +470,6 @@
 									}
 								}
 								{
-									//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[3].childNodes[0].childNodes 
 									let ReplyRepostLikesNode = DescendNode(Box, ChildingToReplyRepostLike)
 									if (ReplyRepostLikesNode.LevelsPassed == ChildingToReplyRepostLike.length) {
 										let ReplyRepostLikesNodeBoxes = Array.from(ReplyRepostLikesNode.OutputNode.childNodes)
@@ -651,6 +679,11 @@
 			//"display: none"
 			let isHidden = false
 			let CurrentNode = Node
+			if (typeof CurrentNode.style.display != "undefined") { //If right at the node we are just on is hidden, immediately flag this as true
+				if (CurrentNode.style.display == "none") {
+					return true
+				}
+			}
 			while ((CurrentNode.parentNode != null) && (!isHidden)) {
 				CurrentNode = CurrentNode.parentNode
 				if (typeof CurrentNode.style != "undefined") {
