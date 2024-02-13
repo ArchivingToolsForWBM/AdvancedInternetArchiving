@@ -423,7 +423,7 @@
 								//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1] - entire post
 								//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0] - Avatar and the vertical line
 								//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1] - posts content and stats
-								//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[x] - each part of above, text, post, quote, media, including stats
+								//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[X] - each part of above: username, text, post, quote, media, including stats
 								//	
 								if (/^Post_CurrentlyViewed/.test(Type)) {
 									PostURL = HttpToTtp(window.location.href)
