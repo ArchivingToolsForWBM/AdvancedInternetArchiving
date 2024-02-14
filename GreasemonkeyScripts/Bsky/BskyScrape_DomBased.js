@@ -233,7 +233,7 @@
 						
 					} else if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/post\/[a-zA-Z\d\-]+\/?/.test(window.location.href)) { //Post page
 						//First, find an a href link to a profile as a reference. We get a node that at least has all the posts
-						let ListOfLinks = Array.from(document.getElementsByTagName("A"))
+						let ListOfLinks = document.getElementsByTagName("A")
 						UserPostArea = GetPostBoxes(ListOfLinks, 10)
 						
 						//"UserPostArea" will now contain "boxes" that contains 0 or 1 posts (even if it is a reply post, there is no div that surround 2 posts)
