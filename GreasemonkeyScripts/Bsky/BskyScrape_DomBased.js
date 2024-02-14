@@ -309,7 +309,7 @@
 											return ArrayElement.hasAttribute("href")
 										})
 										if (typeof IsPotentialAhref == "undefined"){
-											Type = "Post_CurrentlyViewedAtTop"
+											Type = "Post_CurrentlyViewed_AtTop"
 										}
 									}
 								}
@@ -318,7 +318,7 @@
 											return ArrayElement.hasAttribute("href")
 										})
 										if (typeof IsPotentialAhref == "undefined"){
-											Type = "Post_CurrentlyViewedNotAtTop"
+											Type = "Post_CurrentlyViewed_NotAtTop"
 										}
 								}
 								if ((Type == "") && NodeToLookAt_TimeStampOtherThanCurrentPost.LevelsPassed == 8) {
@@ -340,7 +340,7 @@
 							let ChildingToReplyLineUp = []
 							
 							switch (Type) {
-								case "Post_CurrentlyViewedAtTop":
+								case "Post_CurrentlyViewed_AtTop":
 									ChildIngToUserTitle = [0,0,0,1,0,0,0,0]
 									ChildIngToUserHandle = [0,0,0,1,1]
 									ChildingToAvatar = [0,0,0,0,0,0,0,1]
@@ -350,7 +350,7 @@
 									ChildingToReplyRepostLike = [0,0,1,3,0]
 									//Currently viewed at the top never has lines below it as it seems.
 									break
-								case "Post_CurrentlyViewedNotAtTop":
+								case "Post_CurrentlyViewed_NotAtTop":
 									ChildIngToUserTitle = [0,1,0,1,0,0,0]
 									ChildIngToUserHandle = [0,1,0,1,1,0]
 									ChildingToAvatar = [0,1,0,0,0,0,0,1]
@@ -392,12 +392,12 @@
 								//This only works if the post is "Post_NotCurrentlyViewed" (other than the post that you are viewing directly; you just clicked on, has no a href link to that post)
 								
 								//Other notes
-								//Focused post at the top ("Post_CurrentlyViewedAtTop"):
+								//Focused post at the top ("Post_CurrentlyViewed_AtTop"):
 								//	Box.childNodes[0].childNodes[0] - the entire post, before branching out...
 								//	Box.childNodes[0].childNodes[0].childNodes[0] - leads to the user info (title, handle, timestamp)
 								//	Box.childNodes[0].childNodes[0].childNodes[1] - posts content and stats
 								//	Box.childNodes[0].childNodes[0].childNodes[1].childNodes[X] - each part of above, text, post, quote, media, including stats
-								//Focused post not at top ("Post_CurrentlyViewedNotAtTop"):
+								//Focused post not at top ("Post_CurrentlyViewed_NotAtTop"):
 								//	Box.childNodes[0].childNodes[0] - leads to a vertical line pointing upwards indicating a reply
 								//	Box.childNodes[0].childNodes[1] - the entire post
 								//	Box.childNodes[0].childNodes[1].childNodes[0] - leads to the user info (title, handle, timestamp)
