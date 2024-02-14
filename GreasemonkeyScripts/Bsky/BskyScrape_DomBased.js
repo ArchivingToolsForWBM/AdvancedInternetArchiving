@@ -74,6 +74,17 @@
 								let BoxListingPostsLengthCache = BoxListingPosts.length
 								let PostGroup = []
 								for (let i = 0; i < BoxListingPostsLengthCache; i ++) { //Loop each posts (BoxListingPosts[i] should return a post), within a box
+									//
+									//Box - the whole box, if there are multiple posts as a reply, it encompasses all
+									//Box.childNodes[X] - each post within a box
+									//Box.childNodes[X].childNodes[0].childNodes[0] - The space above the posts, a spot for reply line to above
+									//Box.childNodes[X].childNodes[0].childNodes[0].childNodes[1] - Re-posted message (0x12 dimension if not a repost)
+									//Box.childNodes[X].childNodes[0].childNodes[1] - Post area
+									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[0] - Avatar image and reply line below
+									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1] - post content
+									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[0] - User title, handle and timestamp
+									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[1] - Post content (text, media, and quotes)
+									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[2] - Replies, reposts, and likes.
 									let RepostedByUserTitle = ""
 									let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
 									
