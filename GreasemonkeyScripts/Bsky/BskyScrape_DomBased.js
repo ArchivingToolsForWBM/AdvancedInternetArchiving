@@ -46,26 +46,10 @@
 					let ListOfPosts = [] //List of each individual posts
 					if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/?$/.test(window.location.href)) { //profile page
 						//First, find an a href link to a profile as a reference. We get a node that at least has all the posts
-						let ListOfLinks = Array.from(document.getElementsByTagName("A"))
-						ListOfLinks.find((ArrayElement) => { //Search all the a href
-							if (ArrayElement.hasAttribute("href")) { //failsafe, does it has the href attribute?
-								if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/?/.test(ArrayElement.href)) { //Is it a link to the profile page?
-									if (/@[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+$/.test(ArrayElement.innerText)) { //Is the text the user handle?
-										let ReferenceNode = AscendNode(ArrayElement, 8)
-										if (ReferenceNode.LevelsPassed == 8) {//Did it successfully goes up 8 ancestors so we have all the post in the column?
-											if (!isAncestorsStyleDisplayNone(ReferenceNode.OutputNode)) {
-												UserPostArea = Array.from(ReferenceNode.OutputNode.childNodes)
-												return true
-											}
-										}
-									}
-								}
-							}
-							return false
-						});
-//						UserPostArea.filter((Box) => { //Rid out hidden elements
-//							return (!isHidden(Box))
-//						})
+						let ListOfLinks = document.getElementsByTagName("A")
+						UserPostArea = GetPostBoxes(ListOfLinks, 8)
+						
+						let a = 0
 						
 						//"UserPostArea" will now contain "boxes" that may either be a horizontal line, containing 1 or 2 posts (2 if it has replies, with a vertical line between 2 avatars)
 						UserPostArea.forEach((Box, BoxIndex) => { // Loop each box
@@ -250,27 +234,8 @@
 					} else if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/post\/[a-zA-Z\d\-]+\/?/.test(window.location.href)) { //Post page
 						//First, find an a href link to a profile as a reference. We get a node that at least has all the posts
 						let ListOfLinks = Array.from(document.getElementsByTagName("A"))
-						ListOfLinks.find((ArrayElement) => { //Search all the a href
-							if (ArrayElement.hasAttribute("href")) { //failsafe, does it has the href attribute?
-								if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/?/.test(ArrayElement.href)) { //Is it a link to the profile page?
-									if (/@[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+$/.test(ArrayElement.innerText)) { //Is the text the user handle?
-										let ReferenceNode = AscendNode(ArrayElement, 10)
-										if (!isHidden(ReferenceNode.OutputNode.childNodes)) {
-											if (ReferenceNode.LevelsPassed == 10) {
-												if (!isAncestorsStyleDisplayNone(ReferenceNode.OutputNode)) {
-													UserPostArea = Array.from(ReferenceNode.OutputNode.childNodes)
-													return true
-												}
-											}
-										}
-									}
-								}
-							}
-							return false
-						});
-//						UserPostArea.filter((Box) => { //Rid out hidden elements
-//							return (!isHidden(Box))
-//						})
+						UserPostArea = GetPostBoxes(ListOfLinks, 10)
+						
 						//"UserPostArea" will now contain "boxes" that contains 0 or 1 posts (even if it is a reply post, there is no div that surround 2 posts)
 						
 						
@@ -429,7 +394,7 @@
 								//	Box.childNodes[0].childNodes[1].childNodes[1] - posts content and stats
 								//	Box.childNodes[0].childNodes[1].childNodes[1].childNodes[X] - each part of above, text, post, quote, media, including stats
 								//("Post_NotCurrentlyViewed"):
-								//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0] - Entire post
+								//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0] - Entire border of the post
 								//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0] - Blank space above it, space for vertical line upwards in reply to
 								//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1] - entire post
 								//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0] - Avatar and the vertical line (replies under)
@@ -598,6 +563,32 @@
 				SetOfURLs.add(URL_truncateProof)
 			}
 		}
+		function GetPostBoxes(NodeList, Levels) {
+			let ListOfElement = Array.from(NodeList)
+			let BoxList = []
+			ListOfElement.find((ArrayElement) => { //Search all the a href
+				if (!ArrayElement.hasAttribute("href")) { //failsafe, does it has the href attribute?
+					return false
+				}
+				if (!/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/?/.test(ArrayElement.href)) { //Is it a link to the profile page?
+					return false
+				}
+				if (!/@[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+$/.test(ArrayElement.innerText)) { //Is the text the user handle?
+					return false
+				}
+				let ReferenceNode = AscendNode(ArrayElement, Levels)
+				if (ReferenceNode.LevelsPassed != Levels) {//Did it successfully goes up 8 ancestors so we have all the post in the column?
+					return false
+				}
+				if (isAncestorsStyleDisplayNone(ReferenceNode.OutputNode)) {
+					return false
+				}
+				BoxList = Array.from(ReferenceNode.OutputNode.childNodes)
+				return true
+			});
+			return BoxList
+		}
+		
 		function AscendNode(Node, Levels) {
 			//Instead of Node.parentNode.parentNode.parentNode... which is prone to errors if there is no parent, this has a check to prevent it.
 			//Arguments:
