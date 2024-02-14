@@ -46,8 +46,7 @@
 					let ListOfPosts = [] //List of each individual posts
 					if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/?$/.test(window.location.href)) { //profile page
 						//First, find an a href link to a profile as a reference. We get a node that at least has all the posts
-						let ListOfLinks = document.getElementsByTagName("A")
-						UserPostArea = GetPostBoxes(ListOfLinks, 8)
+						UserPostArea = GetPostBoxesByLink(8)
 						
 						let a = 0
 						
@@ -232,9 +231,20 @@
 						})
 						
 					} else if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/post\/[a-zA-Z\d\-]+\/?/.test(window.location.href)) { //Post page
-						//First, find an a href link to a profile as a reference. We get a node that at least has all the posts
-						let ListOfLinks = document.getElementsByTagName("A")
-						UserPostArea = GetPostBoxes(ListOfLinks, 10)
+						//First, find an a href link to a profile as a reference. We get a node that at least has all the posts.
+						//Important to note that if there is only a single post and it is the one you directly viewing, then there is no a href link to extract from.
+						UserPostArea = GetPostBoxesByLink(10)
+						if (UserPostArea.length == 0) {
+							//If no link to post is found (only 1 post exist and that is you currently viewing), try getting
+							//a div node that have a timestamp in the tooltip (please note that I could've instead do this
+							//instead of first searching every a href links, but currently viewed posts have different DOM layout)
+							let DivTooltipOnlyPostExistThatIsViewed = Array.from(document.getElementsByTagName("div")).find((ArrayElement) => {
+								return /(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sept|Oct|Nov|Dec) \d+/.test(ArrayElement.dataset.tooltip)
+							})
+							if (typeof DivTooltipOnlyPostExistThatIsViewed != "undefined") {
+								UserPostArea.push(AscendNode(DivTooltipOnlyPostExistThatIsViewed, 7).OutputNode)
+							}
+						}
 						
 						//"UserPostArea" will now contain "boxes" that contains 0 or 1 posts (even if it is a reply post, there is no div that surround 2 posts)
 						
@@ -563,13 +573,10 @@
 				SetOfURLs.add(URL_truncateProof)
 			}
 		}
-		function GetPostBoxes(NodeList, Levels) {
-			let ListOfElement = Array.from(NodeList)
+		function GetPostBoxesByLink(Levels) {
+			let ListOfElement = Array.from(document.getElementsByTagName("A"))
 			let BoxList = []
 			ListOfElement.find((ArrayElement) => { //Search all the a href
-				if (!ArrayElement.hasAttribute("href")) { //failsafe, does it has the href attribute?
-					return false
-				}
 				if (!/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/?/.test(ArrayElement.href)) { //Is it a link to the profile page?
 					return false
 				}
@@ -580,7 +587,7 @@
 				if (ReferenceNode.LevelsPassed != Levels) {//Did it successfully goes up 8 ancestors so we have all the post in the column?
 					return false
 				}
-				if (isAncestorsStyleDisplayNone(ReferenceNode.OutputNode)) {
+				if (isAncestorsStyleDisplayNone(ReferenceNode.OutputNode)) { //Is not in a display-none or inside any element with display-none?
 					return false
 				}
 				BoxList = Array.from(ReferenceNode.OutputNode.childNodes)
