@@ -289,44 +289,45 @@
 								let NodeToLookAt_TimeStampCurrentlyViewedPostNotTop = DescendNode(Box, [0,1,0,1,0,0,1])
 								let NodeToLookAt_TimeStampOtherThanCurrentPost = DescendNode(Box, [0,0,0,0,1,1,0,2])
 								
-								
-								//Now I have to use (Type == "") because the inner if statement could cause an error for trying to assess properties of potentially
-								//a nonexistent attribute. This means if this is an elseif on the outer, failing the inner if statement would skip all the later checks
-								//which I do not want.
-								if ((Type == "") && NodeToLookAt_ReplyButton.LevelsPassed == 2) {
-									if (NodeToLookAt_ReplyButton.OutputNode.tagName == "BUTTON") {
-										Type = "NonPost_ReplyButton"
-									}
-								}
-								if ((Type == "") && NodeToLookAt_BlankBottom.LevelsPassed == 1) {
-									if (NodeToLookAt_BlankBottom.OutputNode.innerHTML == "") {
-										Type = "NonPost_BlankBottom"
-									}
-								}
-								if ((Type == "") && NodeToLookAt_TimeStampCurrentlyViewedPostTop.LevelsPassed == 7) {
-									if (typeof NodeToLookAt_TimeStampCurrentlyViewedPostTop.OutputNode.dataset != "undefined") {
-										let IsPotentialAhref = Array.from(NodeToLookAt_TimeStampCurrentlyViewedPostTop.OutputNode.getElementsByTagName("a")).find((ArrayElement) => {
-											return ArrayElement.hasAttribute("href")
-										})
-										if (typeof IsPotentialAhref == "undefined"){
-											Type = "Post_CurrentlyViewed_AtTop"
+								Type = function () {
+									let IdentifiedType = ""
+									if (NodeToLookAt_ReplyButton.LevelsPassed == 2) {
+										if (NodeToLookAt_ReplyButton.OutputNode.tagName == "BUTTON") {
+											return "NonPost_ReplyButton"
 										}
 									}
-								}
-								if ((Type =="") && NodeToLookAt_TimeStampCurrentlyViewedPostNotTop.LevelsPassed == 7) {
+									if (NodeToLookAt_BlankBottom.LevelsPassed == 1) {
+										if (NodeToLookAt_BlankBottom.OutputNode.innerHTML == "") {
+											return "NonPost_BlankBottom"
+										}
+									}
+									if (NodeToLookAt_TimeStampCurrentlyViewedPostTop.LevelsPassed == 7) {
+										if (typeof NodeToLookAt_TimeStampCurrentlyViewedPostTop.OutputNode.dataset != "undefined") {
+											let IsPotentialAhref = Array.from(NodeToLookAt_TimeStampCurrentlyViewedPostTop.OutputNode.getElementsByTagName("a")).find((ArrayElement) => {
+												return ArrayElement.hasAttribute("href")
+											})
+											if (typeof IsPotentialAhref == "undefined"){
+												return "Post_CurrentlyViewed_AtTop"
+											}
+										}
+									}
+									if ((Type =="") && NodeToLookAt_TimeStampCurrentlyViewedPostNotTop.LevelsPassed == 7) {
 										let IsPotentialAhref = Array.from(NodeToLookAt_TimeStampCurrentlyViewedPostNotTop.OutputNode.getElementsByTagName("a")).find((ArrayElement) => {
 											return ArrayElement.hasAttribute("href")
 										})
 										if (typeof IsPotentialAhref == "undefined"){
-											Type = "Post_CurrentlyViewed_NotAtTop"
+											return "Post_CurrentlyViewed_NotAtTop"
 										}
-								}
-								if ((Type == "") && NodeToLookAt_TimeStampOtherThanCurrentPost.LevelsPassed == 8) {
-									if (typeof NodeToLookAt_TimeStampOtherThanCurrentPost.OutputNode.href != "undefined") {
-										Type = "Post_NotCurrentlyViewed"
 									}
-								}
+									if (NodeToLookAt_TimeStampOtherThanCurrentPost.LevelsPassed == 8) {
+										if (typeof NodeToLookAt_TimeStampOtherThanCurrentPost.OutputNode.href != "undefined") {
+											return "Post_NotCurrentlyViewed"
+										}
+									}
+									return ""
+								}.call()
 							}
+
 							let ChildIngToUserTitle = []
 							let ChildIngToUserHandle = []
 							let ChildingToAvatar = []
