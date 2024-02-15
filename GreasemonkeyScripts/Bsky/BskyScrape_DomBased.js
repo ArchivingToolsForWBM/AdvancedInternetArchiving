@@ -102,7 +102,7 @@
 									{
 										let AHrefElement = DescendNode(Post, [0, 1, 1, 0, 2])
 										if (AHrefElement.LevelsPassed == 5) {
-											if (typeof AHrefElement.OutputNode.href != "undefined") {
+											if (AHrefElement.OutputNode.href != "") {
 												PostURL = HttpToTtp(AHrefElement.OutputNode.href)
 											}
 										}
