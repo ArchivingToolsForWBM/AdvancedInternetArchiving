@@ -289,7 +289,7 @@
 								let NodeToLookAt_TimeStampCurrentlyViewedPostNotTop = DescendNode(Box, [0,1,0,1,0,0,1])
 								let NodeToLookAt_TimeStampOtherThanCurrentPost = DescendNode(Box, [0,0,0,0,1,1,0,2])
 								
-								Type = function () {
+								Type = (function () {
 									let IdentifiedType = ""
 									if (NodeToLookAt_ReplyButton.LevelsPassed == 2) {
 										if (NodeToLookAt_ReplyButton.OutputNode.tagName == "BUTTON") {
@@ -325,7 +325,7 @@
 										}
 									}
 									return ""
-								}.call()
+								})()
 							}
 
 							let ChildIngToUserTitle = []
