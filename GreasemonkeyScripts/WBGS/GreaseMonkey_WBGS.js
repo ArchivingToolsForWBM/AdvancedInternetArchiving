@@ -21,6 +21,9 @@
 		const DisplayEasyCopyableListOfProcess = true
 			//^false = no, true = yes (will print out a statement once per page refresh on the console log that you can copy in case of a
 			// bug of some sort on processes)
+		const Setting_http_ttp = true
+			//^true = All URLs in the output start with "ttp" instead of "http" (to avoid URL truncation like what firefox does; replacing the middle of string with ellipsis).
+			// false = leave it as http
 	//Don't touch unless you know what you're doing
 		setInterval(Code, IntervalDelay)
 		const ListOfTrackingURLs = new Set() //If you leave the start process page and somehow return without resetting the page, this script will remember it.
@@ -53,7 +56,8 @@
 						if (ListOfTrackingURLs.has(ProcessTrackingURLString)==false) {
 							//console.log("Tracking URL: " + ProcessTrackingURLString.replace(/^https/, "ttps")) //URLs in the console log gets truncated and the text may not be preserved depending on browser.
 							let OBJ_WBGS_TrackingURL = {
-								TrackingURL: ProcessTrackingURLString.replace(/^https/, "ttps"), //URLs in the console log gets truncated and the text may not be preserved depending on browser.
+								TrackingURL: HttpToTtp(ProcessTrackingURLString), //URLs in the console log gets truncated and the text may not be preserved depending on browser.
+								GoogleSheetURL: HttpToTtp(ProcessTrackingURLString.replace(/^.+?\&google_sheet_url=/g, "").replaceAll("%3A", ":").replaceAll("%2F", "/").replaceAll("%23", "#").replaceAll("%3D", "=")),
 								JobID: ProcessTrackingURLString.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
 								TimestampOfInitalProcess: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
 							}
@@ -76,9 +80,9 @@
 							let OBJ_WBGS_Info = ListOfProcessesItems.map((WBGSProcess) => {
 								let TrackingURL = WBGSProcess.childNodes[5].childNodes[0].href
 								return {
-									TrackingURL: TrackingURL.replace(/^https/, "ttps"),
+									TrackingURL: HttpToTtp(TrackingURL),
 									JobID: TrackingURL.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
-									GSheetURL: WBGSProcess.childNodes[0].innerText.replace(/^https/, "ttps"),
+									GSheetURL: HttpToTtp(WBGSProcess.childNodes[0].innerText),
 									StartedTime: WBGSProcess.childNodes[1].innerText,
 									Status: WBGSProcess.childNodes[4].innerText
 								}
@@ -105,5 +109,11 @@
 		function ISOString_to_YYYY_MM_DD_HH_MM_SS(ISOString) {
 			//YYYY-MM-DDTHH:mm:ss.sssZ or ±YYYYYY-MM-DDTHH:mm:ss.sssZ
 			return ISOString.replace("T", " ").replace(/\.\d{3}Z$/, "") + " UTC"
+		}
+		function HttpToTtp(URLString) {
+			if (Setting_http_ttp) {
+				return URLString.replace(/^http/, "ttp")
+			}
+			return URLString
 		}
 })();
