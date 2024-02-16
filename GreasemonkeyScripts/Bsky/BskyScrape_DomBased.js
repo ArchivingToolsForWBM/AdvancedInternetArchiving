@@ -603,7 +603,7 @@
 			//only numbers on what child to descend on.
 			let CurrentNode = Node
 			if (typeof LevelsArray == "undefined") {
-				return "WTF?"
+				return "Uhh..."
 			}
 			let LevelsDown = LevelsArray.length
 			let ParentCount = 0
@@ -650,6 +650,9 @@
 			return Output
 		}
 		function HttpToTtp(URLString) {
+			if (typeof URLString == "undefined") {
+				return ""
+			}
 			if (Setting_http_ttp) {
 				return URLString.replace(/^http/, "ttp")
 			}
