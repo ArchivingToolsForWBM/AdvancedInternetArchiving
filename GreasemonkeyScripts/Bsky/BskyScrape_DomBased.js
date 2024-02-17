@@ -69,6 +69,7 @@
 									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[1] - Post content (text, media, and quotes)
 									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[X] - each segment of above
 									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[2] - Replies, reposts, and likes.
+									
 									let RepostedByUserTitle = ""
 									let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
 									
@@ -134,7 +135,7 @@
 									{
 										let UserHandleElement = DescendNode(Post, [0, 1, 1, 0, 0, 0, 2])
 										if (UserHandleElement.LevelsPassed == 7) {
-											UserTitle = UserHandleElement.OutputNode.innerText
+											UserHandle = UserHandleElement.OutputNode.innerText
 										}
 									}
 									//User Avatar
