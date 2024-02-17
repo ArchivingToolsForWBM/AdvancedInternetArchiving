@@ -67,6 +67,7 @@
 									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1] - post content
 									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[0] - User title, handle and timestamp
 									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[1] - Post content (text, media, and quotes)
+									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[X] - each segment of above
 									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[2] - Replies, reposts, and likes.
 									let RepostedByUserTitle = ""
 									let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
@@ -82,6 +83,7 @@
 									let UserAvatar = ""
 									let PostTimeStamp = ""
 									let PostText = ""
+									let QuotedPosts = []
 									let LinksToAnotherPage = []
 									let MediaList = []
 									let ReplyCount = ""
@@ -154,28 +156,56 @@
 											}
 										}
 									}
-									//Post text
-									{
-										let PostTextElement = DescendNode(Post, [0, 1, 1, 1, 0, 0])
-										if (PostTextElement.LevelsPassed == 6) {
-											PostText = PostTextElement.OutputNode.textContent
+									//Thankfully, unlike being at the post page, the text content and quotes are in a INNER node, meaning
+									//the header (user title, handle, timestamp) and footer (comments, repost, and likes) are not in the
+									//same hierarchy as in between, and it also doesn't matter how many stuff in between, since it won't
+									//affect the header and footer index locations.
+									
+									//Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1]
+									let PostContentArea = Array.from(DescendNode(Post, [0,1,1,1]).OutputNode.childNodes)
+									PostContentArea.forEach((PostPart) => {
+										if (PostPart.innerText != "") {//Content has text, may be a quote, etc.
+											let PotentialQuotedUserHandleNode = DescendNode(PostPart, [0,0,0,0,1,0,2])
+											if (PotentialQuotedUserHandleNode.LevelsPassed == 7) {
+												//Quoted post
+												//PostPart.childNodes[0].childNodes[0] - post containing entire content, where the node splits
+												//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0] - Usertitle, handle, timestamp
+												//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0]
+												//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1] - avatar image
+												//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1] - user title and handle (a href link)
+												//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0] - User title
+												//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2] - user handle
+												//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[3] - timestamp (also a href link)
+												//PostPart.childNodes[0].childNodes[0].childNodes[1] - text content
+												
+												
+												let Node_QuotedPost = DescendNode(PostPart, [0,0]).OutputNode
+												let Quoted_UserTitle = DescendNode(Node_QuotedPost, [0,0,1,0,0]).OutputNode.textContent
+												let Quoted_Userhandle = DescendNode(Node_QuotedPost, [0,0,1,0,2]).OutputNode.textContent
+												let Quoted_Timestamp = DescendNode(Node_QuotedPost, [0,0,3]).OutputNode.dataset.tooltip
+												let Quoted_UserPostLink = HttpToTtp(DescendNode(Node_QuotedPost, [0,0,3]).OutputNode.href)
+												let Quoted_Text = DescendNode(Node_QuotedPost, [1]).OutputNode.innerText
+												let a = 0
+
+												QuotedPosts.push({
+													Quoted_UserTitle: Quoted_UserTitle,
+													Quoted_Userhandle: Quoted_Userhandle,
+													Quoted_Timestamp: Quoted_Timestamp,
+													Quoted_UserPostLink: Quoted_UserPostLink,
+													Quoted_Text: Quoted_Text
+												});
+											} else {
+												//PostPart.childNodes[0] - text (can contain links)
+												let TextZone = DescendNode(PostPart, [0]).OutputNode
+												PostText = TextZone.textContent
+												LinksToAnotherPage = GetLinksURLs(TextZone)
+												let a = 0
+											}
+										} else {
+											//Media content
+											MediaList = GetMediaURLs(PostPart)
 										}
-									}
-									//Links to another page
-									{
-										let PostAreaToFindLinks = DescendNode(Post, [0, 1, 1, 1])
-										if (PostAreaToFindLinks.LevelsPassed == 4) {
-											LinksToAnotherPage = GetLinksURLs(PostAreaToFindLinks.OutputNode)
-										}
-										
-									}
-									//Media list
-									{
-										let PostAreaToFindImgs = DescendNode(Post, [0, 1, 1, 1])
-										if (PostAreaToFindImgs.LevelsPassed == 4) {
-											MediaList = GetMediaURLs(PostAreaToFindImgs.OutputNode)
-										}
-									}
+									})
 									//Reply, repost, and likes
 									{
 										let ReplyRepostLikesNode = DescendNode(Post, [0, 1, 1, 2])
@@ -203,6 +233,7 @@
 										UserAvatar: UserAvatar,
 										PostTimeStamp: PostTimeStamp,
 										PostText: PostText,
+										QuotedPosts: QuotedPosts,
 										LinksToAnotherPage: LinksToAnotherPage,
 										MediaList: MediaList,
 										ReplyCount: ReplyCount,
@@ -408,7 +439,6 @@
 												//PostPart.childNodes[0].childNodes[0].childNodes[1] - text (or another post segment?)
 												//
 												let Node_QuotedPost = DescendNode(PostPart, [0,0]).OutputNode
-												
 												let Quoted_UserTitle = DescendNode(Node_QuotedPost, [0,0,1,0,0]).OutputNode.textContent
 												let Quoted_Userhandle = DescendNode(Node_QuotedPost, [0,0,1,0,2]).OutputNode.textContent
 												let Quoted_Timestamp = DescendNode(Node_QuotedPost, [0,0,3]).OutputNode.dataset.tooltip
