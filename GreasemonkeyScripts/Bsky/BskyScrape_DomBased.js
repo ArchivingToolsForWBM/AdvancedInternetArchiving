@@ -56,7 +56,7 @@
 								let BoxListingPosts = Array.from(Box.childNodes)
 								let BoxListingPostsLengthCache = BoxListingPosts.length
 								let PostGroup = []
-								for (let i = 0; i < BoxListingPostsLengthCache; i ++) { //Loop each posts (BoxListingPosts[i] should return a post), within a box
+								for (let i = 0; i < BoxListingPostsLengthCache; i++) { //Loop each posts (BoxListingPosts[i] should return a post), within a box
 									//
 									//Box - the whole box, if there are multiple posts as a reply, it encompasses all
 									//Box.childNodes[X] - each post within a box
@@ -308,11 +308,20 @@
 									//	Box.childNodes[0].childNodes[0] - the entire post, before branching out...
 									//	Box.childNodes[0].childNodes[0].childNodes[0] - leads to the user info (title, handle, follow button)
 									//	Box.childNodes[0].childNodes[0].childNodes[1] - posts content and stats
-									//	Box.childNodes[0].childNodes[0].childNodes[1].childNodes[X] - each part of above, text, post, quote, media, including stats, except the header containing user info
+									//	Box.childNodes[0].childNodes[0].childNodes[1].childNodes[0] - post content zone
+									//	Box.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[x] - each part of above, text, post, quote, media, including stats, except the header containing user info
+									//	Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1] - timestamp
+									//	Box.childNodes[0].childNodes[0].childNodes[1].childNodes[2] - likes
+									//	Box.childNodes[0].childNodes[0].childNodes[1].childNodes[3] - more stats
+									ContentSegmentSlice: {
+										Start: 0,
+										End: -3
+									},
+									
 									ChildIngToUserTitle: [0,0,0,1,0,0,0,0],
 									ChildIngToUserHandle: [0,0,0,1,1],
 									ChildingToAvatar: [0,0,0,0,0,0,0,1],
-									ChildingToTimeStamp: [0,0,0,1,0,0,1],
+									ChildingToTimeStamp: [0,0,1,1],
 									ChildingToPostSegments: [0,0,1],
 									
 									ChildingToPostText: [0,0,1,0,0],
@@ -325,11 +334,17 @@
 									//	Box.childNodes[0].childNodes[1].childNodes[0] - leads to the user info (title, handle, timestamp)
 									//	Box.childNodes[0].childNodes[1].childNodes[1] - posts content and stats
 									//	Box.childNodes[0].childNodes[1].childNodes[1].childNodes[X] - each part of above, text, post, quote, media, including stats (last 3 is always stats)
-									//	
+									//	Box.childNodes[0].childNodes[1].childNodes[1].childNodes[0 to length-3] - post content
+									//	Box.childNodes[0].childNodes[1].childNodes[1].childNodes[length-2] - time stamp
+									//	Box.childNodes[0].childNodes[1].childNodes[1].childNodes[length-1] - post stats
+									ContentSegmentSlice: {
+										Start: 0,
+										End: -3
+									},
 									ChildIngToUserTitle: [0,1,0,1,0,0,0],
 									ChildIngToUserHandle: [0,1,0,1,1,0],
 									ChildingToAvatar: [0,1,0,0,0,0,0,1],
-									ChildingToTimeStamp: [0,1,0,1,0,0,1],
+									ChildingToTimeStamp: [0,1,1],
 									ChildingToPostSegments: [0,1,1],
 									
 									ChildingToPostText: [0,1,1,0,0],
@@ -343,7 +358,14 @@
 									//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1] - entire post
 									//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0] - Avatar and the vertical line (replies under)
 									//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1] - posts content and stats
-									//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[X] - each part of above: username, text, post, quote, media, including stats
+									//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[X] - each part of above: username, text, post, quote, media, including stats:
+									//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0] - user title, handle, timestamp
+									//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1 to length-2] - post content
+									//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[length-1] - stats
+									ContentSegmentSlice: {
+										Start: 1,
+										End: -1
+									},
 									ChildingToUserPostUrl: [0,0,0,0,1,1,0,2],
 									ChildIngToUserTitle: [0,0,0,0,1,1,0,0,0,0],
 									ChildIngToUserHandle: [0,0,0,0,1,1,0,0,0,2],
@@ -390,8 +412,21 @@
 								}
 								if (Type == "Post_NotCurrentlyViewed") {
 									PostTimeStamp = DescendNode(Box, PostDomLayout.ChildingToTimeStamp).OutputNode.dataset.tooltip
+								} else if (Type == "Post_CurrentlyViewed_AtTop"){
+									//Currently viewed posts have a date not as a tooltip but explicitly at the footer
+									PostTimeStamp = DescendNode(Box, PostDomLayout.ChildingToTimeStamp).OutputNode.innerText
+								} else if (Type == "Post_CurrentlyViewed_NotAtTop") {
+									let PostSegmentsThatHaveDateAtVaryingIndexLocation = Array.from(DescendNode(Box, PostDomLayout.ChildingToTimeStamp).OutputNode.childNodes)
+									PostTimeStamp = PostSegmentsThatHaveDateAtVaryingIndexLocation.at(-2).innerText
 								}
 								let PostSegments = Array.from(DescendNode(Box, PostDomLayout.ChildingToPostSegments).OutputNode.childNodes)
+								//Type = "Post_CurrentlyViewed_AtTop"
+								//PostSegments[0] entire post contents, text and quotes
+								//
+								//Type = "Post_NotCurrentlyViewed"
+								//PostSegments[0]: User title and handle
+								//PostSegments[1 to length-2]: post content
+								//PostSegments[length-1]: post stats
 								if (Type == "Post_NotCurrentlyViewed") {
 									ReplyCount = DescendNode(PostSegments.at(-1), [0]).OutputNode.innerText
 									RepostCount = DescendNode(PostSegments.at(-1), [1]).OutputNode.innerText
@@ -403,23 +438,13 @@
 								}
 								let a = 0
 								
+								
 								let PostContent = []
-								const PostContentSliceMap = {
-									"Post_CurrentlyViewed_AtTop": {
-										Start: 0,
-										End: -2
-									},
-									"Post_CurrentlyViewed_NotAtTop": {
-										Start: 0,
-										End: -3
-									},
-									"Post_NotCurrentlyViewed": {
-										Start: 1,
-										End: -1
-									}
+								if (Type == "Post_NotCurrentlyViewed") {
+									PostContent = PostSegments.slice(PostDomLayout.ContentSegmentSlice.Start, PostSegments.length + PostDomLayout.ContentSegmentSlice.End)
+								} else {
+									PostContent = Array.from(PostSegments[0].childNodes)
 								}
-								let SliceOfPostSegments = PostContentSliceMap[Type] ?? undefined
-								PostContent = PostSegments.slice(SliceOfPostSegments.Start, PostSegments.length + SliceOfPostSegments.End)
 								//Here:
 								//PostSegments[0] is the post header (user, title, handle, and post date)
 								//PostSegments.at(-1) (the last element in the array) is the post footer (replies, reposts, and likes)
@@ -427,38 +452,37 @@
 								//This is where PostText and everything after it are processed here.
 								PostContent.forEach((PostPart) => {
 									if (PostPart.innerText != "") {//Content has text, may be a quote, etc.
-										if (Array.from(PostPart.childNodes).length == 1) { //If there is only one child and that is a div?
-											let PotentialQuotedUserHandleNode = DescendNode(PostPart, [0,0,0,0,1,0,2])
-											if (PotentialQuotedUserHandleNode.LevelsPassed == 7) { //If the dom layout is a quoted post?
-												//Quoted post
-												//PostPart.childNodes[0].childNodes[0].childNodes[0] - user title, handle, date
-												//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0] - link to profile
-												//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0] - user title
-												//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[1] - space
-												//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2] - User handle
-												//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[3] - link to post and timestamp
-												//PostPart.childNodes[0].childNodes[0].childNodes[1] - text (or another post segment?)
-												//
-												let Node_QuotedPost = DescendNode(PostPart, [0,0]).OutputNode
-												let Quoted_UserTitle = DescendNode(Node_QuotedPost, [0,0,1,0,0]).OutputNode.textContent
-												let Quoted_Userhandle = DescendNode(Node_QuotedPost, [0,0,1,0,2]).OutputNode.textContent
-												let Quoted_Timestamp = DescendNode(Node_QuotedPost, [0,0,3]).OutputNode.dataset.tooltip
-												let Quoted_UserPostLink = HttpToTtp(DescendNode(Node_QuotedPost, [0,0,3]).OutputNode.href)
-												let Quoted_Text = DescendNode(Node_QuotedPost, [1]).OutputNode.innerText
-												
-												QuotedPosts.push({
-													Quoted_UserTitle: Quoted_UserTitle,
-													Quoted_Userhandle: Quoted_Userhandle,
-													Quoted_Timestamp: Quoted_Timestamp,
-													Quoted_UserPostLink: Quoted_UserPostLink,
-													Quoted_Text: Quoted_Text
-												});
-											} else {
-												//Just plain text
-												let PostTextArea = DescendNode(PostPart, [0]).OutputNode
-												PostText = PostTextArea.innerText
-												LinksToAnotherPage = GetLinksURLs(PostTextArea)
-											}
+										let PotentialQuotedUserHandleNode = DescendNode(PostPart, [0,0,0,0,1,0,2])
+										if (PotentialQuotedUserHandleNode.LevelsPassed == 7) { //If the dom layout is a quoted post?
+											//Quoted post
+											//PostPart.childNodes[0].childNodes[0].childNodes[0] - user title, handle, date
+											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0] - link to profile
+											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0] - user title
+											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[1] - space
+											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2] - User handle
+											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[3] - link to post and timestamp
+											//PostPart.childNodes[0].childNodes[0].childNodes[1] - text (or another post segment?)
+											//
+											let Node_QuotedPost = DescendNode(PostPart, [0,0]).OutputNode
+											let Quoted_UserTitle = DescendNode(Node_QuotedPost, [0,0,1,0,0]).OutputNode.textContent
+											let Quoted_Userhandle = DescendNode(Node_QuotedPost, [0,0,1,0,2]).OutputNode.textContent
+											let Quoted_Timestamp = DescendNode(Node_QuotedPost, [0,0,3]).OutputNode.dataset.tooltip
+											let Quoted_UserPostLink = HttpToTtp(DescendNode(Node_QuotedPost, [0,0,3]).OutputNode.href)
+											let Quoted_Text = DescendNode(Node_QuotedPost, [1]).OutputNode.innerText
+											
+											QuotedPosts.push({
+												Quoted_UserTitle: Quoted_UserTitle,
+												Quoted_Userhandle: Quoted_Userhandle,
+												Quoted_Timestamp: Quoted_Timestamp,
+												Quoted_UserPostLink: Quoted_UserPostLink,
+												Quoted_Text: Quoted_Text
+											});
+										} else {
+											//Just plain text
+											let PostTextArea = DescendNode(PostPart, [0]).OutputNode
+											PostText = PostTextArea.innerText
+											LinksToAnotherPage = GetLinksURLs(PostTextArea)
+											MediaList = GetMediaURLs(PostPart)
 										}
 									} else {
 										//Media content
