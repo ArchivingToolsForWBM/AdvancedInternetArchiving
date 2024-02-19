@@ -279,7 +279,7 @@
 							}
 						})
 						
-					} else if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/post\/[a-zA-Z\d\-]+\/?/.test(window.location.href)) { //Post page
+					} else if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-\.]+\/post\/[a-zA-Z\d\-]+\/?/.test(window.location.href)) { //Post page
 						//[post page]
 						//First, find an a href link to a profile as a reference. We get a node that at least has all the posts.
 						//Important to note that if there is only a single post and it is the one you directly viewing, then there is no a href link to extract from.
