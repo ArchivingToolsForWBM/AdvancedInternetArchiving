@@ -433,7 +433,7 @@
 									let PostTimeStampNode = DescendNode(Box, PostDomLayout.ChildingToTimeStamp)
 									if (PostTimeStampNode.LevelsPassed == PostDomLayout.ChildingToTimeStamp.length) {
 										let PostSegmentsThatHaveDateAtVaryingIndexLocation = Array.from(PostTimeStampNode.OutputNode.childNodes)
-										PostTimeStamp = PostDateInfo((PostSegmentsThatHaveDateAtVaryingIndexLocation.at(-3).innerText))
+										PostTimeStamp = PostDateInfo(DescendNode(PostSegmentsThatHaveDateAtVaryingIndexLocation.at(-3), [0]).OutputNode.innerText)
 									}
 								}
 								let PostSegments = Array.from(DescendNode(Box, PostDomLayout.ChildingToPostSegments).OutputNode.childNodes)
