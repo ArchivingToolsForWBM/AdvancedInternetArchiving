@@ -60,7 +60,7 @@
 					let UserPostArea = []
 					let ListOfPosts = [] //List of each individual posts
 					if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/?$/.test(window.location.href)) { //profile page
-						//First, find an a href link to a profile as a reference. We get a node that at least has all the posts
+						//First, find an a href link to a profile as a reference. We get the lowest node that at least has all the posts on the page
 						UserPostArea = GetPostBoxesByLink(8)
 						
 						let a = 0
@@ -281,10 +281,12 @@
 						
 					} else if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-\.]+\/post\/[a-zA-Z\d\-]+\/?/.test(window.location.href)) { //Post page
 						//[post page]
-						//First, find an a href link to a profile as a reference. We get a node that at least has all the posts.
-						//Important to note that if there is only a single post and it is the one you directly viewing, then there is no a href link to extract from.
+						//First, find an a div containing a timestamp as a reference. We then ascend the nodes to get the lowest node that at least has all the posts.
+						//Reason not to get a "a href" link to post is because if there is only 1 post on the page and it is the post you are directly viewing, then
+						//there is no a href link we can use as a reference to jump a fixed number of hierarchy levels without being in the wrong node.
 						UserPostArea = GetNodeByFooterTimestamp(5)
-						//"UserPostArea" will now contain "boxes" that contains 0 or 1 posts (even if it is a reply post, there is no div that surround 2 posts)
+						//"UserPostArea" will now contain "boxes" that contains 0 or 1 posts:
+						//0 posts if it is a placeholder area or a blank box at the bottom of the page, as well as "Write your Reply"
 						
 						
 						let PostsSeperator = ""
@@ -637,7 +639,7 @@
 					return false
 				}
 				let ReferenceNode = AscendNode(ArrayElement, Levels)
-				if (ReferenceNode.LevelsPassed != Levels) {//Did it successfully goes up 6 ancestors so we have all the post in the column?
+				if (ReferenceNode.LevelsPassed != Levels) {//Did it successfully goes up 5 ancestors so we have all the post in the column?
 					return false
 				}
 				if (isAncestorsStyleDisplayNone(ReferenceNode.OutputNode)) { //Is not in a display-none or inside any element with display-none?
