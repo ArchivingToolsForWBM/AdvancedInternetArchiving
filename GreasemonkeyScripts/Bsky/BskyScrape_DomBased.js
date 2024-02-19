@@ -633,7 +633,7 @@
 			let ListOfElements = Array.from(document.getElementsByTagName("DIV"))
 			let BoxList = []
 			ListOfElements.find((ArrayElement) => { //Search all the div
-				if (!/^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d+, \d+/.test(ArrayElement.innerText)) { //Is the text the timestamp?
+				if (!/^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d+, \d+ at \d+:\d+ (?:A|P)M$/.test(ArrayElement.innerText)) { //Is the text the timestamp? (must be the outermost div that contains *JUST* the date when "innerText"'ed)
 					return false
 				}
 				let ReferenceNode = AscendNode(ArrayElement, Levels)
