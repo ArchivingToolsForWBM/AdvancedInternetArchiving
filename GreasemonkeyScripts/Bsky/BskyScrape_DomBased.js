@@ -406,15 +406,19 @@
 								}
 								if (Type == "Post_NotCurrentlyViewed") { //There is never a downwards line from the post you currently viewing directly.
 									let ReplyLineDownNode = DescendNode(Box, PostDomLayout.ChildingToReplyLineDown)
-									if (typeof ReplyLineDownNode.OutputNode.style != "undefined") {
+									if (ReplyLineDownNode.LevelsPassed == PostDomLayout.ChildingToReplyLineDown.length) {
+										if (typeof ReplyLineDownNode.OutputNode.style != "undefined") {
 											PostHasRepliesLineBelow = true
+										}
 									}
 								}
 								if (Type != "Post_CurrentlyViewed_AtTop") { //It's the topmost post, so no replies. However haven't tested for replies to a deleted post
 									let ReplyLineUpNode = DescendNode(Box, PostDomLayout.ChildingToReplyLineUp)
-									if (typeof ReplyLineUpNode.OutputNode.style != "undefined") {
-										if (ReplyLineUpNode.OutputNode.style.length > 1) {
-											PostIsAReplyLineToAbove = true
+									if (ReplyLineUpNode.LevelsPassed == PostDomLayout.ChildingToReplyLineUp.length) {
+										if (typeof ReplyLineUpNode.OutputNode.style != "undefined") {
+											if (ReplyLineUpNode.OutputNode.style.length > 1) {
+												PostIsAReplyLineToAbove = true
+											}
 										}
 									}
 								}
