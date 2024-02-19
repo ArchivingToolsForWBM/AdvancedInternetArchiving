@@ -10,15 +10,17 @@
 (function() {
 	//NOTES:
 	//Best works on firefox because of my testing:
-	//-URLs have the "http" substring replaced with "ttps" because firefox truncate long links and doesn't keep the original full URL when copying them (the middle is replaced with
-	// ellipsis).
+	//-Best to have URLs have the "http" substring replaced with "ttps" because firefox truncate long links and doesn't keep the original full URL when copying them (the middle is
+	// replaced with ellipsis).
 	//-Chrome will truncate object parts printed on the console log, and those aren't preserved
 	//-If you navigate to (click on links) another bsky page, the list of process stored here will not unload posts that are no longer visible that were once visible before you navigate
 	// due to the entire page not refreshing. This means that if you say navigate from the user profile page to a posts, several posts from the profile page persist while being on a
-	// post page.
+	// post page. This script will detect loaded-but-invisible lists and ignore them.
 	//-This scripts assumes that the reply post system follows a "tree structure": https://en.wikipedia.org/wiki/Tree_(data_structure) - The first post that isn't a reply to anything is
 	// the "root" post each post can have multiple replies, but what it's replying to only goes to 1 post. Therefore the attribute "ReplyToURL" only contains 1 URL, and "RepliesURLs" is
 	// a list of replies to the post.
+	//-This script will work on post pages if you are logged in, because the dom tree layout of posts are different when viewing a post vs not logged in. I strongly recommend that you
+	// are because users can sometimes have their post content hidden from public view.
 	//Settings
 		const Setting_Delay = 1000
 			//^Number of milliseconds between each re-execution of this script.
@@ -44,7 +46,17 @@
 		function MainCode() {
 			if (!RaceConditionLock) {
 				RaceConditionLock = true
+
 				//Code here
+					let isLoggedIn = false
+					{
+						let SignUpButton = Array.from(document.getElementsByTagName("BUTTON")).find((Button) => {
+							return (Button.innerText == "Sign up")
+						})
+						if (typeof SignUpButton == "undefined") {//No signup button is found, indicating the user is logged in.
+							isLoggedIn = true
+						}
+					}
 					let UserPostArea = []
 					let ListOfPosts = [] //List of each individual posts
 					if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/?$/.test(window.location.href)) { //profile page
@@ -55,6 +67,7 @@
 						
 						//"UserPostArea" will now contain "boxes" that may either be a horizontal line, containing 1 or 2 posts (2 if it has replies, with a vertical line between 2 avatars)
 						UserPostArea.forEach((Box, BoxIndex) => { // Loop each box
+							//[profile page]
 							if (typeof Box.childNodes != "undefined") {
 								let BoxListingPosts = Array.from(Box.childNodes)
 								let BoxListingPostsLengthCache = BoxListingPosts.length
@@ -86,10 +99,7 @@
 									let UserHandle = ""
 									let UserAvatar = ""
 									let PostTimeStamp = {}
-									let PostText = ""
-									let QuotedPosts = []
-									let LinksToAnotherPage = []
-									let MediaList = []
+									let PostContentParts = []
 									let ReplyCount = ""
 									let RepostCount = ""
 									let LikesCount = ""
@@ -189,9 +199,8 @@
 												let Quoted_Timestamp = DescendNode(Node_QuotedPost, [0,0,3]).OutputNode.dataset.tooltip
 												let Quoted_UserPostLink = HttpToTtp(DescendNode(Node_QuotedPost, [0,0,3]).OutputNode.href)
 												let Quoted_Text = DescendNode(Node_QuotedPost, [1]).OutputNode.innerText
-												let a = 0
-
-												QuotedPosts.push({
+												PostContentParts.push({
+													PostPartType: "Quote",
 													Quoted_UserTitle: Quoted_UserTitle,
 													Quoted_Userhandle: Quoted_Userhandle,
 													Quoted_Timestamp: Quoted_Timestamp,
@@ -201,13 +210,21 @@
 											} else {
 												//PostPart.childNodes[0] - text (can contain links)
 												let TextZone = DescendNode(PostPart, [0]).OutputNode
-												PostText = TextZone.textContent
-												LinksToAnotherPage = GetLinksURLs(TextZone)
-												let a = 0
+												let PostText = TextZone.textContent
+												let LinksToAnotherPage = GetLinksURLs(TextZone)
+												PostContentParts.push({
+													PostPartType: "Text",
+													Post_Text: PostText,
+													LinksToAnotherPage: LinksToAnotherPage
+												})
 											}
 										} else {
 											//Media content
-											MediaList = GetMediaURLs(PostPart)
+											let MediaList = GetMediaURLs(PostPart)
+											PostContentParts.push({
+												PostPartType: "Media",
+												MediaList: MediaList
+											})
 										}
 									})
 									//Reply, repost, and likes
@@ -236,10 +253,7 @@
 										UserHandle: UserHandle,
 										UserAvatar: UserAvatar,
 										PostTimeStamp: PostTimeStamp,
-										PostText: PostText,
-										QuotedPosts: QuotedPosts,
-										LinksToAnotherPage: LinksToAnotherPage,
-										MediaList: MediaList,
+										PostContentParts: PostContentParts,
 										ReplyCount: ReplyCount,
 										RepostCount: RepostCount,
 										LikesCount: LikesCount
@@ -266,11 +280,10 @@
 						})
 						
 					} else if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/post\/[a-zA-Z\d\-]+\/?/.test(window.location.href)) { //Post page
+						//[post page]
 						//First, find an a href link to a profile as a reference. We get a node that at least has all the posts.
 						//Important to note that if there is only a single post and it is the one you directly viewing, then there is no a href link to extract from.
-						//UserPostArea = GetPostBoxesByLink(10)
-						UserPostArea = GetNodeByFooterTimestamp(4)
-						
+						UserPostArea = GetNodeByFooterTimestamp(5)
 						//"UserPostArea" will now contain "boxes" that contains 0 or 1 posts (even if it is a reply post, there is no div that surround 2 posts)
 						
 						
@@ -295,10 +308,7 @@
 							let UserHandle = ""
 							let UserAvatar = ""
 							let PostTimeStamp = {}
-							let PostText = ""
-							let QuotedPosts = []
-							let LinksToAnotherPage = []
-							let MediaList = []
+							let PostContentParts = []
 							let ReplyCount = ""
 							let RepostCount = ""
 							let LikesCount = ""
@@ -307,6 +317,7 @@
 							//thank you https://www.youtube.com/shorts/cbA2HY1xV0w (@FlutterMapp)
 							//Object literal technique
 							const TypeMap = {
+								//Please note that the DOM structure is different if you are logged in or not, the notes below assumes you are logged in.
 								"Post_CurrentlyViewed_AtTop": {
 									//	Box.childNodes[0].childNodes[0] - the entire post, before branching out...
 									//	Box.childNodes[0].childNodes[0].childNodes[0] - leads to the user info (title, handle, follow button)
@@ -419,8 +430,11 @@
 									//Currently viewed posts have a date not as a tooltip but explicitly at the footer
 									PostTimeStamp = PostDateInfo((DescendNode(Box, PostDomLayout.ChildingToTimeStamp).OutputNode.innerText))
 								} else if (Type == "Post_CurrentlyViewed_NotAtTop") {
-									let PostSegmentsThatHaveDateAtVaryingIndexLocation = Array.from(DescendNode(Box, PostDomLayout.ChildingToTimeStamp).OutputNode.childNodes)
-									PostTimeStamp = PostDateInfo((PostSegmentsThatHaveDateAtVaryingIndexLocation.at(-2).innerText))
+									let PostTimeStampNode = DescendNode(Box, PostDomLayout.ChildingToTimeStamp)
+									if (PostTimeStampNode.LevelsPassed == PostDomLayout.ChildingToTimeStamp.length) {
+										let PostSegmentsThatHaveDateAtVaryingIndexLocation = Array.from(PostTimeStampNode.OutputNode.childNodes)
+										PostTimeStamp = PostDateInfo((PostSegmentsThatHaveDateAtVaryingIndexLocation.at(-3).innerText))
+									}
 								}
 								let PostSegments = Array.from(DescendNode(Box, PostDomLayout.ChildingToPostSegments).OutputNode.childNodes)
 								//Type = "Post_CurrentlyViewed_AtTop"
@@ -442,18 +456,18 @@
 								let a = 0
 								
 								
-								let PostContent = []
+								let PostContentArea = []
 								if (Type == "Post_NotCurrentlyViewed") {
-									PostContent = PostSegments.slice(PostDomLayout.ContentSegmentSlice.Start, PostSegments.length + PostDomLayout.ContentSegmentSlice.End)
+									PostContentArea = PostSegments.slice(PostDomLayout.ContentSegmentSlice.Start, PostSegments.length + PostDomLayout.ContentSegmentSlice.End)
 								} else {
-									PostContent = Array.from(PostSegments[0].childNodes)
+									PostContentArea = Array.from(PostSegments[0].childNodes)
 								}
 								//Here:
 								//PostSegments[0] is the post header (user, title, handle, and post date)
 								//PostSegments.at(-1) (the last element in the array) is the post footer (replies, reposts, and likes)
 								//Stuff in between are text, media, and many other things.
 								//This is where PostText and everything after it are processed here.
-								PostContent.forEach((PostPart) => {
+								PostContentArea.forEach((PostPart) => {
 									if (PostPart.innerText != "") {//Content has text, may be a quote, etc.
 										let PotentialQuotedUserHandleNode = DescendNode(PostPart, [0,0,0,0,1,0,2])
 										if (PotentialQuotedUserHandleNode.LevelsPassed == 7) { //If the dom layout is a quoted post?
@@ -473,7 +487,8 @@
 											let Quoted_UserPostLink = HttpToTtp(DescendNode(Node_QuotedPost, [0,0,3]).OutputNode.href)
 											let Quoted_Text = DescendNode(Node_QuotedPost, [1]).OutputNode.innerText
 											
-											QuotedPosts.push({
+											PostContentParts.push({
+												PostPartType: "Quote",
 												Quoted_UserTitle: Quoted_UserTitle,
 												Quoted_Userhandle: Quoted_Userhandle,
 												Quoted_Timestamp: Quoted_Timestamp,
@@ -482,14 +497,22 @@
 											});
 										} else {
 											//Just plain text
-											let PostTextArea = DescendNode(PostPart, [0]).OutputNode
-											PostText = PostTextArea.innerText
-											LinksToAnotherPage = GetLinksURLs(PostTextArea)
-											MediaList = GetMediaURLs(PostPart)
+											let TextZone = DescendNode(PostPart, [0]).OutputNode
+											let PostText = TextZone.innerText
+											let LinksToAnotherPage = GetLinksURLs(TextZone)
+											PostContentParts.push({
+												PostPartType: "Text",
+												Post_Text: PostText,
+												LinksToAnotherPage: LinksToAnotherPage
+											})
 										}
 									} else {
 										//Media content
-										MediaList = GetMediaURLs(PostPart)
+										let MediaList = GetMediaURLs(PostPart)
+										PostContentParts.push({
+											PostPartType: "Media",
+											MediaList: MediaList
+										})
 									}
 									
 								})
@@ -509,11 +532,7 @@
 									UserHandle: UserHandle,
 									UserAvatar: UserAvatar,
 									PostTimeStamp: PostTimeStamp,
-									
-									PostText: PostText,
-									QuotedPosts: QuotedPosts,
-									LinksToAnotherPage: LinksToAnotherPage,
-									MediaList: MediaList,
+									PostContentParts: PostContentParts,
 									ReplyCount: ReplyCount,
 									RepostCount: RepostCount,
 									LikesCount: LikesCount
@@ -800,6 +819,10 @@
 			return ""
 		}
 		function PostDateInfo(StringTimestamp) {
+			if (typeof StringTimestamp == "undefined") {
+				return "uhh"
+			}
+			
 			//Info got from: https://stackoverflow.com/questions/78018427/how-do-i-convert-the-local-date-and-time-e-g-est-to-utc
 			//
 			//One post mentions "It appears this post was in whole or in part created with AI tools. " (got deleted)
