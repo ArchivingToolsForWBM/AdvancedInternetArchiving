@@ -809,9 +809,9 @@
 			
 			let TimeZoneString = TimestampObject.toString().match(/\(.+\)/)
 			if (TimeZoneString != null) {
-				TimeZoneString = " " + TimeZoneString[0]
+				TimeZoneString = TimeZoneString[0]
 			} else {
-				TimeZoneString = " (unknown timezone)"
+				TimeZoneString = "(unknown timezone)"
 			}
 			
 			if (TimestampObject.toString() != "Invalid Date") {
