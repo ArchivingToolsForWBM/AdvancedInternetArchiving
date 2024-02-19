@@ -25,6 +25,9 @@
 		const Setting_http_ttp = true
 			//^true = All URLs in the output start with "ttp" instead of "http" (to avoid URL truncation like what firefox does; replacing the middle of string with ellipsis).
 			// false = leave it as http
+		const Setting_ShowLocalTimeInTimestamp = true
+			//^true = PostTimeStamp sub-object will contain the local timestamp
+			//^false = no (will only show the UTC and milliseconds (page only shows minutes as lowest units of time, so it assumes whole minutes) since epoch)
 		const Setting_PostImageFullRes = true
 			//^true = all image URLs in the post will be full resolution versions
 			// false = use potentially downsized resolution from the HTML.
@@ -82,7 +85,7 @@
 									let UserTitle = ""
 									let UserHandle = ""
 									let UserAvatar = ""
-									let PostTimeStamp = ""
+									let PostTimeStamp = {}
 									let PostText = ""
 									let QuotedPosts = []
 									let LinksToAnotherPage = []
@@ -153,7 +156,7 @@
 										let PostTimeStampElement = DescendNode(Post, [0, 1, 1, 0, 2])
 										if (PostTimeStampElement.LevelsPassed == 5) {
 											if (typeof PostTimeStampElement.OutputNode.dataset.tooltip != "undefined") {
-												PostTimeStamp = HttpToTtp(PostTimeStampElement.OutputNode.dataset.tooltip)
+												PostTimeStamp = PostDateInfo(PostTimeStampElement.OutputNode.dataset.tooltip)
 											}
 										}
 									}
@@ -266,7 +269,7 @@
 						//First, find an a href link to a profile as a reference. We get a node that at least has all the posts.
 						//Important to note that if there is only a single post and it is the one you directly viewing, then there is no a href link to extract from.
 						//UserPostArea = GetPostBoxesByLink(10)
-						UserPostArea = GetNodeByFooterTimestamp(5)
+						UserPostArea = GetNodeByFooterTimestamp(4)
 						
 						//"UserPostArea" will now contain "boxes" that contains 0 or 1 posts (even if it is a reply post, there is no div that surround 2 posts)
 						
@@ -291,7 +294,7 @@
 							let UserTitle = ""
 							let UserHandle = ""
 							let UserAvatar = ""
-							let PostTimeStamp = ""
+							let PostTimeStamp = {}
 							let PostText = ""
 							let QuotedPosts = []
 							let LinksToAnotherPage = []
@@ -411,13 +414,13 @@
 									UserAvatar = HttpToTtp(UserAvatarNode.OutputNode.src)
 								}
 								if (Type == "Post_NotCurrentlyViewed") {
-									PostTimeStamp = DescendNode(Box, PostDomLayout.ChildingToTimeStamp).OutputNode.dataset.tooltip
+									PostTimeStamp = PostDateInfo(DescendNode(Box, PostDomLayout.ChildingToTimeStamp).OutputNode.dataset.tooltip)
 								} else if (Type == "Post_CurrentlyViewed_AtTop"){
 									//Currently viewed posts have a date not as a tooltip but explicitly at the footer
-									PostTimeStamp = DescendNode(Box, PostDomLayout.ChildingToTimeStamp).OutputNode.innerText
+									PostTimeStamp = PostDateInfo((DescendNode(Box, PostDomLayout.ChildingToTimeStamp).OutputNode.innerText))
 								} else if (Type == "Post_CurrentlyViewed_NotAtTop") {
 									let PostSegmentsThatHaveDateAtVaryingIndexLocation = Array.from(DescendNode(Box, PostDomLayout.ChildingToTimeStamp).OutputNode.childNodes)
-									PostTimeStamp = PostSegmentsThatHaveDateAtVaryingIndexLocation.at(-2).innerText
+									PostTimeStamp = PostDateInfo((PostSegmentsThatHaveDateAtVaryingIndexLocation.at(-2).innerText))
 								}
 								let PostSegments = Array.from(DescendNode(Box, PostDomLayout.ChildingToPostSegments).OutputNode.childNodes)
 								//Type = "Post_CurrentlyViewed_AtTop"
@@ -795,5 +798,38 @@
 				return "Post_NotCurrentlyViewed"
 			}
 			return ""
+		}
+		function PostDateInfo(StringTimestamp) {
+			//Info got from: https://stackoverflow.com/questions/78018427/how-do-i-convert-the-local-date-and-time-e-g-est-to-utc
+			//
+			//One post mentions "It appears this post was in whole or in part created with AI tools. " (got deleted)
+			//If anyone spots an error that certain local timezone displays a different UTC time on a post, please report/fork to fix this.
+			let DateObjectReadbleString = StringTimestamp.replace(/ at /, " ")
+			let TimestampObject = new Date(DateObjectReadbleString)
+			
+			let TimeZoneString = TimestampObject.toString().match(/\(.+\)/)
+			if (TimeZoneString != null) {
+				TimeZoneString = " " + TimeZoneString[0]
+			} else {
+				TimeZoneString = " (unknown timezone)"
+			}
+			
+			if (TimestampObject.toString() != "Invalid Date") {
+				let TimestampMillisecondsEpoch = TimestampObject.getTime()
+				let UTCString = TimestampObject.toISOString()
+				
+				let ReturnObject = new Object()
+				if (Setting_ShowLocalTimeInTimestamp) {
+					ReturnObject.LocalTimeDisplayedOnPage = StringTimestamp + " " + TimeZoneString
+				}
+				ReturnObject.Date_UTC = UTCString.replace("T", " ").replace(/:\d+\.\d{3}Z$/, "")
+				ReturnObject.TimestampMillisecondsEpoch = TimestampMillisecondsEpoch
+				
+				return ReturnObject
+			} else {
+				return({
+					Error: "Invalid date"
+				})
+			}
 		}
 })();
