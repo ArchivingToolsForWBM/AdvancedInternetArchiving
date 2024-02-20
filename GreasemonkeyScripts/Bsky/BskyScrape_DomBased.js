@@ -259,7 +259,7 @@
 										LikesCount: LikesCount
 									})
 								}
-								//Now fill out the reply to and from that are inside a box
+								//Now fill out the reply to and from that are inside a box (connect them)
 								let PostGroupLengthCache = PostGroup.length
 								for (let i = 0; i < PostGroupLengthCache; i++) {
 									if (PostGroup[i].ReplyConnections.PostHasRepliesLineBelow) {
@@ -284,14 +284,14 @@
 						//First, find an a div containing a timestamp as a reference. We then ascend the nodes to get the lowest node that at least has all the posts.
 						//Reason not to get a "a href" link to post is because if there is only 1 post on the page and it is the post you are directly viewing, then
 						//there is no a href link we can use as a reference to jump a fixed number of hierarchy levels without being in the wrong node.
-						UserPostArea = GetNodeByFooterTimestamp(5)
+						UserPostArea = GetNodeByFooterTimestamp(6)
 						//"UserPostArea" will now contain "boxes" that contains 0 or 1 posts:
 						//0 posts if it is a placeholder area or a blank box at the bottom of the page, as well as "Write your Reply"
 						
 						
 						let PostsSeperator = ""
 						//^Now, in some time in the future, bsky may be updated to include recommended posts that aren't necessarily a reply to posts above,
-						// so this text here serves as a placeholder as the following foreach determine that the adjacent posts are something like "for you"
+						// so this text here serves as a placeholder as the following forEach determine that the adjacent posts are something like "for you"
 						// (if such a separator exists, PostsSeperator will update and future boxes in this array will reflect on it (anthing after "for you"))
 						
 						let PostGroup = []
@@ -310,219 +310,302 @@
 							let UserHandle = ""
 							let UserAvatar = ""
 							let PostTimeStamp = {}
-							let PostContentParts = []
+							let PostContentText = {
+								Text: "",
+								Links: []
+							}
+							let PostAttachments = []
 							let ReplyCount = ""
 							let RepostCount = ""
 							let LikesCount = ""
 							
-
-							//thank you https://www.youtube.com/shorts/cbA2HY1xV0w (@FlutterMapp)
-							//Object literal technique
-							const TypeMap = {
-								//Please note that the DOM structure is different if you are logged in or not, the notes below assumes you are logged in.
-								"Post_CurrentlyViewed_AtTop": {
-									//	Box.childNodes[0].childNodes[0] - the entire post, before branching out...
-									//	Box.childNodes[0].childNodes[0].childNodes[0] - leads to the user info (title, handle, follow button)
-									//	Box.childNodes[0].childNodes[0].childNodes[1] - posts content and stats
-									//	Box.childNodes[0].childNodes[0].childNodes[1].childNodes[0] - post content zone
-									//	Box.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[x] - each part of above, text, post, quote, media, including stats, except the header containing user info
-									//	Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1] - timestamp
-									//	Box.childNodes[0].childNodes[0].childNodes[1].childNodes[2] - likes
-									//	Box.childNodes[0].childNodes[0].childNodes[1].childNodes[3] - more stats
-									ContentSegmentSlice: {
-										Start: 0,
-										End: -3
-									},
-									
-									ChildIngToUserTitle: [0,0,0,1,0,0,0,0],
-									ChildIngToUserHandle: [0,0,0,1,1],
-									ChildingToAvatar: [0,0,0,0,0,0,0,1],
-									ChildingToTimeStamp: [0,0,1,1],
-									ChildingToPostSegments: [0,0,1],
-									
-									ChildingToPostText: [0,0,1,0,0],
-									ChildingToMedia: [0,0,1,0],
-									ChildingToReplyRepostLike: [0,0,1,3,0],
-								},
-								"Post_CurrentlyViewed_NotAtTop": {
-									//	Box.childNodes[0].childNodes[0] - leads to a vertical line pointing upwards indicating a reply
-									//	Box.childNodes[0].childNodes[1] - the entire post
-									//	Box.childNodes[0].childNodes[1].childNodes[0] - leads to the user info (title, handle, timestamp)
-									//	Box.childNodes[0].childNodes[1].childNodes[1] - posts content and stats
-									//	Box.childNodes[0].childNodes[1].childNodes[1].childNodes[X] - each part of above, text, post, quote, media, including stats (last 3 is always stats)
-									//	Box.childNodes[0].childNodes[1].childNodes[1].childNodes[0 to length-3] - post content
-									//	Box.childNodes[0].childNodes[1].childNodes[1].childNodes[length-2] - time stamp
-									//	Box.childNodes[0].childNodes[1].childNodes[1].childNodes[length-1] - post stats
-									ContentSegmentSlice: {
-										Start: 0,
-										End: -3
-									},
-									ChildIngToUserTitle: [0,1,0,1,0,0,0],
-									ChildIngToUserHandle: [0,1,0,1,1,0],
-									ChildingToAvatar: [0,1,0,0,0,0,0,1],
-									ChildingToTimeStamp: [0,1,1],
-									ChildingToPostSegments: [0,1,1],
-									
-									ChildingToPostText: [0,1,1,0,0],
-									ChildingToMedia: [0,1,1,0],
-									ChildingToReplyRepostLike: [0,1,1,3,0],
-									ChildingToReplyLineUp: [0,0,0,0],
-								},
-								"Post_NotCurrentlyViewed": {
-									//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0] - Entire border of the post
-									//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0] - Blank space above it, space for vertical line upwards in reply to
-									//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1] - entire post
-									//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0] - Avatar and the vertical line (replies under)
-									//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1] - posts content and stats
-									//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[X] - each part of above: username, text, post, quote, media, including stats:
-									//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0] - user title, handle, timestamp
-									//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1 to length-2] - post content
-									//	Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[length-1] - stats
-									ContentSegmentSlice: {
-										Start: 1,
-										End: -1
-									},
-									ChildingToUserPostUrl: [0,0,0,0,1,1,0,2],
-									ChildIngToUserTitle: [0,0,0,0,1,1,0,0,0,0],
-									ChildIngToUserHandle: [0,0,0,0,1,1,0,0,0,2],
-									ChildingToAvatar: [0,0,0,0,1,0,0,0,0,1],
-									ChildingToTimeStamp: [0,0,0,0,1,1,0,2],
-									ChildingToPostSegments: [0,0,0,0,1,1],
-									
-									
-									ChildingToPostText: [0,0,0,0,1,1,1],
-									ChildingToMedia: [0,0,0,0,1,1],
-									ChildingToReplyRepostLike: [0,0,0,0,1,1,2],
-									
-									ChildingToReplyLineDown: [0,0,0,0,1,0,1],
-									ChildingToReplyLineUp: [0,0,0,0,0,0,0],
+							if (Type == "Post_CurrentlyViewed_AtTop") {
+								PostURL = HttpToTtp(window.location.href)
+								
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0]
+								UserTitle = DescendNode(Box, [0,0,0,1,0,0,0]).OutputNode.textContent
+								
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0]
+								UserHandle = DescendNode(Box, [0,0,0,1,1,0,0]).OutputNode.innerText 
+								
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1]
+								let NodeOfAvatarImg = DescendNode(Box, [0,0,0,0,0,0,0,1])
+								if (NodeOfAvatarImg.IsSuccessful) {
+									UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
 								}
-							}
-							
-							let PostDomLayout = TypeMap[Type] ?? undefined
-							if (typeof PostDomLayout != "undefined") { //For boxes that are posts.
-								if (/^Post_CurrentlyViewed/.test(Type)) {
-									PostURL = HttpToTtp(window.location.href)
+								
+								//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0]
+								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,0,1,1,0]).OutputNode.innerText)
+								
+								//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0]
+								let NodeOfPostContentText = DescendNode(Box, [0,0,1,0,0,0])
+								if (NodeOfPostContentText.IsSuccessful) {
+									PostContentText.Text = NodeOfPostContentText.OutputNode.textContent
+									PostContentText.Links = GetLinksURLs(NodeOfPostContentText.OutputNode)
+								}
+								
+								//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[0].childNodes[0]
+								let NodeOfPostContentAttachments_Array = []
+								let NodeOfPostContentAttachments = DescendNode(Box, [0,0,1,0,1,0])
+								if (NodeOfPostContentAttachments.IsSuccessful) {
+									NodeOfPostContentAttachments_Array = Array.from(NodeOfPostContentAttachments.OutputNode.childNodes)
 								} else {
-									PostURL = HttpToTtp(DescendNode(Box, PostDomLayout.ChildingToUserPostUrl).OutputNode.href)
+									//https://bsky.app/profile/monokobold.bsky.social/post/3kkz6pkeazz2c
+									//Post only containing media with no text at all
+									//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[0]
+									NodeOfPostContentAttachments = DescendNode(Box, [0,0,1,0])
+									NodeOfPostContentAttachments_Array = Array.from(NodeOfPostContentAttachments.OutputNode.childNodes)
 								}
-								if (Type == "Post_NotCurrentlyViewed") { //There is never a downwards line from the post you currently viewing directly.
-									let ReplyLineDownNode = DescendNode(Box, PostDomLayout.ChildingToReplyLineDown)
-									if (ReplyLineDownNode.LevelsPassed == PostDomLayout.ChildingToReplyLineDown.length) {
-										if (typeof ReplyLineDownNode.OutputNode.style != "undefined") {
-											PostHasRepliesLineBelow = true
-										}
-									}
-								}
-								if (Type != "Post_CurrentlyViewed_AtTop") { //It's the topmost post, so no replies. However haven't tested for replies to a deleted post
-									let ReplyLineUpNode = DescendNode(Box, PostDomLayout.ChildingToReplyLineUp)
-									if (ReplyLineUpNode.LevelsPassed == PostDomLayout.ChildingToReplyLineUp.length) {
-										if (typeof ReplyLineUpNode.OutputNode.style != "undefined") {
-											if (ReplyLineUpNode.OutputNode.style.length > 1) {
-												PostIsAReplyLineToAbove = true
+								NodeOfPostContentAttachments_Array.forEach((PostPart) => {
+									if (PostPart.textContent == "") {
+										//media (no text)
+										let ListOfMediaLinks = GetMediaURLs(PostPart)
+										PostAttachments.push({
+											AttachmentType: "Media",
+											MediaURLs: ListOfMediaLinks
+										})
+									} else {
+										let a = 0
+										let AttachmentType = ""
+										
+										//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[3]
+										let NodeOfQuotedPost_Testing = DescendNode(PostPart, [0,0,0,3])
+										if (NodeOfQuotedPost_Testing.IsSuccessful) {
+											if (NodeOfQuotedPost_Testing.OutputNode.dataset.tooltip != "") {
+												AttachmentType = "Quote"
 											}
 										}
-									}
-								}
-								UserTitle = DescendNode(Box, PostDomLayout.ChildIngToUserTitle).OutputNode.textContent
-								UserHandle = DescendNode(Box, PostDomLayout.ChildIngToUserHandle).OutputNode.innerText
-								let UserAvatarNode = DescendNode(Box, PostDomLayout.ChildingToAvatar)
-								if (UserAvatarNode.LevelsPassed == PostDomLayout.ChildingToAvatar.length) {
-									UserAvatar = HttpToTtp(UserAvatarNode.OutputNode.src)
-								}
-								if (Type == "Post_NotCurrentlyViewed") {
-									PostTimeStamp = PostDateInfo(DescendNode(Box, PostDomLayout.ChildingToTimeStamp).OutputNode.dataset.tooltip)
-								} else if (Type == "Post_CurrentlyViewed_AtTop"){
-									//Currently viewed posts have a date not as a tooltip but explicitly at the footer
-									PostTimeStamp = PostDateInfo((DescendNode(Box, PostDomLayout.ChildingToTimeStamp).OutputNode.innerText))
-								} else if (Type == "Post_CurrentlyViewed_NotAtTop") {
-									let PostTimeStampNode = DescendNode(Box, PostDomLayout.ChildingToTimeStamp)
-									if (PostTimeStampNode.LevelsPassed == PostDomLayout.ChildingToTimeStamp.length) {
-										let PostSegmentsThatHaveDateAtVaryingIndexLocation = Array.from(PostTimeStampNode.OutputNode.childNodes)
-										PostTimeStamp = PostDateInfo(DescendNode(PostSegmentsThatHaveDateAtVaryingIndexLocation.at(-3), [0]).OutputNode.innerText)
-									}
-								}
-								let PostSegments = Array.from(DescendNode(Box, PostDomLayout.ChildingToPostSegments).OutputNode.childNodes)
-								//Type = "Post_CurrentlyViewed_AtTop"
-								//PostSegments[0] entire post contents, text and quotes
-								//
-								//Type = "Post_NotCurrentlyViewed"
-								//PostSegments[0]: User title and handle
-								//PostSegments[1 to length-2]: post content
-								//PostSegments[length-1]: post stats
-								if (Type == "Post_NotCurrentlyViewed") {
-									ReplyCount = DescendNode(PostSegments.at(-1), [0]).OutputNode.innerText
-									RepostCount = DescendNode(PostSegments.at(-1), [1]).OutputNode.innerText
-									LikesCount = DescendNode(PostSegments.at(-1), [2]).OutputNode.innerText
-								} else { //Both types of focused post, either at the top or not.
-									ReplyCount = DescendNode(PostSegments.at(-1), [0,0]).OutputNode.innerText
-									RepostCount = DescendNode(PostSegments.at(-1), [0,1]).OutputNode.innerText
-									LikesCount = DescendNode(PostSegments.at(-1), [0,2]).OutputNode.innerText
-								}
-								let a = 0
-								
-								
-								let PostContentArea = []
-								if (Type == "Post_NotCurrentlyViewed") {
-									PostContentArea = PostSegments.slice(PostDomLayout.ContentSegmentSlice.Start, PostSegments.length + PostDomLayout.ContentSegmentSlice.End)
-								} else {
-									PostContentArea = Array.from(PostSegments[0].childNodes)
-								}
-								//Here:
-								//PostSegments[0] is the post header (user, title, handle, and post date)
-								//PostSegments.at(-1) (the last element in the array) is the post footer (replies, reposts, and likes)
-								//Stuff in between are text, media, and many other things.
-								//This is where PostText and everything after it are processed here.
-								PostContentArea.forEach((PostPart) => {
-									if (PostPart.innerText != "") {//Content has text, may be a quote, etc.
-										let PotentialQuotedUserHandleNode = DescendNode(PostPart, [0,0,0,0,1,0,2])
-										if (PotentialQuotedUserHandleNode.LevelsPassed == 7) { //If the dom layout is a quoted post?
-											//Quoted post
-											//PostPart.childNodes[0].childNodes[0].childNodes[0] - user title, handle, date
-											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0] - link to profile
-											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0] - user title
-											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[1] - space
-											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2] - User handle
-											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[3] - link to post and timestamp
-											//PostPart.childNodes[0].childNodes[0].childNodes[1] - text (or another post segment?)
-											//
-											let Node_QuotedPost = DescendNode(PostPart, [0,0]).OutputNode
-											let Quoted_UserTitle = DescendNode(Node_QuotedPost, [0,0,1,0,0]).OutputNode.textContent
-											let Quoted_Userhandle = DescendNode(Node_QuotedPost, [0,0,1,0,2]).OutputNode.textContent
-											let Quoted_Timestamp = DescendNode(Node_QuotedPost, [0,0,3]).OutputNode.dataset.tooltip
-											let Quoted_UserPostLink = HttpToTtp(DescendNode(Node_QuotedPost, [0,0,3]).OutputNode.href)
-											let Quoted_Text = DescendNode(Node_QuotedPost, [1]).OutputNode.innerText
+										
+										if (AttachmentType == "Quote") {
+											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[3].href
+											let PostURL = HttpToTtp(DescendNode(PostPart, [0,0,0,3]).OutputNode.href)
 											
-											PostContentParts.push({
-												PostPartType: "Quote",
-												Quoted_UserTitle: Quoted_UserTitle,
-												Quoted_Userhandle: Quoted_Userhandle,
-												Quoted_Timestamp: Quoted_Timestamp,
-												Quoted_UserPostLink: Quoted_UserPostLink,
-												Quoted_Text: Quoted_Text
-											});
-										} else {
-											//Just plain text
-											let TextZone = DescendNode(PostPart, [0]).OutputNode
-											let PostText = TextZone.innerText
-											let LinksToAnotherPage = GetLinksURLs(TextZone)
-											PostContentParts.push({
-												PostPartType: "Text",
-												Post_Text: PostText,
-												LinksToAnotherPage: LinksToAnotherPage
+											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].textContent
+											let Usertitle = DescendNode(PostPart, [0,0,0,1,0,0]).OutputNode.textContent
+											
+											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].innerText
+											let UserHandle = DescendNode(PostPart, [0,0,0,1,0,2]).OutputNode.innerText
+											
+											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+											let NodeOfAvatarImg = DescendNode(PostPart, [0,0,0,0,0,0,1])
+											if (NodeOfAvatarImg.IsSuccessful) {
+												let UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
+											}
+											
+											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
+											let PostTimeStamp = PostDateInfo(DescendNode(PostPart, [0,0,0,3]).OutputNode.dataset.tooltip)
+											
+											//PostPart.childNodes[0].childNodes[1].textContent
+											let Text = DescendNode(PostPart, [0,1]).OutputNode.textContent
+											
+											//PostPart.childNodes[0].childNodes[2]
+											let Media = GetMediaURLs(DescendNode(PostPart, [0,2]).OutputNode)
+											
+											let a = 0
+											PostAttachments.push({
+												AttachmentType: AttachmentType,
+												PostURL: PostURL,
+												UserTitle: UserTitle,
+												UserHandle: UserHandle,
+												UserAvatar: UserAvatar,
+												PostTimeStamp: PostTimeStamp,
+												Text: Text,
+												Media: Media
 											})
 										}
-									} else {
-										//Media content
-										let MediaList = GetMediaURLs(PostPart)
-										PostContentParts.push({
-											PostPartType: "Media",
-											MediaList: MediaList
-										})
 									}
-									
 								})
 								
+								//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[3].childNodes[0]
+								let NodeOfReplyRepostLikes = DescendNode(Box, [0,0,1,3,0])
+								let NodeOfReplyRepostLikes_Array = NodeOfReplyRepostLikes.OutputNode.childNodes
+								
+								ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText
+								RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
+								LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
+								
+							} else if (Type == "Post_CurrentlyViewed_NotAtTop") {
+								PostURL = HttpToTtp(window.location.href)
+								
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0]
+								let ReplyLineUpNode = DescendNode(Box, [0,0,0,0])
+								if (ReplyLineUpNode.IsSuccessful) {
+									if (typeof ReplyLineUpNode.OutputNode.style != "undefined") {
+										if (ReplyLineUpNode.OutputNode.style.length > 1) {
+											PostIsAReplyLineToAbove = true
+										}
+									}
+								}
+								
+								//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].textContent
+								UserTitle = DescendNode(Box, [0,1,0,1,0,0,0]).OutputNode.textContent
+								
+								//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].innerText
+								UserHandle = DescendNode(Box, [0,1,0,1,1,0,0]).OutputNode.innerText
+								
+								//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+								let NodeOfAvatarImg = DescendNode(Box, [0,1,0,0,0,0,0,1])
+								if (NodeOfAvatarImg.IsSuccessful) {
+									UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
+								}
+								
+								//Box.childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].innerText
+								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,1,1,1,0]).OutputNode.innerText)
+								
+								//Box.childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes
+								let NodeOfPostContentAttachments = DescendNode(Box, [0,1,1,0])
+								if (NodeOfPostContentAttachments.IsSuccessful) {
+									NodeOfPostContentAttachments_Array = Array.from(NodeOfPostContentAttachments.OutputNode.childNodes)
+									NodeOfPostContentAttachments_Array.shift()
+									
+									//Box.childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0]
+									let NodeOfPostContentText = DescendNode(Box, [0,1,1,0,0,0])
+									if (NodeOfPostContentText.IsSuccessful) {
+										PostContentText.Text = NodeOfPostContentText.OutputNode.textContent
+										PostContentText.Links = GetLinksURLs(NodeOfPostContentText.OutputNode)
+									}
+									NodeOfPostContentAttachments_Array.forEach((PostPart) => {
+										if (PostPart.textContent == "") {
+											//media (no text)
+											let ListOfMediaLinks = GetMediaURLs(PostPart)
+											PostAttachments.push({
+												AttachmentType: "Media",
+												MediaURLs: ListOfMediaLinks
+											})
+										} else {
+											//Potential quotes here
+										}
+									})
+								}
+								
+								//Box.childNodes[0].childNodes[1].childNodes[1] - get the footer (position varies)
+								let PostFooter = Array.from(DescendNode(Box, [0,1,1]).OutputNode.childNodes)
+								PostFooter = PostFooter.at(-1)
+								NodeOfReplyRepostLikes_Array = Array.from(DescendNode(PostFooter, [0]).OutputNode.childNodes)
+								
+								ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText
+								RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
+								LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
+								let a = 0
+							} else if (Type == "Post_NotCurrentlyViewed") {
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].href
+								PostURL = HttpToTtp(DescendNode(Box, [0,0,0,0,1,1,0,2]).OutputNode.href)
+								
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[1].style
+								let ReplyLineDownNode = DescendNode(Box, [0,0,0,0,1,0,1])
+								if (ReplyLineDownNode.IsSuccessful) {
+									if (typeof ReplyLineDownNode.OutputNode.style != "undefined") {
+										PostHasRepliesLineBelow = true
+									}
+								}
+								
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].style
+								let ReplyLineUpNode = DescendNode(Box, [0,0,0,0,0,0,0])
+								if (ReplyLineUpNode.IsSuccessful) {
+									if (typeof ReplyLineUpNode.OutputNode.style != "undefined") {
+										if (ReplyLineUpNode.OutputNode.style.length > 1) {
+											PostIsAReplyLineToAbove = true
+										}
+									}
+								}
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
+								UserTitle = DescendNode(Box, [0,0,0,0,1,1,0,0,0,0]).OutputNode.textContent
+								
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[2].innerText
+								UserHandle = DescendNode(Box, [0,0,0,0,1,1,0,0,0,2]).OutputNode.innerText
+								
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+								let NodeOfAvatarImg = DescendNode(Box, [0,0,0,0,1,0,0,0,0,1])
+								if (NodeOfAvatarImg.IsSuccessful) {
+									UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
+								}
+								
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
+								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,0,0,0,1,1,0,2]).OutputNode.dataset.tooltip)
+								
+								
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].textContent
+								let NodeOfPostContentText = DescendNode(Box, [0,0,0,0,1,1,1,0])
+								if (NodeOfPostContentText.IsSuccessful) {
+									PostContentText.Text = NodeOfPostContentText.OutputNode.textContent
+									PostContentText.Links = GetLinksURLs(NodeOfPostContentText.OutputNode)
+								}
+								
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes
+								let NodeOfPostContentAttachments = DescendNode(Box, [0,0,0,0,1,1])
+								if (NodeOfPostContentAttachments.IsSuccessful) {
+									let PostArrayIncludingHeaderAndFooter =  Array.from(NodeOfPostContentAttachments.OutputNode.childNodes)
+									let NodeOfPostContentAttachments_Array = PostArrayIncludingHeaderAndFooter.slice(2, PostArrayIncludingHeaderAndFooter.length-1)
+									
+									NodeOfPostContentAttachments_Array.forEach((PostPart) => {
+										let EvenInnerContentAttachements = DescendNode(PostPart, [0])
+										if (EvenInnerContentAttachements.IsSuccessful) {
+											//See this: https://bsky.app/profile/gladpackad.bsky.social/post/3klkha5ynic24 with the top post not having focus.
+											EvenInnerContentAttachements_Array = Array.from(EvenInnerContentAttachements.OutputNode.childNodes)
+											EvenInnerContentAttachements_Array.forEach((PostPart1) => {
+												if (PostPart1.textContent == "") {
+													//media (no text)
+													let ListOfMediaLinks = GetMediaURLs(PostPart1)
+													PostAttachments.push({
+														AttachmentType: "Media",
+														MediaURLs: ListOfMediaLinks
+													})
+												} else {
+													//Potential quotes here
+													let NodeOfQuotedPost_Testing = DescendNode(PostPart1, [0,0,0,3])
+													if (NodeOfQuotedPost_Testing.IsSuccessful) {
+														if (NodeOfQuotedPost_Testing.OutputNode.dataset.tooltip != "") {
+															AttachmentType = "Quote"
+														}
+													}
+													
+													if (AttachmentType == "Quote") {
+														//PostPart1.childNodes[0].childNodes[0].childNodes[0].childNodes[3].href
+														let PostURL = HttpToTtp(DescendNode(PostPart1, [0,0,0,3]).OutputNode.href)
+														
+														//PostPart1.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].textContent
+														let Usertitle = DescendNode(PostPart1, [0,0,0,1,0,0]).OutputNode.textContent
+														
+														//PostPart1.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].innerText
+														let UserHandle = DescendNode(PostPart1, [0,0,0,1,0,2]).OutputNode.innerText
+														
+														//PostPart1.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+														let NodeOfAvatarImg = DescendNode(PostPart1, [0,0,0,0,0,0,1])
+														if (NodeOfAvatarImg.IsSuccessful) {
+															let UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
+														}
+														
+														//PostPart1.childNodes[0].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
+														let PostTimeStamp = PostDateInfo(DescendNode(PostPart1, [0,0,0,3]).OutputNode.dataset.tooltip)
+														
+														//PostPart1.childNodes[0].childNodes[1].textContent
+														let Text = DescendNode(PostPart1, [0,1]).OutputNode.textContent
+														
+														//PostPart1.childNodes[0].childNodes[2]
+														let Media = GetMediaURLs(DescendNode(PostPart1, [0,2]).OutputNode)
+														
+														let a = 0
+														PostAttachments.push({
+															AttachmentType: AttachmentType,
+															PostURL: PostURL,
+															UserTitle: UserTitle,
+															UserHandle: UserHandle,
+															UserAvatar: UserAvatar,
+															PostTimeStamp: PostTimeStamp,
+															Text: Text,
+															Media: Media
+														})
+													}
+												}
+											})
+										}
+									})
+									
+								}
+								
+								let a = 0
+							}
+							if (/^Post_/.test(Type)) {
 								PostGroup.push({
 									RepostedByUserTitle: RepostedByUserTitle,
 									PostURL: PostURL,
@@ -538,7 +621,8 @@
 									UserHandle: UserHandle,
 									UserAvatar: UserAvatar,
 									PostTimeStamp: PostTimeStamp,
-									PostContentParts: PostContentParts,
+									PostContentText: PostContentText,
+									PostAttachments: PostAttachments,
 									ReplyCount: ReplyCount,
 									RepostCount: RepostCount,
 									LikesCount: LikesCount
@@ -578,7 +662,6 @@
 						}
 						ListOfPosts.push(...PostGroup)
 					}
-					
 					let ListOfPosts_Clean = ListOfPosts.map((ArrayElement) => { //Have a version without ReplyConnections attribute since we do not need it if we are just looking at posts
 						return {
 							RepostedByUserTitle: ArrayElement.RepostedByUserTitle,
@@ -635,7 +718,7 @@
 			let ListOfElements = Array.from(document.getElementsByTagName("DIV"))
 			let BoxList = []
 			ListOfElements.find((ArrayElement) => { //Search all the div
-				if (!/^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d+, \d+ at \d+:\d+ (?:A|P)M$/.test(ArrayElement.innerText)) { //Is the text the timestamp? (must be the outermost div that contains *JUST* the date when "innerText"'ed)
+				if (!/^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d+, \d+ at \d+:\d+ (?:A|P)M$/.test(ArrayElement.innerHTML)) { //Is the text the timestamp? (must be the innermost div that contains *JUST* the date)
 					return false
 				}
 				let ReferenceNode = AscendNode(ArrayElement, Levels)
@@ -702,7 +785,8 @@
 			}
 			return {
 				OutputNode: CurrentNode,
-				LevelsPassed: ParentCount
+				LevelsPassed: ParentCount,
+				IsSuccessful: (ParentCount == LevelsArray.length)
 			}
 		}
 		function GetMediaURLs(Node) {
