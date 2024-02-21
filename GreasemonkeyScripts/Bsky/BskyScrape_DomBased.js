@@ -457,9 +457,19 @@
 								})
 								
 								//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[3].childNodes[0]
-								let NodeOfReplyRepostLikes = DescendNode(Box, [0,0,1,3,0])
-								let NodeOfReplyRepostLikes_Array = NodeOfReplyRepostLikes.OutputNode.childNodes
 								
+								
+								let NodeOfReplyRepostLikes_Array = []
+								let NodeOfReplyRepostLikes = DescendNode(Box, [0,0,1,3,0])
+								NodeOfReplyRepostLikes_Array = NodeOfReplyRepostLikes.OutputNode.childNodes
+								
+								//https://bsky.app/profile/dumjaveln.bsky.social/post/3kls5tyrvdd2v
+								//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[2].childNodes[0].childNodes
+								let AlternativeRepliesRepostLikes = DescendNode(Box, [0,0,1,2,0])
+								if (AlternativeRepliesRepostLikes.IsSuccessful) {
+									NodeOfReplyRepostLikes_Array = Array.from(AlternativeRepliesRepostLikes.OutputNode.childNodes)
+									
+								}
 								ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText
 								RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
 								LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
