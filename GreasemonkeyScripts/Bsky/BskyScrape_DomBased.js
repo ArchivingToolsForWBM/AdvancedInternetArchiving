@@ -325,11 +325,7 @@
 							let UserHandle = ""
 							let UserAvatar = ""
 							let PostTimeStamp = {}
-							let PostContentText = {
-								Text: "",
-								Links: []
-							}
-							let PostAttachments = []
+							let PostContent = {}
 							let ReplyCount = ""
 							let RepostCount = ""
 							let LikesCount = ""
@@ -354,126 +350,22 @@
 								
 								let NodeOfPostContent = DescendNode(Box, [0,0,1,0])
 								if (NodeOfPostContent.IsSuccessful) {
-									GetPostContent(NodeOfPostContent.OutputNode)
+									PostContent = GetPostContent(NodeOfPostContent.OutputNode)
 								}
 								
-								//asdf
-//								//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0]
-//								let NodeOfPostContentText = DescendNode(Box, [0,0,1,0,0,0])
-//								if (NodeOfPostContentText.IsSuccessful) {
-//									PostContentText.Text = NodeOfPostContentText.OutputNode.textContent
-//									PostContentText.Links = GetLinksURLs(NodeOfPostContentText.OutputNode)
-//								}
-//								
-//								//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[0].childNodes[0]
-//								let NodeOfPostContentAttachments_Array = []
-//								let NodeOfPostContentAttachments = DescendNode(Box, [0,0,1,0,1,0])
-//								if (NodeOfPostContentAttachments.IsSuccessful) {
-//									//Box.childNodes[0].childNodes[0] - root of post
-//									//Box.childNodes[0].childNodes[0].childNodes[0] - header
-//									//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0] - avatar
-//									//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1] - Title and name
-//									//Box.childNodes[0].childNodes[0].childNodes[1] - Post including footer
-//									//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[0] - post
-//									//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[x] - post parts
-//									//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[x].childNodes[x].childNodes[x] - quoted posts and image
-//									//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1] - date and timestamp
-//									//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[2] - reposts and likes
-//									//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[3] - footer (replies, reposts, and likes)
-//									//
-//									//
-//									//
-//									NodeOfPostContentAttachments_Array = Array.from(NodeOfPostContentAttachments.OutputNode.childNodes)
-//								} else {
-//									//https://bsky.app/profile/monokobold.bsky.social/post/3kkz6pkeazz2c
-//									//Post only containing media with no text at all
-//									//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[0]
-//									//
-//									//It's Layout:
-//									//Box.childNodes[0].childNodes[0] - root of the post
-//									//Box.childNodes[0].childNodes[0].childNodes[0] - header
-//									//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0] - avatar
-//									//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1] - Title and name
-//									//Box.childNodes[0].childNodes[0].childNodes[1] - Post including footer
-//									//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[0] - post
-//									//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1] - date and timestamp
-//									//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[2] - reposts and likes
-//									//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[3] - footer (replies, reposts, and likes)
-//									NodeOfPostContentAttachments = DescendNode(Box, [0,0,1,0])
-//									NodeOfPostContentAttachments_Array = Array.from(NodeOfPostContentAttachments.OutputNode.childNodes)
-//								}
-//								NodeOfPostContentAttachments_Array.forEach((PostPart) => {
-//									if (PostPart.textContent == "") {
-//										//media (no text)
-//										let ListOfMediaLinks = GetMediaURLs(PostPart)
-//										PostAttachments.push({
-//											AttachmentType: "Media",
-//											MediaURLs: ListOfMediaLinks
-//										})
-//									} else {
-//										let a = 0
-//										let AttachmentType = ""
-//										
-//										//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[3]
-//										let NodeOfQuotedPost_Testing = DescendNode(PostPart, [0,0,0,3])
-//										if (NodeOfQuotedPost_Testing.IsSuccessful) {
-//											if (NodeOfQuotedPost_Testing.OutputNode.dataset.tooltip != "") {
-//												AttachmentType = "Quote"
-//											}
-//										}
-//										
-//										if (AttachmentType == "Quote") {
-//											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[3].href
-//											let PostURL = HttpToTtp(DescendNode(PostPart, [0,0,0,3]).OutputNode.href)
-//											
-//											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].textContent
-//											let Usertitle = DescendNode(PostPart, [0,0,0,1,0,0]).OutputNode.textContent
-//											
-//											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].innerText
-//											let UserHandle = DescendNode(PostPart, [0,0,0,1,0,2]).OutputNode.innerText
-//											
-//											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-//											let NodeOfAvatarImg = DescendNode(PostPart, [0,0,0,0,0,0,1])
-//											if (NodeOfAvatarImg.IsSuccessful) {
-//												let UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
-//											}
-//											
-//											//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
-//											let PostTimeStamp = PostDateInfo(DescendNode(PostPart, [0,0,0,3]).OutputNode.dataset.tooltip)
-//											
-//											//PostPart.childNodes[0].childNodes[1].textContent
-//											let Text = DescendNode(PostPart, [0,1]).OutputNode.textContent
-//											
-//											//PostPart.childNodes[0].childNodes[2]
-//											let Media = GetMediaURLs(DescendNode(PostPart, [0,2]).OutputNode)
-//											
-//											let a = 0
-//											PostAttachments.push({
-//												AttachmentType: AttachmentType,
-//												PostURL: PostURL,
-//												UserTitle: UserTitle,
-//												UserHandle: UserHandle,
-//												UserAvatar: UserAvatar,
-//												PostTimeStamp: PostTimeStamp,
-//												Text: Text,
-//												Media: Media
-//											})
-//										}
-//									}
-//								})
-								
-								//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[3].childNodes[0]
 								
 								
 								let NodeOfReplyRepostLikes_Array = []
-								let NodeOfReplyRepostLikes = DescendNode(Box, [0,0,1,3,0])
-								NodeOfReplyRepostLikes_Array = NodeOfReplyRepostLikes.OutputNode.childNodes
-								
-								//https://bsky.app/profile/dumjaveln.bsky.social/post/3kls5tyrvdd2v
-								//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[2].childNodes[0].childNodes
-								let AlternativeRepliesRepostLikes = DescendNode(Box, [0,0,1,2,0])
-								if (AlternativeRepliesRepostLikes.IsSuccessful) {
-									NodeOfReplyRepostLikes_Array = Array.from(AlternativeRepliesRepostLikes.OutputNode.childNodes)
+								//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[N]
+								//where N is the last element because sometimes a post have duplicate counts between the date and timestamp at the bottom
+								let NodeOfFoooter = DescendNode(Box, [0,0,1])
+								if (NodeOfFoooter.IsSuccessful) {
+									let LastNode = Array.from(NodeOfFoooter.OutputNode.childNodes).at(-1)
+									let NodeOfFooterDeepest = DescendNode(LastNode, [0])
+									if (NodeOfFooterDeepest.IsSuccessful) {
+										NodeOfReplyRepostLikes_Array = Array.from(NodeOfFooterDeepest.OutputNode.childNodes)
+										let a = 0
+									}
 									
 								}
 								ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText
@@ -508,31 +400,12 @@
 								//Box.childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].innerText
 								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,1,1,1,0]).OutputNode.innerText)
 								
-								//Box.childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes
-								let NodeOfPostContentAttachments = DescendNode(Box, [0,1,1,0])
-								if (NodeOfPostContentAttachments.IsSuccessful) {
-									NodeOfPostContentAttachments_Array = Array.from(NodeOfPostContentAttachments.OutputNode.childNodes)
-									NodeOfPostContentAttachments_Array.shift()
-									
-									//Box.childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0]
-									let NodeOfPostContentText = DescendNode(Box, [0,1,1,0,0,0])
-									if (NodeOfPostContentText.IsSuccessful) {
-										PostContentText.Text = NodeOfPostContentText.OutputNode.textContent
-										PostContentText.Links = GetLinksURLs(NodeOfPostContentText.OutputNode)
-									}
-									NodeOfPostContentAttachments_Array.forEach((PostPart) => {
-										if (PostPart.textContent == "") {
-											//media (no text)
-											let ListOfMediaLinks = GetMediaURLs(PostPart)
-											PostAttachments.push({
-												AttachmentType: "Media",
-												MediaURLs: ListOfMediaLinks
-											})
-										} else {
-											//Potential quotes here
-										}
-									})
+								//asdf
+								let NodeOfPostContent = DescendNode(Box, [0,0,1,0])
+								if (NodeOfPostContent.IsSuccessful) {
+									PostContent = GetPostContent(NodeOfPostContent.OutputNode)
 								}
+								
 								
 								//Box.childNodes[0].childNodes[1].childNodes[1] - get the footer (position varies)
 								let PostFooter = Array.from(DescendNode(Box, [0,1,1]).OutputNode.childNodes)
@@ -579,6 +452,7 @@
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
 								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,0,0,0,1,1,0,2]).OutputNode.dataset.tooltip)
 								
+								//asdf
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].textContent
 								let NodeOfPostContentText = DescendNode(Box, [0,0,0,0,1,1,1,0])
@@ -587,88 +461,14 @@
 									PostContentText.Links = GetLinksURLs(NodeOfPostContentText.OutputNode)
 								}
 								
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes
-								let NodeOfPostContentAttachments = DescendNode(Box, [0,0,0,0,1,1])
-								if (NodeOfPostContentAttachments.IsSuccessful) {
-									let PostArrayIncludingHeaderAndFooter =  Array.from(NodeOfPostContentAttachments.OutputNode.childNodes)
-									let NodeOfPostContentAttachments_Array = PostArrayIncludingHeaderAndFooter.slice(2, PostArrayIncludingHeaderAndFooter.length-1)
-									
-									NodeOfPostContentAttachments_Array.forEach((PostPart) => {
-										let EvenInnerContentAttachements = DescendNode(PostPart, [0])
-										if (EvenInnerContentAttachements.IsSuccessful) {
-											//See this: https://bsky.app/profile/gladpackad.bsky.social/post/3klkha5ynic24 with the top post not having focus.
-											EvenInnerContentAttachements_Array = Array.from(EvenInnerContentAttachements.OutputNode.childNodes)
-											EvenInnerContentAttachements_Array.forEach((PostPart1) => {
-												if (PostPart1.textContent == "") {
-													//media (no text)
-													let ListOfMediaLinks = GetMediaURLs(PostPart1)
-													PostAttachments.push({
-														AttachmentType: "Media",
-														MediaURLs: ListOfMediaLinks
-													})
-												} else {
-													//Potential quotes here
-													let NodeOfQuotedPost_Testing = DescendNode(PostPart1, [0,0,0,3])
-													if (NodeOfQuotedPost_Testing.IsSuccessful) {
-														if (NodeOfQuotedPost_Testing.OutputNode.dataset.tooltip != "") {
-															AttachmentType = "Quote"
-														}
-													}
-													
-													if (AttachmentType == "Quote") {
-														//PostPart1.childNodes[0].childNodes[0].childNodes[0].childNodes[3].href
-														let PostURL = HttpToTtp(DescendNode(PostPart1, [0,0,0,3]).OutputNode.href)
-														
-														//PostPart1.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].textContent
-														let Usertitle = DescendNode(PostPart1, [0,0,0,1,0,0]).OutputNode.textContent
-														
-														//PostPart1.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].innerText
-														let UserHandle = DescendNode(PostPart1, [0,0,0,1,0,2]).OutputNode.innerText
-														
-														//PostPart1.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-														let NodeOfAvatarImg = DescendNode(PostPart1, [0,0,0,0,0,0,1])
-														if (NodeOfAvatarImg.IsSuccessful) {
-															let UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
-														}
-														
-														//PostPart1.childNodes[0].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
-														let PostTimeStamp = PostDateInfo(DescendNode(PostPart1, [0,0,0,3]).OutputNode.dataset.tooltip)
-														
-														//PostPart1.childNodes[0].childNodes[1].textContent
-														let Text = DescendNode(PostPart1, [0,1]).OutputNode.textContent
-														
-														//PostPart1.childNodes[0].childNodes[2]
-														let Media = GetMediaURLs(DescendNode(PostPart1, [0,2]).OutputNode)
-														
-														let a = 0
-														PostAttachments.push({
-															AttachmentType: AttachmentType,
-															PostURL: PostURL,
-															UserTitle: UserTitle,
-															UserHandle: UserHandle,
-															UserAvatar: UserAvatar,
-															PostTimeStamp: PostTimeStamp,
-															Text: Text,
-															Media: Media
-														})
-													}
-												}
-											})
-										}
-										let a = 0
-										//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[3].childNodes
-										let PostFooterNode = DescendNode(Box, [0,0,0,0,1,1,3])
-										if (PostFooterNode.IsSuccessful) {
-											PostFooterNode_Array = Array.from(PostFooterNode.OutputNode.childNodes)
-											ReplyCount = PostFooterNode_Array[0].innerText
-											RepostCount = PostFooterNode_Array[1].innerText
-											LikesCount = PostFooterNode_Array[2].innerText
-										}
-									})
-									
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[3].childNodes
+								let PostFooterNode = DescendNode(Box, [0,0,0,0,1,1,3])
+								if (PostFooterNode.IsSuccessful) {
+									PostFooterNode_Array = Array.from(PostFooterNode.OutputNode.childNodes)
+									ReplyCount = PostFooterNode_Array[0].innerText
+									RepostCount = PostFooterNode_Array[1].innerText
+									LikesCount = PostFooterNode_Array[2].innerText
 								}
-								
-								let a = 0
 							}
 							if (/^Post_/.test(Type)) {
 								PostGroup.push({
@@ -686,8 +486,7 @@
 									UserHandle: UserHandle,
 									UserAvatar: UserAvatar,
 									PostTimeStamp: PostTimeStamp,
-									PostContentText: PostContentText,
-									PostAttachments: PostAttachments,
+									PostContent: PostContent,
 									ReplyCount: ReplyCount,
 									RepostCount: RepostCount,
 									LikesCount: LikesCount
