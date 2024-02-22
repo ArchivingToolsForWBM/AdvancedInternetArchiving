@@ -937,40 +937,10 @@
 										ContentType: "Attachment",
 										Content: SubBoxesContent
 									})
-								} else { //Link to external site, have a preview of the page
-									let a = 0
+								} else { //Link to external site, have a preview of the page, e.g. https://bsky.app/profile/pappahutten.bsky.social/post/3klxhuy6wbc2h
 									let LinkPreview = Node_QuoteSubBox.OutputNode
-									let LinkPreviewObject = {
-										ContentType: "LinkPreview",
-										LinkTo: HttpToTtp(LinkPreview.href)
-									}
-									let ImagePreviewURL = ""
-									
-									//LinkPreview.childNodes[0].childNodes[0].childNodes[0].childNodes[0]
-									let NodeOfImage = DescendNode(LinkPreview, [0,0,0,0])
-									if (NodeOfImage.IsSuccessful) {
-										if (NodeOfImage.OutputNode.tagName == "IMG") {
-											ImagePreviewURL = HttpToTtp(FullResConvert(NodeOfImage.OutputNode.src))
-										}
-									}
-									LinkPreviewObject.ImagePreviewURL = ImagePreviewURL
-									
-									//LinkPreview.childNodes[0].childNodes[1] - text content
-									let NodeOfTextContent_LinkPreview = DescendNode(LinkPreview, [0,1])
-									if (NodeOfTextContent_LinkPreview.IsSuccessful) {
-										let TextArray = Array.from(NodeOfTextContent_LinkPreview.OutputNode.childNodes)
-										TextArray.forEach((Part, Index) => {
-											if (Index == 0) {
-												LinkPreviewObject.ExternalLink_DomainName = Part.innerText
-											} else if (Index == 1) {
-												LinkPreviewObject.ExternalLink_Title = Part.innerText
-												
-											} else {
-												LinkPreviewObject.ExternalLink_PreviewTextContent = Part.innerText
-											}
-										})
-									}
-									
+									let LinkPreviewObject = LinkPreviewNodeToJson(LinkPreview)
+									let a = 0
 									PostContent.Segments.push(LinkPreviewObject)
 								}
 							}
@@ -984,5 +954,38 @@
 				}
 			})
 			return PostContent
+		}
+		function LinkPreviewNodeToJson(Node) {
+			let LinkPreviewObject = {
+				ContentType: "LinkPreview",
+				LinkTo: HttpToTtp(Node.href)
+			}
+			let ImagePreviewURL = ""
+			
+			//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[0]
+			let NodeOfImage = DescendNode(Node, [0,0,0,0])
+			if (NodeOfImage.IsSuccessful) {
+				if (NodeOfImage.OutputNode.tagName == "IMG") {
+					ImagePreviewURL = HttpToTtp(FullResConvert(NodeOfImage.OutputNode.src))
+				}
+			}
+			LinkPreviewObject.ImagePreviewURL = ImagePreviewURL
+			
+			//Node.childNodes[0].childNodes[1] - text content
+			let NodeOfTextContent_LinkPreview = DescendNode(Node, [0,1])
+			if (NodeOfTextContent_LinkPreview.IsSuccessful) {
+				let TextArray = Array.from(NodeOfTextContent_LinkPreview.OutputNode.childNodes)
+				TextArray.forEach((Part, Index) => {
+					if (Index == 0) {
+						LinkPreviewObject.ExternalLink_DomainName = Part.innerText
+					} else if (Index == 1) {
+						LinkPreviewObject.ExternalLink_Title = Part.innerText
+						
+					} else {
+						LinkPreviewObject.ExternalLink_PreviewTextContent = Part.innerText
+					}
+				})
+			}
+			return LinkPreviewObject
 		}
 })();
