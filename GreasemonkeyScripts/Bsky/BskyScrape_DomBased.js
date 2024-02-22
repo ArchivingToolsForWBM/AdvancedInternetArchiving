@@ -218,30 +218,35 @@
 												let LastNode = Array.from(NodeOfFoooter.OutputNode.childNodes).at(-1)
 												NodeOfReplyRepostLikes_Array = Array.from(LastNode.childNodes)
 											}
-											ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText
-											RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
-											LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
+											if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
+												ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText //prone to errors
+												RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
+												LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
+											}
+											
 										}
-										PostGroup.push({
-											RepostedByUserTitle: RepostedByUserTitle,
-											PostURL: PostURL,
-											ReplyConnections: {
-												PostHasRepliesLineBelow: PostHasRepliesLineBelow,
-												PostIsAReplyLineToAbove: PostIsAReplyLineToAbove,
-												IsCurrentPostURL: IsCurrentPostURL,
-												IsViewFullThread: false
-											},
-											ReplyToURL: ReplyToURL,
-											RepliesURLs: RepliesURLs,
-											UserTitle: UserTitle,
-											UserHandle: UserHandle,
-											UserAvatar: UserAvatar,
-											PostTimeStamp: PostTimeStamp,
-											PostContent: PostContent,
-											ReplyCount: ReplyCount,
-											RepostCount: RepostCount,
-											LikesCount: LikesCount
-										})
+										if (PostURL != "") {
+											PostGroup.push({
+												RepostedByUserTitle: RepostedByUserTitle,
+												PostURL: PostURL,
+												ReplyConnections: {
+													PostHasRepliesLineBelow: PostHasRepliesLineBelow,
+													PostIsAReplyLineToAbove: PostIsAReplyLineToAbove,
+													IsCurrentPostURL: IsCurrentPostURL,
+													IsViewFullThread: false
+												},
+												ReplyToURL: ReplyToURL,
+												RepliesURLs: RepliesURLs,
+												UserTitle: UserTitle,
+												UserHandle: UserHandle,
+												UserAvatar: UserAvatar,
+												PostTimeStamp: PostTimeStamp,
+												PostContent: PostContent,
+												ReplyCount: ReplyCount,
+												RepostCount: RepostCount,
+												LikesCount: LikesCount
+											})
+										}
 									} else {
 										//Post ommitted in between (a non-post array element saying "View full thread")
 										//We need this object in the array, then reply-connect-detect,
@@ -347,9 +352,12 @@
 										NodeOfReplyRepostLikes_Array = Array.from(NodeOfFooterDeepest.OutputNode.childNodes)
 									}
 								}
-								ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText
-								RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
-								LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
+								if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
+									ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText //prone to errors
+									RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
+									LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
+								}
+								
 								
 							} else if (Type == "Post_CurrentlyViewed_NotAtTop") {
 								PostURL = HttpToTtp(window.location.href)
@@ -391,9 +399,11 @@
 								PostFooter = PostFooter.at(-1)
 								NodeOfReplyRepostLikes_Array = Array.from(DescendNode(PostFooter, [0]).OutputNode.childNodes)
 								
-								ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText
-								RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
-								LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
+								if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
+									ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText //prone to errors
+									RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
+									LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
+								}
 								let a = 0
 							} else if (Type == "Post_NotCurrentlyViewed") {
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].href
@@ -446,12 +456,14 @@
 									NodeOfReplyRepostLikes_Array = Array.from(NodeOfFooterDeepest.childNodes)
 									
 								}
-								ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText
-								RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
-								LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
+								if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
+									ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText //prone to errors
+									RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
+									LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
+								}
 								
 							}
-							if (/^Post_/.test(Type)) {
+							if (/^Post_/.test(Type) && (PostURL != "")) {
 								PostGroup.push({
 									RepostedByUserTitle: RepostedByUserTitle,
 									PostURL: PostURL,
