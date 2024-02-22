@@ -883,7 +883,7 @@
 													//SubBox.childNodes[0] - header
 													//SubBox.childNodes[1+] - content
 													//
-													//https://bsky.app/profile/anyainlove.bsky.social/post/3klxhf4wnoi2z
+													//https://bsky.app/profile/anyainlove.bsky.social/post/3klxhf4wnoi2z - postception
 													//
 													let PostURL = HttpToTtp(NodeOfPostDate1.OutputNode.href)
 													
