@@ -827,115 +827,152 @@
 							//https://bsky.app/profile/dumjaveln.bsky.social/post/3klkgthv63q2z quoted post
 							let Node_QuoteSubBox = DescendNode(PostSegment, [0]) //Go down a div level
 							if (Node_QuoteSubBox.IsSuccessful) {
-								let SubBoxesContent = []
-								let SubBoxes = Array.from(Node_QuoteSubBox.OutputNode.childNodes)
-								SubBoxes.forEach((SubBox) => { //Loop each inner boxes (text, images, quotes)
-									if (SubBox.innerText != "") {
-										//Test if there is a post date
-										//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
-										let NodeOfPostDate = DescendNode(SubBox, [0,0,0,3])
-										
-										//SubBox.childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
-										//https://bsky.app/profile/kimscaravelli.bsky.social/post/3klaue65stp2x
-										let NodeOfPostDate1 = DescendNode(SubBox, [0,0,3])
-										
-										
-										if (NodeOfPostDate.IsSuccessful) { //This HAS to be a quote (if attachments have both a media and a quote, thus both wrapped in a div)
-											if (NodeOfPostDate.OutputNode.dataset.tooltip != "") { //If has a date
-												let PostURL = HttpToTtp(NodeOfPostDate.OutputNode.href)
-												
-												//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0]
-												let UserTitle = DescendNode(SubBox, [0,0,0,1,0,0]).OutputNode.textContent
-												
-												//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].innerText
-												let UserHandle = DescendNode(SubBox, [0,0,0,1,0,2]).OutputNode.innerText
-												
-												//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-												let UserAvatar = ""
-												let NodeOfAvatarImg = DescendNode(SubBox, [0,0,0,0,0,0,1])
-												if (NodeOfAvatarImg.IsSuccessful) {
-													UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
+								if (Node_QuoteSubBox.OutputNode.tagName != "A") {
+									let SubBoxesContent = []
+									let SubBoxes = Array.from(Node_QuoteSubBox.OutputNode.childNodes)
+									SubBoxes.forEach((SubBox) => { //Loop each inner boxes (text, images, quotes)
+										if (SubBox.innerText != "") {
+											//Test if there is a post date
+											//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
+											let NodeOfPostDate = DescendNode(SubBox, [0,0,0,3])
+											
+											//SubBox.childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
+											//https://bsky.app/profile/kimscaravelli.bsky.social/post/3klaue65stp2x
+											let NodeOfPostDate1 = DescendNode(SubBox, [0,0,3])
+											
+											
+											if (NodeOfPostDate.IsSuccessful) { //This HAS to be a quote (if attachments have both a media and a quote, thus both wrapped in a div)
+												if (NodeOfPostDate.OutputNode.dataset.tooltip != "") { //If has a date
+													let PostURL = HttpToTtp(NodeOfPostDate.OutputNode.href)
+													
+													//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0]
+													let UserTitle = DescendNode(SubBox, [0,0,0,1,0,0]).OutputNode.textContent
+													
+													//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].innerText
+													let UserHandle = DescendNode(SubBox, [0,0,0,1,0,2]).OutputNode.innerText
+													
+													//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+													let UserAvatar = ""
+													let NodeOfAvatarImg = DescendNode(SubBox, [0,0,0,0,0,0,1])
+													if (NodeOfAvatarImg.IsSuccessful) {
+														UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
+													}
+													
+													let PostTimeStamp = PostDateInfo(NodeOfPostDate.OutputNode.dataset.tooltip)
+													
+													//SubBox.childNodes[0].childNodes[1].childNodes[0].textContent
+													let PostContentText = ""
+													let NodeOfPostContentText = DescendNode(SubBox, [0,1,0])
+													if (NodeOfPostContentText.IsSuccessful) {
+														PostContentText = NodeOfPostContentText.OutputNode.textContent
+													}
+													
+													let a = 0
+													SubBoxesContent.push({
+														ContentType: "Quote",
+														PostURL: PostURL,
+														UserTitle: UserTitle,
+														UserHandle: UserHandle,
+														UserAvatar: UserAvatar,
+														PostTimeStamp: PostTimeStamp,
+														PostContentText: PostContentText
+													})
 												}
-												
-												let PostTimeStamp = PostDateInfo(NodeOfPostDate.OutputNode.dataset.tooltip)
-												
-												//SubBox.childNodes[0].childNodes[1].childNodes[0].textContent
-												let PostContentText = ""
-												let NodeOfPostContentText = DescendNode(SubBox, [0,1,0])
-												if (NodeOfPostContentText.IsSuccessful) {
-													PostContentText = NodeOfPostContentText.OutputNode.textContent
+											} else if (NodeOfPostDate1.IsSuccessful) { //If there is only a single attachment, then this isn't div-wrapped
+												if (NodeOfPostDate1.OutputNode.dataset.tooltip != "") {
+													//SubBox.childNodes[0] - header
+													//SubBox.childNodes[1+] - content
+													//
+													//https://bsky.app/profile/anyainlove.bsky.social/post/3klxhf4wnoi2z
+													//
+													let PostURL = HttpToTtp(NodeOfPostDate1.OutputNode.href)
+													
+													//SubBox.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].textContent
+													let UserTitle = DescendNode(SubBox, [0,0,1,0,0]).OutputNode.textContent
+													
+													//SubBox.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].innerText
+													let UserHandle = DescendNode(SubBox, [0,0,1,0,2]).OutputNode.textContent
+													
+													//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+													let UserAvatar = ""
+													let NodeOfAvatarImg = DescendNode(SubBox, [0,0,0,0,0,1])
+													if (NodeOfAvatarImg.IsSuccessful) {
+														UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
+													}
+													
+													let PostTimeStamp = PostDateInfo(NodeOfPostDate1.OutputNode.dataset.tooltip)
+													
+													//SubBox.childNodes[1+]
+													//https://bsky.app/profile/dumjaveln.bsky.social/post/3kls5tyrvdd2v
+													
+													//SubBox.childNodes[1].childNodes[0].textContent
+													let PostContentText = ""
+													let NodeOfPostContentText = DescendNode(SubBox, [1,0])
+													if (NodeOfPostContentText.IsSuccessful) {
+														PostContentText = NodeOfPostContentText.OutputNode.textContent
+													}
+													
+													
+													SubBoxesContent.push({
+														ContentType: "Quote",
+														PostURL: PostURL,
+														UserTitle: UserTitle,
+														UserHandle: UserHandle,
+														UserAvatar: UserAvatar,
+														PostTimeStamp: PostTimeStamp,
+														PostContentText: PostContentText
+													})
 												}
-												
-												let a = 0
-												SubBoxesContent.push({
-													ContentType: "Quote",
-													PostURL: PostURL,
-													UserTitle: UserTitle,
-													UserHandle: UserHandle,
-													UserAvatar: UserAvatar,
-													PostTimeStamp: PostTimeStamp,
-													PostContentText: PostContentText
-												})
 											}
-										} else if (NodeOfPostDate1.IsSuccessful) { //If there is only a single attachment, then this isn't div-wrapped
-											if (NodeOfPostDate1.OutputNode.dataset.tooltip != "") {
-												//SubBox.childNodes[0] - header
-												//SubBox.childNodes[1+] - content
-												//
-												//
-												//
-												let PostURL = HttpToTtp(NodeOfPostDate1.OutputNode.href)
-												
-												//SubBox.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].textContent
-												let UserTitle = DescendNode(SubBox, [0,0,1,0,0]).OutputNode.textContent
-												
-												//SubBox.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].innerText
-												let UserHandle = DescendNode(SubBox, [0,0,1,0,2]).OutputNode.textContent
-												
-												//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-												let UserAvatar = ""
-												let NodeOfAvatarImg = DescendNode(SubBox, [0,0,0,0,0,1])
-												if (NodeOfAvatarImg.IsSuccessful) {
-													UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
-												}
-												
-												let PostTimeStamp = PostDateInfo(NodeOfPostDate1.OutputNode.dataset.tooltip)
-												
-												//SubBox.childNodes[1+]
-												//https://bsky.app/profile/dumjaveln.bsky.social/post/3kls5tyrvdd2v
-												
-												//SubBox.childNodes[1].childNodes[0].textContent
-												let PostContentText = ""
-												let NodeOfPostContentText = DescendNode(SubBox, [1,0])
-												if (NodeOfPostContentText.IsSuccessful) {
-													PostContentText = NodeOfPostContentText.OutputNode.textContent
-												}
-												
-												
-												SubBoxesContent.push({
-													ContentType: "Quote",
-													PostURL: PostURL,
-													UserTitle: UserTitle,
-													UserHandle: UserHandle,
-													UserAvatar: UserAvatar,
-													PostTimeStamp: PostTimeStamp,
-													PostContentText: PostContentText
-												})
-											}
+										} else {
+											//Post has quotes and media
+											SubBoxesContent.push({
+												ContentType: "Media",
+												MediaURLs: GetMediaURLs(SubBox)
+											})
 										}
-									} else {
-										//Post has quotes and media
-										SubBoxesContent.push({
-											ContentType: "Media",
-											MediaURLs: GetMediaURLs(SubBox)
+										let a = 0
+									})
+									PostContent.Segments.push({
+										ContentType: "Attachment",
+										Content: SubBoxesContent
+									})
+								} else { //Link to external site, have a preview of the page
+									let a = 0
+									let LinkPreview = Node_QuoteSubBox.OutputNode
+									let LinkPreviewObject = {
+										ContentType: "LinkPreview",
+										LinkTo: HttpToTtp(LinkPreview.href)
+									}
+									let ImagePreviewURL = ""
+									
+									//LinkPreview.childNodes[0].childNodes[0].childNodes[0].childNodes[0]
+									let NodeOfImage = DescendNode(LinkPreview, [0,0,0,0])
+									if (NodeOfImage.IsSuccessful) {
+										if (NodeOfImage.OutputNode.tagName == "IMG") {
+											ImagePreviewURL = HttpToTtp(FullResConvert(NodeOfImage.OutputNode.src))
+										}
+									}
+									LinkPreviewObject.ImagePreviewURL = ImagePreviewURL
+									
+									//LinkPreview.childNodes[0].childNodes[1] - text content
+									let NodeOfTextContent_LinkPreview = DescendNode(LinkPreview, [0,1])
+									if (NodeOfTextContent_LinkPreview.IsSuccessful) {
+										let TextArray = Array.from(NodeOfTextContent_LinkPreview.OutputNode.childNodes)
+										TextArray.forEach((Part, Index) => {
+											if (Index == 0) {
+												LinkPreviewObject.ExternalLink_DomainName = Part.innerText
+											} else if (Index == 1) {
+												LinkPreviewObject.ExternalLink_Title = Part.innerText
+												
+											} else {
+												LinkPreviewObject.ExternalLink_PreviewTextContent = Part.innerText
+											}
 										})
 									}
-									let a = 0
-								})
-								PostContent.Segments.push({
-									ContentType: "Attachment",
-									Content: SubBoxesContent
-								})
+									
+									PostContent.Segments.push(LinkPreviewObject)
+								}
 							}
 						}
 					}
