@@ -364,7 +364,6 @@
 									let NodeOfFooterDeepest = DescendNode(LastNode, [0])
 									if (NodeOfFooterDeepest.IsSuccessful) {
 										NodeOfReplyRepostLikes_Array = Array.from(NodeOfFooterDeepest.OutputNode.childNodes)
-										let a = 0
 									}
 									
 								}
@@ -400,12 +399,12 @@
 								//Box.childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].innerText
 								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,1,1,1,0]).OutputNode.innerText)
 								
-								//asdf
-								let NodeOfPostContent = DescendNode(Box, [0,0,1,0])
+
+								//Box.childNodes[0].childNodes[1].childNodes[1].childNodes[0]
+								let NodeOfPostContent = DescendNode(Box, [0,1,1,0])
 								if (NodeOfPostContent.IsSuccessful) {
-									PostContent = GetPostContent(NodeOfPostContent.OutputNode)
+									PostContent = GetPostContent(NodeOfPostContent.OutputNode, Type)
 								}
-								
 								
 								//Box.childNodes[0].childNodes[1].childNodes[1] - get the footer (position varies)
 								let PostFooter = Array.from(DescendNode(Box, [0,1,1]).OutputNode.childNodes)
@@ -453,22 +452,25 @@
 								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,0,0,0,1,1,0,2]).OutputNode.dataset.tooltip)
 								
 								//asdf
-								
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].textContent
-								let NodeOfPostContentText = DescendNode(Box, [0,0,0,0,1,1,1,0])
-								if (NodeOfPostContentText.IsSuccessful) {
-									PostContentText.Text = NodeOfPostContentText.OutputNode.textContent
-									PostContentText.Links = GetLinksURLs(NodeOfPostContentText.OutputNode)
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1] - This also contains the header and footer...
+								let NodeOfPostContent = DescendNode(Box, [0,0,0,0,1,1])
+								if (NodeOfPostContent.IsSuccessful) {
+									PostContent = GetPostContent(NodeOfPostContent.OutputNode, Type)
 								}
 								
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[3].childNodes
-								let PostFooterNode = DescendNode(Box, [0,0,0,0,1,1,3])
-								if (PostFooterNode.IsSuccessful) {
-									PostFooterNode_Array = Array.from(PostFooterNode.OutputNode.childNodes)
-									ReplyCount = PostFooterNode_Array[0].innerText
-									RepostCount = PostFooterNode_Array[1].innerText
-									LikesCount = PostFooterNode_Array[2].innerText
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[N]
+								let NodeOfReplyRepostLikes_Array = []
+								let NodeOfFoooter = DescendNode(Box, [0,0,0,0,1,1])
+								if (NodeOfFoooter.IsSuccessful) {
+									let LastNode = Array.from(NodeOfFoooter.OutputNode.childNodes).at(-1)
+									let NodeOfFooterDeepest = LastNode
+									NodeOfReplyRepostLikes_Array = Array.from(NodeOfFooterDeepest.childNodes)
+									
 								}
+								ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText
+								RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
+								LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
+								
 							}
 							if (/^Post_/.test(Type)) {
 								PostGroup.push({
@@ -810,7 +812,7 @@
 			}
 		}
 		
-		function GetPostContent(Node) {
+		function GetPostContent(Node, Type) {
 			//Node should be the outermost div tag that covers only the post and not the header/footer
 			let PostContent = {}
 			
@@ -824,6 +826,9 @@
 			// PostSegments[0] - text
 			// PostSegments[1] - collection of quotes
 			
+			if (Type == "Post_NotCurrentlyViewed") {
+				PostSegments = PostSegments.slice(1, PostSegments.length-1)
+			}
 			let a = 0
 			
 			PostContent.Segments = []
@@ -893,6 +898,11 @@
 											}
 										} else if (NodeOfPostDate1.IsSuccessful) { //If there is only a single attachment, then this isn't div-wrapped
 											if (NodeOfPostDate1.OutputNode.dataset.tooltip != "") {
+												//SubBox.childNodes[0] - header
+												//SubBox.childNodes[1+] - content
+												//
+												//
+												//
 												let PostURL = HttpToTtp(NodeOfPostDate1.OutputNode.href)
 												
 												//SubBox.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].textContent
@@ -910,6 +920,9 @@
 												
 												let PostTimeStamp = PostDateInfo(NodeOfPostDate1.OutputNode.dataset.tooltip)
 												
+												//SubBox.childNodes[1+]
+												//https://bsky.app/profile/dumjaveln.bsky.social/post/3kls5tyrvdd2v
+												
 												//SubBox.childNodes[1].childNodes[0].textContent
 												let PostContentText = ""
 												let NodeOfPostContentText = DescendNode(SubBox, [1,0])
@@ -917,7 +930,7 @@
 													PostContentText = NodeOfPostContentText.OutputNode.textContent
 												}
 												
-												let a = 0
+												
 												SubBoxesContent.push({
 													ContentType: "Quote",
 													PostURL: PostURL,
