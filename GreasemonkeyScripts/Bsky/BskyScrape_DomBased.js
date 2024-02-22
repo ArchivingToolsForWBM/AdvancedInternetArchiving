@@ -178,21 +178,52 @@
 										
 										//Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1]
 										let a = 0
-										let NodeOfPostContent = DescendNode(Post, [0,1,1,1])
+										
+										if (/Reply to/.test(Post.innerText)) {
+											let breakpoint = 0
+										}
+										
+										//Post content format:
+										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[0] - User title, handle, timestamp
+										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1] - content
+										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[2] - Footer of post containing the counters
+										
+										//If it contains "Reply to <user title>"
+										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[0] - User title, handle, timestamp
+										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1] - reply to <UserTitle>
+										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[2] - content
+										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[3] - Footer of post containing the counters
+										
+										//Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[1]
+										let ReplyToOffset = 0
+										let NodeOfReplyTo = DescendNode(Post, [0,1,1,1,1])
+										if (NodeOfReplyTo.IsSuccessful) {
+											if (/^Reply to/.test(NodeOfReplyTo.OutputNode.innerText)) {
+												let ReplyToLink = Array.from(NodeOfReplyTo.OutputNode.getElementsByTagName("a"))
+												if (ReplyToLink.length != 0) {
+													ReplyToOffset++
+												}
+											}
+										}
+										let NodeOfPostContent = DescendNode(Post, [0,1,1,1+ReplyToOffset])
 										if (NodeOfPostContent.IsSuccessful) {
 											PostContent = GetPostContent(NodeOfPostContent.OutputNode, "Post_UserFontPage")
 										}
+										
+										
 										//Reply, repost, and likes
 										{
-											let ReplyRepostLikesNode = DescendNode(Post, [0, 1, 1, 2])
-											if (ReplyRepostLikesNode.IsSuccessful) {
-												let NodesOfReplyRepostLikes = Array.from(ReplyRepostLikesNode.OutputNode.childNodes)
-												if (NodesOfReplyRepostLikes.length >= 3) {
-													ReplyCount = NodesOfReplyRepostLikes[0].innerText
-													RepostCount = NodesOfReplyRepostLikes[1].innerText
-													LikesCount = NodesOfReplyRepostLikes[2].innerText
-												}
+											let NodeOfReplyRepostLikes_Array = []
+											//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[N]
+											//where N is the last element because sometimes a post have duplicate counts between the date and timestamp at the bottom
+											let NodeOfFoooter = DescendNode(Post, [0,1,1])
+											if (NodeOfFoooter.IsSuccessful) {
+												let LastNode = Array.from(NodeOfFoooter.OutputNode.childNodes).at(-1)
+												NodeOfReplyRepostLikes_Array = Array.from(LastNode.childNodes)
 											}
+											ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText
+											RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
+											LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
 										}
 										PostGroup.push({
 											RepostedByUserTitle: RepostedByUserTitle,
@@ -308,7 +339,6 @@
 								}
 								
 								
-								
 								let NodeOfReplyRepostLikes_Array = []
 								//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[N]
 								//where N is the last element because sometimes a post have duplicate counts between the date and timestamp at the bottom
@@ -319,7 +349,6 @@
 									if (NodeOfFooterDeepest.IsSuccessful) {
 										NodeOfReplyRepostLikes_Array = Array.from(NodeOfFooterDeepest.OutputNode.childNodes)
 									}
-									
 								}
 								ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText
 								RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
@@ -781,8 +810,10 @@
 			
 			if (Type == "Post_NotCurrentlyViewed") {
 				PostSegments = PostSegments.slice(1, PostSegments.length-1)
+			} else if (Type == "Post_UserFontPage_InReplyTo") {
+				let StartOfContent = 2 //0 would be the UserTitle/Handle/Timestamp
+				PostSegments = PostSegments.slice(StartOfContent, PostSegments.length-1)
 			}
-			let a = 0
 			
 			PostContent.Segments = []
 			PostSegments.forEach((PostSegment) => { //Each post segments
