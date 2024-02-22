@@ -59,7 +59,7 @@
 					}
 					let UserPostArea = []
 					let ListOfPosts = [] //List of each individual posts
-					if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/?$/.test(window.location.href)) { //profile page
+					if (/https:\/\/bsky\.app\/?:profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/?$/.test(window.location.href)) { //profile page
 						//First, find an a href link to a profile as a reference. We get the lowest node that at least has all the posts on the page
 						UserPostArea = GetPostBoxesByLink(8)
 						
@@ -287,6 +287,8 @@
 						//Reason not to get a "a href" link to post is because if there is only 1 post on the page and it is the post you are directly viewing, then
 						//there is no a href link we can use as a reference to jump a fixed number of hierarchy levels without being in the wrong node.
 						UserPostArea = GetNodeByFooterTimestamp(6)
+						
+						
 						//"UserPostArea" will now contain "boxes" that contains 0 or 1 posts:
 						//0 posts if it is a placeholder area or a blank box at the bottom of the page, as well as "Write your Reply"
 						
@@ -518,6 +520,96 @@
 							}
 						}
 						ListOfPosts.push(...PostGroup)
+					} else if (/https:\/\/bsky\.app\/search/.test(window.location.href)) { //Search page
+						UserPostArea = GetPostBoxesByLink(7)
+						
+						UserPostArea.forEach((Post) => {
+							if (Post.textContent != "") {
+								let RepostedByUserTitle = ""
+								let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
+								
+								let ReplyToURL = "" //Reply to post above
+								let RepliesURLs = [] //Replies of the current post
+								let UserTitle = ""
+								let UserHandle = ""
+								let UserAvatar = ""
+								let PostTimeStamp = {}
+								let PostContent = {}
+								let ReplyCount = ""
+								let RepostCount = ""
+								let LikesCount = ""
+								
+								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].href
+								PostURL = HttpToTtp(DescendNode(Post, [0,0,1,0,2]).OutputNode.href)
+								
+								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
+								UserTitle = DescendNode(Post, [0,0,1,0,0,0,0]).OutputNode.textContent
+								
+								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[2].innerText
+								UserHandle = DescendNode(Post, [0,0,1,0,0,0,2]).OutputNode.innerText
+								
+								//Post.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+								let NodeOfAvatar = DescendNode(Post, [0,0,0,0,0,0,1])
+								if (NodeOfAvatar.IsSuccessful) {
+									UserAvatar = HttpToTtp(NodeOfAvatar.OutputNode.src)
+								}
+								
+								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
+								PostTimeStamp = PostDateInfo(DescendNode(Post, [0,0,1,0,2]).OutputNode.dataset.tooltip)
+								
+								
+								if (/Reply to/.test(Post.textContent)) {
+									let breakpoint = 0
+								}
+								let ReplyToOffset = 0
+								let NodeOfReplyTo = DescendNode(Post, [0,0,1,1])
+								if (NodeOfReplyTo.IsSuccessful) {
+									if (/^Reply to/.test(NodeOfReplyTo.OutputNode.innerText)) {
+										let ReplyToLink = Array.from(NodeOfReplyTo.OutputNode.getElementsByTagName("a"))
+										if (ReplyToLink.length != 0) {
+											ReplyToOffset++
+										}
+									}
+								}
+								
+								
+								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1]
+								PostContent = GetPostContent(DescendNode(Post, [0,0,1,1+ReplyToOffset]).OutputNode)
+								
+								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes
+								let NodeOfReplyRepostLikes_Array = []
+								let NodeOfFoooter = DescendNode(Post, [0,0,1])
+								if (NodeOfFoooter.IsSuccessful) {
+									let LastNode = Array.from(NodeOfFoooter.OutputNode.childNodes).at(-1)
+									let NodeOfFooterDeepest = LastNode
+									NodeOfReplyRepostLikes_Array = Array.from(NodeOfFooterDeepest.childNodes)
+									
+								}
+								if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
+									ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText //prone to errors
+									RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
+									LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
+								}
+								let a = 0
+								
+								ListOfPosts.push({
+									RepostedByUserTitle: RepostedByUserTitle,
+									PostURL: PostURL,
+									ReplyToURL: ReplyToURL,
+									RepliesURLs: RepliesURLs,
+									UserTitle: UserTitle,
+									UserHandle: UserHandle,
+									UserAvatar: UserAvatar,
+									PostTimeStamp: PostTimeStamp,
+									PostContent: PostContent,
+									ReplyCount: ReplyCount,
+									RepostCount: RepostCount,
+									LikesCount: LikesCount
+								})
+							}
+							
+						})
+
 					}
 					let ListOfPosts_Clean = ListOfPosts.map((ArrayElement) => { //Have a version without ReplyConnections attribute since we do not need it if we are just looking at posts
 						return {
@@ -529,9 +621,7 @@
 							UserHandle: ArrayElement.UserHandle,
 							UserAvatar: ArrayElement.UserAvatar,
 							PostTimeStamp: ArrayElement.PostTimeStamp,
-							PostText: ArrayElement.PostText,
-							LinksToAnotherPage: ArrayElement.LinksToAnotherPage,
-							MediaList: ArrayElement.MediaList,
+							PostContent: ArrayElement.PostContent,
 							ReplyCount: ArrayElement.ReplyCount,
 							RepostCount: ArrayElement.RepostCount,
 							LikesCount: ArrayElement.LikesCount
