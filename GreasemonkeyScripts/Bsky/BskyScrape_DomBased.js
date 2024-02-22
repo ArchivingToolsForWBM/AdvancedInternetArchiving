@@ -553,9 +553,6 @@
 								PostTimeStamp = PostDateInfo(DescendNode(Post, [0,0,1,0,2]).OutputNode.dataset.tooltip)
 								
 								
-								if (/Reply to/.test(Post.textContent)) {
-									let breakpoint = 0
-								}
 								let ReplyToOffset = 0
 								let NodeOfReplyTo = DescendNode(Post, [0,0,1,1])
 								if (NodeOfReplyTo.IsSuccessful) {
@@ -1058,6 +1055,22 @@
 						LinkPreviewObject.ExternalLink_PreviewTextContent = Part.innerText
 					}
 				})
+			} else { //No image preview
+				//https://bsky.app/profile/socialmedialab.ca/post/3kklyg6hlss2b
+				//Node.childNodes[0].childNodes[0].childNodes
+				let TextOnlyLinkPreview = DescendNode(Node, [0,0])
+				if (TextOnlyLinkPreview.IsSuccessful) {
+					let TextArray = Array.from(TextOnlyLinkPreview.OutputNode.childNodes)
+					TextArray.forEach((Part, Index) => {
+						if (Index == 0) {
+							LinkPreviewObject.ExternalLink_DomainName = Part.innerText
+						} else if (Index == 1) {
+							LinkPreviewObject.ExternalLink_Title = Part.innerText
+						} else {
+							LinkPreviewObject.ExternalLink_PreviewTextContent = Part.innerText
+						}
+					})
+				}
 			}
 			return LinkPreviewObject
 		}
