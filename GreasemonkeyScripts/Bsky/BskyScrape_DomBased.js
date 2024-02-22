@@ -843,85 +843,11 @@
 											
 											if (NodeOfPostDate.IsSuccessful) { //This HAS to be a quote (if attachments have both a media and a quote, thus both wrapped in a div)
 												if (NodeOfPostDate.OutputNode.dataset.tooltip != "") { //If has a date
-													let PostURL = HttpToTtp(NodeOfPostDate.OutputNode.href)
-													
-													//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0]
-													let UserTitle = DescendNode(SubBox, [0,0,0,1,0,0]).OutputNode.textContent
-													
-													//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].innerText
-													let UserHandle = DescendNode(SubBox, [0,0,0,1,0,2]).OutputNode.innerText
-													
-													//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-													let UserAvatar = ""
-													let NodeOfAvatarImg = DescendNode(SubBox, [0,0,0,0,0,0,1])
-													if (NodeOfAvatarImg.IsSuccessful) {
-														UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
-													}
-													
-													let PostTimeStamp = PostDateInfo(NodeOfPostDate.OutputNode.dataset.tooltip)
-													
-													//SubBox.childNodes[0].childNodes[1].childNodes[0].textContent
-													let PostContentText = ""
-													let NodeOfPostContentText = DescendNode(SubBox, [0,1,0])
-													if (NodeOfPostContentText.IsSuccessful) {
-														PostContentText = NodeOfPostContentText.OutputNode.textContent
-													}
-													
-													let a = 0
-													SubBoxesContent.push({
-														ContentType: "Quote",
-														PostURL: PostURL,
-														UserTitle: UserTitle,
-														UserHandle: UserHandle,
-														UserAvatar: UserAvatar,
-														PostTimeStamp: PostTimeStamp,
-														PostContentText: PostContentText
-													})
+													SubBoxesContent.push(GetQuoteBoxData(SubBox.childNodes[0]))
 												}
 											} else if (NodeOfPostDate1.IsSuccessful) { //If there is only a single attachment, then this isn't div-wrapped
 												if (NodeOfPostDate1.OutputNode.dataset.tooltip != "") {
-													//SubBox.childNodes[0] - header
-													//SubBox.childNodes[1+] - content
-													//
-													//https://bsky.app/profile/anyainlove.bsky.social/post/3klxhf4wnoi2z - postception
-													//
-													let PostURL = HttpToTtp(NodeOfPostDate1.OutputNode.href)
-													
-													//SubBox.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].textContent
-													let UserTitle = DescendNode(SubBox, [0,0,1,0,0]).OutputNode.textContent
-													
-													//SubBox.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].innerText
-													let UserHandle = DescendNode(SubBox, [0,0,1,0,2]).OutputNode.textContent
-													
-													//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-													let UserAvatar = ""
-													let NodeOfAvatarImg = DescendNode(SubBox, [0,0,0,0,0,1])
-													if (NodeOfAvatarImg.IsSuccessful) {
-														UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
-													}
-													
-													let PostTimeStamp = PostDateInfo(NodeOfPostDate1.OutputNode.dataset.tooltip)
-													
-													//SubBox.childNodes[1+]
-													//https://bsky.app/profile/dumjaveln.bsky.social/post/3kls5tyrvdd2v
-													
-													//SubBox.childNodes[1].childNodes[0].textContent
-													let PostContentText = ""
-													let NodeOfPostContentText = DescendNode(SubBox, [1,0])
-													if (NodeOfPostContentText.IsSuccessful) {
-														PostContentText = NodeOfPostContentText.OutputNode.textContent
-													}
-													
-													
-													SubBoxesContent.push({
-														ContentType: "Quote",
-														PostURL: PostURL,
-														UserTitle: UserTitle,
-														UserHandle: UserHandle,
-														UserAvatar: UserAvatar,
-														PostTimeStamp: PostTimeStamp,
-														PostContentText: PostContentText
-													})
+													SubBoxesContent.push(GetQuoteBoxData(SubBox))
 												}
 											}
 										} else {
@@ -955,6 +881,59 @@
 			})
 			return PostContent
 		}
+		function GetQuoteBoxData(Node_SubBox) {
+			let DescendMap_PostURLAndTimestamp = [0,0,3]
+			let DescendMap_UserTitle = [0,0,1,0,0]
+			let DescendMap_UserHandle = [0,0,1,0,2]
+			let DescendMap_UserAvatar = [0,0,0,0,0,1]
+			let DescendMap_PostContentText = [1,0]
+			
+			let OutputObject = {
+				ContentType: "Quote"
+			}
+			
+			OutputObject.PostURL = HttpToTtp(DescendNode(Node_SubBox, DescendMap_PostURLAndTimestamp).OutputNode.href)
+			
+			//Node_SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0]
+			OutputObject.UserTitle = DescendNode(Node_SubBox, DescendMap_UserTitle).OutputNode.textContent
+			
+			//Node_SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].innerText
+			OutputObject.UserHandle = DescendNode(Node_SubBox, DescendMap_UserHandle).OutputNode.innerText
+			
+			//Node_SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+			OutputObject.UserAvatar = ""
+			let NodeOfAvatarImg = DescendNode(Node_SubBox, DescendMap_UserAvatar)
+			if (NodeOfAvatarImg.IsSuccessful) {
+				OutputObject.UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
+			}
+			
+			OutputObject.PostTimeStamp = PostDateInfo(DescendNode(Node_SubBox, DescendMap_PostURLAndTimestamp).OutputNode.dataset.tooltip)
+			
+			
+			OutputObject.PostContentText = ""
+			OutputObject.QuotedMedia = []
+			let QuoteContentArray = Array.from(Node_SubBox.childNodes).slice(1) //Get everything after the user title/handle/timestamp
+			QuoteContentArray.forEach((QuotePiece, Index) => {
+				if (Index == 0) {
+					if (QuotePiece.textContent != "" && (OutputObject.PostContentText == "")) {
+						OutputObject.PostContentText = QuotePiece.textContent
+					}
+				}
+				if (QuotePiece.tagName != "A") {
+					OutputObject.QuotedMedia = GetMediaURLs(QuotePiece)
+				}
+				let a = 0
+				if (QuotePiece.tagName == "A") {
+					OutputObject.LinkPreviewObject = LinkPreviewNodeToJson(QuotePiece)
+				}
+			})
+			
+			//Node_SubBox.childNodes[0].childNodes[1].childNodes[0].textContent
+			//Postception - https://bsky.app/profile/anyainlove.bsky.social/post/3klxhf4wnoi2z (post containing a quote containing a link preview)
+			
+			return OutputObject
+		}
+		
 		function LinkPreviewNodeToJson(Node) {
 			let LinkPreviewObject = {
 				ContentType: "LinkPreview",
