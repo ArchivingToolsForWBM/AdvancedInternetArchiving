@@ -179,16 +179,13 @@
 										//Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1]
 										let a = 0
 										
-										if (/Reply to/.test(Post.innerText)) {
-											let breakpoint = 0
-										}
-										
 										//Post content format:
 										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[0] - User title, handle, timestamp
 										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1] - content
 										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[2] - Footer of post containing the counters
 										
 										//If it contains "Reply to <user title>"
+										//https://bsky.app/profile/dumjaveln.bsky.social
 										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[0] - User title, handle, timestamp
 										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1] - reply to <UserTitle>
 										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[2] - content
@@ -817,7 +814,7 @@
 			
 			PostContent.Segments = []
 			PostSegments.forEach((PostSegment) => { //Each post segments
-				if (PostSegment.innerText != "") { //Content has text
+				if (!(/(?:^(?:ALT)?$)/.test(PostSegment.innerText))) { //Content has text (besides blank or "ALT")
 					if (typeof PostSegment.childNodes != "undefined") { //Has children
 						if (Array.from(PostSegment.childNodes[0].getElementsByTagName("DIV")).length == 0) { //If there is no more div levels down, then this is user-posted text
 							PostContent.Segments.push({
