@@ -63,8 +63,6 @@
 						//First, find an a href link to a profile as a reference. We get the lowest node that at least has all the posts on the page
 						UserPostArea = GetPostBoxesByLink(8)
 						
-						let a = 0
-						
 						//"UserPostArea" will now contain "boxes" that may either be a horizontal line, containing 1 or 2 posts (2 if it has replies, with a vertical line between 2 avatars)
 						UserPostArea.forEach((Box, BoxIndex) => { // Loop each box
 							//[profile page]
@@ -177,7 +175,6 @@
 										//affect the header and footer index locations.
 										
 										//Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1]
-										let a = 0
 										
 										//Post content format:
 										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[0] - User title, handle, timestamp
@@ -406,7 +403,6 @@
 									RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
 									LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
 								}
-								let a = 0
 							} else if (Type == "Post_NotCurrentlyViewed") {
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].href
 								PostURL = HttpToTtp(DescendNode(Box, [0,0,0,0,1,1,0,2]).OutputNode.href)
@@ -514,7 +510,6 @@
 										if (PostGroup[i+1].ReplyToURL == "") {
 											PostGroup[i+1].ReplyToURL = PostGroup[i].PostURL //In reply to a post above
 										}
-										let a = 0
 									}
 								}
 							}
@@ -590,22 +585,22 @@
 									RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
 									LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
 								}
-								let a = 0
-								
-								ListOfPosts.push({
-									RepostedByUserTitle: RepostedByUserTitle,
-									PostURL: PostURL,
-									ReplyToURL: ReplyToURL,
-									RepliesURLs: RepliesURLs,
-									UserTitle: UserTitle,
-									UserHandle: UserHandle,
-									UserAvatar: UserAvatar,
-									PostTimeStamp: PostTimeStamp,
-									PostContent: PostContent,
-									ReplyCount: ReplyCount,
-									RepostCount: RepostCount,
-									LikesCount: LikesCount
-								})
+								if (PostURL != "") {
+									ListOfPosts.push({
+										RepostedByUserTitle: RepostedByUserTitle,
+										PostURL: PostURL,
+										ReplyToURL: ReplyToURL,
+										RepliesURLs: RepliesURLs,
+										UserTitle: UserTitle,
+										UserHandle: UserHandle,
+										UserAvatar: UserAvatar,
+										PostTimeStamp: PostTimeStamp,
+										PostContent: PostContent,
+										ReplyCount: ReplyCount,
+										RepostCount: RepostCount,
+										LikesCount: LikesCount
+									})
+								}
 							}
 							
 						})
@@ -959,7 +954,6 @@
 												MediaURLs: GetMediaURLs(SubBox)
 											})
 										}
-										let a = 0
 									})
 									PostContent.Segments.push({
 										ContentType: "Attachment",
@@ -968,7 +962,6 @@
 								} else { //Link to external site, have a preview of the page, e.g. https://bsky.app/profile/pappahutten.bsky.social/post/3klxhuy6wbc2h
 									let LinkPreview = Node_QuoteSubBox.OutputNode
 									let LinkPreviewObject = LinkPreviewNodeToJson(LinkPreview)
-									let a = 0
 									PostContent.Segments.push(LinkPreviewObject)
 								}
 							}
@@ -1024,7 +1017,6 @@
 				if (QuotePiece.tagName != "A") {
 					OutputObject.QuotedMedia = GetMediaURLs(QuotePiece)
 				}
-				let a = 0
 				if (QuotePiece.tagName == "A") {
 					OutputObject.LinkPreviewObject = LinkPreviewNodeToJson(QuotePiece)
 				}
