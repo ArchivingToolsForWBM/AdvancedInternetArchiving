@@ -99,7 +99,7 @@
 									let UserHandle = ""
 									let UserAvatar = ""
 									let PostTimeStamp = {}
-									let PostContentParts = []
+									let PostContent = {}
 									let ReplyCount = ""
 									let RepostCount = ""
 									let LikesCount = ""
@@ -110,7 +110,7 @@
 										//RepostedByUser
 										{
 											let RepostElement = DescendNode(Post, [0, 0, 1, 0, 1, 1])
-											if (RepostElement.LevelsPassed == 6) {
+											if (RepostElement.IsSuccessful) {
 												RepostedByUserTitle = RepostElement.OutputNode.textContent
 											}
 										}
@@ -118,7 +118,7 @@
 										//Link to post
 										{
 											let AHrefElement = DescendNode(Post, [0, 1, 1, 0, 2])
-											if (AHrefElement.LevelsPassed == 5) {
+											if (AHrefElement.IsSuccessful) {
 												if (AHrefElement.OutputNode.href != "") {
 													PostURL = HttpToTtp(AHrefElement.OutputNode.href)
 												}
@@ -127,28 +127,28 @@
 										//Reply downwards line
 										{
 											let LineElement = DescendNode(Post, [0, 1, 0, 1])
-											if (LineElement.LevelsPassed == 4) {
+											if (LineElement.IsSuccessful) {
 												PostHasRepliesLineBelow = true
 											}
 										}
 										//Reply upwards line
 										{
 											let LineElement = DescendNode(Post, [0, 0, 0, 0])
-											if (LineElement.LevelsPassed == 4) {
+											if (LineElement.IsSuccessful) {
 												PostHasRepliesLineBelow = true
 											}
 										}
 										//User title
 										{
 											let UserTitleElement = DescendNode(Post, [0, 1, 1, 0, 0, 0, 0])
-											if (UserTitleElement.LevelsPassed == 7) {
+											if (UserTitleElement.IsSuccessful) {
 												UserTitle = UserTitleElement.OutputNode.textContent
 											}
 										}
 										//User handle
 										{
 											let UserHandleElement = DescendNode(Post, [0, 1, 1, 0, 0, 0, 2])
-											if (UserHandleElement.LevelsPassed == 7) {
+											if (UserHandleElement.IsSuccessful) {
 												UserHandle = UserHandleElement.OutputNode.innerText
 											}
 										}
@@ -156,7 +156,7 @@
 										{
 											//Post.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1]
 											let AvatarImgElement = DescendNode(Post, [0, 1, 0, 0, 0, 0, 1])
-											if (AvatarImgElement.LevelsPassed == 7) {
+											if (AvatarImgElement.IsSuccessful) {
 												if (typeof AvatarImgElement.OutputNode.src != "undefined") {
 													UserAvatar = HttpToTtp(AvatarImgElement.OutputNode.src)
 												}
@@ -165,7 +165,7 @@
 										//Post time stamp
 										{
 											let PostTimeStampElement = DescendNode(Post, [0, 1, 1, 0, 2])
-											if (PostTimeStampElement.LevelsPassed == 5) {
+											if (PostTimeStampElement.IsSuccessful) {
 												if (typeof PostTimeStampElement.OutputNode.dataset.tooltip != "undefined") {
 													PostTimeStamp = PostDateInfo(PostTimeStampElement.OutputNode.dataset.tooltip)
 												}
@@ -177,61 +177,15 @@
 										//affect the header and footer index locations.
 										
 										//Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1]
-										let PostContentArea = Array.from(DescendNode(Post, [0,1,1,1]).OutputNode.childNodes)
-										PostContentArea.forEach((PostPart) => {
-											if (PostPart.innerText != "") {//Content has text, may be a quote, etc.
-												let PotentialQuotedUserHandleNode = DescendNode(PostPart, [0,0,0,0,1,0,2])
-												if (PotentialQuotedUserHandleNode.LevelsPassed == 7) {
-													//Quoted post
-													//PostPart.childNodes[0].childNodes[0] - post containing entire content, where the node splits
-													//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0] - Usertitle, handle, timestamp
-													//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0]
-													//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1] - avatar image
-													//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1] - user title and handle (a href link)
-													//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0] - User title
-													//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2] - user handle
-													//PostPart.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[3] - timestamp (also a href link)
-													//PostPart.childNodes[0].childNodes[0].childNodes[1] - text content
-													
-													
-													let Node_QuotedPost = DescendNode(PostPart, [0,0]).OutputNode
-													let Quoted_UserTitle = DescendNode(Node_QuotedPost, [0,0,1,0,0]).OutputNode.textContent
-													let Quoted_Userhandle = DescendNode(Node_QuotedPost, [0,0,1,0,2]).OutputNode.textContent
-													let Quoted_Timestamp = DescendNode(Node_QuotedPost, [0,0,3]).OutputNode.dataset.tooltip
-													let Quoted_UserPostLink = HttpToTtp(DescendNode(Node_QuotedPost, [0,0,3]).OutputNode.href)
-													let Quoted_Text = DescendNode(Node_QuotedPost, [1]).OutputNode.innerText
-													PostContentParts.push({
-														PostPartType: "Quote",
-														Quoted_UserTitle: Quoted_UserTitle,
-														Quoted_Userhandle: Quoted_Userhandle,
-														Quoted_Timestamp: Quoted_Timestamp,
-														Quoted_UserPostLink: Quoted_UserPostLink,
-														Quoted_Text: Quoted_Text
-													});
-												} else {
-													//PostPart.childNodes[0] - text (can contain links)
-													let TextZone = DescendNode(PostPart, [0]).OutputNode
-													let PostText = TextZone.textContent
-													let LinksToAnotherPage = GetLinksURLs(TextZone)
-													PostContentParts.push({
-														PostPartType: "Text",
-														Post_Text: PostText,
-														LinksToAnotherPage: LinksToAnotherPage
-													})
-												}
-											} else {
-												//Media content
-												let MediaList = GetMediaURLs(PostPart)
-												PostContentParts.push({
-													PostPartType: "Media",
-													MediaList: MediaList
-												})
-											}
-										})
+										let a = 0
+										let NodeOfPostContent = DescendNode(Post, [0,1,1,1])
+										if (NodeOfPostContent.IsSuccessful) {
+											PostContent = GetPostContent(NodeOfPostContent.OutputNode, "Post_UserFontPage")
+										}
 										//Reply, repost, and likes
 										{
 											let ReplyRepostLikesNode = DescendNode(Post, [0, 1, 1, 2])
-											if (ReplyRepostLikesNode.LevelsPassed == 4) {
+											if (ReplyRepostLikesNode.IsSuccessful) {
 												let NodesOfReplyRepostLikes = Array.from(ReplyRepostLikesNode.OutputNode.childNodes)
 												if (NodesOfReplyRepostLikes.length >= 3) {
 													ReplyCount = NodesOfReplyRepostLikes[0].innerText
@@ -255,7 +209,7 @@
 											UserHandle: UserHandle,
 											UserAvatar: UserAvatar,
 											PostTimeStamp: PostTimeStamp,
-											PostContentParts: PostContentParts,
+											PostContent: PostContent,
 											ReplyCount: ReplyCount,
 											RepostCount: RepostCount,
 											LikesCount: LikesCount
@@ -451,7 +405,6 @@
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
 								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,0,0,0,1,1,0,2]).OutputNode.dataset.tooltip)
 								
-								//asdf
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1] - This also contains the header and footer...
 								let NodeOfPostContent = DescendNode(Box, [0,0,0,0,1,1])
 								if (NodeOfPostContent.IsSuccessful) {
