@@ -24,11 +24,13 @@
 	//-This script will work on post pages if you are logged in, because the dom tree layout of posts are different when viewing a post vs not logged in. I strongly recommend that you
 	// are because users can sometimes have their post content hidden from public view.
 	//Settings
+	// Note: Changes apply when the page is refreshed. Either reload the page via a browser or enter the address bar. It's not a reload if only part of the page loads content while
+	// everything else persist.
 		const Setting_Delay = 3000
 			//^Number of milliseconds between each re-execution of this script.
 		const Setting_http_ttp = false
 			//^true = All URLs in the output start with "ttp" instead of "http" (to avoid URL truncation like what firefox does; replacing the middle of string with ellipsis).
-			// false = leave it as http
+			// false = leave it as http. NOTE that this counts as a "different URL" when this script detects a post that is already saved, causing it to save duplicates.
 		const Setting_ShowLocalTimeInTimestamp = true
 			//^true = PostTimeStamp sub-object will contain the local timestamp
 			//^false = no (will only show the UTC and milliseconds (page only shows minutes as lowest units of time, so it assumes whole minutes) since epoch)
@@ -38,7 +40,8 @@
 		const Setting_MaxNumberOfPosts = 100
 			//^-1 = No limit on how many posts
 			// <any positive number> = The maximum number of post can be saved. Once reached, any new post won't
-			//be added and console log will state that the max is reached.
+			// be added and console log will state that the max is reached. It does not delete any posts in the
+			// list if above the limit
 
 	//Stuff you don't touch unless you know what you're doing.
 		let RaceConditionLock = false
@@ -54,12 +57,14 @@
 			var CopiedListOfPosts = ""
 	//Several menu commands
 		async function Reset() {
-			await GM.setValue("BSkyScrapePostList", "[]").then(() => {
-				alert("Bsky-scrape: post list cleared.")
-			},
-			() => {
-				alert("Bsky-scrape: post list failed to clear.")
-			});
+			if (window.confirm("You sure you want to clear the list of post extracted?")) {
+				await GM.setValue("BSkyScrapePostList", "[]").then(() => {
+					alert("Bsky-scrape: post list cleared.")
+				},
+				() => {
+					alert("Bsky-scrape: post list failed to clear.")
+				});
+			}
 		}
 		GM.registerMenuCommand("Bsky-scrape - clear post collection", Reset, "R");
 		
@@ -654,6 +659,10 @@
 						let MatchedPostIndex = SavedBskyPostList.findIndex((SavedPost) => { //Search all in the saved list to find a matching post
 							return (ExtractedPost.PostURL == SavedPost.PostURL)
 						})
+						if (ExtractedPostIndex == 5) {
+							let bp = 0
+							
+						}
 						if (MatchedPostIndex == -1) { //If not found, add it to the list
 							if (Setting_MaxNumberOfPosts < 0) {
 								SavedBskyPostList.push(ListOfPosts_Clean[ExtractedPostIndex])
@@ -664,8 +673,8 @@
 									console.log("Bsky-scrape: content count limit reached.")
 								}
 							}
-						} else{
-							//Match occurred, replace it (but keep the list of reply URLs)
+						} else {
+							//Match occurred, replace it (but keep the list of reply URLs and what's replying to)
 							let SavedList_WhatToReplace = SavedBskyPostList[MatchedPostIndex]
 							let ExtractList_ReplaceWith = ExtractedPost
 							
@@ -676,6 +685,10 @@
 								Set_ListOfURLsSaved.add(Extracted_Replies)
 							})
 							SavedList_WhatToReplace.RepliesURLs = Array.from(Set_ListOfURLsSaved)
+							
+							if ((SavedList_WhatToReplace.ReplyToURL == "") && (ExtractList_ReplaceWith.ReplyToURL != "")) { //If discovered that the post has a reply, add a URL to it.
+								SavedList_WhatToReplace.ReplyToURL = ExtractList_ReplaceWith.ReplyToURL
+							}
 						}
 					})
 					
