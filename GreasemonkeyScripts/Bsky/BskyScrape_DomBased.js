@@ -4,9 +4,10 @@
 // @version      0.2
 // @description  try to take over the world!
 // @include      https://bsky.app/*
-// @grant       GM.setValue
-// @grant       GM.getValue
-// @grant    GM.registerMenuCommand
+// @grant        GM.setValue
+// @grant        GM.getValue
+// @grant        GM.registerMenuCommand
+// @grant        GM.setClipboard
 // ==/UserScript==
 (async function() {
 	//NOTES:
@@ -49,12 +50,23 @@
 			window.onload = setInterval(MainCode, Setting_Delay)
 			
 			
+		//Copy to clipboard
+			var CopiedListOfPosts = ""
 	//Several menu commands
 		async function Reset() {
-			await GM.setValue("BSkyScrapePostList", "[]");
-			alert("Bsky scrape post list cleared.")
+			await GM.setValue("BSkyScrapePostList", "[]").then(() => {
+				alert("Bsky-scrape: post list cleared.")
+			},
+			() => {
+				alert("Bsky-scrape: post list failed to clear.")
+			});
 		}
-		GM.registerMenuCommand("Clear Bsky post collection", Reset, "R");
+		GM.registerMenuCommand("Bsky-scrape - clear post collection", Reset, "R");
+		
+		async function CopyPostToClipboard() {
+			GM.setClipboard(CopiedListOfPosts)
+		}
+		GM.registerMenuCommand("Bsky-scrape - Copy post list to clipboard", CopyPostToClipboard, "C");
 	
 	//MainCode, runs periodically and used to extract page content.
 		async function MainCode() {
@@ -634,7 +646,7 @@
 					})
 				//Saving...
 					let SavedBskyPostList = await GM.getValue("BSkyScrapePostList", "[]").catch(() => {
-						window.alert("Bsky-scrape load saved post failed!")
+						window.alert("Bsky-scrape: load saved post failed!")
 					});
 					SavedBskyPostList = JSON.parse(SavedBskyPostList)
 					ListOfPosts_Clean.forEach((ExtractedPost, ExtractedPostIndex) => {
@@ -649,7 +661,7 @@
 								if (SavedBskyPostList.length < Setting_MaxNumberOfPosts) {
 									SavedBskyPostList.push(ListOfPosts_Clean[ExtractedPostIndex])
 								} else {
-									console.log("Bsky scrape content count limit reached.")
+									console.log("Bsky-scrape: content count limit reached.")
 								}
 							}
 						} else{
@@ -668,10 +680,11 @@
 					})
 					
 					await GM.setValue("BSkyScrapePostList", JSON.stringify(SavedBskyPostList)).then(() => {
-						console.log("Bsky extracted post count: " + SavedBskyPostList.length.toString(10))
+						CopiedListOfPosts = JSON.stringify(SavedBskyPostList, null, " ")
+						console.log("Bsky-scrape: extracted post count: " + SavedBskyPostList.length.toString(10))
 					},
 					() => {
-						window.alert("Bsky-scrape saving post failed!")
+						window.alert("Bsky-scrape: saving post failed!")
 					});
 				
 				//Set a breakpoint here after everything loads to test the results stored in "ListOfPosts".
@@ -965,58 +978,63 @@
 			PostSegments.forEach((PostSegment) => { //Each post segments
 				if (!(/(?:^(?:ALT)?$)/.test(PostSegment.innerText))) { //Content has text (besides blank or "ALT")
 					if (typeof PostSegment.childNodes != "undefined") { //Has children
-						if (Array.from(PostSegment.childNodes[0].getElementsByTagName("DIV")).length == 0) { //If there is no more div levels down, then this is user-posted text
-							PostContent.Segments.push({
-								ContentType: "Text",
-								UserPostedText: PostSegment.textContent,
-								Links: GetLinksURLs(PostSegment)
-							})
-						} else {
-							//PostSegment contains multiple sub-boxes here
-							//https://bsky.app/profile/dumjaveln.bsky.social/post/3klkgthv63q2z quoted post
-							let Node_QuoteSubBox = DescendNode(PostSegment, [0]) //Go down a div level
-							if (Node_QuoteSubBox.IsSuccessful) {
-								if (Node_QuoteSubBox.OutputNode.tagName != "A") {
-									let SubBoxesContent = []
-									let SubBoxes = Array.from(Node_QuoteSubBox.OutputNode.childNodes)
-									SubBoxes.forEach((SubBox) => { //Loop each inner boxes (text, images, quotes)
-										if (SubBox.innerText != "") {
-											//Test if there is a post date
-											//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
-											let NodeOfPostDate = DescendNode(SubBox, [0,0,0,3])
-											
-											//SubBox.childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
-											//https://bsky.app/profile/kimscaravelli.bsky.social/post/3klaue65stp2x
-											let NodeOfPostDate1 = DescendNode(SubBox, [0,0,3])
-											
-											
-											if (NodeOfPostDate.IsSuccessful) { //This HAS to be a quote (if attachments have both a media and a quote, thus both wrapped in a div)
-												if (NodeOfPostDate.OutputNode.dataset.tooltip != "") { //If has a date
-													SubBoxesContent.push(GetQuoteBoxData(SubBox.childNodes[0]))
+						let NodeForDivs = DescendNode(PostSegment, [0])
+						if (NodeForDivs.IsSuccessful) {
+							if (Array.from(NodeForDivs.OutputNode.getElementsByTagName("DIV")).length == 0) { //If there is no more div levels down, then this is user-posted text
+								PostContent.Segments.push({
+									ContentType: "Text",
+									UserPostedText: PostSegment.textContent,
+									Links: GetLinksURLs(PostSegment)
+								})
+							} else {
+								//PostSegment contains multiple sub-boxes here
+								//https://bsky.app/profile/dumjaveln.bsky.social/post/3klkgthv63q2z quoted post
+								let Node_QuoteSubBox = DescendNode(PostSegment, [0]) //Go down a div level
+								if (Node_QuoteSubBox.IsSuccessful) {
+									if (Node_QuoteSubBox.OutputNode.tagName != "A") {
+										let SubBoxesContent = []
+										let SubBoxes = Array.from(Node_QuoteSubBox.OutputNode.childNodes)
+										SubBoxes.forEach((SubBox) => { //Loop each inner boxes (text, images, quotes)
+											if (SubBox.innerText != "") {
+												//Test if there is a post date
+												//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
+												let NodeOfPostDate = DescendNode(SubBox, [0,0,0,3])
+												
+												//SubBox.childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
+												//https://bsky.app/profile/kimscaravelli.bsky.social/post/3klaue65stp2x
+												let NodeOfPostDate1 = DescendNode(SubBox, [0,0,3])
+												
+												
+												if (NodeOfPostDate.IsSuccessful) { //This HAS to be a quote (if attachments have both a media and a quote, thus both wrapped in a div)
+													if (NodeOfPostDate.OutputNode.dataset.tooltip != "") { //If has a date
+														SubBoxesContent.push(GetQuoteBoxData(SubBox.childNodes[0]))
+													}
+												} else if (NodeOfPostDate1.IsSuccessful) { //If there is only a single attachment, then this isn't div-wrapped
+													if (NodeOfPostDate1.OutputNode.dataset.tooltip != "") {
+														SubBoxesContent.push(GetQuoteBoxData(SubBox))
+													}
 												}
-											} else if (NodeOfPostDate1.IsSuccessful) { //If there is only a single attachment, then this isn't div-wrapped
-												if (NodeOfPostDate1.OutputNode.dataset.tooltip != "") {
-													SubBoxesContent.push(GetQuoteBoxData(SubBox))
-												}
+											} else {
+												//Post has quotes and media
+												SubBoxesContent.push({
+													ContentType: "Media",
+													MediaURLs: GetMediaURLs(SubBox)
+												})
 											}
-										} else {
-											//Post has quotes and media
-											SubBoxesContent.push({
-												ContentType: "Media",
-												MediaURLs: GetMediaURLs(SubBox)
-											})
-										}
-									})
-									PostContent.Segments.push({
-										ContentType: "Attachment",
-										Content: SubBoxesContent
-									})
-								} else { //Link to external site, have a preview of the page, e.g. https://bsky.app/profile/pappahutten.bsky.social/post/3klxhuy6wbc2h
-									let LinkPreview = Node_QuoteSubBox.OutputNode
-									let LinkPreviewObject = LinkPreviewNodeToJson(LinkPreview)
-									PostContent.Segments.push(LinkPreviewObject)
+										})
+										PostContent.Segments.push({
+											ContentType: "Attachment",
+											Content: SubBoxesContent
+										})
+									} else { //Link to external site, have a preview of the page, e.g. https://bsky.app/profile/pappahutten.bsky.social/post/3klxhuy6wbc2h
+										let LinkPreview = Node_QuoteSubBox.OutputNode
+										let LinkPreviewObject = LinkPreviewNodeToJson(LinkPreview)
+										PostContent.Segments.push(LinkPreviewObject)
+									}
 								}
 							}
+						} else {
+							return {} //Something went wrong (failsafe)
 						}
 					}
 				} else {
