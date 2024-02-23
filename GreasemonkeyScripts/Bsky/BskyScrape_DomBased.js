@@ -219,10 +219,10 @@
 										let NodeOfReplyTo = DescendNode(Post, [0,1,1,1,1])
 										if (NodeOfReplyTo.IsSuccessful) {
 											if (/^Reply to/.test(NodeOfReplyTo.OutputNode.innerText)) {
-												let ReplyToLink = Array.from(NodeOfReplyTo.OutputNode.getElementsByTagName("a"))
-												if (ReplyToLink.length != 0) {
+												//let ReplyToLink = Array.from(NodeOfReplyTo.OutputNode.getElementsByTagName("a"))
+												//if (ReplyToLink.length != 0) {
 													ReplyToOffset++
-												}
+												//}
 											}
 										}
 										let NodeOfPostContent = DescendNode(Post, [0,1,1,1+ReplyToOffset])
@@ -583,10 +583,10 @@
 								let NodeOfReplyTo = DescendNode(Post, [0,0,1,1])
 								if (NodeOfReplyTo.IsSuccessful) {
 									if (/^Reply to/.test(NodeOfReplyTo.OutputNode.innerText)) {
-										let ReplyToLink = Array.from(NodeOfReplyTo.OutputNode.getElementsByTagName("a"))
-										if (ReplyToLink.length != 0) {
+										//let ReplyToLink = Array.from(NodeOfReplyTo.OutputNode.getElementsByTagName("a"))
+										//if (ReplyToLink.length != 0) {
 											ReplyToOffset++
-										}
+										//}
 									}
 								}
 								
@@ -980,61 +980,64 @@
 					if (typeof PostSegment.childNodes != "undefined") { //Has children
 						let NodeForDivs = DescendNode(PostSegment, [0])
 						if (NodeForDivs.IsSuccessful) {
-							if (Array.from(NodeForDivs.OutputNode.getElementsByTagName("DIV")).length == 0) { //If there is no more div levels down, then this is user-posted text
-								PostContent.Segments.push({
-									ContentType: "Text",
-									UserPostedText: PostSegment.textContent,
-									Links: GetLinksURLs(PostSegment)
-								})
-							} else {
-								//PostSegment contains multiple sub-boxes here
-								//https://bsky.app/profile/dumjaveln.bsky.social/post/3klkgthv63q2z quoted post
-								let Node_QuoteSubBox = DescendNode(PostSegment, [0]) //Go down a div level
-								if (Node_QuoteSubBox.IsSuccessful) {
-									if (Node_QuoteSubBox.OutputNode.tagName != "A") {
-										let SubBoxesContent = []
-										let SubBoxes = Array.from(Node_QuoteSubBox.OutputNode.childNodes)
-										SubBoxes.forEach((SubBox) => { //Loop each inner boxes (text, images, quotes)
-											if (SubBox.innerText != "") {
-												//Test if there is a post date
-												//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
-												let NodeOfPostDate = DescendNode(SubBox, [0,0,0,3])
-												
-												//SubBox.childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
-												//https://bsky.app/profile/kimscaravelli.bsky.social/post/3klaue65stp2x
-												let NodeOfPostDate1 = DescendNode(SubBox, [0,0,3])
-												
-												
-												if (NodeOfPostDate.IsSuccessful) { //This HAS to be a quote (if attachments have both a media and a quote, thus both wrapped in a div)
-													if (NodeOfPostDate.OutputNode.dataset.tooltip != "") { //If has a date
-														SubBoxesContent.push(GetQuoteBoxData(SubBox.childNodes[0]))
+							if (typeof NodeForDivs.OutputNode.getElementsByTagName === "function") {
+								//^"Reply to ..." can happen if this code executes before their "Reply to" fully loads, causing NodeForDivs.OutputNode to be a text node instead of a tag node
+								if (Array.from(NodeForDivs.OutputNode.getElementsByTagName("DIV")).length == 0) { //If there is no more div levels down, then this is user-posted text
+									PostContent.Segments.push({
+										ContentType: "Text",
+										UserPostedText: PostSegment.textContent,
+										Links: GetLinksURLs(PostSegment)
+									})
+								} else {
+									//PostSegment contains multiple sub-boxes here
+									//https://bsky.app/profile/dumjaveln.bsky.social/post/3klkgthv63q2z quoted post
+									let Node_QuoteSubBox = DescendNode(PostSegment, [0]) //Go down a div level
+									if (Node_QuoteSubBox.IsSuccessful) {
+										if (Node_QuoteSubBox.OutputNode.tagName != "A") {
+											let SubBoxesContent = []
+											let SubBoxes = Array.from(Node_QuoteSubBox.OutputNode.childNodes)
+											SubBoxes.forEach((SubBox) => { //Loop each inner boxes (text, images, quotes)
+												if (SubBox.innerText != "") {
+													//Test if there is a post date
+													//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
+													let NodeOfPostDate = DescendNode(SubBox, [0,0,0,3])
+													
+													//SubBox.childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
+													//https://bsky.app/profile/kimscaravelli.bsky.social/post/3klaue65stp2x
+													let NodeOfPostDate1 = DescendNode(SubBox, [0,0,3])
+													
+													
+													if (NodeOfPostDate.IsSuccessful) { //This HAS to be a quote (if attachments have both a media and a quote, thus both wrapped in a div)
+														if (NodeOfPostDate.OutputNode.dataset.tooltip != "") { //If has a date
+															SubBoxesContent.push(GetQuoteBoxData(SubBox.childNodes[0]))
+														}
+													} else if (NodeOfPostDate1.IsSuccessful) { //If there is only a single attachment, then this isn't div-wrapped
+														if (NodeOfPostDate1.OutputNode.dataset.tooltip != "") {
+															SubBoxesContent.push(GetQuoteBoxData(SubBox))
+														}
 													}
-												} else if (NodeOfPostDate1.IsSuccessful) { //If there is only a single attachment, then this isn't div-wrapped
-													if (NodeOfPostDate1.OutputNode.dataset.tooltip != "") {
-														SubBoxesContent.push(GetQuoteBoxData(SubBox))
-													}
+												} else {
+													//Post has quotes and media
+													SubBoxesContent.push({
+														ContentType: "Media",
+														MediaURLs: GetMediaURLs(SubBox)
+													})
 												}
-											} else {
-												//Post has quotes and media
-												SubBoxesContent.push({
-													ContentType: "Media",
-													MediaURLs: GetMediaURLs(SubBox)
-												})
-											}
-										})
-										PostContent.Segments.push({
-											ContentType: "Attachment",
-											Content: SubBoxesContent
-										})
-									} else { //Link to external site, have a preview of the page, e.g. https://bsky.app/profile/pappahutten.bsky.social/post/3klxhuy6wbc2h
-										let LinkPreview = Node_QuoteSubBox.OutputNode
-										let LinkPreviewObject = LinkPreviewNodeToJson(LinkPreview)
-										PostContent.Segments.push(LinkPreviewObject)
+											})
+											PostContent.Segments.push({
+												ContentType: "Attachment",
+												Content: SubBoxesContent
+											})
+										} else { //Link to external site, have a preview of the page, e.g. https://bsky.app/profile/pappahutten.bsky.social/post/3klxhuy6wbc2h
+											let LinkPreview = Node_QuoteSubBox.OutputNode
+											let LinkPreviewObject = LinkPreviewNodeToJson(LinkPreview)
+											PostContent.Segments.push(LinkPreviewObject)
+										}
 									}
 								}
+							} else {
+								return "Error"
 							}
-						} else {
-							return {} //Something went wrong (failsafe)
 						}
 					}
 				} else {
