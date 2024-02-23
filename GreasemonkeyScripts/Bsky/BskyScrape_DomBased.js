@@ -6,8 +6,9 @@
 // @include      https://bsky.app/*
 // @grant       GM.setValue
 // @grant       GM.getValue
+// @grant    GM.registerMenuCommand
 // ==/UserScript==
-(function() {
+(async function() {
 	//NOTES:
 	//Best works on firefox because of my testing:
 	//-Best to have URLs have the "http" substring replaced with "ttps" because firefox truncate long links and doesn't keep the original full URL when copying them (the middle is
@@ -33,6 +34,10 @@
 		const Setting_PostImageFullRes = true
 			//^true = all image URLs in the post will be full resolution versions
 			// false = use potentially downsized resolution from the HTML.
+		const Setting_MaxNumberOfPosts = 100
+			//^-1 = No limit on how many posts
+			// <any positive number> = The maximum number of post can be saved. Once reached, any new post won't
+			//be added and console log will state that the max is reached.
 
 	//Stuff you don't touch unless you know what you're doing.
 		let RaceConditionLock = false
@@ -42,8 +47,17 @@
 			const SetOfPostsURLs = new Set()
 		//Run code periodically (recommended for dynamic web pages, infinite scrolling)
 			window.onload = setInterval(MainCode, Setting_Delay)
+			
+			
+	//Several menu commands
+		async function Reset() {
+			await GM.setValue("BSkyScrapePostList", "[]");
+			alert("Bsky scrape post list cleared.")
+		}
+		GM.registerMenuCommand("Clear Bsky post collection", Reset, "R");
+	
 	//MainCode, runs periodically and used to extract page content.
-		function MainCode() {
+		async function MainCode() {
 			if (!RaceConditionLock) {
 				RaceConditionLock = true
 
@@ -59,7 +73,7 @@
 					}
 					let UserPostArea = []
 					let ListOfPosts = [] //List of each individual posts
-					if (/https:\/\/bsky\.app\/?:profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/?$/.test(window.location.href)) { //profile page
+					if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/?$/.test(window.location.href)) { //profile page
 						//First, find an a href link to a profile as a reference. We get the lowest node that at least has all the posts on the page
 						UserPostArea = GetPostBoxesByLink(8)
 						
@@ -601,7 +615,6 @@
 							}
 							
 						})
-
 					}
 					let ListOfPosts_Clean = ListOfPosts.map((ArrayElement) => { //Have a version without ReplyConnections attribute since we do not need it if we are just looking at posts
 						return {
@@ -619,6 +632,48 @@
 							LikesCount: ArrayElement.LikesCount
 						}
 					})
+				//Saving...
+					let SavedBskyPostList = await GM.getValue("BSkyScrapePostList", "[]").catch(() => {
+						window.alert("Bsky-scrape load saved post failed!")
+					});
+					SavedBskyPostList = JSON.parse(SavedBskyPostList)
+					ListOfPosts_Clean.forEach((ExtractedPost, ExtractedPostIndex) => {
+						//Loop through what we have extracted it, and try to add it to the saved list, unless we already have it, then update it
+						let MatchedPostIndex = SavedBskyPostList.findIndex((SavedPost) => { //Search all in the saved list to find a matching post
+							return (ExtractedPost.PostURL == SavedPost.PostURL)
+						})
+						if (MatchedPostIndex == -1) { //If not found, add it to the list
+							if (Setting_MaxNumberOfPosts < 0) {
+								SavedBskyPostList.push(ListOfPosts_Clean[ExtractedPostIndex])
+							} else {
+								if (SavedBskyPostList.length < Setting_MaxNumberOfPosts) {
+									SavedBskyPostList.push(ListOfPosts_Clean[ExtractedPostIndex])
+								} else {
+									console.log("Bsky scrape content count limit reached.")
+								}
+							}
+						} else{
+							//Match occurred, replace it (but keep the list of reply URLs)
+							let SavedList_WhatToReplace = SavedBskyPostList[MatchedPostIndex]
+							let ExtractList_ReplaceWith = ExtractedPost
+							
+							let Set_ListOfURLsSaved = new Set(SavedList_WhatToReplace.RepliesURLs) //Start what we have that is saved
+							ExtractList_ReplaceWith.RepliesURLs.forEach((Extracted_Replies) => {
+								//Loop each reply URLs from what we newly extracted, and add them to the saved version's list of reply URLs,
+								//unless if it is already added
+								Set_ListOfURLsSaved.add(Extracted_Replies)
+							})
+							SavedList_WhatToReplace.RepliesURLs = Array.from(Set_ListOfURLsSaved)
+						}
+					})
+					
+					await GM.setValue("BSkyScrapePostList", JSON.stringify(SavedBskyPostList)).then(() => {
+						console.log("Bsky extracted post count: " + SavedBskyPostList.length.toString(10))
+					},
+					() => {
+						window.alert("Bsky-scrape saving post failed!")
+					});
+				
 				//Set a breakpoint here after everything loads to test the results stored in "ListOfPosts".
 				RaceConditionLock = false
 			}
