@@ -153,6 +153,7 @@
 												}
 											}
 										}
+										
 										//Reply downwards line
 										{
 											let LineElement = DescendNode(Post, [0, 1, 0, 1])
@@ -164,7 +165,7 @@
 										{
 											let LineElement = DescendNode(Post, [0, 0, 0, 0])
 											if (LineElement.IsSuccessful) {
-												PostHasRepliesLineBelow = true
+												PostIsAReplyLineToAbove = true
 											}
 										}
 										//User title
@@ -220,6 +221,8 @@
 										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[3] - Footer of post containing the counters
 										
 										//Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[1]
+										
+										
 										let ReplyToOffset = 0
 										let NodeOfReplyTo = DescendNode(Post, [0,1,1,1,1])
 										if (NodeOfReplyTo.IsSuccessful) {
@@ -861,7 +864,7 @@
 			let isHidden = false
 			let CurrentNode = Node
 			if (typeof CurrentNode.style.display != "undefined") { //If right at the node we are just on is hidden, immediately flag this as true
-				if (CurrentNode.style.display == "none") {
+				if ((CurrentNode.style.display == "none")||(getComputedStyle(CurrentNode).display == "none")) {
 					return true
 				}
 			}
@@ -869,7 +872,7 @@
 				CurrentNode = CurrentNode.parentNode
 				if (typeof CurrentNode.style != "undefined") {
 					if (typeof CurrentNode.style.display != "undefined") {
-						if (CurrentNode.style.display == "none") {
+						if ((CurrentNode.style.display == "none")||(getComputedStyle(CurrentNode).display == "none")) {
 							isHidden = true
 						}
 					}
