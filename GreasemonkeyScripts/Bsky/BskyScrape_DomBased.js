@@ -850,7 +850,7 @@
 						}
 						await GM.setValue("BSkyScrapeProfileList", JSON.stringify(SavedBskyProfileList)).then(() => {
 							CopiedListOfProfiles = JSON.stringify(SavedBskyProfileList, null, " ")
-							console.log("Bsky-scrape: extracted post count: " + SavedBskyProfileList.length.toString(10))
+							console.log("Bsky-scrape: extracted profile count: " + SavedBskyProfileList.length.toString(10))
 						},
 						() => {
 							window.alert("Bsky-scrape: saving profile failed!")
