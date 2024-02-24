@@ -46,6 +46,9 @@
 	//Stuff you don't touch unless you know what you're doing.
 		let RaceConditionLock = false
 			//^This prevents concurrent runs of the code as a failsafe.
+		let ConfirmationPause = false
+			//^This makes the reset function not fail should the main code execute right when the user
+			// selects reset.
 		//no duplicates on the console log
 			const SetOfURLs = new Set()
 			const SetOfPostsURLs = new Set()
@@ -55,23 +58,49 @@
 			
 		//Copy to clipboard
 			var CopiedListOfPosts = ""
+			var CopiedListOfProfiles = ""
 	//Several menu commands
-		async function Reset() {
-			if (window.confirm("You sure you want to clear the list of post extracted?")) {
-				await GM.setValue("BSkyScrapePostList", "[]").then(() => {
-					alert("Bsky-scrape: post list cleared.")
-				},
-				() => {
-					alert("Bsky-scrape: post list failed to clear.")
-				});
+	
+		//Post lists
+			async function ResetPostList() {
+				ConfirmationPause = true
+				if (window.confirm("You sure you want to clear the list of post extracted?")) {
+					await GM.setValue("BSkyScrapePostList", "[]").then(() => {
+						alert("Bsky-scrape: post list cleared.")
+						ConfirmationPause = false
+					},
+					() => {
+						alert("Bsky-scrape: post list failed to clear.")
+						ConfirmationPause = false
+					});
+				}
 			}
-		}
-		GM.registerMenuCommand("Bsky-scrape - clear post collection", Reset, "R");
-		
-		async function CopyPostToClipboard() {
-			GM.setClipboard(CopiedListOfPosts)
-		}
-		GM.registerMenuCommand("Bsky-scrape - Copy post list to clipboard", CopyPostToClipboard, "C");
+			GM.registerMenuCommand("Bsky-scrape - clear post collection", ResetPostList, "R");
+			
+			async function CopyPostToClipboard() {
+				GM.setClipboard(CopiedListOfPosts)
+			}
+			GM.registerMenuCommand("Bsky-scrape - Copy post list to clipboard", CopyPostToClipboard, "C");
+		//Profile lists
+			async function ResetProfileList() {
+				ConfirmationPause = true
+				if (window.confirm("You sure you want to clear the list of profiles extracted?")) {
+					await GM.setValue("BSkyScrapeProfileList", "[]").then(() => {
+						alert("Bsky-scrape: profile list cleared.")
+						ConfirmationPause = false
+					},
+					() => {
+						alert("Bsky-scrape: profile list failed to clear.")
+						ConfirmationPause = false
+					});
+				}
+			}
+			GM.registerMenuCommand("Bsky-scrape - clear profile collection", ResetPostList, "R");
+			
+			async function CopyProfileToClipboard() {
+				GM.setClipboard(CopiedListOfProfiles)
+			}
+			GM.registerMenuCommand("Bsky-scrape - Copy profile list to clipboard", CopyProfileToClipboard, "H");
 	
 	//MainCode, runs periodically and used to extract page content.
 		async function MainCode() {
@@ -89,6 +118,7 @@
 						}
 					}
 					let UserPostArea = []
+					let Profile = {}
 					let ListOfPosts = [] //List of each individual posts
 					if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/?$/.test(window.location.href)) { //profile page
 						//First, find an a href link to a profile as a reference. We get the lowest node that at least has all the posts on the page
@@ -311,7 +341,88 @@
 								ListOfPosts.push(...PostGroup)
 							}
 						})
-						
+						//Obtain user profile
+							let ProfileNode = {}
+							
+							let UserProfileHandle = Array.from(document.getElementsByTagName("DIV")).find((DivElement) => {
+								if (isAncestorsStyleDisplayNone(DivElement)) {
+									return false
+								}
+								let OuterNodeNotAAhref = AscendNode(DivElement, 1)
+								if (!OuterNodeNotAAhref.IsSuccessful) {
+									return false
+								}
+								if (!(/^@[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+$/.test(DivElement.innerHTML))) {
+									return false
+								}
+								if (OuterNodeNotAAhref.OutputNode.tagName == "A") {
+									return false
+								}
+								ProfileNode = AscendNode(DivElement, 3).OutputNode
+								return true
+							})
+							if (typeof UserProfileHandle != "undefined") {
+								
+								let ProfileURL = HttpToTtp(window.location.href)
+								
+								//ProfileNode.childNodes[1].childNodes[1].textContent 
+								let Profile_UserTitle = ""
+								let Node_Profile_UserTitle = DescendNode(ProfileNode, [1,1])
+								if (Node_Profile_UserTitle.IsSuccessful) {
+									Profile_UserTitle = Node_Profile_UserTitle.OutputNode.textContent
+								}
+								
+								//ProfileNode.childNodes[1].childNodes[2].childNodes[0].innerText
+								let Profile_UserHandle = ""
+								let Node_Profile_UserHandle = DescendNode(ProfileNode, [1,2,0])
+								if (Node_Profile_UserHandle.IsSuccessful) {
+									Profile_UserHandle = Node_Profile_UserHandle.OutputNode.innerText
+								}
+								
+								//ProfileNode.childNodes[1].childNodes[3]
+								let Profile_FollowCount = ""
+								let Profile_FollowingCount = ""
+								let Profile_PostCount = ""
+								let NodeOfFollowFollowingPost = DescendNode(ProfileNode, [1,3])
+								if (NodeOfFollowFollowingPost.IsSuccessful) {
+									let ArrayOf_FollowFollowingPost = Array.from(NodeOfFollowFollowingPost.OutputNode.childNodes)
+									
+									Profile_FollowCount = ArrayOf_FollowFollowingPost[0].textContent.replace(/^([\d\.A-Za-z]+).*$/, "$1")
+									Profile_FollowingCount = ArrayOf_FollowFollowingPost[1].textContent.replace(/^([\d\.A-Za-z]+).*$/, "$1")
+									Profile_PostCount = ArrayOf_FollowFollowingPost[2].textContent.replace(/^([\d\.A-Za-z]+).*$/, "$1")
+								}
+								
+								//ProfileNode.childNodes[0].childNodes[0].childNodes[0].childNodes[0].src
+								let Profile_BackgroundImg = ""
+								let Node_Profile_BackgroundImg = DescendNode(ProfileNode, [0,0,0,0])
+								if (Node_Profile_BackgroundImg.IsSuccessful) {
+									Profile_BackgroundImg = HttpToTtp(Node_Profile_BackgroundImg.OutputNode.src)
+								}
+								
+								//ProfileNode.childNodes[1].childNodes[4].childNodes[0].textContent
+								let Profile_TextContent = {
+									Text: "",
+									Links: ""
+								}
+								let Node_TextContent = DescendNode(ProfileNode, [1,4,0])
+								if (Node_TextContent.IsSuccessful) {
+									Profile_TextContent.Text = Node_TextContent.OutputNode.textContent
+									Profile_TextContent.Links = GetLinksURLs(Node_TextContent.OutputNode)
+								}
+								
+								Profile = {
+									Type: "UserProfile",
+									ProfileURL: ProfileURL,
+									UserTitle: Profile_UserTitle,
+									UserHandle: Profile_UserHandle,
+									BackgroundImg: Profile_BackgroundImg,
+									TextContent: Profile_TextContent,
+									
+									ProfileFollowCount: Profile_FollowCount,
+									ProfileFollowingCount: Profile_FollowingCount,
+									ProfilePostCount: Profile_PostCount
+								}
+							}
 					} else if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-\.:]+\/post\/[a-zA-Z\d\-]+\/?/.test(window.location.href)) { //Post page
 						//https://bsky.app/profile/<UserHandle>/post/<base64_string>
 						//https://bsky.app/profile/did:plc:<base64_string>/post/<base64_string> when "View full thread" is clicked.
@@ -667,55 +778,86 @@
 						}
 					})
 				//Saving...
-					let SavedBskyPostList = await GM.getValue("BSkyScrapePostList", "[]").catch(() => {
-						window.alert("Bsky-scrape: load saved post failed!")
-					});
-					SavedBskyPostList = JSON.parse(SavedBskyPostList)
-					ListOfPosts_Clean.forEach((ExtractedPost, ExtractedPostIndex) => {
-						//Loop through what we have extracted it, and try to add it to the saved list, unless we already have it, then update it
-						let MatchedPostIndex = SavedBskyPostList.findIndex((SavedPost) => { //Search all in the saved list to find a matching post
-							return (ExtractedPost.PostURL == SavedPost.PostURL)
-						})
-						if (ExtractedPostIndex == 5) {
-							let bp = 0
-							
-						}
-						if (MatchedPostIndex == -1) { //If not found, add it to the list
-							if (Setting_MaxNumberOfPosts < 0) {
-								SavedBskyPostList.push(ListOfPosts_Clean[ExtractedPostIndex])
-							} else {
-								if (SavedBskyPostList.length < Setting_MaxNumberOfPosts) {
+					if (!ConfirmationPause) {
+						let SavedBskyPostList = await GM.getValue("BSkyScrapePostList", "[]").catch(() => {
+							window.alert("Bsky-scrape: load saved post failed!")
+						});
+						SavedBskyPostList = JSON.parse(SavedBskyPostList)
+						ListOfPosts_Clean.forEach((ExtractedPost, ExtractedPostIndex) => {
+							//Loop through what we have extracted it, and try to add it to the saved list, unless we already have it, then update it
+							let MatchedPostIndex = SavedBskyPostList.findIndex((SavedPost) => { //Search all in the saved list to find a matching post
+								return (ExtractedPost.PostURL == SavedPost.PostURL)
+							})
+							if (ExtractedPostIndex == 5) {
+								let bp = 0
+								
+							}
+							if (MatchedPostIndex == -1) { //If not found, add it to the list
+								if (Setting_MaxNumberOfPosts < 0) {
 									SavedBskyPostList.push(ListOfPosts_Clean[ExtractedPostIndex])
 								} else {
-									console.log("Bsky-scrape: content count limit reached.")
+									if (SavedBskyPostList.length < Setting_MaxNumberOfPosts) {
+										SavedBskyPostList.push(ListOfPosts_Clean[ExtractedPostIndex])
+									} else {
+										console.log("Bsky-scrape: content count limit reached.")
+									}
+								}
+							} else {
+								//Match occurred, replace it (but keep the list of reply URLs and what's replying to)
+								let SavedList_WhatToReplace = SavedBskyPostList[MatchedPostIndex]
+								let ExtractList_ReplaceWith = ExtractedPost
+								
+								let Set_ListOfURLsSaved = new Set(SavedList_WhatToReplace.RepliesURLs) //Start what we have that is saved
+								ExtractList_ReplaceWith.RepliesURLs.forEach((Extracted_Replies) => {
+									//Loop each reply URLs from what we newly extracted, and add them to the saved version's list of reply URLs,
+									//unless if it is already added
+									Set_ListOfURLsSaved.add(Extracted_Replies)
+								})
+								SavedList_WhatToReplace.RepliesURLs = Array.from(Set_ListOfURLsSaved)
+								
+								if ((SavedList_WhatToReplace.ReplyToURL == "") && (ExtractList_ReplaceWith.ReplyToURL != "")) { //If discovered that the post has a reply, add a URL to it.
+									SavedList_WhatToReplace.ReplyToURL = ExtractList_ReplaceWith.ReplyToURL
 								}
 							}
-						} else {
-							//Match occurred, replace it (but keep the list of reply URLs and what's replying to)
-							let SavedList_WhatToReplace = SavedBskyPostList[MatchedPostIndex]
-							let ExtractList_ReplaceWith = ExtractedPost
-							
-							let Set_ListOfURLsSaved = new Set(SavedList_WhatToReplace.RepliesURLs) //Start what we have that is saved
-							ExtractList_ReplaceWith.RepliesURLs.forEach((Extracted_Replies) => {
-								//Loop each reply URLs from what we newly extracted, and add them to the saved version's list of reply URLs,
-								//unless if it is already added
-								Set_ListOfURLsSaved.add(Extracted_Replies)
+						})
+						await GM.setValue("BSkyScrapePostList", JSON.stringify(SavedBskyPostList)).then(() => {
+							CopiedListOfPosts = JSON.stringify(SavedBskyPostList, null, " ")
+							console.log("Bsky-scrape: extracted post count: " + SavedBskyPostList.length.toString(10))
+						},
+						() => {
+							window.alert("Bsky-scrape: saving post failed!")
+						});
+						
+						
+						//Save profile data
+						let SavedBskyProfileList = await GM.getValue("BSkyScrapeProfileList", "[]").catch(() => {
+							window.alert("Bsky-scrape: load saved profiles failed!")
+						})
+						SavedBskyProfileList = JSON.parse(SavedBskyProfileList)
+						if ((Object.keys(Profile).length != 0) && (Profile.ProfileURL != "")) {
+							let IndexOfSavedMatching = SavedBskyProfileList.findIndex((SavedProfile) => {
+								if (SavedProfile.ProfileURL == Profile.ProfileURL) {
+									return true
+								}
+								return false
 							})
-							SavedList_WhatToReplace.RepliesURLs = Array.from(Set_ListOfURLsSaved)
 							
-							if ((SavedList_WhatToReplace.ReplyToURL == "") && (ExtractList_ReplaceWith.ReplyToURL != "")) { //If discovered that the post has a reply, add a URL to it.
-								SavedList_WhatToReplace.ReplyToURL = ExtractList_ReplaceWith.ReplyToURL
+							if (IndexOfSavedMatching == -1) {
+								SavedBskyProfileList.push(Profile)
+							} else { //Replace it
+								SavedBskyProfileList[IndexOfSavedMatching] = Profile
 							}
 						}
-					})
-					
-					await GM.setValue("BSkyScrapePostList", JSON.stringify(SavedBskyPostList)).then(() => {
-						CopiedListOfPosts = JSON.stringify(SavedBskyPostList, null, " ")
-						console.log("Bsky-scrape: extracted post count: " + SavedBskyPostList.length.toString(10))
-					},
-					() => {
-						window.alert("Bsky-scrape: saving post failed!")
-					});
+						await GM.setValue("BSkyScrapeProfileList", JSON.stringify(SavedBskyProfileList)).then(() => {
+							CopiedListOfProfiles = JSON.stringify(SavedBskyProfileList, null, " ")
+							console.log("Bsky-scrape: extracted post count: " + SavedBskyProfileList.length.toString(10))
+						},
+						() => {
+							window.alert("Bsky-scrape: saving profile failed!")
+						});
+					} else {
+						console.log("Bsky-scrape: Paused")
+					}
 				
 				//Set a breakpoint here after everything loads to test the results stored in "ListOfPosts".
 				RaceConditionLock = false
@@ -791,12 +933,14 @@
 				}
 				return {
 					OutputNode: CurrentNode,
-					LevelsPassed: ChildCount
+					LevelsPassed: ChildCount,
+					IsSuccessful: (Levels == ChildCount)
 				}
 			} else {
 				return {
 					OutputNode: undefined,
-					LevelsPassed: -1
+					LevelsPassed: -1,
+					IsSuccessful: false
 				}
 				
 			}
