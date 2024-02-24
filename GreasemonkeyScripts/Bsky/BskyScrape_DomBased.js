@@ -109,8 +109,9 @@
 		async function MainCode() {
 			if (!RaceConditionLock) {
 				RaceConditionLock = true
-
 				//Code here
+					let DateTimeOfScrape = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
+					
 					let isLoggedIn = false
 					{
 						let SignUpButton = Array.from(document.getElementsByTagName("BUTTON")).find((Button) => {
@@ -308,7 +309,8 @@
 												PostContent: PostContent,
 												ReplyCount: ReplyCount,
 												RepostCount: RepostCount,
-												LikesCount: LikesCount
+												LikesCount: LikesCount,
+												DateTimeOfScrape: DateTimeOfScrape
 											})
 										}
 									} else {
@@ -382,6 +384,31 @@
 									Profile_UserHandle = Node_Profile_UserHandle.OutputNode.innerText
 								}
 								
+								//ProfileNode.childNodes[2].childNodes[0].childNodes[0].childNodes[1].src
+								let Profile_Avatar = ""
+								let Node_Profile_Avatar = DescendNode(ProfileNode, [2,0,0,1])
+								if (Node_Profile_Avatar.IsSuccessful) {
+									Profile_Avatar = HttpToTtp(Node_Profile_Avatar.OutputNode.src)
+								}
+								
+								//ProfileNode.childNodes[0].childNodes[0].childNodes[0].childNodes[0].src
+								let Profile_BackgroundImg = ""
+								let Node_Profile_BackgroundImg = DescendNode(ProfileNode, [0,0,0,0])
+								if (Node_Profile_BackgroundImg.IsSuccessful) {
+									Profile_BackgroundImg = HttpToTtp(Node_Profile_BackgroundImg.OutputNode.src)
+								}
+								
+								//ProfileNode.childNodes[1].childNodes[4].childNodes[0].textContent
+								let Profile_TextContent = {
+									Text: "",
+									Links: []
+								}
+								let Node_TextContent = DescendNode(ProfileNode, [1,4,0])
+								if (Node_TextContent.IsSuccessful) {
+									Profile_TextContent.Text = Node_TextContent.OutputNode.textContent
+									Profile_TextContent.Links = GetLinksURLs(Node_TextContent.OutputNode)
+								}
+								
 								//ProfileNode.childNodes[1].childNodes[3]
 								let Profile_FollowCount = ""
 								let Profile_FollowingCount = ""
@@ -395,35 +422,18 @@
 									Profile_PostCount = ArrayOf_FollowFollowingPost[2].textContent.replace(/^([\d\.A-Za-z]+).*$/, "$1")
 								}
 								
-								//ProfileNode.childNodes[0].childNodes[0].childNodes[0].childNodes[0].src
-								let Profile_BackgroundImg = ""
-								let Node_Profile_BackgroundImg = DescendNode(ProfileNode, [0,0,0,0])
-								if (Node_Profile_BackgroundImg.IsSuccessful) {
-									Profile_BackgroundImg = HttpToTtp(Node_Profile_BackgroundImg.OutputNode.src)
-								}
-								
-								//ProfileNode.childNodes[1].childNodes[4].childNodes[0].textContent
-								let Profile_TextContent = {
-									Text: "",
-									Links: ""
-								}
-								let Node_TextContent = DescendNode(ProfileNode, [1,4,0])
-								if (Node_TextContent.IsSuccessful) {
-									Profile_TextContent.Text = Node_TextContent.OutputNode.textContent
-									Profile_TextContent.Links = GetLinksURLs(Node_TextContent.OutputNode)
-								}
-								
 								Profile = {
 									Type: "UserProfile",
 									ProfileURL: ProfileURL,
 									UserTitle: Profile_UserTitle,
 									UserHandle: Profile_UserHandle,
+									UserAvatar: Profile_Avatar,
 									BackgroundImg: Profile_BackgroundImg,
 									TextContent: Profile_TextContent,
-									
 									ProfileFollowCount: Profile_FollowCount,
 									ProfileFollowingCount: Profile_FollowingCount,
-									ProfilePostCount: Profile_PostCount
+									ProfilePostCount: Profile_PostCount,
+									DateTimeOfScrape: DateTimeOfScrape
 								}
 							}
 					} else if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-\.:]+\/post\/[a-zA-Z\d\-]+\/?/.test(window.location.href)) { //Post page
@@ -642,7 +652,8 @@
 									PostContent: PostContent,
 									ReplyCount: ReplyCount,
 									RepostCount: RepostCount,
-									LikesCount: LikesCount
+									LikesCount: LikesCount,
+									DateTimeOfScrape: DateTimeOfScrape
 								})
 							}
 						})
@@ -777,7 +788,8 @@
 							PostContent: ArrayElement.PostContent,
 							ReplyCount: ArrayElement.ReplyCount,
 							RepostCount: ArrayElement.RepostCount,
-							LikesCount: ArrayElement.LikesCount
+							LikesCount: ArrayElement.LikesCount,
+							DateTimeOfScrape: ArrayElement.DateTimeOfScrape
 						}
 					})
 				//Saving...
@@ -1140,6 +1152,10 @@
 					Error: "Invalid date"
 				})
 			}
+		}
+		function ISOString_to_YYYY_MM_DD_HH_MM_SS(ISOString) {
+			//YYYY-MM-DDTHH:mm:ss.sssZ or ±YYYYYY-MM-DDTHH:mm:ss.sssZ
+			return ISOString.replace("T", " ").replace(/\.\d{3}Z$/, "") + " UTC"
 		}
 		
 		function GetPostContent(Node, Type) {
