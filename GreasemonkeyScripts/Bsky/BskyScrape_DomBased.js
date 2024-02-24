@@ -314,7 +314,7 @@
 						
 					} else if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-\.:]+\/post\/[a-zA-Z\d\-]+\/?/.test(window.location.href)) { //Post page
 						//https://bsky.app/profile/<UserHandle>/post/<base64_string>
-						//https://bsky.app/profile/did:plc:<base64_string>/post/<base64_string>
+						//https://bsky.app/profile/did:plc:<base64_string>/post/<base64_string> when "View full thread" is clicked.
 						//[post page]
 						//First, find an a div containing a timestamp as a reference. We then ascend the nodes to get the lowest node that at least has all the posts.
 						//Reason not to get a "a href" link to post is because if there is only 1 post on the page and it is the post you are directly viewing, then
