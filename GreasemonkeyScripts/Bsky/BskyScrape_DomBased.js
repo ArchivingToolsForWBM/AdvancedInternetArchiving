@@ -42,6 +42,9 @@
 			// <any positive number> = The maximum number of post can be saved. Once reached, any new post won't
 			// be added and console log will state that the max is reached. It does not delete any posts in the
 			// list if above the limit
+		const Setting_MaxNumberOfProfiles = 100
+			//^-1 = no limit
+			// <any positive number> = The maximum number of profiles can be saved. Same as above.
 
 	//Stuff you don't touch unless you know what you're doing.
 		let RaceConditionLock = false
@@ -779,6 +782,7 @@
 					})
 				//Saving...
 					if (!ConfirmationPause) {
+						//Saving posts
 						let SavedBskyPostList = await GM.getValue("BSkyScrapePostList", "[]").catch(() => {
 							window.alert("Bsky-scrape: load saved post failed!")
 						});
@@ -799,7 +803,7 @@
 									if (SavedBskyPostList.length < Setting_MaxNumberOfPosts) {
 										SavedBskyPostList.push(ListOfPosts_Clean[ExtractedPostIndex])
 									} else {
-										console.log("Bsky-scrape: content count limit reached.")
+										console.log("Bsky-scrape: post count limit reached.")
 									}
 								}
 							} else {
@@ -843,8 +847,19 @@
 							})
 							
 							if (IndexOfSavedMatching == -1) {
-								SavedBskyProfileList.push(Profile)
-							} else { //Replace it
+								//If haven't add it
+								if (Setting_MaxNumberOfProfiles < 0) {
+									SavedBskyProfileList.push(Profile)
+								} else {
+									if (SavedBskyProfileList.length < Setting_MaxNumberOfProfiles) {
+										SavedBskyProfileList.push(Profile)
+									} else {
+										console.log("Bsky-scrape: profile page count limit reached.")
+									}
+								}
+								
+							} else {
+								//if gotten already, replace it
 								SavedBskyProfileList[IndexOfSavedMatching] = Profile
 							}
 						}
