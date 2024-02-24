@@ -312,7 +312,9 @@
 							}
 						})
 						
-					} else if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-\.]+\/post\/[a-zA-Z\d\-]+\/?/.test(window.location.href)) { //Post page
+					} else if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-\.:]+\/post\/[a-zA-Z\d\-]+\/?/.test(window.location.href)) { //Post page
+						//https://bsky.app/profile/<UserHandle>/post/<base64_string>
+						//https://bsky.app/profile/did:plc:<base64_string>/post/<base64_string>
 						//[post page]
 						//First, find an a div containing a timestamp as a reference. We then ascend the nodes to get the lowest node that at least has all the posts.
 						//Reason not to get a "a href" link to post is because if there is only 1 post on the page and it is the post you are directly viewing, then
@@ -358,6 +360,12 @@
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0]
 								UserHandle = DescendNode(Box, [0,0,0,1,1,0,0]).OutputNode.innerText 
+								
+								if (/https:\/\/bsky\.app\/profile\/did:plc/.test(PostURL)) { //"View full thread" button is clicked, goes to a handle-less version of a post URL
+									//Replace the "did:plc:<base64_string>" with the handle.
+									let UserHandleNoAt = UserHandle.replace(/^@/, "")
+									PostURL = PostURL.replace(/(https:\/\/bsky\.app\/profile\/)[a-zA-Z\d\-\.:]+(\/post\/[a-zA-Z\d\-]+\/?)/, "$1" + UserHandleNoAt + "$2")
+								}
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1]
 								let NodeOfAvatarImg = DescendNode(Box, [0,0,0,0,0,0,0,1])
@@ -410,6 +418,12 @@
 								
 								//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].innerText
 								UserHandle = DescendNode(Box, [0,1,0,1,1,0,0]).OutputNode.innerText
+								
+								if (/https:\/\/bsky\.app\/profile\/did:plc/.test(PostURL)) { //"View full thread" button is clicked, goes to a handle-less version of a post URL
+									//Replace the "did:plc:<base64_string>" with the handle.
+									let UserHandleNoAt = UserHandle.replace(/^@/, "")
+									PostURL = PostURL.replace(/(https:\/\/bsky\.app\/profile\/)[a-zA-Z\d\-\.:]+(\/post\/[a-zA-Z\d\-]+\/?)/, "$1" + UserHandleNoAt + "$2")
+								}
 								
 								//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
 								let NodeOfAvatarImg = DescendNode(Box, [0,1,0,0,0,0,0,1])
