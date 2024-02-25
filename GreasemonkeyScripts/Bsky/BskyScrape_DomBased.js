@@ -95,6 +95,7 @@
 			
 			//Start/stop button
 			let StartStopButton = document.createElement("button")
+			StartStopButton.setAttribute("style", "width: 50px;")
 			StartStopButton.setAttribute("id", Setting_BskyReservedElementID_StartStopButtonText)
 			let BskyScrape_StartStopFlag = Saved_Setting_StartStop
 			let StartStopButton_Text = "Start"
