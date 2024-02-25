@@ -411,7 +411,13 @@ Sort:
 				//Avatar
 				Type:"normal",
 				FindWhat: RegExp("(" + BSkyDomainName_CDN_Domain + "\\/img\\/avatar\\/plain\\/.*$)"),
-				ReplaceWith:[{Replacement:"$1",KeyName:"Bsky_Avatar"}]
+				ReplaceWith:[{Replacement:"$1",KeyName:"Bsky_Img_Avatar"}]
+			},
+			{
+				//Banner
+				Type:"normal",
+				FindWhat: RegExp("(" + BSkyDomainName_CDN_Domain + "\\/img\\/banner\\/plain\\/.*$)"),
+				ReplaceWith:[{Replacement:"$1",KeyName:"Bsky_Img_Banner"}]
 			}
 		]
 	window.onload = LoadCustomToggableFilters
