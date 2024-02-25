@@ -101,7 +101,7 @@
 					});
 				}
 			}
-			GM.registerMenuCommand("Bsky-scrape - clear profile collection", ResetPostList, "R");
+			GM.registerMenuCommand("Bsky-scrape - clear profile collection", ResetProfileList, "R");
 			
 			async function CopyProfileToClipboard() {
 				GM.setClipboard(CopiedListOfProfiles)
