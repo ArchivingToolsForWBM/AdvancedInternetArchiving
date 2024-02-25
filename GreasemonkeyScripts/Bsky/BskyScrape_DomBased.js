@@ -26,8 +26,6 @@
 	//Settings
 	// Note: Changes apply when the page is refreshed. Either reload the page via a browser or enter the address bar. It's not a reload if only part of the page loads content while
 	// everything else persist.
-		const Setting_Delay = 3000
-			//^Number of milliseconds between each re-execution of this script.
 		const Setting_http_ttp = false
 			//^true = All URLs in the output start with "ttp" instead of "http" (to avoid URL truncation like what firefox does; replacing the middle of string with ellipsis).
 			// false = leave it as http. NOTE that this counts as a "different URL" when this script detects a post that is already saved, causing it to save duplicates.
@@ -37,7 +35,7 @@
 		const Setting_PostImageFullRes = true
 			//^true = all image URLs in the post will be full resolution versions
 			// false = use potentially downsized resolution from the HTML.
-		const Setting_MaxNumberOfPosts = 100
+		const Setting_MaxNumberOfPosts = -1
 			//^-1 = No limit on how many posts
 			// <any positive number> = The maximum number of post can be saved. Once reached, any new post won't
 			// be added and console log will state that the max is reached. It does not delete any posts in the
@@ -55,13 +53,18 @@
 		//no duplicates on the console log
 			const SetOfURLs = new Set()
 			const SetOfPostsURLs = new Set()
+		//Code that spawns the UI on the bottom right
+			setTimeout (LoadScrapeUI, 1500)
 		//Run code periodically (recommended for dynamic web pages, infinite scrolling)
-			window.onload = setInterval(MainCode, Setting_Delay)
-			
-			
+			window.onload = setTimeout(MainCode, 2000)
 		//Copy to clipboard
 			var CopiedListOfPosts = ""
 			var CopiedListOfProfiles = ""
+		//If for some reason the site started using element IDs that this script is using, change them.
+			const Setting_BskyReservedElementID_PostSavedCount = "BskyScrape_Info_PostSavedCount"
+			const Setting_BskyReservedElementID_ProfileSavedCount = "BskyScrape_Info_ProfileSavedCount"
+			const Setting_BskyReservedElementID_ScanFrequency = "BskyScrape_Input_ScanFrequency"
+			const Setting_BskyReservedElementID_ScanFrequencyNumberDisplay = "BskyScrape_Info_ScanSec"
 	//Several menu commands
 	
 		//Post lists
@@ -104,7 +107,92 @@
 				GM.setClipboard(CopiedListOfProfiles)
 			}
 			GM.registerMenuCommand("Bsky-scrape - Copy profile list to clipboard", CopyProfileToClipboard, "H");
-	
+	//Spawn a UI
+		async function LoadScrapeUI() {
+			//div box
+			let BoxOfUI = document.createElement("div")
+			BoxOfUI.setAttribute("style", "position: fixed;bottom: 40px;right: 40px;z-index: 999; background-color: #404040; color: #ffffff;")
+			
+			//table
+			let TableUI = document.createElement("table")
+			
+			//Row - scan frequency
+			let ScanFrequencySetting = await GM.getValue("BskyScrapeScanFrequency", 1000)
+			
+			let TableRow0 = document.createElement("tr")
+			TableUI.appendChild(TableRow0)
+			
+			let TableCell_0_0 = document.createElement("td")
+			TableCell_0_0.setAttribute("title", "The amount of time between each scanning for scraping.")
+			TableCell_0_0.appendChild(document.createTextNode("Scan frequency "))
+			TableRow0.appendChild(TableCell_0_0)
+			
+			let TableCell_0_1 = document.createElement("td")
+			let ScrapeFrequency_InputRange = document.createElement("input")
+			ScrapeFrequency_InputRange.setAttribute("id", Setting_BskyReservedElementID_ScanFrequency)
+			ScrapeFrequency_InputRange.setAttribute("type", "range")
+			ScrapeFrequency_InputRange.setAttribute("min", "1000")
+			ScrapeFrequency_InputRange.setAttribute("max", "10000")
+			ScrapeFrequency_InputRange.setAttribute("step", "500")
+			ScrapeFrequency_InputRange.setAttribute("value", ScanFrequencySetting.toString(10))
+			ScrapeFrequency_InputRange.addEventListener(
+			"input",
+			async function () {
+				document.getElementById(Setting_BskyReservedElementID_ScanFrequencyNumberDisplay).innerText = (parseInt(this.value)/1000).toFixed(1)
+				await GM.setValue("BskyScrapeScanFrequency", this.value.toString(10))
+			})
+			TableCell_0_1.appendChild(ScrapeFrequency_InputRange)
+			TableCell_0_1.appendChild(document.createElement("br"))
+			TableCell_0_1.setAttribute("style", "text-align: center;")
+			
+			let ScrapeFrequency_SecDisplay = document.createElement("span")
+			ScrapeFrequency_SecDisplay.setAttribute("id", Setting_BskyReservedElementID_ScanFrequencyNumberDisplay)
+			ScrapeFrequency_SecDisplay.appendChild(document.createTextNode((ScanFrequencySetting/1000).toFixed(1)))
+			TableCell_0_1.appendChild(ScrapeFrequency_SecDisplay)
+			TableCell_0_1.appendChild(document.createTextNode(" sec"))
+			TableRow0.appendChild(TableCell_0_1)
+			
+			//Row - "Number of posts saved: "
+			let TableRow1 = document.createElement("tr")
+			TableUI.appendChild(TableRow1)
+			
+			let TableCell_1_0 = document.createElement("td")
+			TableCell_1_0.appendChild(document.createTextNode("Number of posts saved: "))
+			TableRow1.appendChild(TableCell_1_0)
+			
+			let TableCell_1_1 = document.createElement("td")
+			let PostCountNumberSpan = document.createElement("span")
+			PostCountNumberSpan.setAttribute("id", Setting_BskyReservedElementID_PostSavedCount)
+			PostCountNumberSpan.appendChild(document.createTextNode("0"))
+			TableCell_1_1.appendChild(PostCountNumberSpan)
+			TableRow1.appendChild(TableCell_1_1)
+			
+			
+			//Row - Number of profiles
+			let TableRow2 = document.createElement("tr")
+			TableUI.appendChild(TableRow2
+			)
+			let TableCell_2_0 = document.createElement("td")
+			TableCell_2_0.appendChild(document.createTextNode("Number of profiles saved: "))
+			TableRow2.appendChild(TableCell_2_0)
+			
+			let TableCell_2_1 = document.createElement("td")
+			let ProfileCountNumberSpan = document.createElement("span")
+			ProfileCountNumberSpan.setAttribute("id", Setting_BskyReservedElementID_ProfileSavedCount)
+			ProfileCountNumberSpan.appendChild(document.createTextNode("0"))
+			TableCell_2_1.appendChild(ProfileCountNumberSpan)
+			TableRow2.appendChild(TableCell_2_1)
+			
+			BoxOfUI.appendChild(TableUI)
+			
+			
+			//Add the box to the HTML
+			let HTMLBody = Array.from(document.getElementsByTagName("BODY")).find((Element) => {return true})
+			InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0])
+			if (InnerNodeOfHTMLBody.IsSuccessful) {
+				document.body.insertBefore(BoxOfUI, HTMLBody.childNodes[0]);
+			}
+		}
 	//MainCode, runs periodically and used to extract page content.
 		async function MainCode() {
 			if (!RaceConditionLock) {
@@ -838,7 +926,12 @@
 						})
 						await GM.setValue("BSkyScrapePostList", JSON.stringify(SavedBskyPostList)).then(() => {
 							CopiedListOfPosts = JSON.stringify(SavedBskyPostList, null, " ")
-							console.log("Bsky-scrape: extracted post count: " + SavedBskyPostList.length.toString(10))
+							//console.log("Bsky-scrape: extracted post count: " + SavedBskyPostList.length.toString(10))
+							
+							let ElementOfUI_PostCount = document.getElementById(Setting_BskyReservedElementID_PostSavedCount)
+							if (ElementOfUI_PostCount != null) {
+								ElementOfUI_PostCount.innerText = SavedBskyPostList.length.toString(10)
+							}
 						},
 						() => {
 							window.alert("Bsky-scrape: saving post failed!")
@@ -877,7 +970,11 @@
 						}
 						await GM.setValue("BSkyScrapeProfileList", JSON.stringify(SavedBskyProfileList)).then(() => {
 							CopiedListOfProfiles = JSON.stringify(SavedBskyProfileList, null, " ")
-							console.log("Bsky-scrape: extracted profile count: " + SavedBskyProfileList.length.toString(10))
+							//console.log("Bsky-scrape: extracted profile count: " + SavedBskyProfileList.length.toString(10))
+							let ElementOfUI_ProfileCount = document.getElementById(Setting_BskyReservedElementID_ProfileSavedCount)
+							if (ElementOfUI_ProfileCount != null) {
+								ElementOfUI_ProfileCount.innerText = SavedBskyProfileList.length.toString(10)
+							}
 						},
 						() => {
 							window.alert("Bsky-scrape: saving profile failed!")
@@ -886,9 +983,17 @@
 						console.log("Bsky-scrape: Paused")
 					}
 				
+				let ScanFrequencySetting = await GM.getValue("BskyScrapeScanFrequency", 1000)
+				setTimeout(MainCode, ScanFrequencySetting)
+				
 				//Set a breakpoint here after everything loads to test the results stored in "ListOfPosts".
 				RaceConditionLock = false
 			}
+		}
+	//UI functions
+		function UpdateDisplay_ScanFrequency() {
+			let a = 0
+			
 		}
 	//reused/helper Functions
 		function ConsoleLoggingURL(URL_String) {
