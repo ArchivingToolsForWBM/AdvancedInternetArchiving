@@ -53,60 +53,35 @@
 		//no duplicates on the console log
 			const SetOfURLs = new Set()
 			const SetOfPostsURLs = new Set()
-		//Code that spawns the UI on the bottom right
-			setTimeout (LoadScrapeUI, 1500)
-		//Run code periodically (recommended for dynamic web pages, infinite scrolling)
-			window.onload = setTimeout(MainCode, 2000)
+		//Some load/save values (note that here execute only once and during a page load)
+			let Saved_Setting_StartStop = false
+			let Saved_Setting_ScanFrequency = 1000
+			let Saved_Extracted_Posts = []
+			let Saved_Extracted_Profiles = []
+			
+			UpdateSavedValues()
+			
+			let ID_TimeoutMainCode = 0
+		//Run code
+			//Code that spawns the UI on the bottom right
+				setTimeout(LoadScrapeUI, 1500)
+			//Main code
+				if (Saved_Setting_StartStop) {
+					ID_TimeoutMainCode = setTimeout(MainCode, 2000)
+				}
+			
 		//Copy to clipboard
-			var CopiedListOfPosts = ""
-			var CopiedListOfProfiles = ""
+			let CopiedListOfPosts = ""
+			let CopiedListOfProfiles = ""
 		//If for some reason the site started using element IDs that this script is using, change them.
 			const Setting_BskyReservedElementID_PostSavedCount = "BskyScrape_Info_PostSavedCount"
 			const Setting_BskyReservedElementID_ProfileSavedCount = "BskyScrape_Info_ProfileSavedCount"
+			const Setting_BskyReservedElementID_StartStopButtonText = "BskyScrape_StopStartButton"
 			const Setting_BskyReservedElementID_ScanFrequency = "BskyScrape_Input_ScanFrequency"
 			const Setting_BskyReservedElementID_ScanFrequencyNumberDisplay = "BskyScrape_Info_ScanSec"
-	//Several menu commands
-	
-		//Post lists
-			async function ResetPostList() {
-				ConfirmationPause = true
-				if (window.confirm("You sure you want to clear the list of post extracted?")) {
-					await GM.setValue("BSkyScrapePostList", "[]").then(() => {
-						alert("Bsky-scrape: post list cleared.")
-						ConfirmationPause = false
-					},
-					() => {
-						alert("Bsky-scrape: post list failed to clear.")
-						ConfirmationPause = false
-					});
-				}
-			}
-			GM.registerMenuCommand("Bsky-scrape - clear post collection", ResetPostList, "R");
-			
-			async function CopyPostToClipboard() {
-				GM.setClipboard(CopiedListOfPosts)
-			}
-			GM.registerMenuCommand("Bsky-scrape - Copy post list to clipboard", CopyPostToClipboard, "C");
-		//Profile lists
-			async function ResetProfileList() {
-				ConfirmationPause = true
-				if (window.confirm("You sure you want to clear the list of profiles extracted?")) {
-					await GM.setValue("BSkyScrapeProfileList", "[]").then(() => {
-						alert("Bsky-scrape: profile list cleared.")
-						ConfirmationPause = false
-					},
-					() => {
-						alert("Bsky-scrape: profile list failed to clear.")
-						ConfirmationPause = false
-					});
-				}
-			}
-			GM.registerMenuCommand("Bsky-scrape - clear profile collection", ResetProfileList, "R");
-			
-			async function CopyProfileToClipboard() {
-				GM.setClipboard(CopiedListOfProfiles)
-			}
-			GM.registerMenuCommand("Bsky-scrape - Copy profile list to clipboard", CopyProfileToClipboard, "H");
+		//Counters for display
+			let Counter_Profile_Saved = 0
+			let Counter_Post_Saved = 0
 	//Spawn a UI
 		async function LoadScrapeUI() {
 			//div box
@@ -118,11 +93,91 @@
 			Title.setAttribute("style", "text-align: center;")
 			BoxOfUI.appendChild(Title)
 			
+			//Start/stop button
+			let StartStopButton = document.createElement("button")
+			StartStopButton.setAttribute("id", Setting_BskyReservedElementID_StartStopButtonText)
+			let BskyScrape_StartStopFlag = Saved_Setting_StartStop
+			let StartStopButton_Text = "Start"
+			if (BskyScrape_StartStopFlag) {
+				StartStopButton_Text = "Stop"
+			}
+			StartStopButton.appendChild(document.createTextNode(StartStopButton_Text))
+			StartStopButton.addEventListener(
+				"click",
+				async function () {
+					BskyScrape_StartStopFlag = !BskyScrape_StartStopFlag
+					
+					if (BskyScrape_StartStopFlag) {
+						this.innerText = "Stop"
+						ID_TimeoutMainCode = setTimeout(MainCode, Saved_Setting_ScanFrequency)
+					} else {
+						this.innerText = "Start"
+						if (typeof ID_TimeoutMainCode != "undefined") {
+							clearTimeout(ID_TimeoutMainCode);
+						}
+					}
+					
+					await GM.setValue("BskyScrape_StartStopFlag", BskyScrape_StartStopFlag)
+				}
+			)
+			BoxOfUI.appendChild(StartStopButton)
+			
+			//Copy data into clipboard button (readable)
+			let CopyToClipboardButton = document.createElement("button")
+			CopyToClipboardButton.appendChild(document.createTextNode("Copy to clipboard"))
+			CopyToClipboardButton.addEventListener(
+				"click",
+				function() {CopyExtractedContent(" ")}
+			)
+			BoxOfUI.appendChild(CopyToClipboardButton)
+			
+			//Copy data into clipboard button (compressed)
+			let CopyToClipboardButtonCompressed = document.createElement("button")
+			CopyToClipboardButtonCompressed.appendChild(document.createTextNode("Copy to clipboard (compressed)"))
+			CopyToClipboardButtonCompressed.addEventListener(
+				"click",
+				function() {CopyExtractedContent()}
+			)
+			BoxOfUI.appendChild(CopyToClipboardButtonCompressed)
+			
+			//Reset button
+			let ResetButton = document.createElement("button")
+			ResetButton.appendChild(document.createTextNode("Reset"))
+			ResetButton.addEventListener(
+				"click",
+				async function () {
+					ConfirmationPause = true
+					if (window.confirm("Bsky-scrape: Are you sure you want to reset?")) {
+						BskyScrape_StartStopFlag = false
+						document.getElementById(Setting_BskyReservedElementID_StartStopButtonText).innerText = "Start"
+						if (typeof ID_TimeoutMainCode != "undefined") {
+							clearTimeout(ID_TimeoutMainCode);
+						}
+						
+						Saved_Extracted_Posts = []
+						Saved_Extracted_Profiles = []
+						await GM.setValue("BSkyScrape_PostList", "[]")
+						await GM.setValue("BSkyScrape_ProfileList", "[]")
+						
+						let Element_ProfileSavedCount = document.getElementById(Setting_BskyReservedElementID_ProfileSavedCount)
+						if (Element_ProfileSavedCount != null) {
+							Element_ProfileSavedCount.innerText = "0"
+						}
+						
+						let Element_PostSavedCount = document.getElementById(Setting_BskyReservedElementID_PostSavedCount)
+						if (Element_PostSavedCount != null) {
+							Element_PostSavedCount.innerText = "0"
+						}
+					}
+					ConfirmationPause = false
+				}
+			)
+			BoxOfUI.appendChild(ResetButton)
+			
 			//table
 			let TableUI = document.createElement("table")
 			
 			//Row - scan frequency
-			let ScanFrequencySetting = await GM.getValue("BskyScrapeScanFrequency", 1000)
 			
 			let TableRow0 = document.createElement("tr")
 			TableUI.appendChild(TableRow0)
@@ -136,15 +191,15 @@
 			let ScrapeFrequency_InputRange = document.createElement("input")
 			ScrapeFrequency_InputRange.setAttribute("id", Setting_BskyReservedElementID_ScanFrequency)
 			ScrapeFrequency_InputRange.setAttribute("type", "range")
-			ScrapeFrequency_InputRange.setAttribute("min", "1000")
+			ScrapeFrequency_InputRange.setAttribute("min", "500")
 			ScrapeFrequency_InputRange.setAttribute("max", "10000")
 			ScrapeFrequency_InputRange.setAttribute("step", "500")
-			ScrapeFrequency_InputRange.setAttribute("value", ScanFrequencySetting.toString(10))
+			ScrapeFrequency_InputRange.setAttribute("value", Saved_Setting_ScanFrequency.toString(10))
 			ScrapeFrequency_InputRange.addEventListener(
 			"input",
 			async function () {
 				document.getElementById(Setting_BskyReservedElementID_ScanFrequencyNumberDisplay).innerText = (parseInt(this.value)/1000).toFixed(1)
-				await GM.setValue("BskyScrapeScanFrequency", this.value.toString(10))
+				await GM.setValue("BskyScrape_ScanFrequency", this.value.toString(10))
 			})
 			TableCell_0_1.appendChild(ScrapeFrequency_InputRange)
 			TableCell_0_1.appendChild(document.createElement("br"))
@@ -152,7 +207,7 @@
 			
 			let ScrapeFrequency_SecDisplay = document.createElement("span")
 			ScrapeFrequency_SecDisplay.setAttribute("id", Setting_BskyReservedElementID_ScanFrequencyNumberDisplay)
-			ScrapeFrequency_SecDisplay.appendChild(document.createTextNode((ScanFrequencySetting/1000).toFixed(1)))
+			ScrapeFrequency_SecDisplay.appendChild(document.createTextNode((Saved_Setting_ScanFrequency/1000).toFixed(1)))
 			TableCell_0_1.appendChild(ScrapeFrequency_SecDisplay)
 			TableCell_0_1.appendChild(document.createTextNode(" sec"))
 			TableRow0.appendChild(TableCell_0_1)
@@ -168,7 +223,7 @@
 			let TableCell_1_1 = document.createElement("td")
 			let PostCountNumberSpan = document.createElement("span")
 			PostCountNumberSpan.setAttribute("id", Setting_BskyReservedElementID_PostSavedCount)
-			PostCountNumberSpan.appendChild(document.createTextNode("0"))
+			PostCountNumberSpan.appendChild(document.createTextNode(Saved_Extracted_Posts.length.toString(10)))
 			TableCell_1_1.appendChild(PostCountNumberSpan)
 			TableRow1.appendChild(TableCell_1_1)
 			
@@ -184,7 +239,7 @@
 			let TableCell_2_1 = document.createElement("td")
 			let ProfileCountNumberSpan = document.createElement("span")
 			ProfileCountNumberSpan.setAttribute("id", Setting_BskyReservedElementID_ProfileSavedCount)
-			ProfileCountNumberSpan.appendChild(document.createTextNode("0"))
+			ProfileCountNumberSpan.appendChild(document.createTextNode(Saved_Extracted_Profiles.length.toString(10)))
 			TableCell_2_1.appendChild(ProfileCountNumberSpan)
 			TableRow2.appendChild(TableCell_2_1)
 			
@@ -198,9 +253,20 @@
 				document.body.insertBefore(BoxOfUI, HTMLBody.childNodes[0]);
 			}
 		}
+	//Reused UI menu functions
+		function CopyExtractedContent(string) {
+			let Text = ""
+			let ObjectOfProfilesAndPosts = {
+				ListOfProfiles: Saved_Extracted_Profiles,
+				ListOfPosts: Saved_Extracted_Posts
+			}
+			GM.setClipboard(JSON.stringify(ObjectOfProfilesAndPosts, null, string))
+		}
 	//MainCode, runs periodically and used to extract page content.
 		async function MainCode() {
 			if (!RaceConditionLock) {
+				UpdateSavedValues()
+				
 				RaceConditionLock = true
 				//Code here
 					let DateTimeOfScrape = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
@@ -888,10 +954,7 @@
 				//Saving...
 					if (!ConfirmationPause) {
 						//Saving posts
-						let SavedBskyPostList = await GM.getValue("BSkyScrapePostList", "[]").catch(() => {
-							window.alert("Bsky-scrape: load saved post failed!")
-						});
-						SavedBskyPostList = JSON.parse(SavedBskyPostList)
+						let SavedBskyPostList = Saved_Extracted_Posts
 						ListOfPosts_Clean.forEach((ExtractedPost, ExtractedPostIndex) => {
 							//Loop through what we have extracted it, and try to add it to the saved list, unless we already have it, then update it
 							let MatchedPostIndex = SavedBskyPostList.findIndex((SavedPost) => { //Search all in the saved list to find a matching post
@@ -929,7 +992,7 @@
 								}
 							}
 						})
-						await GM.setValue("BSkyScrapePostList", JSON.stringify(SavedBskyPostList)).then(() => {
+						await GM.setValue("BSkyScrape_PostList", JSON.stringify(SavedBskyPostList)).then(() => {
 							CopiedListOfPosts = JSON.stringify(SavedBskyPostList, null, " ")
 							//console.log("Bsky-scrape: extracted post count: " + SavedBskyPostList.length.toString(10))
 							
@@ -944,10 +1007,7 @@
 						
 						
 						//Save profile data
-						let SavedBskyProfileList = await GM.getValue("BSkyScrapeProfileList", "[]").catch(() => {
-							window.alert("Bsky-scrape: load saved profiles failed!")
-						})
-						SavedBskyProfileList = JSON.parse(SavedBskyProfileList)
+						let SavedBskyProfileList = Saved_Extracted_Profiles
 						if ((Object.keys(Profile).length != 0) && (Profile.ProfileURL != "")) {
 							let IndexOfSavedMatching = SavedBskyProfileList.findIndex((SavedProfile) => {
 								if (SavedProfile.ProfileURL == Profile.ProfileURL) {
@@ -973,7 +1033,7 @@
 								SavedBskyProfileList[IndexOfSavedMatching] = Profile
 							}
 						}
-						await GM.setValue("BSkyScrapeProfileList", JSON.stringify(SavedBskyProfileList)).then(() => {
+						await GM.setValue("BSkyScrape_ProfileList", JSON.stringify(SavedBskyProfileList)).then(() => {
 							CopiedListOfProfiles = JSON.stringify(SavedBskyProfileList, null, " ")
 							//console.log("Bsky-scrape: extracted profile count: " + SavedBskyProfileList.length.toString(10))
 							let ElementOfUI_ProfileCount = document.getElementById(Setting_BskyReservedElementID_ProfileSavedCount)
@@ -988,8 +1048,9 @@
 						console.log("Bsky-scrape: Paused")
 					}
 				
-				let ScanFrequencySetting = await GM.getValue("BskyScrapeScanFrequency", 1000)
-				setTimeout(MainCode, ScanFrequencySetting)
+				if (Saved_Setting_StartStop) {
+					ID_TimeoutMainCode = setTimeout(MainCode, Saved_Setting_ScanFrequency)
+				}
 				
 				//Set a breakpoint here after everything loads to test the results stored in "ListOfPosts".
 				RaceConditionLock = false
@@ -1464,5 +1525,22 @@
 				}
 			}
 			return LinkPreviewObject
+		}
+		async function UpdateSavedValues() {
+			Saved_Setting_StartStop = await GM.getValue("BskyScrape_StartStopFlag", false).catch( () => {
+				GetValueError()
+			})
+			Saved_Setting_ScanFrequency = await GM.getValue("BskyScrape_ScanFrequency", 1000).catch( () => {
+				GetValueError()
+			})
+			Saved_Extracted_Posts = JSON.parse(await GM.getValue("BSkyScrape_PostList", "[]").catch( () => {
+				GetValueError()
+			}))
+			Saved_Extracted_Profiles = JSON.parse(await GM.getValue("BSkyScrape_ProfileList", "[]").catch( () => {
+				GetValueError()
+			}))
+		}
+		function GetValueError() {
+			console.log("Bsky-scrape: Error, cannot obtain save value")
 		}
 })();
