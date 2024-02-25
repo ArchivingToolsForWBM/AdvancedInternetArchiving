@@ -284,7 +284,7 @@
 					let UserPostArea = []
 					let Profile = {}
 					let ListOfPosts = [] //List of each individual posts
-					if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/?$/.test(window.location.href)) { //profile page
+					if (/https:\/\/bsky\.app\/profile\/(?:[a-zA-Z\d\-]+\.)+(?:[a-zA-Z\d\-]+)\/?$/.test(window.location.href)) { //profile page
 						//First, find an a href link to a profile as a reference. We get the lowest node that at least has all the posts on the page
 						UserPostArea = GetPostBoxesByLink(8)
 						
@@ -517,7 +517,7 @@
 								if (!OuterNodeNotAAhref.IsSuccessful) {
 									return false
 								}
-								if (!(/^@[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+$/.test(DivElement.innerHTML))) {
+								if (!(/^@(?:[a-zA-Z\d\-]+\.)+[a-zA-Z\d\-]+$/.test(DivElement.innerHTML))) {
 									return false
 								}
 								if (OuterNodeNotAAhref.OutputNode.tagName == "A") {
