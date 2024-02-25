@@ -113,6 +113,11 @@
 			let BoxOfUI = document.createElement("div")
 			BoxOfUI.setAttribute("style", "position: fixed;bottom: 40px;right: 40px;z-index: 999; background-color: #404040; color: #ffffff;")
 			
+			let Title = document.createElement("h2")
+			Title.appendChild(document.createTextNode("Blue sky scraper"))
+			Title.setAttribute("style", "text-align: center;")
+			BoxOfUI.appendChild(Title)
+			
 			//table
 			let TableUI = document.createElement("table")
 			
