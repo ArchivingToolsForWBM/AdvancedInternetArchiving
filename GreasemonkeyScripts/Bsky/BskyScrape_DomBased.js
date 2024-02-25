@@ -111,7 +111,7 @@
 		async function LoadScrapeUI() {
 			//div box
 			let BoxOfUI = document.createElement("div")
-			BoxOfUI.setAttribute("style", "position: fixed;bottom: 40px;right: 40px;z-index: 999; background-color: #404040; color: #ffffff;")
+			BoxOfUI.setAttribute("style", "position: fixed;bottom: 40px;right: 40px;z-index: 999; background-color: #404040; color: #ffffff; border-radius: 30px; padding: 15px;")
 			
 			let Title = document.createElement("h2")
 			Title.appendChild(document.createTextNode("Blue sky scraper"))
