@@ -450,7 +450,7 @@
 											}
 											
 										}
-										if (PostURL != "") {
+										if ((PostURL != "") &&(UserTitle != "")) {
 											PostGroup.push({
 												RepostedByUserTitle: RepostedByUserTitle,
 												PostURL: PostURL,
@@ -793,7 +793,7 @@
 								}
 								
 							}
-							if (/^Post_/.test(Type) && (PostURL != "")) {
+							if (/^Post_/.test(Type) && (PostURL != "") && (UserTitle != "")) {
 								PostGroup.push({
 									RepostedByUserTitle: RepostedByUserTitle,
 									PostURL: PostURL,
@@ -915,7 +915,7 @@
 									RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
 									LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
 								}
-								if (PostURL != "") {
+								if ((PostURL != "") && (UserTitle != "")) {
 									ListOfPosts.push({
 										RepostedByUserTitle: RepostedByUserTitle,
 										PostURL: PostURL,
