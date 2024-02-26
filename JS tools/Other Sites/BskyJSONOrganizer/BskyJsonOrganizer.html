@@ -1,0 +1,212 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+			input { font-family: monospace;}
+			
+			label, input[type='checkbox'], input[type='radio'] {
+				cursor: pointer;
+			}
+		</style>
+	</head>
+<body>
+
+<p>This tool will sort and filter data scraped from a userscript BSky included in this package.</p>
+
+<textarea id="JsonScrapedBskyData" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" onchange="JSONTextareaChanged()"></textarea><br><br>
+<table>
+	<tr>
+		<th>Posts</th>
+		<th>Profiles</th>
+	</tr>
+	<tr>
+		<td>
+			
+			
+			Include: <button onclick="ChangeFilterSettings('FilterInclude_Posts', 1)">Check all</button><button onclick="ChangeFilterSettings('FilterInclude_Posts', 0)">Unheck all</button><button onclick="ChangeFilterSettings('FilterInclude_Posts', 2)">Invert</button>
+			<ul>MediaText
+				<li><label><input type="checkbox" class="FilterInclude_Posts" id="FilterInclude_Posts_Media">Has media</label></li>
+				<li><label><input type="checkbox" class="FilterInclude_Posts" id="FilterInclude_Posts_Text">Has text in content</label></li>
+				<li><label><input type="checkbox" class="FilterInclude_Posts" id="FilterInclude_Posts_Quote">Has quoted post</label></li>
+			</ul>
+			Exclude: <button onclick="ChangeFilterSettings('FilterExclude_Posts', 1)">Check all</button><button onclick="ChangeFilterSettings('FilterExclude_Posts', 0)">Unheck all</button><button onclick="ChangeFilterSettings('FilterExclude_Posts', 2)">Invert</button>
+			<ul>
+				<li><label><input type="checkbox" class="FilterExclude_Posts" id="FilterExclude_Posts_Media">Has media</label></li>
+				<li><label><input type="checkbox" class="FilterExclude_Posts" id="FilterExclude_Posts_Text">Has text in content</label></li>
+				<li><label><input type="checkbox" class="FilterExclude_Posts" id="FilterExclude_Posts_Quote">Has quoted post</label></li>
+			</ul>
+			Sort:
+			<ul>
+				<li><label><input type="radio" id="Sort_Setting_Date" name="SortSetting_Post">Date</label> (<label><input type="radio" id="Sort_Setting_Date_Reverse" name="SortSetting_Post" checked>Reverse</label>)</li>
+			</ul>
+		</td>
+	</tr>
+</table>
+<label><input type="checkbox" id="Output_DisplaySetting_ReadableJSON" checked>Readable JSON format</label><br>
+<button onclick="MainCode()">Submit</button>
+<hr>
+<table>
+
+	<tr>
+		<td></td>
+		<th>Before filter</th>
+		<th>After filter</th>
+		<th>How many removed</th>
+	</tr>
+	<tr>
+		<th>Number of profiles:</th>
+		<td><kbd id="Output_Statistic_ProfileCount_BeforeFilter">0</kbd></td>
+		<td><kbd id="Output_Statistic_ProfileCount_AfterFilter">0</kbd></td>
+		<td><kbd id="Output_Statistic_ProfileCount_Removed">0</kbd></td>
+	</tr>
+	<tr>
+		<th>Number of posts prior:</th>
+		<td><kbd id="Output_Statistic_PostCount_BeforeFilter">0</kbd></td>
+		<td><kbd id="Output_Statistic_PostCount_AfterFilter">0</kbd></td>
+		<td><kbd id="Output_Statistic_PostCount_Removed">0</kbd></td>
+	</tr>
+
+</table>
+<textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
+
+<script>
+	let SavedJson_ProfileList = [] //Save two lists into memory so you can have hibrid sorting (thank you JS for mandating stable sorts)
+	let SavedJson_PostList = []
+	let HasInputTextareaChanged = false
+	
+	function JSONTextareaChanged() {
+		HasInputTextareaChanged = true
+	}
+	
+	function ChangeFilterSettings(ElementClass, Setting) {
+		//ElementClass: the element class to be affected by this function
+		//Setting:
+		//0 = uncheck
+		//1 = check
+		//2+ = invert
+		if (Setting < 2) {
+			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
+				document.getElementsByClassName(ElementClass)[i].checked = Setting
+			}
+		} else {
+			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
+				document.getElementsByClassName(ElementClass)[i].checked = document.getElementsByClassName(ElementClass)[i].checked ^ 1
+			}
+		}
+	}
+	function MainCode() {
+		if (HasInputTextareaChanged) {
+			let JsonEnteredData = document.getElementById("JsonScrapedBskyData").value
+			if (!isJsonString(JsonEnteredData)) {
+				document.getElementById("Output_Plaintext").value = "Invalid JSON"
+				return
+			}
+			let JsonData = JSON.parse(JsonEnteredData)
+			
+			SavedJson_ProfileList = JsonData.ListOfProfiles
+			SavedJson_PostList = JsonData.ListOfPosts
+			
+			HasInputTextareaChanged = false
+		}
+		
+		
+		//sort and then filter list of posts (unlike the super-optimized way of filtering first so we can preserve the order)
+			if (document.getElementById("Sort_Setting_Date").checked) {
+				SavedJson_PostList.sort((a,b) => {
+					return a.PostTimeStamp.TimestampMillisecondsEpoch - b.PostTimeStamp.TimestampMillisecondsEpoch
+				})
+			} else if (document.getElementById("Sort_Setting_Date_Reverse").checked) {
+				SavedJson_PostList.sort((a,b) => {
+					return b.PostTimeStamp.TimestampMillisecondsEpoch - a.PostTimeStamp.TimestampMillisecondsEpoch
+				})
+			}
+			let Count_PostBeforeFilter = SavedJson_PostList.length
+			document.getElementById("Output_Statistic_PostCount_BeforeFilter").innerText = BigInt(Count_PostBeforeFilter).toString(10)
+			
+			let FilteredPostList = SavedJson_PostList.filter((Post) => {
+				let hasMedia = Boolean(Post.PostContent.Segments.find((PostSegment) => {return PostSegment.ContentType == "Media"}))
+				let hasText = Boolean(Post.PostContent.Segments.find((PostSegment) => {return PostSegment.ContentType == "Text"}))
+				let hasQuote = false
+				{
+					let FindQuote = Post.PostContent.Segments.find((Segment) => {
+						if (Segment.ContentType == "Quote") {
+							hasQuote = true
+							return true
+						}
+						if (Segment.ContentType == "Attachment") {
+							Segment.Content.find((SubContent) => {
+								if (SubContent.ContentType == "Quote") {
+									hasQuote = true
+									return true
+								}
+							})
+						}
+					})
+					if (typeof FindQuote != "undefined") {
+						return true
+					}
+				}
+				
+				
+				
+				//Requirement rules
+					if (document.getElementById("FilterInclude_Posts_Media").checked && (!hasMedia)) { //If media is required and not have one, filter out
+						return false
+					}
+					if (document.getElementById("FilterInclude_Posts_Text").checked && (!hasText)) { //If text is required and not have one, filter out
+						return false
+					}
+					if (document.getElementById("FilterInclude_Posts_Quote").checked && (!hasQuote)) { //If quote is required and not have one, filter out
+						return false
+					}
+				//Prohibited rules
+					if (document.getElementById("FilterExclude_Posts_Media").checked && (hasMedia)) { //If media is prohibited and have one, filter out
+						return false
+					}
+					if (document.getElementById("FilterExclude_Posts_Text").checked && (hasText)) { //If text is prohibited and have one, filter out
+						return false
+					}
+					if (document.getElementById("FilterExclude_Posts_Quote").checked && (hasQuote)) { //If quote is prohibited and not have one, filter out
+						return false
+					}
+				return true
+			})
+			let Count_PostAfterFilter = FilteredPostList.length
+			document.getElementById("Output_Statistic_PostCount_AfterFilter").innerText = BigInt(Count_PostAfterFilter).toString(10)
+			document.getElementById("Output_Statistic_PostCount_Removed").innerText = BigInt(Count_PostBeforeFilter-Count_PostAfterFilter).toString(10)
+		//Output
+			let OutputObject = {
+				ListOfPosts: FilteredPostList
+			}
+			
+			let JsonIndentReadble = 0
+			if (document.getElementById("Output_DisplaySetting_ReadableJSON").checked) {
+				JsonIndentReadble = 1
+			}
+			
+			document.getElementById("Output_Plaintext").value = JSON.stringify(OutputObject, null, JsonIndentReadble)
+	}
+	
+	function isJsonString(str) {
+		//https://stackoverflow.com/questions/3710204/how-to-check-if-a-string-is-a-valid-json-string
+		try {
+			JSON.parse(str);
+		} catch (e) {
+			return false;
+		}
+		return true;
+	}
+</script>
