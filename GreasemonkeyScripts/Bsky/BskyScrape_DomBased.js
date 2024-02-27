@@ -86,7 +86,7 @@
 		async function LoadScrapeUI() {
 			//div box
 			let BoxOfUI = document.createElement("div")
-			BoxOfUI.setAttribute("style", "position: fixed;bottom: 40px;right: 40px;z-index: 999; background-color: #404040; color: #ffffff; border-radius: 30px; padding: 15px;")
+			BoxOfUI.setAttribute("style", "position: fixed;bottom: 40px;right: 40px;z-index: 999; background-color: rgba(64, 64, 64, .5); color: #ffffff; border-radius: 30px; padding: 15px;")
 			
 			let Title = document.createElement("h2")
 			Title.appendChild(document.createTextNode("Blue sky scraper"))
@@ -249,7 +249,7 @@
 			
 			//Add the box to the HTML
 			let HTMLBody = Array.from(document.getElementsByTagName("BODY")).find((Element) => {return true})
-			InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0])
+			let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0])
 			if (InnerNodeOfHTMLBody.IsSuccessful) {
 				document.body.insertBefore(BoxOfUI, HTMLBody.childNodes[0]);
 			}
