@@ -25,7 +25,16 @@
 		//Load save values
 			let StorageSaved_Textarea = ""
 			let StorageSaved_Checkbox = false
-			let StorageSaved_Select = [true, false, false]
+			let StorageSaved_Select = [
+				{value:"Option1", visibleText: "Option one", isSelected: true},
+				{value:"Option2", visibleText: "Option two",  isSelected: false},
+				{value:"Option2", visibleText: "Option three",  isSelected: false}
+			]
+			let StorageSaved_Select2 = [
+				{value:"Option1", visibleText: "Option one", isSelected: false},
+				{value:"Option2", visibleText: "Option two",  isSelected: false},
+				{value:"Option2", visibleText: "Option three",  isSelected: false}
+			]
 			LoadValuesFromStorage()
 			let a = 0
 	//UI panel
@@ -34,33 +43,14 @@
 				let DivBox = document.createElement("div")
 				DivBox.setAttribute("style", "position: fixed;bottom: 40px;right: 40px;z-index: 999; background-color: rgba(64, 64, 64, .5); color: #ffffff; border-radius: 30px; padding: 15px;")
 				//select
-					let SelectList = [
-						{value:"Option1", visibleText: "Option one"},
-						{value:"Option2", visibleText: "Option two"},
-						{value:"Option2", visibleText: "Option three"}
-					]
-					let SelectElement = document.createElement("select")
-					SelectList.forEach((SelectOption, Index) => {
-						let SelectOptionElement = document.createElement("option")
-						SelectOptionElement.setAttribute("value", SelectOption.value)
-						SelectOptionElement.appendChild(document.createTextNode(SelectOption.visibleText))
-						if (StorageSaved_Select[Index]) {
-							SelectOptionElement.setAttribute("selected", "")
-						}
-						SelectElement.appendChild(SelectOptionElement)
-					})
-					
-					SelectElement.addEventListener(
-						"change",
-						function () {
-							StorageSaved_Select = Array.from(SelectElement.childNodes).map((SelectOption) => {
-								return SelectOption.selected
-							})
-							SaveValuesToStorage()
-						}
-					)
+					let SelectElement = CreateSelectElement(StorageSaved_Select, false)
 					
 					DivBox.appendChild(SelectElement)
+					DivBox.appendChild(document.createElement("br"))
+				//Select, multiple
+					let SelectElement2 = CreateSelectElement(StorageSaved_Select2, true)
+					
+					DivBox.appendChild(SelectElement2)
 					DivBox.appendChild(document.createElement("br"))
 				//Checkbox
 					let Label_For_Checkbox = document.createElement("label")
@@ -127,22 +117,31 @@
 			StorageSaved_Checkbox = await GM.getValue("TemplateSaveTest_CheckBox", false).catch( () => {
 				GetValueErrorMessage()
 			})
-			StorageSaved_Select = await GM.getValue("TemplateSaveTest_Select", "[true, false, false]").catch( () => {
+			StorageSaved_Select = await GM.getValue("TemplateSaveTest_Select", JSON.stringify(StorageSaved_Select)).catch( () => {
 				GetValueErrorMessage()
 			})
 			StorageSaved_Select = JSON.parse(StorageSaved_Select)
+			
+			
+			StorageSaved_Select2 = await GM.getValue("TemplateSaveTest_Select2", JSON.stringify(StorageSaved_Select2)).catch( () => {
+				GetValueErrorMessage()
+			})
+			StorageSaved_Select2 = JSON.parse(StorageSaved_Select2)
 		}
 		function GetValueErrorMessage() {
 			console.log("TemplateScript - getvalue failed.")
 		}
 		async function SaveValuesToStorage() {
-			StorageSaved_Textarea = await GM.setValue("TemplateSaveTest_Textarea", StorageSaved_Textarea).catch( () => {
+			await GM.setValue("TemplateSaveTest_Textarea", StorageSaved_Textarea).catch( () => {
 				SetValueErrorMessage()
 			})
-			StorageSaved_Checkbox= await GM.setValue("TemplateSaveTest_CheckBox", StorageSaved_Checkbox).catch( () => {
+			await GM.setValue("TemplateSaveTest_CheckBox", StorageSaved_Checkbox).catch( () => {
 				GetValueErrorMessage()
 			})
-			StorageSaved_Select = await GM.setValue("TemplateSaveTest_Select", JSON.stringify(StorageSaved_Select)).catch( () => {
+			await GM.setValue("TemplateSaveTest_Select", JSON.stringify(StorageSaved_Select)).catch( () => {
+				GetValueErrorMessage()
+			})
+			await GM.setValue("TemplateSaveTest_Select2", JSON.stringify(StorageSaved_Select2)).catch( () => {
 				GetValueErrorMessage()
 			})
 		}
@@ -208,5 +207,36 @@
 				}
 				
 			}
+		}
+		function CreateSelectElement(arrayOptions, allowMultiple) {
+			//Input (arrayOptions):
+			//[
+			//{value: "ValueString", visibleText: "Text here", isSelected: false}
+			//]
+			let HTML_Element_Select = document.createElement("select")
+			HTML_Element_Select.addEventListener(
+				"change",
+				function () {
+					Array.from(this.childNodes).forEach((listedOption, Index) => {
+						arrayOptions[Index].isSelected = listedOption.selected
+					})
+					SaveValuesToStorage()
+				}
+			)
+			if (allowMultiple) {
+				HTML_Element_Select.setAttribute("multiple", "")
+			}
+			arrayOptions.forEach((listedOption) => {
+				let HTML_Element_Option = document.createElement("option")
+				HTML_Element_Option.setAttribute("value", listedOption.value)
+				if (listedOption.isSelected) {
+					HTML_Element_Option.setAttribute("selected", "")
+				}
+				HTML_Element_Option.appendChild(document.createTextNode(listedOption.visibleText))
+				
+				HTML_Element_Select.appendChild(HTML_Element_Option)
+			})
+			
+			return HTML_Element_Select
 		}
 })();
