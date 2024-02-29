@@ -1370,11 +1370,11 @@
 									//https://bsky.app/profile/dumjaveln.bsky.social/post/3klkgthv63q2z quoted post
 									let Node_QuoteSubBox = DescendNode(PostSegment, [0]) //Go down a div level
 									if (Node_QuoteSubBox.IsSuccessful) {
-										if (Node_QuoteSubBox.OutputNode.tagName != "A") { //[debug, imange content improperly failing]
+										if (Node_QuoteSubBox.OutputNode.tagName != "A") {
 											let SubBoxesContent = []
 											let SubBoxes = Array.from(Node_QuoteSubBox.OutputNode.childNodes)
 											SubBoxes.forEach((SubBox) => { //Loop each inner boxes (text, images, quotes)
-												if (SubBox.innerText != "") {
+												if (SubBox.innerText != "") { //[DEBUG] "ALTALTLT"
 													//Test if there is a post date
 													//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
 													let NodeOfPostDate = DescendNode(SubBox, [0,0,0,3])
