@@ -77,7 +77,7 @@
 					DivBox.appendChild(Label_For_Checkbox)
 					DivBox.appendChild(document.createElement("br"))
 				//radio
-					let Div_RadioButtons = CreateRadioList(StorageSaved_Radio, true)
+					let Div_RadioButtons = CreateRadioList(StorageSaved_Radio, "RadioGroup1", true)
 					
 					DivBox.appendChild(Div_RadioButtons)
 					DivBox.appendChild(document.createElement("br"))
