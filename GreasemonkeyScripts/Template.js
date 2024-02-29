@@ -35,6 +35,11 @@
 				{value:"Option2", visibleText: "Option two",  isSelected: false},
 				{value:"Option2", visibleText: "Option three",  isSelected: false}
 			]
+			let StorageSaved_Radio = [
+				{visibleText: "Radio1", isSelected: true},
+				{visibleText: "Radio2", isSelected: false},
+				{visibleText: "Radio3", isSelected: false}
+			]
 			LoadValuesFromStorage()
 			let a = 0
 	//UI panel
@@ -70,6 +75,11 @@
 					Label_For_Checkbox.appendChild(CheckBoxElement)
 					Label_For_Checkbox.appendChild(document.createTextNode("Text here"))
 					DivBox.appendChild(Label_For_Checkbox)
+					DivBox.appendChild(document.createElement("br"))
+				//radio
+					let Div_RadioButtons = CreateRadioList(StorageSaved_Radio, true)
+					
+					DivBox.appendChild(Div_RadioButtons)
 					DivBox.appendChild(document.createElement("br"))
 				//Textarea
 					let Textarea_test = document.createElement("textarea")
@@ -117,16 +127,17 @@
 			StorageSaved_Checkbox = await GM.getValue("TemplateSaveTest_CheckBox", false).catch( () => {
 				GetValueErrorMessage()
 			})
-			StorageSaved_Select = await GM.getValue("TemplateSaveTest_Select", JSON.stringify(StorageSaved_Select)).catch( () => {
+			StorageSaved_Select = JSON.parse(await GM.getValue("TemplateSaveTest_Select", JSON.stringify(StorageSaved_Select)).catch( () => {
 				GetValueErrorMessage()
-			})
-			StorageSaved_Select = JSON.parse(StorageSaved_Select)
+			}))
 			
-			
-			StorageSaved_Select2 = await GM.getValue("TemplateSaveTest_Select2", JSON.stringify(StorageSaved_Select2)).catch( () => {
+			StorageSaved_Select2 = JSON.parse(await GM.getValue("TemplateSaveTest_Select2", JSON.stringify(StorageSaved_Select2)).catch( () => {
 				GetValueErrorMessage()
-			})
-			StorageSaved_Select2 = JSON.parse(StorageSaved_Select2)
+			}))
+			
+			StorageSaved_Radio = JSON.parse(await GM.getValue("TemplateSaveTest_Radio", JSON.stringify(StorageSaved_Radio)).catch( () => {
+				GetValueErrorMessage()
+			}))
 		}
 		function GetValueErrorMessage() {
 			console.log("TemplateScript - getvalue failed.")
@@ -142,6 +153,9 @@
 				GetValueErrorMessage()
 			})
 			await GM.setValue("TemplateSaveTest_Select2", JSON.stringify(StorageSaved_Select2)).catch( () => {
+				GetValueErrorMessage()
+			})
+			await GM.setValue("TemplateSaveTest_Radio", JSON.stringify(StorageSaved_Radio)).catch( () => {
 				GetValueErrorMessage()
 			})
 		}
@@ -209,10 +223,10 @@
 			}
 		}
 		function CreateSelectElement(arrayOptions, allowMultiple) {
-			//Input (arrayOptions):
-			//[
-			//{value: "ValueString", visibleText: "Text here", isSelected: false}
-			//]
+			//Input:
+			//arrayOptions:
+			//	[{value: "ValueString", visibleText: "Text here", isSelected: false}]
+			//allowMultiple: false = select only one, true = allow multiple
 			let HTML_Element_Select = document.createElement("select")
 			HTML_Element_Select.addEventListener(
 				"change",
@@ -238,5 +252,40 @@
 			})
 			
 			return HTML_Element_Select
+		}
+		function CreateRadioList(arrayRadios, elementName, lineBreakEach) {
+			//Input:
+			//arrayRadios:
+			//	[{visibleText: "Radio1", isSelected: true}]
+			//elementName: the name for radio group
+			let HTML_Element_Div = document.createElement("div")
+			
+			arrayRadios.forEach((radioItem) => {
+				let HTML_Element_Label = document.createElement("label")
+				
+				let HTML_Element_Radio = document.createElement("input")
+				HTML_Element_Radio.setAttribute("type", "radio")
+				HTML_Element_Radio.setAttribute("name", "elementName")
+				HTML_Element_Radio.addEventListener(
+					"change",
+					function () {
+						Array.from(this.parentNode.parentNode.childNodes).forEach((radioOption, Index) => {
+							arrayRadios[Index].isSelected = radioOption.childNodes[0].checked
+						})
+						SaveValuesToStorage()
+					}
+				)
+				
+				if (radioItem.isSelected) {
+					HTML_Element_Radio.setAttribute("checked", "")
+				}
+				HTML_Element_Label.appendChild(HTML_Element_Radio)
+				HTML_Element_Label.appendChild(document.createTextNode(radioItem.visibleText))
+				HTML_Element_Div.appendChild(HTML_Element_Label)
+				if (lineBreakEach) {
+					HTML_Element_Div.appendChild(document.createElement("br"))
+				}
+			})
+			return HTML_Element_Div
 		}
 })();
