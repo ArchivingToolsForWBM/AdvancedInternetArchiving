@@ -348,11 +348,6 @@
 												}
 											}
 										}
-										//test
-										if (PostURL == "https://bsky.app/profile/00sunmoon.bsky.social/post/3kmgvjlba762x") {
-											
-											let bp = 0
-										}
 										//Reply downwards line
 										{
 											let LineElement = DescendNode(Post, [0, 1, 0, 1])
@@ -420,7 +415,6 @@
 										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[3] - Footer of post containing the counters
 										
 										//Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[1]
-										
 										
 										let ReplyToOffset = 0
 										let NodeOfReplyTo = DescendNode(Post, [0,1,1,1,1])
@@ -1189,7 +1183,7 @@
 					}
 					switch (HTMLTag.tagName) {
 						case "IMG":
-							MediaOutput.URL = HttpToTtp(FullResConvert(HTMLTag.src)) //asdf
+							MediaOutput.URL = HttpToTtp(FullResConvert(HTMLTag.src))
 							{(() => { //Need this curly braces on outermost so it doesn't cause promise issues (scoping issue)
 								let ButtonForLabel = AscendNode(HTMLTag, 3)
 								if (!ButtonForLabel.IsSuccessful) {
