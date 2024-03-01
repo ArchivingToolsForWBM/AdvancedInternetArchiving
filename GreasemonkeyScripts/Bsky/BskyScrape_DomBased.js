@@ -348,7 +348,11 @@
 												}
 											}
 										}
-										
+										//test
+										if (PostURL == "https://bsky.app/profile/00sunmoon.bsky.social/post/3kmgvjlba762x") {
+											
+											let bp = 0
+										}
 										//Reply downwards line
 										{
 											let LineElement = DescendNode(Post, [0, 1, 0, 1])
@@ -1185,8 +1189,7 @@
 					}
 					switch (HTMLTag.tagName) {
 						case "IMG":
-							MediaOutput.URL = HttpToTtp(HTMLTag.src)
-							let a = 0
+							MediaOutput.URL = HttpToTtp(FullResConvert(HTMLTag.src)) //asdf
 							{(() => { //Need this curly braces on outermost so it doesn't cause promise issues (scoping issue)
 								let ButtonForLabel = AscendNode(HTMLTag, 3)
 								if (!ButtonForLabel.IsSuccessful) {
@@ -1392,7 +1395,7 @@
 									if (ListOfLinks.length != 0) {
 										TextContentObject.Links = ListOfLinks
 									}
-									PostContent.Segments.push({TextContentObject})
+									PostContent.Segments.push(TextContentObject)
 								} else {
 									//PostSegment contains multiple sub-boxes here
 									//https://bsky.app/profile/dumjaveln.bsky.social/post/3klkgthv63q2z quoted post
@@ -1423,10 +1426,14 @@
 													}
 												} else {
 													//Post has quotes and media
-													SubBoxesContent.push({
-														ContentType: "Media",
-														MediaURLs: GetMediaURLs(SubBox)
-													})
+													let QuoteMedia = {
+														ContentType: "Media"
+													}
+													let MediaURLs = GetMediaURLs(SubBox)
+													if (MediaURLs.length != 0) {
+														QuoteMedia.MediaURLs = MediaURLs
+													}
+													SubBoxesContent.push(QuoteMedia)
 												}
 											})
 											PostContent.Segments.push({
@@ -1446,10 +1453,14 @@
 						}
 					}
 				} else {
-					PostContent.Segments.push({
-						ContentType: "Media",
-						MediaURLs: GetMediaURLs(PostSegment)
-					})
+					let MediaContent = {
+						ContentType: "Media"
+					}
+					let MediaURLs = GetMediaURLs(PostSegment)
+					if (MediaURLs.length != 0) {
+						MediaContent.MediaURLs = MediaURLs
+					}
+					PostContent.Segments.push(MediaContent)
 				}
 			})
 			return PostContent
