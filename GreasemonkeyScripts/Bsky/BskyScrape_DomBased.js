@@ -561,13 +561,15 @@
 								
 								//ProfileNode.childNodes[1].childNodes[4].childNodes[0].textContent
 								let Profile_TextContent = {
-									Text: "",
-									Links: []
+									Text: ""
 								}
 								let Node_TextContent = DescendNode(ProfileNode, [1,4,0])
 								if (Node_TextContent.IsSuccessful) {
 									Profile_TextContent.Text = Node_TextContent.OutputNode.textContent
-									Profile_TextContent.Links = GetLinksURLs(Node_TextContent.OutputNode)
+									let ListOfLinks = GetLinksURLs(Node_TextContent.OutputNode)
+									if (ListOfLinks.length != 0) {
+										Profile_TextContent.Links = ListOfLinks
+									}
 								}
 								
 								//ProfileNode.childNodes[1].childNodes[3]
@@ -1120,6 +1122,7 @@
 			//Will return:
 			//-the parent node at "Levels" up, unless it cannot go up any further, then the highest
 			//-the number of successful levels it goes up.
+			//-the state that is true if it successfully went up the tree without issues, false otherwise
 			let CurrentNode = Node
 			let ChildCount = 0
 			if (typeof Node != "undefined") {
@@ -1171,16 +1174,36 @@
 			}
 		}
 		function GetMediaURLs(Node) {
-			//Returns an array listing URLs of media
+			//Returns an array whose items are objects representing its URL, type and caption.
 			let Output = []
 			if (Node.childNodes.length != 0) {
 				Output = Array.from(Node.getElementsByTagName("img")).map((HTMLTag) => {
-					let URLOfSource = ""
-					if (HTMLTag.tagName == "IMG") {
-						URLOfSource = HTMLTag.src
+					//WIP, once bsky allows other media types besides images, this is to be updated to accept multiple tags (img, video, etc.)
+					let MediaOutput = {
+						Type: HTMLTag.tagName,
+						URL: ""
+					}
+					switch (HTMLTag.tagName) {
+						case "IMG":
+							MediaOutput.URL = HttpToTtp(HTMLTag.src)
+							let a = 0
+							{(() => { //Need this curly braces on outermost so it doesn't cause promise issues (scoping issue)
+								let ButtonForLabel = AscendNode(HTMLTag, 3)
+								if (!ButtonForLabel.IsSuccessful) {
+									return
+								}
+								if (ButtonForLabel.OutputNode.tagName != "BUTTON") {
+									return
+								}
+								if (/^(?:Image)?$/.test(ButtonForLabel.OutputNode.ariaLabel)) {
+									return
+								}
+								MediaOutput.Caption = ButtonForLabel.OutputNode.ariaLabel
+							})();}
+							break
 					}
 					
-					return HttpToTtp(FullResConvert(URLOfSource))
+					return MediaOutput
 				}).filter((ArrayElement) => {
 					return (ArrayElement != "")
 				});
@@ -1361,11 +1384,15 @@
 							if (typeof NodeForDivs.OutputNode.getElementsByTagName === "function") {
 								//^"Reply to ..." can happen if this code executes before their "Reply to" fully loads, causing NodeForDivs.OutputNode to be a text node instead of a tag node
 								if (Array.from(NodeForDivs.OutputNode.getElementsByTagName("DIV")).length == 0) { //If there is no more div levels down, then this is user-posted text
-									PostContent.Segments.push({
+									let TextContentObject = {
 										ContentType: "Text",
-										UserPostedText: PostSegment.textContent,
-										Links: GetLinksURLs(PostSegment)
-									})
+										UserPostedText: PostSegment.textContent
+									}
+									let ListOfLinks = GetLinksURLs(PostSegment)
+									if (ListOfLinks.length != 0) {
+										TextContentObject.Links = ListOfLinks
+									}
+									PostContent.Segments.push({TextContentObject})
 								} else {
 									//PostSegment contains multiple sub-boxes here
 									//https://bsky.app/profile/dumjaveln.bsky.social/post/3klkgthv63q2z quoted post
