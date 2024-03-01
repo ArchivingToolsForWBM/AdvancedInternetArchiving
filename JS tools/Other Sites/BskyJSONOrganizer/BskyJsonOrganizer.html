@@ -81,7 +81,7 @@
 
 </table>
 <textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
-
+<button onclick="setClipboard(document.getElementById('Output_Plaintext').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
 <script>
 	let SavedJson_ProfileList = [] //Save two lists into memory so you can have hibrid sorting (thank you JS for mandating stable sorts)
 	let SavedJson_PostList = []
@@ -208,5 +208,28 @@
 			return false;
 		}
 		return true;
+	}
+	
+	function setClipboard(String) {
+		//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
+		const type = "text/plain";
+		const blob = new Blob([String], { type });
+		const data = [new ClipboardItem({ [type]: blob })];
+	
+		navigator.clipboard.write(data).then(
+			() => {
+			/* success */
+				document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #00FF00;'>Copied!</span>"
+				setTimeout(DeleteCopyMessage, 1500)
+			},
+			() => {
+			/* failure */
+				document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #FF0000;'>Copy failed!</span>"
+				setTimeout(DeleteCopyMessage, 1500)
+			}
+		);
+	}
+	function DeleteCopyMessage() {
+		document.getElementById("CopiedTextMessage").innerHTML = ""
 	}
 </script>
