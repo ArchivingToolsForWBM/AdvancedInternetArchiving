@@ -110,6 +110,7 @@
 					
 					if (BskyScrape_StartStopFlag) {
 						this.innerText = "Stop"
+						MainCode()
 						ID_TimeoutMainCode = setTimeout(MainCode, Saved_Setting_ScanFrequency)
 					} else {
 						this.innerText = "Start"
