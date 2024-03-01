@@ -1374,7 +1374,7 @@
 											let SubBoxesContent = []
 											let SubBoxes = Array.from(Node_QuoteSubBox.OutputNode.childNodes)
 											SubBoxes.forEach((SubBox) => { //Loop each inner boxes (text, images, quotes)
-												if (SubBox.innerText != "") { //[DEBUG] "ALTALTLT"
+												if (!(/(?:^$|^(?:ALT\n)*ALT$)/.test(SubBox.innerText))) {
 													//Test if there is a post date
 													//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
 													let NodeOfPostDate = DescendNode(SubBox, [0,0,0,3])
