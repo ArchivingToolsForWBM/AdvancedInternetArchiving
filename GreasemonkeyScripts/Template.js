@@ -22,6 +22,9 @@
 				setInterval(MainCode, Setting_Delay)
 				setTimeout(Spawn_UI_Panel, 1000)
 			},false);
+		//Variables to have in the memory across page session
+			let CurrentUTCTime = ""
+			let TimeDisplayElement = {}
 		//Load save values
 			let StorageSaved_Textarea = ""
 			let StorageSaved_Checkbox = false
@@ -92,7 +95,13 @@
 							SaveValuesToStorage()
 						}
 					)
-				
+					DivBox.appendChild(document.createElement("br"))
+				//Current time (local system)
+					CurrentUTCTime = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
+					TimeDisplayElement = document.createElement("div")
+					TimeDisplayElement.setAttribute("style", "font-family: monospace;")
+					TimeDisplayElement.appendChild(document.createTextNode(CurrentUTCTime))
+					DivBox.appendChild(TimeDisplayElement)
 				
 				DivBox.appendChild(Textarea_test)
 			
@@ -108,6 +117,9 @@
 			if (!RaceConditionLock) {
 				RaceConditionLock = true
 				//Code here
+					//Example: update time display
+						CurrentUTCTime = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString()) //Update the display each interval
+						TimeDisplayElement.textContent = CurrentUTCTime
 				RaceConditionLock = false
 			}
 		}
@@ -269,7 +281,9 @@
 				HTML_Element_Radio.addEventListener(
 					"change",
 					function () {
-						Array.from(this.parentNode.parentNode.childNodes).forEach((radioOption, Index) => {
+						Array.from(this.parentNode.parentNode.childNodes).filter((ElementListItem) => {
+							return ElementListItem.tagName == "LABEL"
+						}).forEach((radioOption, Index) => {
 							arrayRadios[Index].isSelected = radioOption.childNodes[0].checked
 						})
 						SaveValuesToStorage()
@@ -287,5 +301,9 @@
 				}
 			})
 			return HTML_Element_Div
+		}
+		function ISOString_to_YYYY_MM_DD_HH_MM_SS(ISOString) {
+			//YYYY-MM-DDTHH:mm:ss.sssZ or ±YYYYYY-MM-DDTHH:mm:ss.sssZ
+			return ISOString.replace("T", " ").replace(/\.\d{3}Z$/, "") + " UTC"
 		}
 })();
