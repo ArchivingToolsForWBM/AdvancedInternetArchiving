@@ -33,16 +33,18 @@
 	<li>If you only have one list and you somehow have duplicate in that list, just fill out the first box and click the button below.</li>
 </ul>
 </p>
+<input type="checkbox" id="AutoUpdate" checked onchange="AutoUpdate()"><label for="AutoUpdate">Auto update</label><br>
 <table>
 	<tr>
 		<th>Json whose dupes to replace</th>
 		<th>Json whose dupes to replace with</th>
 	</tr>
 	<tr>
-		<td><textarea id="JsonScrapedBskyData0" cols="50" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" onchange="JSONTextareaChanged()"></textarea>
-		<td><textarea id="JsonScrapedBskyData1" cols="50" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" onchange="JSONTextareaChanged()"></textarea></td>
+		<td><textarea id="JsonScrapedBskyData0" cols="50" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" oninput="JSONTextareaChanged(); AutoUpdate()"></textarea>
+		<td><textarea id="JsonScrapedBskyData1" cols="50" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" oninput="JSONTextareaChanged(); AutoUpdate()"></textarea></td>
 	</tr>
 </table>
+<label><input type="checkbox" id="Output_DisplaySetting_ReadableJSON" onchange="AutoUpdate()" checked>Readable JSON format</label><br>
 <button onclick="MainCode()">Submit</button>
 <hr>
 <table>
@@ -82,7 +84,6 @@
 		</td>
 	</tr>
 </table>
-<label><input type="checkbox" id="Output_DisplaySetting_ReadableJSON" checked>Readable JSON format</label><br>
 <textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
 <button onclick="setClipboard(document.getElementById('Output_Plaintext').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
 <script>
@@ -92,6 +93,12 @@
 	function JSONTextareaChanged() {
 		HasInputTextareaChanged = true
 	}
+	function AutoUpdate() {
+		if (document.getElementById("AutoUpdate").checked) {
+			MainCode()
+		}
+	}
+	
 	function MainCode() {
 		//Clear output
 			document.getElementById("Output_Statistic_ProfileCount_Replace").innerText = "0"

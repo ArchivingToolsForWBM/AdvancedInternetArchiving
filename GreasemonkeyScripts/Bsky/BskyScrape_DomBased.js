@@ -23,6 +23,8 @@
 	// a list of replies to the post.
 	//-This script will work on post pages if you are logged in, because the dom tree layout of posts are different when viewing a post vs not logged in. I strongly recommend that you
 	// are because users can sometimes have their post content hidden from public view.
+	//-While this script is scanning the document, I don't recommend doing so while content is loading. This includes scrolling while the scanning is active. Best way to handle this
+	// is hit "start" only when loading is done and you are not scrolling, then hit stop. Preferably scroll down as far as you can go, then start-stop.
 	//Settings
 	// Note: Changes apply when the page is refreshed. Either reload the page via a browser or enter the address bar. It's not a reload if only part of the page loads content while
 	// everything else persist.
@@ -425,6 +427,9 @@
 													ReplyToOffset++
 												//}
 											}
+										}
+										if (PostURL == "https://bsky.app/profile/00sunmoon.bsky.social/post/3kmofkyrfcm23") {
+											let breakpoint = 0
 										}
 										let NodeOfPostContent = DescendNode(Post, [0,1,1,1+ReplyToOffset])
 										if (NodeOfPostContent.IsSuccessful) {
@@ -1426,8 +1431,8 @@
 													let MediaURLs = GetMediaURLs(SubBox)
 													if (MediaURLs.length != 0) {
 														QuoteMedia.MediaURLs = MediaURLs
+														SubBoxesContent.push(QuoteMedia)
 													}
-													SubBoxesContent.push(QuoteMedia)
 												}
 											})
 											PostContent.Segments.push({
@@ -1453,8 +1458,8 @@
 					let MediaURLs = GetMediaURLs(PostSegment)
 					if (MediaURLs.length != 0) {
 						MediaContent.MediaURLs = MediaURLs
+						PostContent.Segments.push(MediaContent)
 					}
-					PostContent.Segments.push(MediaContent)
 				}
 			})
 			return PostContent

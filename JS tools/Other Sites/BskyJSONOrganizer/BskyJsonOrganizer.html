@@ -25,8 +25,8 @@
 <body>
 
 <p>This tool will sort and filter data scraped from a userscript BSky included in this package.</p>
-
-<textarea id="JsonScrapedBskyData" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" onchange="JSONTextareaChanged()"></textarea><br><br>
+<input type="checkbox" id="AutoUpdate" checked onchange="AutoUpdate()"><label for="AutoUpdate">Auto update</label><br>
+<textarea id="JsonScrapedBskyData" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" oninput="JSONTextareaChanged(); AutoUpdate()"></textarea><br><br>
 <table>
 	<tr>
 		<th>Posts</th>
@@ -36,26 +36,26 @@
 		<td>
 			
 			
-			Include: <button onclick="ChangeFilterSettings('FilterInclude_Posts', 1)">Check all</button><button onclick="ChangeFilterSettings('FilterInclude_Posts', 0)">Unheck all</button><button onclick="ChangeFilterSettings('FilterInclude_Posts', 2)">Invert</button>
+			Include: <button onclick="ChangeFilterSettings('FilterInclude_Posts', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterInclude_Posts', 0); AutoUpdate()">Unheck all</button><button onclick="ChangeFilterSettings('FilterInclude_Posts', 2); AutoUpdate()">Invert</button>
 			<ul>MediaText
-				<li><label><input type="checkbox" class="FilterInclude_Posts" id="FilterInclude_Posts_Media">Has media</label></li>
-				<li><label><input type="checkbox" class="FilterInclude_Posts" id="FilterInclude_Posts_Text">Has text in content</label></li>
-				<li><label><input type="checkbox" class="FilterInclude_Posts" id="FilterInclude_Posts_Quote">Has quoted post</label></li>
+				<li><label><input type="checkbox" class="FilterInclude_Posts" onchange="AutoUpdate()" id="FilterInclude_Posts_Media">Has media</label></li>
+				<li><label><input type="checkbox" class="FilterInclude_Posts" onchange="AutoUpdate()" id="FilterInclude_Posts_Text">Has text in content</label></li>
+				<li><label><input type="checkbox" class="FilterInclude_Posts" onchange="AutoUpdate()" id="FilterInclude_Posts_Quote">Has quoted post</label></li>
 			</ul>
-			Exclude: <button onclick="ChangeFilterSettings('FilterExclude_Posts', 1)">Check all</button><button onclick="ChangeFilterSettings('FilterExclude_Posts', 0)">Unheck all</button><button onclick="ChangeFilterSettings('FilterExclude_Posts', 2)">Invert</button>
+			Exclude: <button onclick="ChangeFilterSettings('FilterExclude_Posts', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterExclude_Posts', 0); AutoUpdate()">Unheck all</button><button onclick="ChangeFilterSettings('FilterExclude_Posts', 2); AutoUpdate()">Invert</button>
 			<ul>
-				<li><label><input type="checkbox" class="FilterExclude_Posts" id="FilterExclude_Posts_Media">Has media</label></li>
-				<li><label><input type="checkbox" class="FilterExclude_Posts" id="FilterExclude_Posts_Text">Has text in content</label></li>
-				<li><label><input type="checkbox" class="FilterExclude_Posts" id="FilterExclude_Posts_Quote">Has quoted post</label></li>
+				<li><label><input type="checkbox" class="FilterExclude_Posts" onchange="AutoUpdate()" id="FilterExclude_Posts_Media">Has media</label></li>
+				<li><label><input type="checkbox" class="FilterExclude_Posts" onchange="AutoUpdate()" id="FilterExclude_Posts_Text">Has text in content</label></li>
+				<li><label><input type="checkbox" class="FilterExclude_Posts" onchange="AutoUpdate()" id="FilterExclude_Posts_Quote">Has quoted post</label></li>
 			</ul>
 			Sort:
 			<ul>
-				<li><label><input type="radio" id="Sort_Setting_Date" name="SortSetting_Post">Date</label> (<label><input type="radio" id="Sort_Setting_Date_Reverse" name="SortSetting_Post" checked>Reverse</label>)</li>
+				<li><label><input type="radio" id="Sort_Setting_Date" name="SortSetting_Post" onchange="AutoUpdate()">Date</label> (<label><input type="radio" id="Sort_Setting_Date_Reverse" name="SortSetting_Post" onchange="AutoUpdate()" checked>Reverse</label>)</li>
 			</ul>
 		</td>
 	</tr>
 </table>
-<label><input type="checkbox" id="Output_DisplaySetting_ReadableJSON" checked>Readable JSON format</label><br>
+<label><input type="checkbox" id="Output_DisplaySetting_ReadableJSON" onchange="AutoUpdate()" checked>Readable JSON format</label><br>
 <button onclick="MainCode()">Submit</button>
 <hr>
 <table>
@@ -90,7 +90,11 @@
 	function JSONTextareaChanged() {
 		HasInputTextareaChanged = true
 	}
-	
+	function AutoUpdate() {
+		if (document.getElementById("AutoUpdate").checked) {
+			MainCode()
+		}
+	}
 	function ChangeFilterSettings(ElementClass, Setting) {
 		//ElementClass: the element class to be affected by this function
 		//Setting:
