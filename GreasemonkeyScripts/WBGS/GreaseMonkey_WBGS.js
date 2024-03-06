@@ -4,7 +4,7 @@
 // @version      0.1
 // @description  So duped processes don't overwrite save results.
 // @include      https://archive.org/services/wayback-gsheets/*
-// @grant        none
+// @grant        GM.setClipboard
 // ==/UserScript==
 
 (function() {
@@ -21,16 +21,69 @@
 		const DisplayEasyCopyableListOfProcess = true
 			//^false = no, true = yes (will print out a statement once per page refresh on the console log that you can copy in case of a
 			// bug of some sort on processes)
-		const Setting_http_ttp = true
+		const Setting_http_ttp = false
 			//^true = All URLs in the output start with "ttp" instead of "http" (to avoid URL truncation like what firefox does; replacing the middle of string with ellipsis).
 			// false = leave it as http
 	//Don't touch unless you know what you're doing
 		setInterval(Code, IntervalDelay)
+		setTimeout(Spawn_UI_Panel, 500)
+		
+		
 		const ListOfTrackingURLs = new Set() //If you leave the start process page and somehow return without resetting the page, this script will remember it.
 		let RaceConditionLock = false
 		let ClickAllAbortsCount = 0
 		let HavePrintedListOfProcess = false
 		
+		let JSONTextarea = {}
+		
+		async function Spawn_UI_Panel() {
+			//Element of the main UI
+				let DivBox = document.createElement("div")
+				DivBox.setAttribute("style", "position: fixed;bottom: 40px;right: 40px;z-index: 999; background-color: rgba(64, 64, 64, .5); color: #ffffff; border-radius: 30px; padding: 15px;")
+			//Title
+				let Title = document.createElement("h2")
+				Title.setAttribute("style", "text-align: center;")
+				Title.appendChild(document.createTextNode("WBGS process info"))
+				DivBox.appendChild(Title)
+			//JSON textarea
+				JSONTextarea = document.createElement("textarea")
+				JSONTextarea.setAttribute("style", "white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff; font-family: monospace; resize: both;")
+				JSONTextarea.setAttribute("cols", "50")
+				JSONTextarea.setAttribute("rows", "10")
+				JSONTextarea.setAttribute("readonly", "")
+				DivBox.appendChild(JSONTextarea)
+			//line break
+				DivBox.appendChild(document.createElement("br"))
+			//Copy button
+				let CopyJSONButton = document.createElement("button")
+				CopyJSONButton.appendChild(document.createTextNode("Copy data"))
+				CopyJSONButton.addEventListener(
+				"click",
+					function () {
+						GM.setClipboard(JSONTextarea.textContent)
+					}
+				
+				)
+				DivBox.appendChild(CopyJSONButton)
+			//Refresh button (updates the textarea)
+				let RefreshTextareaButton = document.createElement("button")
+				RefreshTextareaButton.appendChild(document.createTextNode("Refresh"))
+				RefreshTextareaButton.addEventListener(
+				"click",
+					function () {
+						HavePrintedListOfProcess = false
+						Code()
+					}
+				
+				)
+				DivBox.appendChild(RefreshTextareaButton)
+			//Add to document
+				let HTMLBody = Array.from(document.getElementsByTagName("BODY")).find((Element) => {return true})
+				let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0])
+				if (InnerNodeOfHTMLBody.IsSuccessful) {
+					document.body.insertBefore(DivBox, HTMLBody.childNodes[0]);
+				}
+		}
 		
 		function Code() {
 			if (!RaceConditionLock) {
@@ -62,7 +115,8 @@
 								TimestampOfInitalProcess: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
 							}
 							
-							console.log(JSON.stringify(OBJ_WBGS_TrackingURL, "", " "))
+							//console.log(JSON.stringify(OBJ_WBGS_TrackingURL, "", " "))
+							JSONTextarea.textContent = JSON.stringify(OBJ_WBGS_TrackingURL, "", " ")
 							ListOfTrackingURLs.add(ProcessTrackingURLString)
 						}
 					}
@@ -87,7 +141,8 @@
 									Status: WBGSProcess.childNodes[4].innerText
 								}
 							})
-							console.log("WBGS homepage info obtained on " + ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString()) + " \n" + JSON.stringify(OBJ_WBGS_Info, "", " "))
+							//console.log("WBGS homepage info obtained on " + ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString()) + " \n" + JSON.stringify(OBJ_WBGS_Info, "", " "))
+							JSONTextarea.textContent = "WBGS homepage info obtained on " + ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString()) + " \n" + JSON.stringify(OBJ_WBGS_Info, "", " ")
 							HavePrintedListOfProcess = true
 						}
 						
@@ -115,5 +170,66 @@
 				return URLString.replace(/^http/, "ttp")
 			}
 			return URLString
+		}
+		
+		
+	//Reused functions
+		function DescendNode(Node, LevelsArray) {
+			//Opposite of AscendNode, descends a node without errors. LevelsArray is an array that contains
+			//only numbers on what child to descend on.
+			let CurrentNode = Node
+			if (typeof LevelsArray == "undefined") {
+				return "Uhh..."
+			}
+			let LevelsDown = LevelsArray.length
+			let ParentCount = 0
+			for (let i = 0; i < LevelsDown; i++) {
+				if (typeof CurrentNode.childNodes != "undefined") {
+					if (typeof CurrentNode.childNodes[LevelsArray[i]] != "undefined") {
+						CurrentNode = CurrentNode.childNodes[LevelsArray[i]]
+						ParentCount++
+					}
+				} else {
+					break
+				}
+			}
+			return {
+				OutputNode: CurrentNode,
+				LevelsPassed: ParentCount,
+				IsSuccessful: (ParentCount == LevelsArray.length)
+			}
+		}
+		function AscendNode(Node, Levels) {
+			//Instead of Node.parentNode.parentNode.parentNode... which is prone to errors if there is no parent, this has a check to prevent it.
+			//Arguments:
+			//-Node: The node in the HTML
+			//-Levels: A number, representing how many levels to ascend
+			//Will return:
+			//-the parent node at "Levels" up, unless it cannot go up any further, then the highest
+			//-the number of successful levels it goes up.
+			let CurrentNode = Node
+			let ChildCount = 0
+			if (typeof Node != "undefined") {
+				for (let i = 0; i < Levels; i++) {
+					if (typeof CurrentNode.parentNode != "undefined") {
+						CurrentNode = CurrentNode.parentNode
+						ChildCount++
+					} else {
+						break
+					}
+				}
+				return {
+					OutputNode: CurrentNode,
+					LevelsPassed: ChildCount,
+					IsSuccessful: (Levels == ChildCount)
+				}
+			} else {
+				return {
+					OutputNode: undefined,
+					LevelsPassed: -1,
+					IsSuccessful: false
+				}
+				
+			}
 		}
 })();
