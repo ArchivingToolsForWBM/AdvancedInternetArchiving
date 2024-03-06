@@ -71,6 +71,7 @@
 				RefreshTextareaButton.addEventListener(
 				"click",
 					function () {
+						JSONTextarea.textContent = ""
 						HavePrintedListOfProcess = false
 						Code()
 					}
