@@ -2,7 +2,7 @@
 // @name         WBGS - utility
 // @namespace    WBGS_autocheck
 // @version      0.1
-// @description  So duped processes don't overwrite save results.
+// @description  Utility for WBGS.
 // @include      https://archive.org/services/wayback-gsheets/*
 // @grant        GM.setClipboard
 // ==/UserScript==
@@ -29,12 +29,13 @@
 		setTimeout(Spawn_UI_Panel, 500)
 		
 		
-		const ListOfTrackingURLs = new Set() //If you leave the start process page and somehow return without resetting the page, this script will remember it.
 		let RaceConditionLock = false
 		let ClickAllAbortsCount = 0
 		let HavePrintedListOfProcess = false
 		
 		let JSONTextarea = {}
+		
+		let CurrentWBGSURL = ""
 		
 		async function Spawn_UI_Panel() {
 			//Element of the main UI
@@ -89,7 +90,10 @@
 		function Code() {
 			if (!RaceConditionLock) {
 				RaceConditionLock = true
-				let CurrentWBGSURL = window.location.href
+				if (CurrentWBGSURL != window.location.href) {
+					HavePrintedListOfProcess = false //if the user moves to a different URL, we need to update the textarea
+				}
+				CurrentWBGSURL = window.location.href
 				if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=archive") {
 					let Element_SaveInNewSheetOption = Array.from(document.querySelectorAll('input[type=checkbox]')).find((CheckBox) => {
 						return CheckBox.parentElement.innerText == "Save results in a new Sheet."
@@ -106,8 +110,8 @@
 				let ProcessTrackingURLString = ""
 				if (document.querySelectorAll("small")[1] !== undefined) {
 					if (/^Tracking URL/.test(document.querySelectorAll("small")[1].innerText)) {
-						ProcessTrackingURLString = document.querySelectorAll("small")[1].innerText.match(/https:\/\/archive\.org\/services\/wayback-gsheets\/check[^\s]+$/)[0]
-						if (ListOfTrackingURLs.has(ProcessTrackingURLString)==false) {
+						if (!HavePrintedListOfProcess) {
+							ProcessTrackingURLString = document.querySelectorAll("small")[1].innerText.match(/https:\/\/archive\.org\/services\/wayback-gsheets\/check[^\s]+$/)[0]
 							//console.log("Tracking URL: " + ProcessTrackingURLString.replace(/^https/, "ttps")) //URLs in the console log gets truncated and the text may not be preserved depending on browser.
 							let OBJ_WBGS_TrackingURL = {
 								TrackingURL: HttpToTtp(ProcessTrackingURLString), //URLs in the console log gets truncated and the text may not be preserved depending on browser.
@@ -116,9 +120,8 @@
 								TimestampOfInitalProcess: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
 							}
 							
-							//console.log(JSON.stringify(OBJ_WBGS_TrackingURL, "", " "))
 							JSONTextarea.textContent = JSON.stringify(OBJ_WBGS_TrackingURL, "", " ")
-							ListOfTrackingURLs.add(ProcessTrackingURLString)
+							HavePrintedListOfProcess = true
 						}
 					}
 				}
@@ -142,7 +145,6 @@
 									Status: WBGSProcess.childNodes[4].innerText
 								}
 							})
-							//console.log("WBGS homepage info obtained on " + ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString()) + " \n" + JSON.stringify(OBJ_WBGS_Info, "", " "))
 							JSONTextarea.textContent = "WBGS homepage info obtained on " + ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString()) + " \n" + JSON.stringify(OBJ_WBGS_Info, "", " ")
 							HavePrintedListOfProcess = true
 						}
