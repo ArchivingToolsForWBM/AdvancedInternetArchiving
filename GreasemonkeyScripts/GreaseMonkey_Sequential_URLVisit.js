@@ -5,14 +5,13 @@
 // @grant    GM.getValue
 // @grant    GM.registerMenuCommand
 // @include      *
+// @exclude  https://*.google.com/*
+// @exclude  https://archive.org/*
+// @exclude  https://developer.mozilla.org/*
 // ==/UserScript==
 'use strict';
 
 //Notes:
-// -Anytime you edit this script and save, make sure you refresh the page so the loaded JS code reflect the changes.
-// -Also, every time you start this script, ALWAYS reset this by going onto the Greasemonkey script menu on
-//  "User Script Commands..." and click on "Stop and reset URL sequence" just in case the script bugs out and start
-//  on whatever position last set.
 // -Beware of anything that would pause your browser, such as a download prompts and any popup box that you cannot
 //  focus on your browser.
 // -Sometimes, pages may error out temporally (like error 503). Make sure you have a script that sends info to the
@@ -28,10 +27,13 @@
 //Don't touch unless you know what you're doing
 	let RaceConditionLock = false
 	setTimeout(Spawn_UI_Panel, 500)
+	let TimeoutBeforeNextPage = -1
 	let HTMLElement_TextareaURLs = {}
 	let HTMLElement_URLCounter = {}
 	let HTMLElement_ProgressNumber = {}
 	let HTMLElement_ProgressNumber_ErrorMsg = {}
+	let HTMLElement_DelayBeforeNextPage = {}
+	let HTMLElement_DelaySettingDisplay = {}
 	let HTMLElement_StartStopButton = {}
 	let ClippedDivBox = {}
 	let HTMLElement_ProgressDisplayText = {}
@@ -41,15 +43,10 @@
 		ListOfURLs: [],
 		Running: false,
 		ProgressCount_EnteredString: "",
-		ProgressCount: -1
+		ProgressCount: -1,
+		TimeoutDelay: 3000
 	}
 	LoadValuesFromStorage()
-//-----------------------------------------------------------
-	const ListOfURLs = `
-https://google.com
-https://wikipedia.org
-	`
-//-----------------------------------------------------------
 	async function Spawn_UI_Panel() {
 		//Div box
 			let DivBox = document.createElement("div")
@@ -151,6 +148,32 @@ https://wikipedia.org
 			DivBox.appendChild(document.createTextNode(" "))
 			DivBox.appendChild(HTMLElement_ProgressNumber_ErrorMsg)
 			DivBox.appendChild(document.createElement("br"))
+		//Delay
+			let DelayLabel = document.createElement("span")
+			DelayLabel.appendChild(document.createTextNode("Delay before next:"))
+			DivBox.appendChild(DelayLabel)
+			
+			HTMLElement_DelayBeforeNextPage = document.createElement("input")
+			HTMLElement_DelayBeforeNextPage.setAttribute("type", "range")
+			HTMLElement_DelayBeforeNextPage.setAttribute("min", "500")
+			HTMLElement_DelayBeforeNextPage.setAttribute("max", "10000")
+			HTMLElement_DelayBeforeNextPage.setAttribute("step", "500")
+			HTMLElement_DelayBeforeNextPage.setAttribute("value", StorageSaved_URLs.TimeoutDelay.toString(10))
+			HTMLElement_DelayBeforeNextPage.addEventListener(
+				"input",
+				function () {
+					StorageSaved_URLs.TimeoutDelay = HTMLElement_DelayBeforeNextPage.value
+					HTMLElement_DelaySettingDisplay.textContent = (parseInt(HTMLElement_DelayBeforeNextPage.value)/1000).toFixed(1) + " sec"
+					SaveValuesToStorage()
+				}
+			)
+			HTMLElement_DelaySettingDisplay = document.createElement("span")
+			HTMLElement_DelaySettingDisplay.appendChild(document.createTextNode((parseInt(HTMLElement_DelayBeforeNextPage.value)/1000).toFixed(1) + " sec"))
+			
+			
+			DivBox.appendChild(HTMLElement_DelayBeforeNextPage)
+			DivBox.appendChild(HTMLElement_DelaySettingDisplay)
+			DivBox.appendChild(document.createElement("br"))
 		//start and stop button
 			HTMLElement_StartStopButton = document.createElement("Button")
 			HTMLElement_StartStopButton.setAttribute("style", "width: 50px;")
@@ -163,7 +186,11 @@ https://wikipedia.org
 					SaveValuesToStorage()
 					EnableDisableElements()
 					
-					LoadAnotherPage()
+					if (StorageSaved_URLs.Running) {
+						LoadAnotherPage()
+					} else {
+						clearTimeout(TimeoutBeforeNextPage)
+					}
 				}
 			)
 			DivBox.appendChild(HTMLElement_StartStopButton)
@@ -229,7 +256,7 @@ https://wikipedia.org
 	}
 	
 	function LoadURLAfterTimer() {
-		setTimeout(LoadAnotherPage, TimeBeforeLoadingNextURL)
+		TimeoutBeforeNextPage = setTimeout(LoadAnotherPage, StorageSaved_URLs.TimeoutDelay)
 	}
 	
 	
@@ -332,10 +359,12 @@ https://wikipedia.org
 			HTMLElement_TextareaURLs.disabled = false
 			HTMLElement_TextareaURLs.setAttribute("style", "white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #ffffff; color : #000000; font-family: monospace; resize: both;")
 			HTMLElement_ProgressNumber.disabled = false
+			HTMLElement_DelayBeforeNextPage.disabled = false
 			if (StorageSaved_URLs.Running) {
 				HTMLElement_TextareaURLs.disabled = true
 				HTMLElement_TextareaURLs.setAttribute("style", "white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #ffffff; color : #C0C0C0; font-family: monospace; resize: both;")
 				HTMLElement_ProgressNumber.disabled = true
+				HTMLElement_DelayBeforeNextPage.disabled = true
 			}
 		} else {
 			//If no URLs, disable start/stop and position
