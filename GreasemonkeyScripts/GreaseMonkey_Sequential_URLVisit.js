@@ -7,6 +7,7 @@
 // @include      *
 // @exclude  https://*.google.com/*
 // @exclude  https://archive.org/*
+// @exclude  https://web.archive.org/*
 // @exclude  https://developer.mozilla.org/*
 // ==/UserScript==
 'use strict';
@@ -28,29 +29,32 @@
 	let RaceConditionLock = false
 	setTimeout(Spawn_UI_Panel, 500)
 	let TimeoutBeforeNextPage = -1
-	let HTMLElement_TextareaURLs = {}
-	let HTMLElement_URLCounter = {}
-	let HTMLElement_ProgressNumber = {}
-	let HTMLElement_ProgressNumber_ErrorMsg = {}
-	let HTMLElement_DelayBeforeNextPage = {}
-	let HTMLElement_DelaySettingDisplay = {}
-	let HTMLElement_StartStopButton = {}
-	let ClippedDivBox = {}
-	let HTMLElement_ProgressDisplayText = {}
-	let HTMLElement_ProgressDisplayBar = {}
+	let HTMLElement_TextareaURLs = {} //The textarea the user enters a string containing URLs
+	let HTMLElement_URLCounter = {} //The display on how many unique URLs entered by the user
+	let HTMLElement_ProgressNumber = {} //The number input that can be set by the user.
+	let HTMLElement_ProgressNumber_ErrorMsg = {} //Error message when the user enters an invalid string for what URL to start at
+	let HTMLElement_DelayBeforeNextPage = {} //The input range entered by the user
+	let HTMLElement_DelaySettingDisplay = {} //Display how many seconds before loading the next page updated by the setting above
+	let HTMLElement_StartStopButton = {} //Start stop button
+	let ClippedDivBox = {} //The div showing the list of unique URLs table
+	let HTMLElement_ProgressDisplayText = {} //Shows how many URLs progressed
+	let HTMLElement_ProgressDisplayBar = {} //Percentage bar showing progress
 	let StorageSaved_URLs = {
 		TextareaURLs: "",
 		ListOfURLs: [],
 		Running: false,
 		ProgressCount_EnteredString: "",
+		//^This is a string the user enters, that may not always be a valid string, but saved so it is a QOL. Note that a number here will set ProgressCount to this value -2, (entering a 1 here will set ProgressCount to -1)
 		ProgressCount: -1,
+		//^Because when you set the "location.href" value, JS will stop executing codes beyond this point, the code has to be structured in a way that when it loads the next page, it first must increment "ProgressCount"
+		// before setting "location.href". This means to load the first URL, this has to be -1, then execute LoadAnotherPage, which first increases -1 to 0, then load the URL at index 0.
 		TimeoutDelay: 3000
 	}
 	LoadValuesFromStorage()
 	async function Spawn_UI_Panel() {
 		//Div box
 			let DivBox = document.createElement("div")
-			DivBox.setAttribute("style", "position: fixed;top: 20px;right: 20px; z-index: 9999; background-color: rgba(64, 64, 64, .5); color: #ffffff; border-radius: 30px; padding: 15px;")
+			DivBox.setAttribute("style", "position: fixed;top: 20px;right: 20px; z-index: 9999999999; background-color: rgba(64, 64, 64, .90); color: #ffffff; border-radius: 30px; padding: 15px;")
 		//Title
 			let Title = document.createElement("h2")
 			Title.appendChild(document.createTextNode("URL sequence visit"))
@@ -67,7 +71,7 @@
 			HTMLElement_TextareaURLs.value = StorageSaved_URLs.TextareaURLs
 			HTMLElement_TextareaURLs.setAttribute("style", "white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #ffffff; color : #000000; font-family: monospace; resize: both; min-width: 300px")
 			HTMLElement_TextareaURLs.addEventListener(
-				"input",
+				"change",
 				function () {
 					let ListOfURLs = HTMLElement_TextareaURLs.value.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g)
 					if (ListOfURLs == null) {
@@ -90,7 +94,7 @@
 					
 					NumberErrorHandler(HTMLElement_ProgressNumber.value)
 					EnableDisableElements()
-					UpdateProgressDisplay()
+					UpdateProgressDisplay(StorageSaved_URLs.ProgressCount)
 				}
 			)
 			DivBox.appendChild(HTMLElement_TextareaURLs)
@@ -124,6 +128,7 @@
 			HTMLElement_ProgressNumber.setAttribute("min", "1")
 			HTMLElement_ProgressNumber.setAttribute("max", StorageSaved_URLs.ListOfURLs.length.toString(10))
 			HTMLElement_ProgressNumber.value = (StorageSaved_URLs.ProgressCount+2).toString(10)
+			HTMLElement_ProgressNumber.setAttribute("style", "font-family: monospace;")
 			
 			HTMLElement_ProgressNumber.addEventListener(
 				"change",
@@ -136,7 +141,7 @@
 						if ((EnteredNumber >= 0) && (EnteredNumber < StorageSaved_URLs.ListOfURLs.length+1)) {
 							StorageSaved_URLs.ProgressCount = EnteredNumber-2
 							SaveValuesToStorage()
-							UpdateProgressDisplay()
+							UpdateProgressDisplay(StorageSaved_URLs.ProgressCount)
 						}
 					}
 					//NumberErrorHandler(EnteredNumber)
@@ -159,6 +164,7 @@
 			HTMLElement_DelayBeforeNextPage.setAttribute("max", "10000")
 			HTMLElement_DelayBeforeNextPage.setAttribute("step", "500")
 			HTMLElement_DelayBeforeNextPage.setAttribute("value", StorageSaved_URLs.TimeoutDelay.toString(10))
+			HTMLElement_DelayBeforeNextPage.setAttribute("style", "width: 130px")
 			HTMLElement_DelayBeforeNextPage.addEventListener(
 				"input",
 				function () {
@@ -169,6 +175,7 @@
 			)
 			HTMLElement_DelaySettingDisplay = document.createElement("span")
 			HTMLElement_DelaySettingDisplay.appendChild(document.createTextNode((parseInt(HTMLElement_DelayBeforeNextPage.value)/1000).toFixed(1) + " sec"))
+			HTMLElement_DelaySettingDisplay.setAttribute("style", "font-family: monospace;")
 			
 			
 			DivBox.appendChild(HTMLElement_DelayBeforeNextPage)
@@ -194,13 +201,17 @@
 				}
 			)
 			DivBox.appendChild(HTMLElement_StartStopButton)
+			if (StorageSaved_URLs.ProgressCount >= StorageSaved_URLs.ListOfURLs.length-1) {
+				HTMLElement_StartStopButton.setAttribute("disabled", "")
+			}
+			
 			DivBox.appendChild(document.createElement("br"))
 		//Progress display
 			HTMLElement_ProgressDisplayText = document.createElement("span")
 			HTMLElement_ProgressDisplayText.setAttribute("style", "font-family: monospace")
 			
 			HTMLElement_ProgressDisplayBar = document.createElement("div")
-			UpdateProgressDisplay()
+			UpdateProgressDisplay(StorageSaved_URLs.ProgressCount)
 			DivBox.appendChild(HTMLElement_ProgressDisplayText)
 			DivBox.appendChild(HTMLElement_ProgressDisplayBar)
 
@@ -248,15 +259,20 @@
 			ClippedDivBox.appendChild(TableOfUniqueURLs)
 		}
 	}
-	
 	if (TimeBeforeOrAfterLoad == 0) {
 		window.addEventListener('load', LoadURLAfterTimer)
 	} else {
 		LoadURLAfterTimer()
 	}
-	
 	function LoadURLAfterTimer() {
-		TimeoutBeforeNextPage = setTimeout(LoadAnotherPage, StorageSaved_URLs.TimeoutDelay)
+		if (StorageSaved_URLs.ProgressCount != StorageSaved_URLs.ListOfURLs.length-1) {
+			TimeoutBeforeNextPage = setTimeout(LoadAnotherPage, StorageSaved_URLs.TimeoutDelay)
+		} else {
+			//StorageSaved_URLs.ProgressCount = -1
+			//HTMLElement_ProgressNumber.value = "1"
+			StorageSaved_URLs.Running = false
+			HTMLElement_StartStopButton.textContent = AlternateStartStop()
+		}
 	}
 	
 	
@@ -264,21 +280,14 @@
 		if (StorageSaved_URLs.Running) {
 			if (!RaceConditionLock) {
 				RaceConditionLock = true
-				StorageSaved_URLs.ProgressCount++
-				if (Number.isNaN(StorageSaved_URLs.ProgressCount) || StorageSaved_URLs.ProgressCount >= StorageSaved_URLs.ListOfURLs.length) {
+				StorageSaved_URLs.ProgressCount++ //Increment to next page
+				if (Number.isNaN(StorageSaved_URLs.ProgressCount) || StorageSaved_URLs.ProgressCount >= StorageSaved_URLs.ListOfURLs.length) { //failsafe
 					StorageSaved_URLs.ProgressCount = -1
 				}
 				SaveValuesToStorage()
-				if (StorageSaved_URLs.ProgressCount <  StorageSaved_URLs.ListOfURLs.length && StorageSaved_URLs.ProgressCount >=0) {
+				if (StorageSaved_URLs.ProgressCount < StorageSaved_URLs.ListOfURLs.length && StorageSaved_URLs.ProgressCount >=0) {
 					RaceConditionLock = false
 					location.href = StorageSaved_URLs.ListOfURLs[StorageSaved_URLs.ProgressCount] //Code stops executing after this executes.
-				} else {
-					alert("Done!")
-					StorageSaved_URLs.ProgressCount = -1
-					StorageSaved_URLs.Running = false
-					RaceConditionLock = false
-					HTMLElement_StartStopButton.textContent = AlternateStartStop()
-					EnableDisableElements()
 				}
 			}
 		}
@@ -336,10 +345,11 @@
 		return parseInt(string)
 	}
 	function NumberErrorHandler(EnteredNumber) {
-
 		if (!Number.isNaN(EnteredNumber)) {
 			if ((parseInt(EnteredNumber) >= 1) && (parseInt(EnteredNumber) <= StorageSaved_URLs.ListOfURLs.length)) { //In range and valid integer
-				HTMLElement_StartStopButton.removeAttribute("disabled")
+				if (StorageSaved_URLs.ProgressCount < StorageSaved_URLs.ListOfURLs.length-1) {
+					HTMLElement_StartStopButton.removeAttribute("disabled")
+				}
 				HTMLElement_ProgressNumber_ErrorMsg.setAttribute("hidden", "")
 				HTMLElement_ProgressDisplayText.removeAttribute("hidden", "")
 				HTMLElement_ProgressDisplayBar.removeAttribute("hidden", "")
@@ -354,7 +364,9 @@
 	function EnableDisableElements() {
 		if (StorageSaved_URLs.ListOfURLs.length != 0) {
 			//If running, disable textarea and the position number
-			HTMLElement_StartStopButton.disabled = false
+			if (StorageSaved_URLs.ProgressCount < StorageSaved_URLs.ListOfURLs.length-1) {
+				HTMLElement_StartStopButton.disabled = false
+			}
 			HTMLElement_ProgressNumber.disabled = false
 			HTMLElement_TextareaURLs.disabled = false
 			HTMLElement_TextareaURLs.setAttribute("style", "white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #ffffff; color : #000000; font-family: monospace; resize: both;")
@@ -372,10 +384,10 @@
 			HTMLElement_ProgressNumber.disabled = true
 		}
 	}
-	function UpdateProgressDisplay() {
-		let ProgressPercentage = clamp(((StorageSaved_URLs.ProgressCount+1) * 100 / StorageSaved_URLs.ListOfURLs.length), 0, 100)
+	function UpdateProgressDisplay(ProgressonNumber) {
+		let ProgressPercentage = clamp(((ProgressonNumber+1) * 100 / StorageSaved_URLs.ListOfURLs.length), 0, 100)
 		
-		let ProgressText = "Progress: " + (StorageSaved_URLs.ProgressCount+1).toString(10) + "/" + StorageSaved_URLs.ListOfURLs.length.toString(10) + ", " + ProgressPercentage.toFixed(2) + "%, Remaining: " + (StorageSaved_URLs.ListOfURLs.length - (StorageSaved_URLs.ProgressCount+1)).toString(10)
+		let ProgressText = "Progress: " + (ProgressonNumber+1).toString(10) + "/" + StorageSaved_URLs.ListOfURLs.length.toString(10) + ", " + ProgressPercentage.toFixed(2) + "%, Remaining: " + (StorageSaved_URLs.ListOfURLs.length - (ProgressonNumber+1)).toString(10)
 		HTMLElement_ProgressDisplayText.textContent = ProgressText
 		
 		HTMLElement_ProgressDisplayBar.setAttribute("style", "background: linear-gradient(to right, #ffffff 0% " + ProgressPercentage.toString(10) + "%, #000000 " + ProgressPercentage.toString(10) + "% 100%); width: 300px; height: 10px; border-radius: 5px")
