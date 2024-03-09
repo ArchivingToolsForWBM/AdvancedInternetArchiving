@@ -55,17 +55,18 @@
 		//Div box
 			let DivBox = document.createElement("div")
 			DivBox.setAttribute("style", "position: fixed;top: 20px;right: 20px; z-index: 9999999999; background-color: rgba(64, 64, 64, .90); color: #ffffff; border-radius: 30px; padding: 15px;")
+			let DivBox2 = document.createElement("div")
 		//Title
 			let Title = document.createElement("h2")
 			Title.appendChild(document.createTextNode("URL sequence visit"))
 			Title.setAttribute("style", "text-align: center;")
-			DivBox.appendChild(Title)
+			DivBox2.appendChild(Title)
 			
-			DivBox.appendChild(document.createElement("br"))
+			DivBox2.appendChild(document.createElement("br"))
 		//Label for textarea
 			let TextareaLabel = document.createTextNode("Enter your URLs here:")
-			DivBox.appendChild(TextareaLabel)
-			DivBox.appendChild(document.createElement("br"))
+			DivBox2.appendChild(TextareaLabel)
+			DivBox2.appendChild(document.createElement("br"))
 		//Textarea to enter URLs
 			HTMLElement_TextareaURLs = document.createElement("textarea")
 			HTMLElement_TextareaURLs.value = StorageSaved_URLs.TextareaURLs
@@ -97,17 +98,17 @@
 					UpdateProgressDisplay(StorageSaved_URLs.ProgressCount)
 				}
 			)
-			DivBox.appendChild(HTMLElement_TextareaURLs)
-			DivBox.appendChild(document.createElement("br"))
+			DivBox2.appendChild(HTMLElement_TextareaURLs)
+			DivBox2.appendChild(document.createElement("br"))
 		//List of unique URLs
-			DivBox.appendChild(document.createTextNode("List of unique URLs:"))
-			DivBox.appendChild(document.createElement("br"))
+			DivBox2.appendChild(document.createTextNode("List of unique URLs:"))
+			DivBox2.appendChild(document.createElement("br"))
 			
 			ClippedDivBox = document.createElement("div")
 			ClippedDivBox.setAttribute("style", "overflow: scroll; border: solid 1px; resize: both; background-color : #000000; color : #ffffff;  height: 200px; font-family: monospace; max-width: 300px")
 			DisplayUniqueURLsList(StorageSaved_URLs.ListOfURLs)
 			
-			DivBox.appendChild(ClippedDivBox)
+			DivBox2.appendChild(ClippedDivBox)
 		//Number of URLs found
 			let DivOfURLCount = document.createElement("div")
 			DivOfURLCount.setAttribute("style", "font-family: monospace;")
@@ -116,8 +117,8 @@
 			HTMLElement_URLCounter.appendChild(document.createTextNode("Number of unique URLs: " + StorageSaved_URLs.ListOfURLs.length))
 			DivOfURLCount.appendChild(HTMLElement_URLCounter)
 			
-			DivBox.appendChild(DivOfURLCount)
-			DivBox.appendChild(document.createElement("br"))
+			DivBox2.appendChild(DivOfURLCount)
+			DivBox2.appendChild(document.createElement("br"))
 		//Number that indicates progress as well as letting the user enter a value to start at the nth URL
 			HTMLElement_ProgressNumber_ErrorMsg = document.createElement("span")
 			HTMLElement_ProgressNumber_ErrorMsg.appendChild(document.createTextNode("Error!"))
@@ -148,15 +149,15 @@
 					NumberErrorHandler(checkIsStringValidInteger(StorageSaved_URLs.ProgressCount_EnteredString))
 				}
 			)
-			DivBox.appendChild(document.createTextNode("Next Position:"))
-			DivBox.appendChild(HTMLElement_ProgressNumber)
-			DivBox.appendChild(document.createTextNode(" "))
-			DivBox.appendChild(HTMLElement_ProgressNumber_ErrorMsg)
-			DivBox.appendChild(document.createElement("br"))
+			DivBox2.appendChild(document.createTextNode("Next Position:"))
+			DivBox2.appendChild(HTMLElement_ProgressNumber)
+			DivBox2.appendChild(document.createTextNode(" "))
+			DivBox2.appendChild(HTMLElement_ProgressNumber_ErrorMsg)
+			DivBox2.appendChild(document.createElement("br"))
 		//Delay
 			let DelayLabel = document.createElement("span")
 			DelayLabel.appendChild(document.createTextNode("Delay before next:"))
-			DivBox.appendChild(DelayLabel)
+			DivBox2.appendChild(DelayLabel)
 			
 			HTMLElement_DelayBeforeNextPage = document.createElement("input")
 			HTMLElement_DelayBeforeNextPage.setAttribute("type", "range")
@@ -178,9 +179,9 @@
 			HTMLElement_DelaySettingDisplay.setAttribute("style", "font-family: monospace;")
 			
 			
-			DivBox.appendChild(HTMLElement_DelayBeforeNextPage)
-			DivBox.appendChild(HTMLElement_DelaySettingDisplay)
-			DivBox.appendChild(document.createElement("br"))
+			DivBox2.appendChild(HTMLElement_DelayBeforeNextPage)
+			DivBox2.appendChild(HTMLElement_DelaySettingDisplay)
+			DivBox2.appendChild(document.createElement("br"))
 		//start and stop button
 			HTMLElement_StartStopButton = document.createElement("Button")
 			HTMLElement_StartStopButton.setAttribute("style", "width: 50px;")
@@ -200,31 +201,33 @@
 					}
 				}
 			)
-			DivBox.appendChild(HTMLElement_StartStopButton)
+			DivBox2.appendChild(HTMLElement_StartStopButton)
 			if (StorageSaved_URLs.ProgressCount >= StorageSaved_URLs.ListOfURLs.length-1) {
 				HTMLElement_StartStopButton.setAttribute("disabled", "")
 			}
 			
-			DivBox.appendChild(document.createElement("br"))
+			DivBox2.appendChild(document.createElement("br"))
 		//Progress display
 			HTMLElement_ProgressDisplayText = document.createElement("span")
 			HTMLElement_ProgressDisplayText.setAttribute("style", "font-family: monospace")
 			
 			HTMLElement_ProgressDisplayBar = document.createElement("div")
 			UpdateProgressDisplay(StorageSaved_URLs.ProgressCount)
-			DivBox.appendChild(HTMLElement_ProgressDisplayText)
-			DivBox.appendChild(HTMLElement_ProgressDisplayBar)
+			DivBox2.appendChild(HTMLElement_ProgressDisplayText)
+			DivBox2.appendChild(HTMLElement_ProgressDisplayBar)
 
 		//Enable/disable elements
 			NumberErrorHandler(checkIsStringValidInteger(StorageSaved_URLs.ProgressCount_EnteredString))
 			EnableDisableElements()
 		//Remove hidden attribute bc some sites uses it can affect this div box
-			Array.from(DivBox.getElementsByTagName("*")).forEach((Element) => {
+			Array.from(DivBox2.getElementsByTagName("*")).forEach((Element) => {
 				if (Element.textContent != "Error!") {
 					Element.hidden = false
 				}
 			})
 		//Add to document
+			let Shadow = DivBox.attachShadow({ mode: "closed" }); //thank you https://stackoverflow.com/questions/59868970/shadow-dom-elements-attached-to-shadow-dom-not-rendering
+			Shadow.appendChild(DivBox2)
 			let HTMLBody = Array.from(document.getElementsByTagName("BODY")).find((Element) => {return true})
 			let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0])
 			if (InnerNodeOfHTMLBody.IsSuccessful) {
