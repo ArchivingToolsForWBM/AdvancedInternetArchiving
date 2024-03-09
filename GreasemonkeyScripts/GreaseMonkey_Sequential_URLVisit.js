@@ -8,7 +8,7 @@
 // @exclude  https://*.google.com/*
 // @exclude  https://archive.org/*
 // @exclude  https://web.archive.org/*
-// @exclude  https://developer.mozilla.org/*
+// @exclude  https://*.developer.mozilla.org/*
 // ==/UserScript==
 'use strict';
 
@@ -218,6 +218,12 @@
 		//Enable/disable elements
 			NumberErrorHandler(checkIsStringValidInteger(StorageSaved_URLs.ProgressCount_EnteredString))
 			EnableDisableElements()
+		//Remove hidden attribute bc some sites uses it can affect this div box
+			Array.from(DivBox.getElementsByTagName("*")).forEach((Element) => {
+				if (Element.textContent != "Error!") {
+					Element.hidden = false
+				}
+			})
 		//Add to document
 			let HTMLBody = Array.from(document.getElementsByTagName("BODY")).find((Element) => {return true})
 			let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0])
