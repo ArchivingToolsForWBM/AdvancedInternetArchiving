@@ -5,7 +5,7 @@
 // @grant    GM.getValue
 // @grant    GM.registerMenuCommand
 // @include      *
-// @exclude  https://*.google.com/*
+// @exclude  *.google.com*
 // @exclude  https://archive.org/*
 // @exclude  https://web.archive.org/*
 // @exclude  https://*.developer.mozilla.org/*

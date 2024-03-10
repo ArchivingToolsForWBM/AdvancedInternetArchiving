@@ -7,6 +7,7 @@
 // @grant    GM.setValue
 // @grant    GM.getValue
 // @grant    GM.setClipboard
+// @exclude  *.google*
 // ==/UserScript==
 
 //Credit goes to hacker09 on GreasyFork: https://greasyfork.org/en/discussions/requests/65921-feature-request-extract-links-as-the-user-scroll-down-general-purpose-any-site
@@ -31,31 +32,45 @@
 	//Don't touch
 		let IframeRecursionCount = 0 //Tracks how many levels deep sub-window frames to scan into.
 		let AntiRaceCondition = false //This script uses setInterval(), which is an asynchronous function. We don't want potential unintentional overwriting cause by race condition.
-		let IntervalID = 0
+		let IntervalID_ExtractURLs = 0
+		let IntervalID_DisplayURLCount = 0
 		
 	//Save data and having elements in memory
 		let StorageSaved_ExtractLinks = {
 			Running: false,
-			ListOfURLs: []
+			ListOfURLs: [],
+			CopiedURLSort: [
+				{value:"Sort_None", visibleText: "None", isSelected: true},
+				{value:"AlphabeticallyAscend", visibleText: "Alphabetically ascend",  isSelected: false},
+				{value:"AlphabeticallyDescend", visibleText: "Alphabetically descend",  isSelected: false}
+			]
 		}
 		LoadValuesFromStorage()
 	//Elements to remember
 		let HTMLElement_StartStopButton = {}
 		let HTMLElement_URLExtractedCount = {}
+	//timeout for 1-time execution
 		setTimeout(Spawn_UI_Panel, 200)
 		setTimeout(InitalizeInterval, 500)
 	//Initalize interval
 		function InitalizeInterval() {
 			if (StorageSaved_ExtractLinks.Running) { //This code must execute after the await finishes when loading values from storage
-				IntervalID = setInterval(ExtractLinksOnWindow, CaptureLinksInterval, window)
+				IntervalID_ExtractURLs = setInterval(ExtractLinksOnWindow, CaptureLinksInterval, window)
 			}
 		}
+		IntervalID_DisplayURLCount = setInterval(UpdateDisplayNumberOfURLs, CaptureLinksInterval, window)
 	//UI stuff
 		async function Spawn_UI_Panel() {
 			//Div box
 				let DivBox = document.createElement("div")
 				DivBox.setAttribute("style", "position: fixed;bottom: 20px;left: 20px; z-index: 9999999999; background-color: rgba(64, 64, 64, .90); color: #ffffff; border-radius: 30px; padding: 15px;")
 				let DivBox2 = document.createElement("div")
+			//Title
+				let TitleHeader = document.createElement("h2")
+				TitleHeader.appendChild(document.createTextNode("Link extractor"))
+				TitleHeader.setAttribute("style", "text-align: center;")
+				DivBox2.appendChild(TitleHeader)
+				DivBox2.appendChild(document.createElement("br"))
 			//Start/stop button:
 				HTMLElement_StartStopButton = document.createElement("Button")
 				HTMLElement_StartStopButton.setAttribute("style", "width: 50px;")
@@ -68,13 +83,14 @@
 						SaveValuesToStorage()
 						
 						if (StorageSaved_ExtractLinks.Running) {
-							IntervalID = setInterval(ExtractLinksOnWindow, CaptureLinksInterval, window)
+							IntervalID_ExtractURLs = setInterval(ExtractLinksOnWindow, CaptureLinksInterval, window)
 						} else {
-							clearInterval(IntervalID)
+							clearInterval(IntervalID_ExtractURLs)
 						}
 					}
 				)
 				DivBox2.appendChild(HTMLElement_StartStopButton)
+				DivBox2.appendChild(document.createElement("br"))
 			//Copy URL list
 				let HTMLElement_CopyList = document.createElement("Button")
 				HTMLElement_CopyList.textContent = "Copy list of URLs"
@@ -83,6 +99,19 @@
 					function () {
 						let URLText = ""
 						let URLArray = StorageSaved_ExtractLinks.ListOfURLs
+						if (StorageSaved_ExtractLinks.CopiedURLSort[1].isSelected) {
+							//Sort Alphabetically ascending...
+							URLArray = URLArray.toSorted()
+						} else if (StorageSaved_ExtractLinks.CopiedURLSort[2].isSelected) {
+							//...descending
+							URLArray = URLArray.toSorted((a,b) => {
+								if (a==b) {
+									return 0
+								} else {
+									return (a < b) ? 1 : -1;
+								}
+							});
+						}
 						URLArray.forEach((URLItem, Index, List) => {
 							URLText += URLItem
 							if (Index != List.length-1) {
@@ -93,6 +122,10 @@
 					}
 				)
 				DivBox2.appendChild(HTMLElement_CopyList)
+			//Sort settings
+				let HTMLElement_SortSelect = CreateSelectElement(StorageSaved_ExtractLinks.CopiedURLSort, false)
+				DivBox2.appendChild(HTMLElement_SortSelect)
+				DivBox2.appendChild(document.createElement("br"))
 			//clear list button
 				let HTMLElement_ClearURLList = document.createElement("Button")
 				HTMLElement_ClearURLList.textContent = "Clear URL list"
@@ -105,7 +138,7 @@
 							HTMLElement_StartStopButton.textContent = AlternateStartStop()
 							HTMLElement_URLExtractedCount.textContent = "URLs extracted: 0"
 							SaveValuesToStorage()
-							clearInterval(IntervalID)
+							clearInterval(IntervalID_ExtractURLs)
 						}
 					}
 				)
@@ -195,14 +228,17 @@
 					IframeRecursionCount-- //Don't count as total number of function calls, just how many levels deep.
 				}
 				SaveValuesToStorage()
-				HTMLElement_URLExtractedCount.textContent = "URLs extracted: " + StorageSaved_ExtractLinks.ListOfURLs.length.toString(10)
 				AntiRaceCondition = false
 			}
 		}
+		function UpdateDisplayNumberOfURLs() {
+			HTMLElement_URLExtractedCount.textContent = "URLs extracted: " + StorageSaved_ExtractLinks.ListOfURLs.length.toString(10)
+		}
+		
 //		window.addEventListener('scroll',addEventListenersToPages.bind(null, window));
 //		window.addEventListener('load',addEventListenersToPages.bind(null, window));
 //		if (Interval_captureLinks) {
-//			IntervalID = setInterval(ExtractLinksOnWindow, CaptureLinksInterval, window)
+//			IntervalID_ExtractURLs = setInterval(ExtractLinksOnWindow, CaptureLinksInterval, window)
 //		}
 
 	//Reused code
@@ -251,5 +287,36 @@
 				LevelsPassed: ParentCount,
 				IsSuccessful: (ParentCount == LevelsArray.length)
 			}
+		}
+		function CreateSelectElement(arrayOptions, allowMultiple) {
+			//Input:
+			//arrayOptions:
+			//	[{value: "ValueString", visibleText: "Text here", isSelected: false}]
+			//allowMultiple: false = select only one, true = allow multiple
+			let HTML_Element_Select = document.createElement("select")
+			HTML_Element_Select.addEventListener(
+				"change",
+				function () {
+					Array.from(this.childNodes).forEach((listedOption, Index) => {
+						arrayOptions[Index].isSelected = listedOption.selected
+					})
+					SaveValuesToStorage()
+				}
+			)
+			if (allowMultiple) {
+				HTML_Element_Select.setAttribute("multiple", "")
+			}
+			arrayOptions.forEach((listedOption) => {
+				let HTML_Element_Option = document.createElement("option")
+				HTML_Element_Option.setAttribute("value", listedOption.value)
+				if (listedOption.isSelected) {
+					HTML_Element_Option.setAttribute("selected", "")
+				}
+				HTML_Element_Option.appendChild(document.createTextNode(listedOption.visibleText))
+				
+				HTML_Element_Select.appendChild(HTML_Element_Option)
+			})
+			
+			return HTML_Element_Select
 		}
 })();
