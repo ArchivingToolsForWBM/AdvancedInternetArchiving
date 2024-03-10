@@ -8,6 +8,7 @@
 // @grant    GM.getValue
 // @grant    GM.setClipboard
 // @exclude  *.google*
+// @grant    GM.registerMenuCommand
 // ==/UserScript==
 
 //Credit goes to hacker09 on GreasyFork: https://greasyfork.org/en/discussions/requests/65921-feature-request-extract-links-as-the-user-scroll-down-general-purpose-any-site
@@ -37,6 +38,7 @@
 		
 	//Save data and having elements in memory
 		let StorageSaved_ExtractLinks = {
+			ToggleUISetting: true,
 			Running: false,
 			ListOfURLs: [],
 			CopiedURLSort: [
@@ -47,6 +49,8 @@
 		}
 		LoadValuesFromStorage()
 	//Elements to remember
+		let HTMLElement_DivBox = {}
+		let HTMLElement_DivBox2 = {}
 		let HTMLElement_StartStopButton = {}
 		let HTMLElement_URLExtractedCount = {}
 	//timeout for 1-time execution
@@ -59,18 +63,27 @@
 			}
 		}
 		IntervalID_DisplayURLCount = setInterval(UpdateDisplayNumberOfURLs, CaptureLinksInterval, window)
+	//Menu commands
+		GM.registerMenuCommand("Toggle UI", ToggleUI, "");
+		function ToggleUI() {
+			StorageSaved_ExtractLinks.ToggleUISetting = !StorageSaved_ExtractLinks.ToggleUISetting
+			HTMLElement_DivBox2.hidden = !StorageSaved_ExtractLinks.ToggleUISetting
+			SaveValuesToStorage()
+		}
 	//UI stuff
 		async function Spawn_UI_Panel() {
 			//Div box
-				let DivBox = document.createElement("div")
-				DivBox.setAttribute("style", "position: fixed;bottom: 20px;left: 20px; z-index: 9999999999; background-color: rgba(64, 64, 64, .90); color: #ffffff; border-radius: 30px; padding: 15px;")
-				let DivBox2 = document.createElement("div")
+				HTMLElement_DivBox = document.createElement("div")
+				
+				HTMLElement_DivBox2 = document.createElement("div")
+				HTMLElement_DivBox2.hidden = !StorageSaved_ExtractLinks.ToggleUISetting
+				HTMLElement_DivBox2.setAttribute("style", "position: fixed;bottom: 20px;left: 20px; z-index: 9999999999; background-color: rgba(64, 64, 64, .90); color: #ffffff; border-radius: 30px; padding: 15px;")
 			//Title
 				let TitleHeader = document.createElement("h2")
 				TitleHeader.appendChild(document.createTextNode("Link extractor"))
 				TitleHeader.setAttribute("style", "text-align: center;")
-				DivBox2.appendChild(TitleHeader)
-				DivBox2.appendChild(document.createElement("br"))
+				HTMLElement_DivBox2.appendChild(TitleHeader)
+				HTMLElement_DivBox2.appendChild(document.createElement("br"))
 			//Start/stop button:
 				HTMLElement_StartStopButton = document.createElement("Button")
 				HTMLElement_StartStopButton.setAttribute("style", "width: 50px;")
@@ -89,8 +102,8 @@
 						}
 					}
 				)
-				DivBox2.appendChild(HTMLElement_StartStopButton)
-				DivBox2.appendChild(document.createElement("br"))
+				HTMLElement_DivBox2.appendChild(HTMLElement_StartStopButton)
+				HTMLElement_DivBox2.appendChild(document.createElement("br"))
 			//Copy URL list
 				let HTMLElement_CopyList = document.createElement("Button")
 				HTMLElement_CopyList.textContent = "Copy list of URLs"
@@ -121,11 +134,11 @@
 						GM.setClipboard(URLText)
 					}
 				)
-				DivBox2.appendChild(HTMLElement_CopyList)
+				HTMLElement_DivBox2.appendChild(HTMLElement_CopyList)
 			//Sort settings
 				let HTMLElement_SortSelect = CreateSelectElement(StorageSaved_ExtractLinks.CopiedURLSort, false)
-				DivBox2.appendChild(HTMLElement_SortSelect)
-				DivBox2.appendChild(document.createElement("br"))
+				HTMLElement_DivBox2.appendChild(HTMLElement_SortSelect)
+				HTMLElement_DivBox2.appendChild(document.createElement("br"))
 			//clear list button
 				let HTMLElement_ClearURLList = document.createElement("Button")
 				HTMLElement_ClearURLList.textContent = "Clear URL list"
@@ -142,8 +155,8 @@
 						}
 					}
 				)
-				DivBox2.appendChild(HTMLElement_ClearURLList)
-				DivBox2.appendChild(document.createElement("br"))
+				HTMLElement_DivBox2.appendChild(HTMLElement_ClearURLList)
+				HTMLElement_DivBox2.appendChild(document.createElement("br"))
 			//Number of extracted links
 				HTMLElement_URLExtractedCount = document.createElement("span")
 				HTMLElement_URLExtractedCount.setAttribute("style", "font-family: monospace;")
@@ -151,14 +164,14 @@
 				let Text_URLCount = document.createTextNode("URLs extracted: " + StorageSaved_ExtractLinks.ListOfURLs.length.toString(10))
 				HTMLElement_URLExtractedCount.appendChild(Text_URLCount)
 				
-				DivBox2.appendChild(HTMLElement_URLExtractedCount)
+				HTMLElement_DivBox2.appendChild(HTMLElement_URLExtractedCount)
 			//Add to document
-				let Shadow = DivBox.attachShadow({ mode: "closed" }); //thank you https://stackoverflow.com/questions/59868970/shadow-dom-elements-attached-to-shadow-dom-not-rendering
-				Shadow.appendChild(DivBox2)
+				let Shadow = HTMLElement_DivBox.attachShadow({ mode: "closed" }); //thank you https://stackoverflow.com/questions/59868970/shadow-dom-elements-attached-to-shadow-dom-not-rendering
+				Shadow.appendChild(HTMLElement_DivBox2)
 				let HTMLBody = Array.from(document.getElementsByTagName("BODY")).find((Element) => {return true})
 				let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0])
 				if (InnerNodeOfHTMLBody.IsSuccessful) {
-					document.body.insertBefore(DivBox, HTMLBody.childNodes[0]);
+					document.body.insertBefore(HTMLElement_DivBox, HTMLBody.childNodes[0]);
 				}
 			}
 	//Extractor

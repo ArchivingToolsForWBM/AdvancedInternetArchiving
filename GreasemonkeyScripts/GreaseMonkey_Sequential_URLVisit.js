@@ -29,6 +29,8 @@
 	let RaceConditionLock = false
 	setTimeout(Spawn_UI_Panel, 500)
 	let TimeoutBeforeNextPage = -1
+	let HTMLElement_DivBox = {} //The main div box
+	let HTMLElement_DivBox2 = {}
 	let HTMLElement_TextareaURLs = {} //The textarea the user enters a string containing URLs
 	let HTMLElement_URLCounter = {} //The display on how many unique URLs entered by the user
 	let HTMLElement_ProgressNumber = {} //The number input that can be set by the user.
@@ -36,10 +38,11 @@
 	let HTMLElement_DelayBeforeNextPage = {} //The input range entered by the user
 	let HTMLElement_DelaySettingDisplay = {} //Display how many seconds before loading the next page updated by the setting above
 	let HTMLElement_StartStopButton = {} //Start stop button
-	let ClippedDivBox = {} //The div showing the list of unique URLs table
+	let HTMLElement_ClippedDivBox = {} //The div showing the list of unique URLs table
 	let HTMLElement_ProgressDisplayText = {} //Shows how many URLs progressed
 	let HTMLElement_ProgressDisplayBar = {} //Percentage bar showing progress
 	let StorageSaved_URLs = {
+		ToggleUISetting: true,
 		TextareaURLs: "",
 		ListOfURLs: [],
 		Running: false,
@@ -51,22 +54,31 @@
 		TimeoutDelay: 3000
 	}
 	LoadValuesFromStorage()
+	//Menu commands
+		GM.registerMenuCommand("Toggle UI", ToggleUI, "");
+		function ToggleUI() {
+			StorageSaved_URLs.ToggleUISetting = !StorageSaved_URLs.ToggleUISetting
+			HTMLElement_DivBox2.hidden = !StorageSaved_URLs.ToggleUISetting
+			SaveValuesToStorage()
+		}
 	async function Spawn_UI_Panel() {
 		//Div box
-			let DivBox = document.createElement("div")
-			DivBox.setAttribute("style", "position: fixed;top: 20px;right: 20px; z-index: 9999999999; background-color: rgba(64, 64, 64, .90); color: #ffffff; border-radius: 30px; padding: 15px;")
-			let DivBox2 = document.createElement("div")
+			HTMLElement_DivBox = document.createElement("div")
+			
+			HTMLElement_DivBox2 = document.createElement("div")
+			HTMLElement_DivBox2.hidden = !StorageSaved_URLs.ToggleUISetting
+			HTMLElement_DivBox2.setAttribute("style", "position: fixed;top: 20px;right: 20px; z-index: 9999999999; background-color: rgba(64, 64, 64, .90); color: #ffffff; border-radius: 30px; padding: 15px;")
 		//Title
 			let Title = document.createElement("h2")
 			Title.appendChild(document.createTextNode("URL sequence visit"))
 			Title.setAttribute("style", "text-align: center;")
-			DivBox2.appendChild(Title)
+			HTMLElement_DivBox2.appendChild(Title)
 			
-			DivBox2.appendChild(document.createElement("br"))
+			HTMLElement_DivBox2.appendChild(document.createElement("br"))
 		//Label for textarea
 			let TextareaLabel = document.createTextNode("Enter your URLs here:")
-			DivBox2.appendChild(TextareaLabel)
-			DivBox2.appendChild(document.createElement("br"))
+			HTMLElement_DivBox2.appendChild(TextareaLabel)
+			HTMLElement_DivBox2.appendChild(document.createElement("br"))
 		//Textarea to enter URLs
 			HTMLElement_TextareaURLs = document.createElement("textarea")
 			HTMLElement_TextareaURLs.value = StorageSaved_URLs.TextareaURLs
@@ -78,8 +90,8 @@
 					if (ListOfURLs == null) {
 						ListOfURLs = []
 					}
-					let TableToClear = Array.from(ClippedDivBox.childNodes).forEach((Child) => { //Clear the table prior to updating
-						ClippedDivBox.removeChild(Child)
+					let TableToClear = Array.from(HTMLElement_ClippedDivBox.childNodes).forEach((Child) => { //Clear the table prior to updating
+						HTMLElement_ClippedDivBox.removeChild(Child)
 					})
 					ListOfURLs = Array.from(new Set(ListOfURLs)) // in a set object form, a JSON cannot list set entries...
 					
@@ -98,17 +110,17 @@
 					UpdateProgressDisplay(StorageSaved_URLs.ProgressCount)
 				}
 			)
-			DivBox2.appendChild(HTMLElement_TextareaURLs)
-			DivBox2.appendChild(document.createElement("br"))
+			HTMLElement_DivBox2.appendChild(HTMLElement_TextareaURLs)
+			HTMLElement_DivBox2.appendChild(document.createElement("br"))
 		//List of unique URLs
-			DivBox2.appendChild(document.createTextNode("List of unique URLs:"))
-			DivBox2.appendChild(document.createElement("br"))
+			HTMLElement_DivBox2.appendChild(document.createTextNode("List of unique URLs:"))
+			HTMLElement_DivBox2.appendChild(document.createElement("br"))
 			
-			ClippedDivBox = document.createElement("div")
-			ClippedDivBox.setAttribute("style", "overflow: scroll; border: solid 1px; resize: both; background-color : #000000; color : #ffffff;  height: 200px; font-family: monospace; max-width: 300px")
+			HTMLElement_ClippedDivBox = document.createElement("div")
+			HTMLElement_ClippedDivBox.setAttribute("style", "overflow: scroll; border: solid 1px; resize: both; background-color : #000000; color : #ffffff;  height: 200px; font-family: monospace; max-width: 300px")
 			DisplayUniqueURLsList(StorageSaved_URLs.ListOfURLs)
 			
-			DivBox2.appendChild(ClippedDivBox)
+			HTMLElement_DivBox2.appendChild(HTMLElement_ClippedDivBox)
 		//Number of URLs found
 			let DivOfURLCount = document.createElement("div")
 			DivOfURLCount.setAttribute("style", "font-family: monospace;")
@@ -117,8 +129,8 @@
 			HTMLElement_URLCounter.appendChild(document.createTextNode("Number of unique URLs: " + StorageSaved_URLs.ListOfURLs.length))
 			DivOfURLCount.appendChild(HTMLElement_URLCounter)
 			
-			DivBox2.appendChild(DivOfURLCount)
-			DivBox2.appendChild(document.createElement("br"))
+			HTMLElement_DivBox2.appendChild(DivOfURLCount)
+			HTMLElement_DivBox2.appendChild(document.createElement("br"))
 		//Number that indicates progress as well as letting the user enter a value to start at the nth URL
 			HTMLElement_ProgressNumber_ErrorMsg = document.createElement("span")
 			HTMLElement_ProgressNumber_ErrorMsg.appendChild(document.createTextNode("Error!"))
@@ -149,15 +161,15 @@
 					NumberErrorHandler(checkIsStringValidInteger(StorageSaved_URLs.ProgressCount_EnteredString))
 				}
 			)
-			DivBox2.appendChild(document.createTextNode("Next Position:"))
-			DivBox2.appendChild(HTMLElement_ProgressNumber)
-			DivBox2.appendChild(document.createTextNode(" "))
-			DivBox2.appendChild(HTMLElement_ProgressNumber_ErrorMsg)
-			DivBox2.appendChild(document.createElement("br"))
+			HTMLElement_DivBox2.appendChild(document.createTextNode("Next Position:"))
+			HTMLElement_DivBox2.appendChild(HTMLElement_ProgressNumber)
+			HTMLElement_DivBox2.appendChild(document.createTextNode(" "))
+			HTMLElement_DivBox2.appendChild(HTMLElement_ProgressNumber_ErrorMsg)
+			HTMLElement_DivBox2.appendChild(document.createElement("br"))
 		//Delay
 			let DelayLabel = document.createElement("span")
 			DelayLabel.appendChild(document.createTextNode("Delay before next:"))
-			DivBox2.appendChild(DelayLabel)
+			HTMLElement_DivBox2.appendChild(DelayLabel)
 			
 			HTMLElement_DelayBeforeNextPage = document.createElement("input")
 			HTMLElement_DelayBeforeNextPage.setAttribute("type", "range")
@@ -179,9 +191,9 @@
 			HTMLElement_DelaySettingDisplay.setAttribute("style", "font-family: monospace;")
 			
 			
-			DivBox2.appendChild(HTMLElement_DelayBeforeNextPage)
-			DivBox2.appendChild(HTMLElement_DelaySettingDisplay)
-			DivBox2.appendChild(document.createElement("br"))
+			HTMLElement_DivBox2.appendChild(HTMLElement_DelayBeforeNextPage)
+			HTMLElement_DivBox2.appendChild(HTMLElement_DelaySettingDisplay)
+			HTMLElement_DivBox2.appendChild(document.createElement("br"))
 		//start and stop button
 			HTMLElement_StartStopButton = document.createElement("Button")
 			HTMLElement_StartStopButton.setAttribute("style", "width: 50px;")
@@ -201,37 +213,37 @@
 					}
 				}
 			)
-			DivBox2.appendChild(HTMLElement_StartStopButton)
+			HTMLElement_DivBox2.appendChild(HTMLElement_StartStopButton)
 			if (StorageSaved_URLs.ProgressCount >= StorageSaved_URLs.ListOfURLs.length-1) {
 				HTMLElement_StartStopButton.setAttribute("disabled", "")
 			}
 			
-			DivBox2.appendChild(document.createElement("br"))
+			HTMLElement_DivBox2.appendChild(document.createElement("br"))
 		//Progress display
 			HTMLElement_ProgressDisplayText = document.createElement("span")
 			HTMLElement_ProgressDisplayText.setAttribute("style", "font-family: monospace")
 			
 			HTMLElement_ProgressDisplayBar = document.createElement("div")
 			UpdateProgressDisplay(StorageSaved_URLs.ProgressCount)
-			DivBox2.appendChild(HTMLElement_ProgressDisplayText)
-			DivBox2.appendChild(HTMLElement_ProgressDisplayBar)
+			HTMLElement_DivBox2.appendChild(HTMLElement_ProgressDisplayText)
+			HTMLElement_DivBox2.appendChild(HTMLElement_ProgressDisplayBar)
 
 		//Enable/disable elements
 			NumberErrorHandler(checkIsStringValidInteger(StorageSaved_URLs.ProgressCount_EnteredString))
 			EnableDisableElements()
 		//Remove hidden attribute bc some sites uses it can affect this div box
-			Array.from(DivBox2.getElementsByTagName("*")).forEach((Element) => {
-				if (Element.textContent != "Error!") {
-					Element.hidden = false
-				}
-			})
+//			Array.from(HTMLElement_DivBox2.getElementsByTagName("*")).forEach((Element) => {
+//				if (Element.textContent != "Error!") {
+//					Element.hidden = false
+//				}
+//			})
 		//Add to document
-			let Shadow = DivBox.attachShadow({ mode: "closed" }); //thank you https://stackoverflow.com/questions/59868970/shadow-dom-elements-attached-to-shadow-dom-not-rendering
-			Shadow.appendChild(DivBox2)
+			let Shadow = HTMLElement_DivBox.attachShadow({ mode: "closed" }); //thank you https://stackoverflow.com/questions/59868970/shadow-dom-elements-attached-to-shadow-dom-not-rendering
+			Shadow.appendChild(HTMLElement_DivBox2)
 			let HTMLBody = Array.from(document.getElementsByTagName("BODY")).find((Element) => {return true})
 			let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0])
 			if (InnerNodeOfHTMLBody.IsSuccessful) {
-				document.body.insertBefore(DivBox, HTMLBody.childNodes[0]);
+				document.body.insertBefore(HTMLElement_DivBox, HTMLBody.childNodes[0]);
 			}
 	}
 	function AlternateStartStop() {
@@ -265,7 +277,7 @@
 				
 				TableOfUniqueURLs.appendChild(TableRow)
 			})
-			ClippedDivBox.appendChild(TableOfUniqueURLs)
+			HTMLElement_ClippedDivBox.appendChild(TableOfUniqueURLs)
 		}
 	}
 	if (TimeBeforeOrAfterLoad == 0) {
