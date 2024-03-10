@@ -40,7 +40,7 @@
 			Running: false,
 			ListOfURLs: [],
 			CopiedURLSort: [
-				{value:"Sort_None", visibleText: "None", isSelected: true},
+				{value:"Sort_None", visibleText: "No sort", isSelected: true},
 				{value:"AlphabeticallyAscend", visibleText: "Alphabetically ascend",  isSelected: false},
 				{value:"AlphabeticallyDescend", visibleText: "Alphabetically descend",  isSelected: false}
 			]
@@ -163,26 +163,16 @@
 			}
 	//Extractor
 		function ExtractLinksFromPage(PageDocument) {
-			Array.from(PageDocument.getElementsByTagName('a')).forEach(link=>{ //"a href" links
-				//let URLString = FormatURL(link.href)
-				//if(!all.has(URLString[0])&&URLString[1]) {
-				//	all.add(URLString[0]);
-				//	console.log((URLString[0]).replace(/^http/, "ttp").replace(/#.*$/, ""));
-				//}
-				AddLinksToSaveList(link.href, "a tag")
-			});
-			Array.from(PageDocument.getElementsByTagName('img')).forEach(link=>{ //Images
-				AddLinksToSaveList(link.src, "img tag")
-			});
-			Array.from(PageDocument.getElementsByTagName('*')).forEach(link=>{ //Background images
-				//let URLString = FormatURL(link.style.backgroundImage.slice(5, -2))
-				AddLinksToSaveList(link.style.backgroundImage.slice(5, -2), "background-image attribute")
-			});
-			Array.from(PageDocument.getElementsByTagName('video')).forEach(link=>{ //video
-				AddLinksToSaveList(link.src, "video tag")
-			});
+			Array.from(PageDocument.getElementsByTagName('*')).forEach((Element) => {
+				AddLinksToSaveList(Element.href, Element.tagName + " tag") //a href
+				AddLinksToSaveList(Element.src, Element.tagName + " tag") //images and video
+				AddLinksToSaveList(Element.style.backgroundImage.slice(5, -2), "background-image attribute") //background image
+			})
 		}
-		function AddLinksToSaveList(String_URL, ObtainedFrom) {
+		function AddLinksToSaveList(String_URL = "", ObtainedFrom = "") {
+			if (typeof String_URL != "string") { //failsafe, sometimes attributes contains non-string data such as objects.
+				return
+			}
 			if (String_URL == "") {
 				return
 			}

@@ -31,7 +31,7 @@
 			let StorageSaved_Select = [
 				{value:"Option1", visibleText: "Option one", isSelected: true},
 				{value:"Option2", visibleText: "Option two",  isSelected: false},
-				{value:"Option2", visibleText: "Option three",  isSelected: false}
+				{value:"Option3", visibleText: "Option three",  isSelected: false}
 			]
 			let StorageSaved_Select2 = [
 				{value:"Option1", visibleText: "Option one", isSelected: false},
@@ -44,7 +44,6 @@
 				{visibleText: "Radio3", isSelected: false}
 			]
 			LoadValuesFromStorage()
-			let a = 0
 	//UI panel
 		async function Spawn_UI_Panel() {
 			//Spawn elements
