@@ -198,6 +198,9 @@
 			if (/^r-gradient.*$/.test(String_URL)) {
 				return
 			}
+			if (/^data:/.test(String_URL)) {
+				return
+			}
 			let CorrectedURL = String_URL.replace(/#.*$/, "") //get rid of fragment identifier (it's technically not an address), also prevents same URLs with different fragments from filling up the set.
 			if (/^\/+/.test(String_URL)) {
 				CorrectedURL = String_URL.replace(/^\/+/, "https://") // "/example.com" or "//example.com"
