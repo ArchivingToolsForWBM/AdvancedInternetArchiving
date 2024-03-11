@@ -209,7 +209,8 @@
 			}
 			let UniqueListOfURLs = new Set(StorageSaved_ExtractLinks.ListOfURLs) //Get a set, to remove dupes
 			UniqueListOfURLs.add(CorrectedURL) //Add only new items in the set
-			StorageSaved_ExtractLinks.ListOfURLs = Array.from(UniqueListOfURLs) //And place it back
+			//StorageSaved_ExtractLinks.ListOfURLs = Array.from(UniqueListOfURLs) //And place it back
+			StorageSaved_ExtractLinks.ListOfURLs = [...UniqueListOfURLs]
 		}
 		function addEventListenersToPages(Input_Window) {
 			//This adds even listeners to each window when the main window is first loaded, then if there are subwindow, do this recursively on each.
