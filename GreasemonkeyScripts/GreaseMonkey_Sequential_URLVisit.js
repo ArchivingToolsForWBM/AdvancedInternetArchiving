@@ -29,6 +29,8 @@
 	let RaceConditionLock = false
 	setTimeout(Spawn_UI_Panel, 500)
 	let TimeoutBeforeNextPage = -1
+	let HTMLElement_IframeOriginalJS = {} //Certain sites like furaffinity.net replaces several JS methods like Array.from(), this can break userscripts for any websites
+	let JS_OriginalMethodsAndFunctions = {}
 	let HTMLElement_DivBox = {} //The main div box
 	let HTMLElement_DivBox2 = {}
 	let HTMLElement_TextareaURLs = {} //The textarea the user enters a string containing URLs
@@ -62,6 +64,31 @@
 			SaveValuesToStorage()
 		}
 	async function Spawn_UI_Panel() {
+		//Get parts of the document of where to insert
+			let HTMLBody = Array.from(document.getElementsByTagName("BODY")).find((Element) => {return true}) //Get body node
+			let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0]) //Find the first child in the body tag
+		//Iframe
+			let HTMLElement_DivBox_Iframe = document.createElement("div")
+			let HTMLElement_DivBox_Iframe_Shadow = HTMLElement_DivBox_Iframe.attachShadow({ mode: "closed" });
+			
+			HTMLElement_IframeOriginalJS = document.createElement("iframe")
+			HTMLElement_DivBox_Iframe_Shadow.appendChild(HTMLElement_IframeOriginalJS)
+			
+			HTMLElement_IframeOriginalJS.hidden = true
+			if (InnerNodeOfHTMLBody.IsSuccessful) {
+				document.body.insertBefore(HTMLElement_DivBox_Iframe, InnerNodeOfHTMLBody.OutputNode); //Must be placed on the live DOM so that contentWindow won't be null
+			} else {
+				return //Failsafe
+			}
+		//Get original JS methods and function (that cannot be overridden by site's contents.)
+		//Please note: contentWindow will be null if you do not place the iframe on the live DOM, so we MUST place it on
+		//the document to make it a window and not a null, before we can use JS_OriginalMethodsAndFunctions to obtain default JS methods and functions.
+		//
+		//If you are a userscript author and make a userscript for any page, you must do this to prevent your functions or methods from breaking
+		//on some pages. See this:
+		// https://stackoverflow.com/questions/12522618/how-to-restore-an-overridden-functions-original-state-in-javascript
+		// https://jsfiddle.net/ZSypG/
+			JS_OriginalMethodsAndFunctions = HTMLElement_IframeOriginalJS.contentWindow //We now have the unmodified JS native code.
 		//Div box
 			HTMLElement_DivBox = document.createElement("div")
 			
@@ -90,10 +117,10 @@
 					if (ListOfURLs == null) {
 						ListOfURLs = []
 					}
-					let TableToClear = Array.from(HTMLElement_ClippedDivBox.childNodes).forEach((Child) => { //Clear the table prior to updating
+					let TableToClear = JS_OriginalMethodsAndFunctions.Array.from(HTMLElement_ClippedDivBox.childNodes).forEach((Child) => { //Clear the table prior to updating
 						HTMLElement_ClippedDivBox.removeChild(Child)
 					})
-					ListOfURLs = Array.from(new Set(ListOfURLs)) // in a set object form, a JSON cannot list set entries...
+					ListOfURLs = JS_OriginalMethodsAndFunctions.Array.from(new Set(ListOfURLs)) // in a set object form, a JSON cannot list set entries...
 					
 					StorageSaved_URLs.TextareaURLs = this.value
 					StorageSaved_URLs.ListOfURLs = ListOfURLs
@@ -240,10 +267,9 @@
 		//Add to document
 			let Shadow = HTMLElement_DivBox.attachShadow({ mode: "closed" }); //thank you https://stackoverflow.com/questions/59868970/shadow-dom-elements-attached-to-shadow-dom-not-rendering
 			Shadow.appendChild(HTMLElement_DivBox2)
-			let HTMLBody = Array.from(document.getElementsByTagName("BODY")).find((Element) => {return true})
-			let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0])
+			
 			if (InnerNodeOfHTMLBody.IsSuccessful) {
-				document.body.insertBefore(HTMLElement_DivBox, HTMLBody.childNodes[0]);
+				document.body.insertBefore(HTMLElement_DivBox, InnerNodeOfHTMLBody.OutputNode);
 			}
 	}
 	function AlternateStartStop() {

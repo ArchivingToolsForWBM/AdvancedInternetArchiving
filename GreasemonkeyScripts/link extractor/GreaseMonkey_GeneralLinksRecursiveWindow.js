@@ -49,6 +49,8 @@
 		}
 		LoadValuesFromStorage()
 	//Elements to remember
+		let HTMLElement_IframeOriginalJS = {} //Certain sites like furaffinity.net replaces several JS methods like Array.from(), this can break userscripts for any websites
+		let JS_OriginalMethodsAndFunctions = {}
 		let HTMLElement_DivBox = {}
 		let HTMLElement_DivBox2 = {}
 		let HTMLElement_StartStopButton = {}
@@ -72,6 +74,31 @@
 		}
 	//UI stuff
 		async function Spawn_UI_Panel() {
+			//Get parts of the document of where to insert
+				let HTMLBody = Array.from(document.getElementsByTagName("BODY")).find((Element) => {return true}) //Get body node
+				let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0]) //Find the first child in the body tag
+			//Iframe
+				let HTMLElement_DivBox_Iframe = document.createElement("div")
+				let HTMLElement_DivBox_Iframe_Shadow = HTMLElement_DivBox_Iframe.attachShadow({ mode: "closed" });
+				
+				HTMLElement_IframeOriginalJS = document.createElement("iframe")
+				HTMLElement_DivBox_Iframe_Shadow.appendChild(HTMLElement_IframeOriginalJS)
+				
+				HTMLElement_IframeOriginalJS.hidden = true
+				if (InnerNodeOfHTMLBody.IsSuccessful) {
+					document.body.insertBefore(HTMLElement_DivBox_Iframe, InnerNodeOfHTMLBody.OutputNode); //Must be placed on the live DOM so that contentWindow won't be null
+				} else {
+					return //Failsafe
+				}
+			//Get original JS methods and function (that cannot be overridden by site's contents.)
+			//Please note: contentWindow will be null if you do not place the iframe on the live DOM, so we MUST place it on
+			//the document to make it a window and not a null, before we can use JS_OriginalMethodsAndFunctions to obtain default JS methods and functions.
+			//
+			//If you are a userscript author and make a userscript for any page, you must do this to prevent your functions or methods from breaking
+			//on some pages. See this:
+			// https://stackoverflow.com/questions/12522618/how-to-restore-an-overridden-functions-original-state-in-javascript
+			// https://jsfiddle.net/ZSypG/
+				JS_OriginalMethodsAndFunctions = HTMLElement_IframeOriginalJS.contentWindow //We now have the unmodified JS native code.
 			//Div box
 				HTMLElement_DivBox = document.createElement("div")
 				
@@ -168,15 +195,14 @@
 			//Add to document
 				let Shadow = HTMLElement_DivBox.attachShadow({ mode: "closed" }); //thank you https://stackoverflow.com/questions/59868970/shadow-dom-elements-attached-to-shadow-dom-not-rendering
 				Shadow.appendChild(HTMLElement_DivBox2)
-				let HTMLBody = Array.from(document.getElementsByTagName("BODY")).find((Element) => {return true})
-				let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0])
+
 				if (InnerNodeOfHTMLBody.IsSuccessful) {
-					document.body.insertBefore(HTMLElement_DivBox, HTMLBody.childNodes[0]);
+					document.body.insertBefore(HTMLElement_DivBox, InnerNodeOfHTMLBody.OutputNode);
 				}
 			}
 	//Extractor
 		function ExtractLinksFromPage(PageDocument) {
-			Array.from(PageDocument.getElementsByTagName('*')).forEach((Element) => {
+			JS_OriginalMethodsAndFunctions.Array.from(PageDocument.getElementsByTagName('*')).forEach((Element) => {
 				AddLinksToSaveList(Element.href, Element.tagName + " tag") //a href
 				AddLinksToSaveList(Element.src, Element.tagName + " tag") //images and video
 				AddLinksToSaveList(Element.style.backgroundImage.slice(5, -2), "background-image attribute") //background image
@@ -209,8 +235,8 @@
 			}
 			let UniqueListOfURLs = new Set(StorageSaved_ExtractLinks.ListOfURLs) //Get a set, to remove dupes
 			UniqueListOfURLs.add(CorrectedURL) //Add only new items in the set
-			//StorageSaved_ExtractLinks.ListOfURLs = Array.from(UniqueListOfURLs) //And place it back
-			StorageSaved_ExtractLinks.ListOfURLs = [...UniqueListOfURLs]
+			StorageSaved_ExtractLinks.ListOfURLs = JS_OriginalMethodsAndFunctions.Array.from(UniqueListOfURLs) //And place it back
+			//StorageSaved_ExtractLinks.ListOfURLs = [...UniqueListOfURLs]
 		}
 		function addEventListenersToPages(Input_Window) {
 			//This adds even listeners to each window when the main window is first loaded, then if there are subwindow, do this recursively on each.
