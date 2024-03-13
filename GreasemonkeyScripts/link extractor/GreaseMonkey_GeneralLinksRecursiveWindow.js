@@ -27,27 +27,13 @@
 
 (function() {
 	//Don't touch. This guarantees that any JS object methods used here are not altered by the website.
-		const I = (function() {
-			//Credit: Conf - https://greasyfork.org/en/discussions/requests/234649-prevent-website-from-overriding-userscript-s-js-methods#comment-482565
-			//Anyone out there, if you are making a userscript for any webpage, you must call this code to obtain an unmodified JS object methods,
-			//or use @sandbox in a certain environment. Reason being is that your javascript methods could get overridden by the page. E.g Array.from
-			//behaves differently on https://www.furaffinity.net because the site "hijacks" it and now if you try to do say Array.from(new Set([1,2,2,3])),
-			//it will output an empty array instead of [1, 2, 3].
-			
-			//To use unmodified JS methods using this script, just replace what you normally perform a method by having "I." in front of it (e.g.
-			//I.Array.from(new I.Set([1,2,2,3]))). It will use unmodified methods
-			const iframe = document.createElement('iframe'); //Create iframe
-			const fragment = document.createDocumentFragment(); //create document fragement
-			
-			fragment.appendChild(iframe); //Add iframe to the fragment
-			document.body.appendChild(fragment);  //add the fragment to the document
-			
-			const iframeWindow = iframe.contentWindow; //After the iframe is on the document, we then save this iframeWindow for reference to use unmodified methods
-			
-			iframe.remove(); //we no longer need the iframe since we have the window referenced above (temporarily create an iframe).
-			
-			return iframeWindow;
-		}());
+		let I = {}
+		
+		I = GetIframeWindowObject()
+		if (typeof I == "undefined") {
+			//planned to have some kind of loop
+			return
+		}
 	//Settings
 		const Interval_captureLinks = true //Capture based on intervals (run this code periodically), false = no, true = yes.
 		const CaptureLinksInterval = 100 //Time (milliseconds) between each execution of code to extract links, used when Interval_captureLinks = true.
@@ -274,6 +260,30 @@
 //		}
 
 	//Reused code
+		function GetIframeWindowObject() {
+			//Credit: Conf - https://greasyfork.org/en/discussions/requests/234649-prevent-website-from-overriding-userscript-s-js-methods#comment-482565
+			//Anyone out there, if you are making a userscript for any webpage, you must call this code to obtain an unmodified JS object methods,
+			//or use @sandbox in a certain environment. Reason being is that your javascript methods could get overridden by the page. E.g Array.from
+			//behaves differently on https://www.furaffinity.net because the site "hijacks" it and now if you try to do say Array.from(new Set([1,2,2,3])),
+			//it will output an empty array instead of [1, 2, 3].
+			
+			//To use unmodified JS methods using this script, just replace what you normally perform a method by having "I." in front of it (e.g.
+			//I.Array.from(new I.Set([1,2,2,3]))). It will use unmodified methods
+			const iframe = document.createElement('iframe'); //Create iframe
+			const fragment = document.createDocumentFragment(); //create document fragement
+			
+			fragment.appendChild(iframe); //Add iframe to the fragment
+			if (document.body != null) {
+				document.body.appendChild(fragment);  //add the fragment to the document
+			} else {
+				return undefined
+			}
+			const iframeWindow = iframe.contentWindow; //After the iframe is on the document, we then save this iframeWindow for reference to use unmodified methods
+			
+			iframe.remove(); //we no longer need the iframe since we have the window referenced above (temporarily create an iframe).
+			
+			return iframeWindow;
+		}
 		async function LoadValuesFromStorage() {
 			StorageSaved_ExtractLinks = JSON.parse(await GM.getValue("ExtractLinks_SaveData", JSON.stringify(StorageSaved_ExtractLinks)).catch( () => {
 				GetValueErrorMessage()
