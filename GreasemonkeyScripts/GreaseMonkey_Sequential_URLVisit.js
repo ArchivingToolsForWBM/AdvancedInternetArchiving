@@ -9,6 +9,7 @@
 // @exclude  https://archive.org/*
 // @exclude  https://web.archive.org/*
 // @exclude  https://*.developer.mozilla.org/*
+// run-at  document-start
 // ==/UserScript==
 'use strict';
 
@@ -20,6 +21,29 @@
 //  https://example.com) so you can then extract those and retry extracting them.
 
 (async () => {
+//Don't touch. This guarantees that any JS object methods used here are not altered by the website.
+	const I = (function() {
+		//Credit: Conf - https://greasyfork.org/en/discussions/requests/234649-prevent-website-from-overriding-userscript-s-js-methods#comment-482565
+		//Anyone out there, if you are making a userscript for any webpage, you must call this code to obtain an unmodified JS object methods,
+		//or use @sandbox in a certain environment. Reason being is that your javascript methods could get overridden by the page. E.g Array.from
+		//behaves differently on https://www.furaffinity.net because the site "hijacks" it and now if you try to do say Array.from(new Set([1,2,2,3])),
+		//it will output an empty array instead of [1, 2, 3].
+		
+		//To use unmodified JS methods using this script, just replace what you normally perform a method by having "I." in front of it (e.g.
+		//I.Array.from(new I.Set([1,2,2,3]))). It will use unmodified methods
+		const iframe = document.createElement('iframe'); //Create iframe
+		const fragment = document.createDocumentFragment(); //create document fragement
+		
+		fragment.appendChild(iframe); //Add iframe to the fragment
+		document.body.appendChild(fragment);  //add the fragment to the document
+		
+		const iframeWindow = iframe.contentWindow; //After the iframe is on the document, we then save this iframeWindow for reference to use unmodified methods
+		
+		iframe.remove(); //we no longer need the iframe since we have the window referenced above (temporarily create an iframe).
+		
+		return iframeWindow;
+	}());
+
 //Settings
 	const TimeBeforeLoadingNextURL = 5000 //How many milliseconds after the page fully loads before loading the next URL.
 	const TimeBeforeOrAfterLoad = 0
@@ -29,8 +53,6 @@
 	let RaceConditionLock = false
 	setTimeout(Spawn_UI_Panel, 500)
 	let TimeoutBeforeNextPage = -1
-	let HTMLElement_IframeOriginalJS = {} //Certain sites like furaffinity.net replaces several JS methods like Array.from(), this can break userscripts for any websites
-	let JS_OriginalMethodsAndFunctions = {}
 	let HTMLElement_DivBox = {} //The main div box
 	let HTMLElement_DivBox2 = {}
 	let HTMLElement_TextareaURLs = {} //The textarea the user enters a string containing URLs
@@ -65,30 +87,8 @@
 		}
 	async function Spawn_UI_Panel() {
 		//Get parts of the document of where to insert
-			let HTMLBody = Array.from(document.getElementsByTagName("BODY")).find((Element) => {return true}) //Get body node
+			let HTMLBody = I.Array.from(document.getElementsByTagName("BODY")).find((Element) => {return true}) //Get body node
 			let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0]) //Find the first child in the body tag
-		//Iframe
-			let HTMLElement_DivBox_Iframe = document.createElement("div")
-			let HTMLElement_DivBox_Iframe_Shadow = HTMLElement_DivBox_Iframe.attachShadow({ mode: "closed" });
-			
-			HTMLElement_IframeOriginalJS = document.createElement("iframe")
-			HTMLElement_DivBox_Iframe_Shadow.appendChild(HTMLElement_IframeOriginalJS)
-			
-			HTMLElement_IframeOriginalJS.hidden = true
-			if (InnerNodeOfHTMLBody.IsSuccessful) {
-				document.body.insertBefore(HTMLElement_DivBox_Iframe, InnerNodeOfHTMLBody.OutputNode); //Must be placed on the live DOM so that contentWindow won't be null
-			} else {
-				return //Failsafe
-			}
-		//Get original JS methods and function (that cannot be overridden by site's contents.)
-		//Please note: contentWindow will be null if you do not place the iframe on the live DOM, so we MUST place it on
-		//the document to make it a window and not a null, before we can use JS_OriginalMethodsAndFunctions to obtain default JS methods and functions.
-		//
-		//If you are a userscript author and make a userscript for any page, you must do this to prevent your functions or methods from breaking
-		//on some pages. See this:
-		// https://stackoverflow.com/questions/12522618/how-to-restore-an-overridden-functions-original-state-in-javascript
-		// https://jsfiddle.net/ZSypG/
-			JS_OriginalMethodsAndFunctions = HTMLElement_IframeOriginalJS.contentWindow //We now have the unmodified JS native code.
 		//Div box
 			HTMLElement_DivBox = document.createElement("div")
 			
@@ -117,10 +117,10 @@
 					if (ListOfURLs == null) {
 						ListOfURLs = []
 					}
-					let TableToClear = JS_OriginalMethodsAndFunctions.Array.from(HTMLElement_ClippedDivBox.childNodes).forEach((Child) => { //Clear the table prior to updating
+					let TableToClear = I.Array.from(HTMLElement_ClippedDivBox.childNodes).forEach((Child) => { //Clear the table prior to updating
 						HTMLElement_ClippedDivBox.removeChild(Child)
 					})
-					ListOfURLs = JS_OriginalMethodsAndFunctions.Array.from(new Set(ListOfURLs)) // in a set object form, a JSON cannot list set entries...
+					ListOfURLs = I.Array.from(new Set(ListOfURLs)) // in a set object form, a JSON cannot list set entries...
 					
 					StorageSaved_URLs.TextareaURLs = this.value
 					StorageSaved_URLs.ListOfURLs = ListOfURLs

@@ -9,6 +9,7 @@
 // @grant    GM.setClipboard
 // @exclude  *.google*
 // @grant    GM.registerMenuCommand
+// run-at  document-start
 // ==/UserScript==
 
 //Credit goes to hacker09 on GreasyFork: https://greasyfork.org/en/discussions/requests/65921-feature-request-extract-links-as-the-user-scroll-down-general-purpose-any-site
@@ -25,6 +26,28 @@
 //  delete your console.log. At the time of writing this (2022-08-14), I've discovered that firefox doesn't have the ability to disobey console.clear(): https://bugzilla.mozilla.org/show_bug.cgi?id=1267856
 
 (function() {
+	//Don't touch. This guarantees that any JS object methods used here are not altered by the website.
+		const I = (function() {
+			//Credit: Conf - https://greasyfork.org/en/discussions/requests/234649-prevent-website-from-overriding-userscript-s-js-methods#comment-482565
+			//Anyone out there, if you are making a userscript for any webpage, you must call this code to obtain an unmodified JS object methods,
+			//or use @sandbox in a certain environment. Reason being is that your javascript methods could get overridden by the page. E.g Array.from
+			//behaves differently on https://www.furaffinity.net because the site "hijacks" it and now if you try to do say Array.from(new Set([1,2,2,3])),
+			//it will output an empty array instead of [1, 2, 3].
+			
+			//To use unmodified JS methods using this script, just replace what you normally perform a method by having "I." in front of it (e.g.
+			//I.Array.from(new I.Set([1,2,2,3]))). It will use unmodified methods
+			const iframe = document.createElement('iframe'); //Create iframe
+			const fragment = document.createDocumentFragment(); //create document fragement
+			
+			fragment.appendChild(iframe); //Add iframe to the fragment
+			document.body.appendChild(fragment);  //add the fragment to the document
+			
+			const iframeWindow = iframe.contentWindow; //After the iframe is on the document, we then save this iframeWindow for reference to use unmodified methods
+			
+			iframe.remove(); //we no longer need the iframe since we have the window referenced above (temporarily create an iframe).
+			
+			return iframeWindow;
+		}());
 	//Settings
 		const Interval_captureLinks = true //Capture based on intervals (run this code periodically), false = no, true = yes.
 		const CaptureLinksInterval = 100 //Time (milliseconds) between each execution of code to extract links, used when Interval_captureLinks = true.
@@ -49,8 +72,6 @@
 		}
 		LoadValuesFromStorage()
 	//Elements to remember
-		let HTMLElement_IframeOriginalJS = {} //Certain sites like furaffinity.net replaces several JS methods like Array.from(), this can break userscripts for any websites
-		let JS_OriginalMethodsAndFunctions = {}
 		let HTMLElement_DivBox = {}
 		let HTMLElement_DivBox2 = {}
 		let HTMLElement_StartStopButton = {}
@@ -75,30 +96,8 @@
 	//UI stuff
 		async function Spawn_UI_Panel() {
 			//Get parts of the document of where to insert
-				let HTMLBody = Array.from(document.getElementsByTagName("BODY")).find((Element) => {return true}) //Get body node
+				let HTMLBody =I.Array.from(document.getElementsByTagName("BODY")).find((Element) => {return true}) //Get body node
 				let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0]) //Find the first child in the body tag
-			//Iframe
-				let HTMLElement_DivBox_Iframe = document.createElement("div")
-				let HTMLElement_DivBox_Iframe_Shadow = HTMLElement_DivBox_Iframe.attachShadow({ mode: "closed" });
-				
-				HTMLElement_IframeOriginalJS = document.createElement("iframe")
-				HTMLElement_DivBox_Iframe_Shadow.appendChild(HTMLElement_IframeOriginalJS)
-				
-				HTMLElement_IframeOriginalJS.hidden = true
-				if (InnerNodeOfHTMLBody.IsSuccessful) {
-					document.body.insertBefore(HTMLElement_DivBox_Iframe, InnerNodeOfHTMLBody.OutputNode); //Must be placed on the live DOM so that contentWindow won't be null
-				} else {
-					return //Failsafe
-				}
-			//Get original JS methods and function (that cannot be overridden by site's contents.)
-			//Please note: contentWindow will be null if you do not place the iframe on the live DOM, so we MUST place it on
-			//the document to make it a window and not a null, before we can use JS_OriginalMethodsAndFunctions to obtain default JS methods and functions.
-			//
-			//If you are a userscript author and make a userscript for any page, you must do this to prevent your functions or methods from breaking
-			//on some pages. See this:
-			// https://stackoverflow.com/questions/12522618/how-to-restore-an-overridden-functions-original-state-in-javascript
-			// https://jsfiddle.net/ZSypG/
-				JS_OriginalMethodsAndFunctions = HTMLElement_IframeOriginalJS.contentWindow //We now have the unmodified JS native code.
 			//Div box
 				HTMLElement_DivBox = document.createElement("div")
 				
@@ -202,7 +201,7 @@
 			}
 	//Extractor
 		function ExtractLinksFromPage(PageDocument) {
-			JS_OriginalMethodsAndFunctions.Array.from(PageDocument.getElementsByTagName('*')).forEach((Element) => {
+			I.Array.from(PageDocument.getElementsByTagName('*')).forEach((Element) => {
 				AddLinksToSaveList(Element.href, Element.tagName + " tag") //a href
 				AddLinksToSaveList(Element.src, Element.tagName + " tag") //images and video
 				AddLinksToSaveList(Element.style.backgroundImage.slice(5, -2), "background-image attribute") //background image
@@ -235,7 +234,7 @@
 			}
 			let UniqueListOfURLs = new Set(StorageSaved_ExtractLinks.ListOfURLs) //Get a set, to remove dupes
 			UniqueListOfURLs.add(CorrectedURL) //Add only new items in the set
-			StorageSaved_ExtractLinks.ListOfURLs = JS_OriginalMethodsAndFunctions.Array.from(UniqueListOfURLs) //And place it back
+			StorageSaved_ExtractLinks.ListOfURLs = I.Array.from(UniqueListOfURLs) //And place it back
 			//StorageSaved_ExtractLinks.ListOfURLs = [...UniqueListOfURLs]
 		}
 		function addEventListenersToPages(Input_Window) {
