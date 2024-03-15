@@ -9,7 +9,6 @@
 // @grant    GM.setClipboard
 // @exclude  *.google*
 // @grant    GM.registerMenuCommand
-// run-at  document-start
 // ==/UserScript==
 
 //Credit goes to hacker09 on GreasyFork: https://greasyfork.org/en/discussions/requests/65921-feature-request-extract-links-as-the-user-scroll-down-general-purpose-any-site
@@ -25,15 +24,30 @@
 //- Make sure you have "Persist Logs"/"Preserve log" enabled. Loading a different page on the main window or if the page have "console.clear()" in its code will
 //  delete your console.log. At the time of writing this (2022-08-14), I've discovered that firefox doesn't have the ability to disobey console.clear(): https://bugzilla.mozilla.org/show_bug.cgi?id=1267856
 
-(function() {
+(async function() {
 	//Don't touch. This guarantees that any JS object methods used here are not altered by the website.
-		let I = {}
-		
-		I = GetIframeWindowObject()
-		if (typeof I == "undefined") {
-			//planned to have some kind of loop
-			return
+	//Anyone who create a userscript must do this to avoid specific sites like https://www.furaffinity.net from breaking built-in methods and objects.
+	const I = (function() {
+		let SuccessIframe = false
+		let iframeWindow = {}
+		while (!SuccessIframe) {
+			try {
+				const iframe = document.createElement('iframe');
+				const fragment = document.createDocumentFragment();
+				
+				fragment.appendChild(iframe);  
+				document.body.appendChild(fragment);  
+				
+				iframeWindow = iframe.contentWindow;  
+				
+				//iframe.remove();
+				SuccessIframe = true
+			} catch {
+				SuccessIframe = false
+			}
 		}
+		return iframeWindow;
+	}());
 	//Settings
 		const Interval_captureLinks = true //Capture based on intervals (run this code periodically), false = no, true = yes.
 		const CaptureLinksInterval = 100 //Time (milliseconds) between each execution of code to extract links, used when Interval_captureLinks = true.
@@ -68,10 +82,10 @@
 	//Initalize interval
 		function InitalizeInterval() {
 			if (StorageSaved_ExtractLinks.Running) { //This code must execute after the await finishes when loading values from storage
-				IntervalID_ExtractURLs = setInterval(ExtractLinksOnWindow, CaptureLinksInterval, window)
+				IntervalID_ExtractURLs = I.setInterval(ExtractLinksOnWindow, CaptureLinksInterval, window)
 			}
 		}
-		IntervalID_DisplayURLCount = setInterval(UpdateDisplayNumberOfURLs, CaptureLinksInterval, window)
+		IntervalID_DisplayURLCount = I.setInterval(UpdateDisplayNumberOfURLs, CaptureLinksInterval, window)
 	//Menu commands
 		GM.registerMenuCommand("Toggle UI", ToggleUI, "");
 		function ToggleUI() {
@@ -108,9 +122,9 @@
 						SaveValuesToStorage()
 						
 						if (StorageSaved_ExtractLinks.Running) {
-							IntervalID_ExtractURLs = setInterval(ExtractLinksOnWindow, CaptureLinksInterval, window)
+							IntervalID_ExtractURLs = I.setInterval(ExtractLinksOnWindow, CaptureLinksInterval, window)
 						} else {
-							clearInterval(IntervalID_ExtractURLs)
+							I.clearInterval(IntervalID_ExtractURLs)
 						}
 					}
 				)
@@ -163,7 +177,7 @@
 							HTMLElement_StartStopButton.textContent = AlternateStartStop()
 							HTMLElement_URLExtractedCount.textContent = "URLs extracted: 0"
 							SaveValuesToStorage()
-							clearInterval(IntervalID_ExtractURLs)
+							I.clearInterval(IntervalID_ExtractURLs)
 						}
 					}
 				)
@@ -260,30 +274,6 @@
 //		}
 
 	//Reused code
-		function GetIframeWindowObject() {
-			//Credit: Conf - https://greasyfork.org/en/discussions/requests/234649-prevent-website-from-overriding-userscript-s-js-methods#comment-482565
-			//Anyone out there, if you are making a userscript for any webpage, you must call this code to obtain an unmodified JS object methods,
-			//or use @sandbox in a certain environment. Reason being is that your javascript methods could get overridden by the page. E.g Array.from
-			//behaves differently on https://www.furaffinity.net because the site "hijacks" it and now if you try to do say Array.from(new Set([1,2,2,3])),
-			//it will output an empty array instead of [1, 2, 3].
-			
-			//To use unmodified JS methods using this script, just replace what you normally perform a method by having "I." in front of it (e.g.
-			//I.Array.from(new I.Set([1,2,2,3]))). It will use unmodified methods
-			const iframe = document.createElement('iframe'); //Create iframe
-			const fragment = document.createDocumentFragment(); //create document fragement
-			
-			fragment.appendChild(iframe); //Add iframe to the fragment
-			if (document.body != null) {
-				document.body.appendChild(fragment);  //add the fragment to the document
-			} else {
-				return undefined
-			}
-			const iframeWindow = iframe.contentWindow; //After the iframe is on the document, we then save this iframeWindow for reference to use unmodified methods
-			
-			iframe.remove(); //we no longer need the iframe since we have the window referenced above (temporarily create an iframe).
-			
-			return iframeWindow;
-		}
 		async function LoadValuesFromStorage() {
 			StorageSaved_ExtractLinks = JSON.parse(await GM.getValue("ExtractLinks_SaveData", JSON.stringify(StorageSaved_ExtractLinks)).catch( () => {
 				GetValueErrorMessage()
@@ -339,7 +329,7 @@
 			HTML_Element_Select.addEventListener(
 				"change",
 				function () {
-					Array.from(this.childNodes).forEach((listedOption, Index) => {
+					I.Array.from(this.childNodes).forEach((listedOption, Index) => {
 						arrayOptions[Index].isSelected = listedOption.selected
 					})
 					SaveValuesToStorage()

@@ -9,7 +9,6 @@
 // @exclude  https://archive.org/*
 // @exclude  https://web.archive.org/*
 // @exclude  https://*.developer.mozilla.org/*
-// run-at  document-start
 // ==/UserScript==
 'use strict';
 
@@ -22,13 +21,31 @@
 
 (async () => {
 	//Don't touch. This guarantees that any JS object methods used here are not altered by the website.
-		let I = {}
-		
-		I = GetIframeWindowObject()
-		if (typeof I == "undefined") {
-			//planned to have some kind of loop
-			return
-		}
+		//Anyone who create a userscript must do this to avoid specific sites like https://www.furaffinity.net from breaking built-in methods and objects.
+		//
+		// Wait for documentElement, wait for iframe load event
+		// credit: https://greasyfork.org/en/discussions/requests/234649-prevent-website-from-overriding-userscript-s-js-methods#comment-482804
+		const I = (function() {
+			let SuccessIframe = false
+			let iframeWindow = {}
+			while (!SuccessIframe) {
+				try {
+					const iframe = document.createElement('iframe');
+					const fragment = document.createDocumentFragment();
+					
+					fragment.appendChild(iframe);  
+					document.body.appendChild(fragment);  
+					
+					iframeWindow = iframe.contentWindow;  
+					
+					//iframe.remove();
+					SuccessIframe = true
+				} catch {
+					SuccessIframe = false
+				}
+			}
+			return iframeWindow;
+		}());
 
 //Settings
 	const TimeBeforeLoadingNextURL = 5000 //How many milliseconds after the page fully loads before loading the next URL.
@@ -37,7 +54,7 @@
 		//1 = Start timer to load next URL before page fully loads.
 //Don't touch unless you know what you're doing
 	let RaceConditionLock = false
-	setTimeout(Spawn_UI_Panel, 500)
+	I.setTimeout(Spawn_UI_Panel, 500)
 	let TimeoutBeforeNextPage = -1
 	let HTMLElement_DivBox = {} //The main div box
 	let HTMLElement_DivBox2 = {}
@@ -299,7 +316,7 @@
 	}
 	function LoadURLAfterTimer() {
 		if (StorageSaved_URLs.ProgressCount != StorageSaved_URLs.ListOfURLs.length-1) {
-			TimeoutBeforeNextPage = setTimeout(LoadAnotherPage, StorageSaved_URLs.TimeoutDelay)
+			TimeoutBeforeNextPage = I.setTimeout(LoadAnotherPage, StorageSaved_URLs.TimeoutDelay)
 		} else {
 			//StorageSaved_URLs.ProgressCount = -1
 			//HTMLElement_ProgressNumber.value = "1"
@@ -346,30 +363,6 @@
 		console.log("TemplateScript - getvalue failed.")
 	}
 	//Reused code
-		function GetIframeWindowObject() {
-			//Credit: Conf - https://greasyfork.org/en/discussions/requests/234649-prevent-website-from-overriding-userscript-s-js-methods#comment-482565
-			//Anyone out there, if you are making a userscript for any webpage, you must call this code to obtain an unmodified JS object methods,
-			//or use @sandbox in a certain environment. Reason being is that your javascript methods could get overridden by the page. E.g Array.from
-			//behaves differently on https://www.furaffinity.net because the site "hijacks" it and now if you try to do say Array.from(new Set([1,2,2,3])),
-			//it will output an empty array instead of [1, 2, 3].
-			
-			//To use unmodified JS methods using this script, just replace what you normally perform a method by having "I." in front of it (e.g.
-			//I.Array.from(new I.Set([1,2,2,3]))). It will use unmodified methods
-			const iframe = document.createElement('iframe'); //Create iframe
-			const fragment = document.createDocumentFragment(); //create document fragement
-			
-			fragment.appendChild(iframe); //Add iframe to the fragment
-			if (document.body != null) {
-				document.body.appendChild(fragment);  //add the fragment to the document
-			} else {
-				return undefined
-			}
-			const iframeWindow = iframe.contentWindow; //After the iframe is on the document, we then save this iframeWindow for reference to use unmodified methods
-			
-			iframe.remove(); //we no longer need the iframe since we have the window referenced above (temporarily create an iframe).
-			
-			return iframeWindow;
-		}
 		function DescendNode(Node, LevelsArray) {
 			//Opposite of AscendNode, descends a node without errors. LevelsArray is an array that contains
 			//only numbers on what child to descend on.
