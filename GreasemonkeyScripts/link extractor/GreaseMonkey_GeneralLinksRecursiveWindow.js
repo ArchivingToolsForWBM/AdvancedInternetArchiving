@@ -44,6 +44,7 @@ onload = (async function() {
 				
 				//iframe.remove();
 			} catch {
+				window.alert("Link extractor: An error occurred - document.body returns null")
 				return
 			}
 			return iframeWindow;
