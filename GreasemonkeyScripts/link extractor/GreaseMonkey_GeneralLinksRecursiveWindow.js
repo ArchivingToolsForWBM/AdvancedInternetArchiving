@@ -27,27 +27,28 @@
 (async function() {
 	//Don't touch. This guarantees that any JS object methods used here are not altered by the website.
 	//Anyone who create a userscript must do this to avoid specific sites like https://www.furaffinity.net from breaking built-in methods and objects.
-	const I = (function() {
-		let SuccessIframe = false
-		let iframeWindow = {}
-		while (!SuccessIframe) {
+	//
+	// Wait for documentElement, wait for iframe load event
+	// credit: https://greasyfork.org/en/discussions/requests/234649-prevent-website-from-overriding-userscript-s-js-methods#comment-482804
+		const I = (function() {
+			let iframeWindow = {}
 			try {
 				const iframe = document.createElement('iframe');
+				iframe.setAttribute("style", "display: none")
 				const fragment = document.createDocumentFragment();
 				
 				fragment.appendChild(iframe);  
-				document.body.appendChild(fragment);  
+				document.body.appendChild(fragment);  //tendency to output "null" when "run-at" is set to "document-start".
 				
 				iframeWindow = iframe.contentWindow;  
 				
 				//iframe.remove();
-				SuccessIframe = true
 			} catch {
-				SuccessIframe = false
+				window.alert("Link extractor: An error occurred - document.body returns null")
+				return
 			}
-		}
-		return iframeWindow;
-	}());
+			return iframeWindow;
+		}());
 	//Settings
 		const Interval_captureLinks = true //Capture based on intervals (run this code periodically), false = no, true = yes.
 		const CaptureLinksInterval = 100 //Time (milliseconds) between each execution of code to extract links, used when Interval_captureLinks = true.
