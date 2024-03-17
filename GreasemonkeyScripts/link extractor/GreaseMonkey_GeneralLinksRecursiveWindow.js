@@ -24,7 +24,7 @@
 //- Make sure you have "Persist Logs"/"Preserve log" enabled. Loading a different page on the main window or if the page have "console.clear()" in its code will
 //  delete your console.log. At the time of writing this (2022-08-14), I've discovered that firefox doesn't have the ability to disobey console.clear(): https://bugzilla.mozilla.org/show_bug.cgi?id=1267856
 
-(async function() {
+onload = (async function() {
 	//Don't touch. This guarantees that any JS object methods used here are not altered by the website.
 	//Anyone who create a userscript must do this to avoid specific sites like https://www.furaffinity.net from breaking built-in methods and objects.
 	//
@@ -44,7 +44,6 @@
 				
 				//iframe.remove();
 			} catch {
-				window.alert("Link extractor: An error occurred - document.body returns null")
 				return
 			}
 			return iframeWindow;

@@ -19,7 +19,7 @@
 //  web console containing a URL and some string of text that you can find it (e.g ThisURLFailedToLoad:
 //  https://example.com) so you can then extract those and retry extracting them.
 
-(async () => {
+onload = (async () => {
 	//Don't touch. This guarantees that any JS object methods used here are not altered by the website.
 	//Anyone who create a userscript must do this to avoid specific sites like https://www.furaffinity.net from breaking built-in methods and objects.
 	//

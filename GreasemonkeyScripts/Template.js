@@ -6,7 +6,35 @@
 // @grant        GM.setValue
 // @grant        GM.getValue
 // ==/UserScript==
-(function() {
+(async () => {
+	//Don't touch. This guarantees that any JS object methods used here are not altered by the website.
+	//Anyone who create a userscript must do this to avoid specific sites like https://www.furaffinity.net from breaking built-in methods and objects.
+	//
+	// Wait for documentElement, wait for iframe load event
+	// credit: https://greasyfork.org/en/discussions/requests/234649-prevent-website-from-overriding-userscript-s-js-methods#comment-482804
+		function GetIframe() {
+			let iframeWindow = {}
+			try {
+				const iframe = document.createElement('iframe');
+				iframe.setAttribute("style", "display: none")
+				const fragment = document.createDocumentFragment();
+				
+				fragment.appendChild(iframe);  
+				document.body.appendChild(fragment);  //tendency to output "null" when "run-at" is set to "document-start".
+				
+				iframeWindow = iframe.contentWindow;  
+				
+				//iframe.remove();
+			} catch {
+				return //return undefined
+			}
+			return iframeWindow;
+		}
+		let useableIframe = GetIframe()
+		if (typeof useableIframe == "undefined") {
+			return
+		}
+		const I = useableIframe
 	//Settings
 		const Setting_Delay = 1000
 
