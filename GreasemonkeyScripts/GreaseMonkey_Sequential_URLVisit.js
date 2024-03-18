@@ -30,6 +30,7 @@ onload = (async () => {
 			try {
 				const iframe = document.createElement('iframe');
 				iframe.setAttribute("style", "display: none")
+				iframe.setAttribute("hidden", "")
 				const fragment = document.createDocumentFragment();
 				
 				fragment.appendChild(iframe);  
