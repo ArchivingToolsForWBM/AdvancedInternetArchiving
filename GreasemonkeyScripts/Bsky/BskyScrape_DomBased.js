@@ -289,7 +289,7 @@
 					let ListOfPosts = [] //List of each individual posts
 					if (/https:\/\/bsky\.app\/(?:profile\/(?:[a-zA-Z\d\-]+\.)+(?:[a-zA-Z\d\-]+)\/?)?$/.test(window.location.href)) { //profile/front page
 						//First, find an a href link to a profile as a reference. We get the lowest node that at least has all the posts on the page
-						UserPostArea = GetPostBoxesByLink(8)
+						UserPostArea = GetPostBoxesByLink(9)
 						
 						//"UserPostArea" will now contain "boxes" that may either be a horizontal line, containing 1 or 2 posts (2 if it has replies, with a vertical line between 2 avatars)
 						UserPostArea.forEach((Box, BoxIndex) => { // Loop each box
@@ -335,7 +335,7 @@
 									if (Post.innerText != "View full thread") {
 										//RepostedByUser
 										{
-											let RepostElement = DescendNode(Post, [0, 0, 1, 0, 1, 1])
+											let RepostElement = DescendNode(Post, [0, 0, 0, 1, 0, 1, 1])
 											if (RepostElement.IsSuccessful) {
 												RepostedByUserTitle = RepostElement.OutputNode.textContent
 											}
@@ -343,7 +343,7 @@
 										
 										//Link to post
 										{
-											let AHrefElement = DescendNode(Post, [0, 1, 1, 0, 2])
+											let AHrefElement = DescendNode(Post, [0, 0, 1, 1, 0, 2])
 											if (AHrefElement.IsSuccessful) {
 												if (AHrefElement.OutputNode.href != "") {
 													PostURL = HttpToTtp(AHrefElement.OutputNode.href)
@@ -352,28 +352,28 @@
 										}
 										//Reply downwards line
 										{
-											let LineElement = DescendNode(Post, [0, 1, 0, 1])
+											let LineElement = DescendNode(Post, [0, 0, 1, 0, 1])
 											if (LineElement.IsSuccessful) {
 												PostHasRepliesLineBelow = true
 											}
 										}
 										//Reply upwards line
 										{
-											let LineElement = DescendNode(Post, [0, 0, 0, 0])
+											let LineElement = DescendNode(Post, [0, 0, 0, 0, 0])
 											if (LineElement.IsSuccessful) {
 												PostIsAReplyLineToAbove = true
 											}
 										}
 										//User title
 										{
-											let UserTitleElement = DescendNode(Post, [0, 1, 1, 0, 0, 0, 0])
+											let UserTitleElement = DescendNode(Post, [0, 0, 1, 1, 0, 0, 0, 0])
 											if (UserTitleElement.IsSuccessful) {
 												UserTitle = UserTitleElement.OutputNode.textContent
 											}
 										}
 										//User handle
 										{
-											let UserHandleElement = DescendNode(Post, [0, 1, 1, 0, 0, 0, 2])
+											let UserHandleElement = DescendNode(Post, [0, 0, 1, 1, 0, 0, 0, 2])
 											if (UserHandleElement.IsSuccessful) {
 												UserHandle = UserHandleElement.OutputNode.innerText
 											}
@@ -381,7 +381,7 @@
 										//User Avatar
 										{
 											//Post.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1]
-											let AvatarImgElement = DescendNode(Post, [0, 1, 0, 0, 0, 0, 1])
+											let AvatarImgElement = DescendNode(Post, [0, 0, 1, 0, 0, 0, 0, 1])
 											if (AvatarImgElement.IsSuccessful) {
 												if (typeof AvatarImgElement.OutputNode.src != "undefined") {
 													UserAvatar = HttpToTtp(AvatarImgElement.OutputNode.src)
@@ -390,7 +390,7 @@
 										}
 										//Post time stamp
 										{
-											let PostTimeStampElement = DescendNode(Post, [0, 1, 1, 0, 2])
+											let PostTimeStampElement = DescendNode(Post, [0, 0, 1, 1, 0, 2])
 											if (PostTimeStampElement.IsSuccessful) {
 												if (typeof PostTimeStampElement.OutputNode.dataset.tooltip != "undefined") {
 													PostTimeStamp = PostDateInfo(PostTimeStampElement.OutputNode.dataset.tooltip)
@@ -419,7 +419,7 @@
 										//Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[1]
 										
 										let ReplyToOffset = 0
-										let NodeOfReplyTo = DescendNode(Post, [0,1,1,1,1])
+										let NodeOfReplyTo = DescendNode(Post, [0,0,1,1,1,1])
 										if (NodeOfReplyTo.IsSuccessful) {
 											if (/^Reply to/.test(NodeOfReplyTo.OutputNode.innerText)) {
 												//let ReplyToLink = Array.from(NodeOfReplyTo.OutputNode.getElementsByTagName("a"))
@@ -431,7 +431,7 @@
 										if (PostURL == "https://bsky.app/profile/00sunmoon.bsky.social/post/3kmofkyrfcm23") {
 											let breakpoint = 0
 										}
-										let NodeOfPostContent = DescendNode(Post, [0,1,1,1+ReplyToOffset])
+										let NodeOfPostContent = DescendNode(Post, [0,0,1,1,1+ReplyToOffset])
 										if (NodeOfPostContent.IsSuccessful) {
 											PostContent = GetPostContent(NodeOfPostContent.OutputNode, "Post_UserFontPage")
 										}
@@ -442,7 +442,7 @@
 											let NodeOfReplyRepostLikes_Array = []
 											//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[N]
 											//where N is the last element because sometimes a post have duplicate counts between the date and timestamp at the bottom
-											let NodeOfFoooter = DescendNode(Post, [0,1,1])
+											let NodeOfFoooter = DescendNode(Post, [0,0,1,1])
 											if (NodeOfFoooter.IsSuccessful) {
 												let LastNode = Array.from(NodeOfFoooter.OutputNode.childNodes).at(-1)
 												NodeOfReplyRepostLikes_Array = Array.from(LastNode.childNodes)
@@ -743,7 +743,8 @@
 								}
 							} else if (Type == "Post_NotCurrentlyViewed") {
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].href
-								PostURL = HttpToTtp(DescendNode(Box, [0,0,0,0,1,1,0,2]).OutputNode.href)
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2]
+								PostURL = HttpToTtp(DescendNode(Box, [0,0,0,1,1,0,2]).OutputNode.href)
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[1].style
 								let ReplyLineDownNode = DescendNode(Box, [0,0,0,0,1,0,1])
@@ -763,29 +764,29 @@
 									}
 								}
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
-								UserTitle = DescendNode(Box, [0,0,0,0,1,1,0,0,0,0]).OutputNode.textContent
+								UserTitle = DescendNode(Box, [0,0,0,1,1,0,0,0,0]).OutputNode.textContent
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[2].innerText
-								UserHandle = DescendNode(Box, [0,0,0,0,1,1,0,0,0,2]).OutputNode.innerText
+								UserHandle = DescendNode(Box, [0,0,0,1,1,0,0,0,2]).OutputNode.innerText
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-								let NodeOfAvatarImg = DescendNode(Box, [0,0,0,0,1,0,0,0,0,1])
+								let NodeOfAvatarImg = DescendNode(Box, [0,0,0,1,0,0,0,0,1])
 								if (NodeOfAvatarImg.IsSuccessful) {
 									UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
 								}
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
-								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,0,0,0,1,1,0,2]).OutputNode.dataset.tooltip)
+								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,0,0,1,1,0,2]).OutputNode.dataset.tooltip)
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1] - This also contains the header and footer...
-								let NodeOfPostContent = DescendNode(Box, [0,0,0,0,1,1])
+								let NodeOfPostContent = DescendNode(Box, [0,0,0,1,1])
 								if (NodeOfPostContent.IsSuccessful) {
 									PostContent = GetPostContent(NodeOfPostContent.OutputNode, Type)
 								}
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[N]
 								let NodeOfReplyRepostLikes_Array = []
-								let NodeOfFoooter = DescendNode(Box, [0,0,0,0,1,1])
+								let NodeOfFoooter = DescendNode(Box, [0,0,0,1,1])
 								if (NodeOfFoooter.IsSuccessful) {
 									let LastNode = Array.from(NodeOfFoooter.OutputNode.childNodes).at(-1)
 									let NodeOfFooterDeepest = LastNode
@@ -1273,7 +1274,7 @@
 				let NodeToLookAt_BlankBottom = DescendNode(PostBox, [0])
 				let NodeToLookAt_TimeStampCurrentlyViewedPostTop = DescendNode(PostBox, [0,0,0,1,0,0])
 				let NodeToLookAt_TimeStampCurrentlyViewedPostNotTop = DescendNode(PostBox, [0,1,0,1,0,0,1])
-				let NodeToLookAt_TimeStampOtherThanCurrentPost = DescendNode(PostBox, [0,0,0,0,1,1,0,2])
+				let NodeToLookAt_TimeStampOtherThanCurrentPost = DescendNode(PostBox, [0,0,0,1,1,0,2])
 				let IdentifiedType = ""
 				if (NodeToLookAt_ReplyButton.LevelsPassed == 2) {
 					if (NodeToLookAt_ReplyButton.OutputNode.tagName == "BUTTON") {
@@ -1285,7 +1286,7 @@
 						return "NonPost_BlankBottom"
 					}
 				}
-				if (NodeToLookAt_TimeStampCurrentlyViewedPostTop.LevelsPassed == 6) {
+				if ((NodeToLookAt_TimeStampCurrentlyViewedPostTop.LevelsPassed == 6)&&(!NodeToLookAt_TimeStampOtherThanCurrentPost.IsSuccessful)) {
 					if (typeof NodeToLookAt_TimeStampCurrentlyViewedPostTop.OutputNode.dataset != "undefined") {
 						let IsPotentialAhref = Array.from(NodeToLookAt_TimeStampCurrentlyViewedPostTop.OutputNode.getElementsByTagName("a")).find((ArrayElement) => {
 							return ArrayElement.hasAttribute("href")
@@ -1303,7 +1304,7 @@
 						return "Post_CurrentlyViewed_NotAtTop"
 					}
 				}
-				if (NodeToLookAt_TimeStampOtherThanCurrentPost.LevelsPassed == 8) {
+				if (NodeToLookAt_TimeStampOtherThanCurrentPost.IsSuccessful) {
 					if (typeof NodeToLookAt_TimeStampOtherThanCurrentPost.OutputNode.href != "undefined") {
 						return "Post_NotCurrentlyViewed"
 					}
