@@ -747,7 +747,7 @@
 								PostURL = HttpToTtp(DescendNode(Box, [0,0,0,1,1,0,2]).OutputNode.href)
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[1].style
-								let ReplyLineDownNode = DescendNode(Box, [0,0,0,0,1,0,1])
+								let ReplyLineDownNode = DescendNode(Box, [0,0,0,1,0,1])
 								if (ReplyLineDownNode.IsSuccessful) {
 									if (typeof ReplyLineDownNode.OutputNode.style != "undefined") {
 										PostHasRepliesLineBelow = true
@@ -755,7 +755,7 @@
 								}
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].style
-								let ReplyLineUpNode = DescendNode(Box, [0,0,0,0,0,0,0])
+								let ReplyLineUpNode = DescendNode(Box, [0,0,0,0,0,0])
 								if (ReplyLineUpNode.IsSuccessful) {
 									if (typeof ReplyLineUpNode.OutputNode.style != "undefined") {
 										if (ReplyLineUpNode.OutputNode.style.length > 1) {
