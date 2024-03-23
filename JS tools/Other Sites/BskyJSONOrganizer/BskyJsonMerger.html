@@ -84,6 +84,19 @@
 		</td>
 	</tr>
 </table>
+<table>
+	<tr>
+		<th colspan="2">Merged output statistics</th>
+	</tr>
+	<tr>
+		<th>Number of profiles:</th>
+		<td><kbd id="Output_Statistic_Merged_Profiles">0</kbd></td>
+	</tr>
+	<tr>
+		<th>Number of posts:</th>
+		<td><kbd id="Output_Statistic_Merged_Posts">0</kbd></td>
+	</tr>
+</table>
 <textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
 <button onclick="setClipboard(document.getElementById('Output_Plaintext').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
 <script>
@@ -113,6 +126,9 @@
 			
 			document.getElementById("Output_DupeList_Replace").value = ""
 			document.getElementById("Output_DupeList_ReplaceWith").value = ""
+			
+			document.getElementById("Output_Statistic_Merged_Profiles").innerText = "0"
+			document.getElementById("Output_Statistic_Merged_Posts").innerText = "0"
 		//Get json data
 			let JsonEnteredData0 = document.getElementById("JsonScrapedBskyData0").value
 			if (!isJsonString(JsonEnteredData0)) {
@@ -354,6 +370,8 @@
 						}
 					})
 		//Output
+			document.getElementById("Output_Statistic_Merged_Profiles").innerText = BigInt(OutputJson_NoDupes_ProfileList.length).toString(10)
+			document.getElementById("Output_Statistic_Merged_Posts").innerText = BigInt(OutputJson_NoDupes_PostList.length).toString(10)
 			let OutputObject = {
 				ListOfProfiles: OutputJson_NoDupes_ProfileList,
 				ListOfPosts: OutputJson_NoDupes_PostList
