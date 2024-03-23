@@ -50,7 +50,26 @@
 			</ul>
 			Sort:
 			<ul>
-				<li><label><input type="radio" id="Sort_Setting_Date" name="SortSetting_Post" onchange="AutoUpdate()">Date</label> (<label><input type="radio" id="Sort_Setting_Date_Reverse" name="SortSetting_Post" onchange="AutoUpdate()" checked>Reverse</label>)</li>
+				<li><label><input type="radio" id="Sort_Post_Setting_Date" name="SortSetting_Post" onchange="AutoUpdate()">Date</label> (<label><input type="radio" id="Sort_Post_Setting_Date_Reverse" name="SortSetting_Post" onchange="AutoUpdate()" checked>Reverse</label>)</li>
+			</ul>
+		</td>
+		<td>
+			Include: <button onclick="ChangeFilterSettings('FilterInclude_Profile', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterInclude_Profile', 0); AutoUpdate()">Unheck all</button><button onclick="ChangeFilterSettings('FilterInclude_Profile', 2); AutoUpdate()">Invert</button>
+			<ul>
+				<li><label><input type="checkbox" class="FilterInclude_Profile" onchange="AutoUpdate()" id="FilterInclude_Profile_BackgroundImage">Has background image</label></li>
+				<li><label><input type="checkbox" class="FilterInclude_Profile" onchange="AutoUpdate()" id="FilterInclude_Profile_Avatar">Has avatar image</label></li>
+				<li><label><input type="checkbox" class="FilterInclude_Profile" onchange="AutoUpdate()" id="FilterInclude_Profile_LinkInBio">Has a link in the bio.</label></li>
+			</ul>
+			Exclude: <button onclick="ChangeFilterSettings('FilterExclude_Profile', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterExclude_Profile', 0); AutoUpdate()">Unheck all</button><button onclick="ChangeFilterSettings('FilterExclude_Profile', 2); AutoUpdate()">Invert</button>
+			<ul>
+				<li><label><input type="checkbox" class="FilterInclude_Profile" onchange="AutoUpdate()" id="FilterExclude_Profile_BackgroundImage">Has background image</label></li>
+				<li><label><input type="checkbox" class="FilterInclude_Profile" onchange="AutoUpdate()" id="FilterExclude_Profile_Avatar">Has avatar image</label></li>
+				<li><label><input type="checkbox" class="FilterInclude_Profile" onchange="AutoUpdate()" id="FilterExclude_Profile_LinkInBio">Has a link in the bio.</label></li>
+			</ul>
+			Sort:
+			<ul>
+				<li><label><input type="radio" id="SortSetting_Profile_UserTitle" name="SortSetting_Profile" onchange="AutoUpdate()" checked>By user title</label> (<label><input type="radio" id="SortSetting_Profile_UserTitle_Reverse" name="SortSetting_Profile" onchange="AutoUpdate()">Reverse</label>)</li>
+				<li><label><input type="radio" id="SortSetting_Profile_UserHandle" name="SortSetting_Profile" onchange="AutoUpdate()">By user handle</label> (<label><input type="radio" id="SortSetting_Profile_UserHandle_Reverse" name="SortSetting_Profile" onchange="AutoUpdate()">Reverse</label>)</li>
 			</ul>
 		</td>
 	</tr>
@@ -128,11 +147,11 @@
 		
 		
 		//sort and then filter list of posts (unlike the super-optimized way of filtering first so we can preserve the order)
-			if (document.getElementById("Sort_Setting_Date").checked) {
+			if (document.getElementById("Sort_Post_Setting_Date").checked) {
 				SavedJson_PostList.sort((a,b) => {
 					return a.PostTimeStamp.TimestampMillisecondsEpoch - b.PostTimeStamp.TimestampMillisecondsEpoch
 				})
-			} else if (document.getElementById("Sort_Setting_Date_Reverse").checked) {
+			} else if (document.getElementById("Sort_Post_Setting_Date_Reverse").checked) {
 				SavedJson_PostList.sort((a,b) => {
 					return b.PostTimeStamp.TimestampMillisecondsEpoch - a.PostTimeStamp.TimestampMillisecondsEpoch
 				})
@@ -191,8 +210,86 @@
 			let Count_PostAfterFilter = FilteredPostList.length
 			document.getElementById("Output_Statistic_PostCount_AfterFilter").innerText = BigInt(Count_PostAfterFilter).toString(10)
 			document.getElementById("Output_Statistic_PostCount_Removed").innerText = BigInt(Count_PostBeforeFilter-Count_PostAfterFilter).toString(10)
+		//Do the same with profiles
+			if (document.getElementById("SortSetting_Profile_UserTitle").checked) {
+				SavedJson_ProfileList.sort((a,b) => {
+					if (a.UserTitle === b.UserTitle) {
+						return 0;
+					} else {
+						return (a.UserTitle < b.UserTitle) ? -1 : 1;
+					}
+				});
+			} else if (document.getElementById("SortSetting_Profile_UserTitle_Reverse").checked) {
+				SavedJson_ProfileList.sort((a,b) => {
+					if (a.UserTitle === b.UserTitle) {
+						return 0;
+					} else {
+						return (a.UserTitle < b.UserTitle) ? 1 : -1;
+					}
+				});
+			} else if (document.getElementById("SortSetting_Profile_UserHandle").checked) {
+					SavedJson_ProfileList.sort((a,b) => {
+					if (a.UserHandle === b.UserHandle) {
+						return 0;
+					} else {
+						return (a.UserHandle < b.UserHandle) ? -1 : 1;
+					}
+				});
+			} else if (document.getElementById("SortSetting_Profile_UserHandle_Reverse").checked) {
+					SavedJson_ProfileList.sort((a,b) => {
+					if (a.UserHandle === b.UserHandle) {
+						return 0;
+					} else {
+						return (a.UserHandle < b.UserHandle) ? 1 : -1;
+					}
+				});
+			}
+			let Count_ProfileBeforeFilter = SavedJson_ProfileList.length
+			document.getElementById("Output_Statistic_ProfileCount_BeforeFilter").innerText = BigInt(Count_ProfileBeforeFilter).toString(10)
+			
+			let FilteredProfileList = SavedJson_ProfileList.filter((Profile) => {
+				let hasBackgroundImage = false
+				let hasAvatar = false
+				let hasLinkInBio = false
+			
+				if (Profile.BackgroundImg)
+					hasBackgroundImage = true
+				if (Profile.UserAvatar)
+					hasAvatar = true
+				
+				try {
+					let TestURL = Profile.TextContent.Links[0]
+					hasLinkInBio = true
+				} catch {}
+				
+				//Requirement rules
+					if (document.getElementById("FilterInclude_Profile_BackgroundImage").checked && (!hasBackgroundImage)) { //If background is required and not have one, filter out
+						return false
+					}
+					if (document.getElementById("FilterInclude_Profile_Avatar").checked && (!hasAvatar)) { //If avatar is required and not have one, filter out
+						return false
+					}
+					if (document.getElementById("FilterInclude_Profile_LinkInBio").checked && (!hasLinkInBio)) { //If link in the bio is required and not have one, filter out
+						return false
+					}
+				//Prohibited rules
+					if (document.getElementById("FilterExclude_Profile_BackgroundImage").checked && (hasBackgroundImage)) { //If background is prohibited and have one, filter out
+						return false
+					}
+					if (document.getElementById("FilterExclude_Profile_Avatar").checked && (hasAvatar)) { //If avatar is prohibited and have one, filter out
+						return false
+					}
+					if (document.getElementById("FilterExclude_Profile_LinkInBio").checked && (hasLinkInBio)) { //If link in the bio is prohibited and not have one, filter out
+						return false
+					}
+				return true
+			})
+			let Count_ProfileAfterFilter = FilteredProfileList.length
+			document.getElementById("Output_Statistic_ProfileCount_AfterFilter").innerText = BigInt(Count_ProfileAfterFilter).toString(10)
+			document.getElementById("Output_Statistic_ProfileCount_Removed").innerText = BigInt(Count_ProfileBeforeFilter-Count_ProfileAfterFilter).toString(10)
 		//Output
 			let OutputObject = {
+				ListOfProfiles: FilteredProfileList,
 				ListOfPosts: FilteredPostList
 			}
 			
