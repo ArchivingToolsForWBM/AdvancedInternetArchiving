@@ -454,7 +454,7 @@
 											}
 											
 										}
-										if ((PostURL != "") &&(UserTitle != "")) {
+										if ((PostURL != "")&&(UserTitle != "")&&(UserHandle != "")) {
 											PostGroup.push({
 												RepostedByUserTitle: RepostedByUserTitle,
 												PostURL: PostURL,
@@ -527,46 +527,41 @@
 								if (OuterNodeNotAAhref.OutputNode.tagName == "A") {
 									return false
 								}
-								ProfileNode = AscendNode(DivElement, 3).OutputNode
+								ProfileNode = AscendNode(DivElement, 4).OutputNode
 								return true
 							})
 							if (typeof UserProfileHandle != "undefined") {
 								
 								let ProfileURL = HttpToTtp(window.location.href)
 								
-								//ProfileNode.childNodes[1].childNodes[1].textContent 
 								let Profile_UserTitle = ""
-								let Node_Profile_UserTitle = DescendNode(ProfileNode, [1,1])
+								let Node_Profile_UserTitle = DescendNode(ProfileNode, [1,1,0])
 								if (Node_Profile_UserTitle.IsSuccessful) {
 									Profile_UserTitle = Node_Profile_UserTitle.OutputNode.textContent
 								}
 								
-								//ProfileNode.childNodes[1].childNodes[2].childNodes[0].innerText
 								let Profile_UserHandle = ""
-								let Node_Profile_UserHandle = DescendNode(ProfileNode, [1,2,0])
+								let Node_Profile_UserHandle = DescendNode(ProfileNode, [1,1,1])
 								if (Node_Profile_UserHandle.IsSuccessful) {
 									Profile_UserHandle = Node_Profile_UserHandle.OutputNode.innerText
 								}
 								
-								//ProfileNode.childNodes[2].childNodes[0].childNodes[0].childNodes[1].src
 								let Profile_Avatar = ""
-								let Node_Profile_Avatar = DescendNode(ProfileNode, [2,0,0,1])
+								let Node_Profile_Avatar = DescendNode(ProfileNode, [3,0,0,1])
 								if (Node_Profile_Avatar.IsSuccessful) {
 									Profile_Avatar = HttpToTtp(Node_Profile_Avatar.OutputNode.src)
 								}
 								
-								//ProfileNode.childNodes[0].childNodes[0].childNodes[0].childNodes[0].src
 								let Profile_BackgroundImg = ""
 								let Node_Profile_BackgroundImg = DescendNode(ProfileNode, [0,0,0,0])
 								if (Node_Profile_BackgroundImg.IsSuccessful) {
 									Profile_BackgroundImg = HttpToTtp(Node_Profile_BackgroundImg.OutputNode.src)
 								}
 								
-								//ProfileNode.childNodes[1].childNodes[4].childNodes[0].textContent
 								let Profile_TextContent = {
 									Text: ""
 								}
-								let Node_TextContent = DescendNode(ProfileNode, [1,4,0])
+								let Node_TextContent = DescendNode(ProfileNode, [1,3])
 								if (Node_TextContent.IsSuccessful) {
 									Profile_TextContent.Text = Node_TextContent.OutputNode.textContent
 									let ListOfLinks = GetLinksURLs(Node_TextContent.OutputNode)
@@ -579,7 +574,7 @@
 								let Profile_FollowCount = ""
 								let Profile_FollowingCount = ""
 								let Profile_PostCount = ""
-								let NodeOfFollowFollowingPost = DescendNode(ProfileNode, [1,3])
+								let NodeOfFollowFollowingPost = DescendNode(ProfileNode, [1,2])
 								if (NodeOfFollowFollowingPost.IsSuccessful) {
 									let ArrayOf_FollowFollowingPost = Array.from(NodeOfFollowFollowingPost.OutputNode.childNodes)
 									
@@ -800,7 +795,7 @@
 								}
 								
 							}
-							if (/^Post_/.test(Type) && (PostURL != "") && (UserTitle != "")) {
+							if (/^Post_/.test(Type)&&(PostURL != "")&&(UserTitle != "")&&(UserHandle != "")) {
 								PostGroup.push({
 									RepostedByUserTitle: RepostedByUserTitle,
 									PostURL: PostURL,
@@ -922,7 +917,7 @@
 									RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
 									LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
 								}
-								if ((PostURL != "") && (UserTitle != "")) {
+								if ((PostURL != "")&&(UserTitle != "")&&(UserHandle != "")) {
 									ListOfPosts.push({
 										RepostedByUserTitle: RepostedByUserTitle,
 										PostURL: PostURL,
