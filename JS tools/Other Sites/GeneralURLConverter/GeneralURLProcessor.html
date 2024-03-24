@@ -620,7 +620,7 @@ Sort:
 				return (IsIdentifiedTypeAllowed && IsKeynameAllowed)
 			})
 			
-			document.getElementById("Output_URL_Count").innerHTML = BigInt(Filtered_OutputURLObjects.length).toString(10)
+			document.getElementById("Output_URL_Count").textContent = BigInt(Filtered_OutputURLObjects.length).toString(10)
 			
 			if (document.getElementById("SortSetting_ABC").checked) {
 				Filtered_OutputURLObjects.sort((a, b) => {
