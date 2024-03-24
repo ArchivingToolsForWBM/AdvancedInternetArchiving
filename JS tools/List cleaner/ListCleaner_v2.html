@@ -300,31 +300,31 @@ Sort:
 				}
 			//Output
 				//Statistics. Had to use "BigInt(Number).toString(10)" to avoid potential E notation.
-					document.getElementById("HTML_LineCount").innerText = BigInt(Count_Lines).toString(10)
+					document.getElementById("HTML_LineCount").textContent = BigInt(Count_Lines).toString(10)
 					//How many after filtering
 						document.getElementById("HTML_BarGraph_HowManyAfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(InputList.length, Count_Lines, "to right", "#0000ff", "#000000")
-						document.getElementById("HTML_HowManyAfterFilter").innerText = BigInt(InputList.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length, Count_Lines, 2, true) + ")"
+						document.getElementById("HTML_HowManyAfterFilter").textContent = BigInt(InputList.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length, Count_Lines, 2, true) + ")"
 					//How many removed after filtering
 						document.getElementById("HTML_BarGraph_HowManyRemovedAfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Lines - InputList.length, Count_Lines, "to right", "#0000ff", "#000000")
-						document.getElementById("HTML_HowManyRemovedAfterFilter").innerText = BigInt(Count_Lines - InputList.length).toString(10) + " (" + BetterPercentageUsingInts(Count_Lines - InputList.length, Count_Lines, 2, true) + ")"
+						document.getElementById("HTML_HowManyRemovedAfterFilter").textContent = BigInt(Count_Lines - InputList.length).toString(10) + " (" + BetterPercentageUsingInts(Count_Lines - InputList.length, Count_Lines, 2, true) + ")"
 					//Originals
 						document.getElementById("HTML_BarGraph_OriginalItemCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_OriginalItem, Count_Lines, "to right", "#008000", "#000000")
-						document.getElementById("HTML_OriginalItemCount").innerText = BigInt(Count_OriginalItem).toString(10) + " (" + BetterPercentageUsingInts(Count_OriginalItem, Count_Lines, 2, true) + ")"
+						document.getElementById("HTML_OriginalItemCount").textContent = BigInt(Count_OriginalItem).toString(10) + " (" + BetterPercentageUsingInts(Count_OriginalItem, Count_Lines, 2, true) + ")"
 					//Duplicates
 						document.getElementById("HTML_BarGraph_DupeCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Duplicates, Count_Lines, "to right", "#800000", "#000000")
-						document.getElementById("HTML_DupeCount").innerText = BigInt(Count_Duplicates).toString(10) + " (" + BetterPercentageUsingInts(Count_Duplicates, Count_Lines, 2, true) + ")"
+						document.getElementById("HTML_DupeCount").textContent = BigInt(Count_Duplicates).toString(10) + " (" + BetterPercentageUsingInts(Count_Duplicates, Count_Lines, 2, true) + ")"
 					//Empty lines
 						document.getElementById("HTML_BarGraph_EmptyCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_EmptyLines, Count_Lines, "to right", "#808080", "#000000")
-						document.getElementById("HTML_EmptyCount").innerText = BigInt(Count_EmptyLines).toString(10) + " (" + BetterPercentageUsingInts(Count_EmptyLines, Count_Lines, 2, true) + ")"
+						document.getElementById("HTML_EmptyCount").textContent = BigInt(Count_EmptyLines).toString(10) + " (" + BetterPercentageUsingInts(Count_EmptyLines, Count_Lines, 2, true) + ")"
 					//Just space
 						document.getElementById("HTML_BarGraph_SpaceCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_LinesWithJustSpace, Count_Lines, "to right", "#A08080", "#000000")
-						document.getElementById("HTML_SpaceCount").innerText = BigInt(Count_LinesWithJustSpace).toString(10) + " (" + BetterPercentageUsingInts(Count_LinesWithJustSpace, Count_Lines, 2, true) + ")"
+						document.getElementById("HTML_SpaceCount").textContent = BigInt(Count_LinesWithJustSpace).toString(10) + " (" + BetterPercentageUsingInts(Count_LinesWithJustSpace, Count_Lines, 2, true) + ")"
 					//Blacklist
 						document.getElementById("HTML_BarGraph_BlacklistCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Blacklisted, Count_Lines, "to right", "#ff6699", "#000000")
-						document.getElementById("HTML_BlacklistCount").innerText = BigInt(Count_Blacklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_Blacklisted, Count_Lines, 2, true) + ")"
+						document.getElementById("HTML_BlacklistCount").textContent = BigInt(Count_Blacklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_Blacklisted, Count_Lines, 2, true) + ")"
 					//Dupe and blacklist
 						document.getElementById("HTML_BarGraph_DuplicateBlacklistCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_DuplicateBlacklisted, Count_Lines, "to right", "#ff6666", "#000000")
-						document.getElementById("HTML_DuplicateBlacklistCount").innerText = BigInt(Count_DuplicateBlacklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_DuplicateBlacklisted, Count_Lines, 2, true) + ")"
+						document.getElementById("HTML_DuplicateBlacklistCount").textContent = BigInt(Count_DuplicateBlacklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_DuplicateBlacklisted, Count_Lines, 2, true) + ")"
 				//Plaintext
 					let OutputTextArea = ""
 					for (let Index = 0; Index < InputList.length; Index++) {
