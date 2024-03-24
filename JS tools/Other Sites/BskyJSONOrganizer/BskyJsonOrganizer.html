@@ -146,159 +146,163 @@
 		}
 		
 		
-		//sort and then filter list of posts (unlike the super-optimized way of filtering first so we can preserve the order)
-			if (document.getElementById("Sort_Post_Setting_Date").checked) {
-				SavedJson_PostList.sort((a,b) => {
-					return a.PostTimeStamp.TimestampMillisecondsEpoch - b.PostTimeStamp.TimestampMillisecondsEpoch
-				})
-			} else if (document.getElementById("Sort_Post_Setting_Date_Reverse").checked) {
-				SavedJson_PostList.sort((a,b) => {
-					return b.PostTimeStamp.TimestampMillisecondsEpoch - a.PostTimeStamp.TimestampMillisecondsEpoch
-				})
-			}
-			let Count_PostBeforeFilter = SavedJson_PostList.length
-			document.getElementById("Output_Statistic_PostCount_BeforeFilter").innerText = BigInt(Count_PostBeforeFilter).toString(10)
-			
-			let FilteredPostList = SavedJson_PostList.filter((Post) => {
-				let hasMedia = Boolean(Post.PostContent.Segments.find((PostSegment) => {return PostSegment.ContentType == "Media"}))
-				let hasText = Boolean(Post.PostContent.Segments.find((PostSegment) => {return PostSegment.ContentType == "Text"}))
-				let hasQuote = false
-				{
-					let FindQuote = Post.PostContent.Segments.find((Segment) => {
-						if (Segment.ContentType == "Quote") {
-							hasQuote = true
+		try {
+			//sort and then filter list of posts (unlike the super-optimized way of filtering first so we can preserve the order)
+				if (document.getElementById("Sort_Post_Setting_Date").checked) {
+					SavedJson_PostList.sort((a,b) => {
+						return a.PostTimeStamp.TimestampMillisecondsEpoch - b.PostTimeStamp.TimestampMillisecondsEpoch
+					})
+				} else if (document.getElementById("Sort_Post_Setting_Date_Reverse").checked) {
+					SavedJson_PostList.sort((a,b) => {
+						return b.PostTimeStamp.TimestampMillisecondsEpoch - a.PostTimeStamp.TimestampMillisecondsEpoch
+					})
+				}
+				let Count_PostBeforeFilter = SavedJson_PostList.length
+				document.getElementById("Output_Statistic_PostCount_BeforeFilter").innerText = BigInt(Count_PostBeforeFilter).toString(10)
+				
+				let FilteredPostList = SavedJson_PostList.filter((Post) => {
+					let hasMedia = Boolean(Post.PostContent.Segments.find((PostSegment) => {return PostSegment.ContentType == "Media"}))
+					let hasText = Boolean(Post.PostContent.Segments.find((PostSegment) => {return PostSegment.ContentType == "Text"}))
+					let hasQuote = false
+					{
+						let FindQuote = Post.PostContent.Segments.find((Segment) => {
+							if (Segment.ContentType == "Quote") {
+								hasQuote = true
+								return true
+							}
+							if (Segment.ContentType == "Attachment") {
+								Segment.Content.find((SubContent) => {
+									if (SubContent.ContentType == "Quote") {
+										hasQuote = true
+										return true
+									}
+								})
+							}
+						})
+						if (typeof FindQuote != "undefined") {
 							return true
 						}
-						if (Segment.ContentType == "Attachment") {
-							Segment.Content.find((SubContent) => {
-								if (SubContent.ContentType == "Quote") {
-									hasQuote = true
-									return true
-								}
-							})
-						}
-					})
-					if (typeof FindQuote != "undefined") {
-						return true
 					}
+					
+					
+					
+					//Requirement rules
+						if (document.getElementById("FilterInclude_Posts_Media").checked && (!hasMedia)) { //If media is required and not have one, filter out
+							return false
+						}
+						if (document.getElementById("FilterInclude_Posts_Text").checked && (!hasText)) { //If text is required and not have one, filter out
+							return false
+						}
+						if (document.getElementById("FilterInclude_Posts_Quote").checked && (!hasQuote)) { //If quote is required and not have one, filter out
+							return false
+						}
+					//Prohibited rules
+						if (document.getElementById("FilterExclude_Posts_Media").checked && (hasMedia)) { //If media is prohibited and have one, filter out
+							return false
+						}
+						if (document.getElementById("FilterExclude_Posts_Text").checked && (hasText)) { //If text is prohibited and have one, filter out
+							return false
+						}
+						if (document.getElementById("FilterExclude_Posts_Quote").checked && (hasQuote)) { //If quote is prohibited and not have one, filter out
+							return false
+						}
+					return true
+				})
+				let Count_PostAfterFilter = FilteredPostList.length
+				document.getElementById("Output_Statistic_PostCount_AfterFilter").innerText = BigInt(Count_PostAfterFilter).toString(10)
+				document.getElementById("Output_Statistic_PostCount_Removed").innerText = BigInt(Count_PostBeforeFilter-Count_PostAfterFilter).toString(10)
+			//Do the same with profiles
+				if (document.getElementById("SortSetting_Profile_UserTitle").checked) {
+					SavedJson_ProfileList.sort((a,b) => {
+						if (a.UserTitle === b.UserTitle) {
+							return 0;
+						} else {
+							return (a.UserTitle < b.UserTitle) ? -1 : 1;
+						}
+					});
+				} else if (document.getElementById("SortSetting_Profile_UserTitle_Reverse").checked) {
+					SavedJson_ProfileList.sort((a,b) => {
+						if (a.UserTitle === b.UserTitle) {
+							return 0;
+						} else {
+							return (a.UserTitle < b.UserTitle) ? 1 : -1;
+						}
+					});
+				} else if (document.getElementById("SortSetting_Profile_UserHandle").checked) {
+						SavedJson_ProfileList.sort((a,b) => {
+						if (a.UserHandle === b.UserHandle) {
+							return 0;
+						} else {
+							return (a.UserHandle < b.UserHandle) ? -1 : 1;
+						}
+					});
+				} else if (document.getElementById("SortSetting_Profile_UserHandle_Reverse").checked) {
+						SavedJson_ProfileList.sort((a,b) => {
+						if (a.UserHandle === b.UserHandle) {
+							return 0;
+						} else {
+							return (a.UserHandle < b.UserHandle) ? 1 : -1;
+						}
+					});
+				}
+				let Count_ProfileBeforeFilter = SavedJson_ProfileList.length
+				document.getElementById("Output_Statistic_ProfileCount_BeforeFilter").innerText = BigInt(Count_ProfileBeforeFilter).toString(10)
+				
+				let FilteredProfileList = SavedJson_ProfileList.filter((Profile) => {
+					let hasBackgroundImage = false
+					let hasAvatar = false
+					let hasLinkInBio = false
+				
+					if (Profile.BackgroundImg)
+						hasBackgroundImage = true
+					if (Profile.UserAvatar)
+						hasAvatar = true
+					
+					try {
+						let TestURL = Profile.TextContent.Links[0]
+						hasLinkInBio = true
+					} catch {}
+					
+					//Requirement rules
+						if (document.getElementById("FilterInclude_Profile_BackgroundImage").checked && (!hasBackgroundImage)) { //If background is required and not have one, filter out
+							return false
+						}
+						if (document.getElementById("FilterInclude_Profile_Avatar").checked && (!hasAvatar)) { //If avatar is required and not have one, filter out
+							return false
+						}
+						if (document.getElementById("FilterInclude_Profile_LinkInBio").checked && (!hasLinkInBio)) { //If link in the bio is required and not have one, filter out
+							return false
+						}
+					//Prohibited rules
+						if (document.getElementById("FilterExclude_Profile_BackgroundImage").checked && (hasBackgroundImage)) { //If background is prohibited and have one, filter out
+							return false
+						}
+						if (document.getElementById("FilterExclude_Profile_Avatar").checked && (hasAvatar)) { //If avatar is prohibited and have one, filter out
+							return false
+						}
+						if (document.getElementById("FilterExclude_Profile_LinkInBio").checked && (hasLinkInBio)) { //If link in the bio is prohibited and not have one, filter out
+							return false
+						}
+					return true
+				})
+				let Count_ProfileAfterFilter = FilteredProfileList.length
+				document.getElementById("Output_Statistic_ProfileCount_AfterFilter").innerText = BigInt(Count_ProfileAfterFilter).toString(10)
+				document.getElementById("Output_Statistic_ProfileCount_Removed").innerText = BigInt(Count_ProfileBeforeFilter-Count_ProfileAfterFilter).toString(10)
+			//Output
+				let OutputObject = {
+					ListOfProfiles: FilteredProfileList,
+					ListOfPosts: FilteredPostList
 				}
 				
+				let JsonIndentReadble = 0
+				if (document.getElementById("Output_DisplaySetting_ReadableJSON").checked) {
+					JsonIndentReadble = 1
+				}
 				
-				
-				//Requirement rules
-					if (document.getElementById("FilterInclude_Posts_Media").checked && (!hasMedia)) { //If media is required and not have one, filter out
-						return false
-					}
-					if (document.getElementById("FilterInclude_Posts_Text").checked && (!hasText)) { //If text is required and not have one, filter out
-						return false
-					}
-					if (document.getElementById("FilterInclude_Posts_Quote").checked && (!hasQuote)) { //If quote is required and not have one, filter out
-						return false
-					}
-				//Prohibited rules
-					if (document.getElementById("FilterExclude_Posts_Media").checked && (hasMedia)) { //If media is prohibited and have one, filter out
-						return false
-					}
-					if (document.getElementById("FilterExclude_Posts_Text").checked && (hasText)) { //If text is prohibited and have one, filter out
-						return false
-					}
-					if (document.getElementById("FilterExclude_Posts_Quote").checked && (hasQuote)) { //If quote is prohibited and not have one, filter out
-						return false
-					}
-				return true
-			})
-			let Count_PostAfterFilter = FilteredPostList.length
-			document.getElementById("Output_Statistic_PostCount_AfterFilter").innerText = BigInt(Count_PostAfterFilter).toString(10)
-			document.getElementById("Output_Statistic_PostCount_Removed").innerText = BigInt(Count_PostBeforeFilter-Count_PostAfterFilter).toString(10)
-		//Do the same with profiles
-			if (document.getElementById("SortSetting_Profile_UserTitle").checked) {
-				SavedJson_ProfileList.sort((a,b) => {
-					if (a.UserTitle === b.UserTitle) {
-						return 0;
-					} else {
-						return (a.UserTitle < b.UserTitle) ? -1 : 1;
-					}
-				});
-			} else if (document.getElementById("SortSetting_Profile_UserTitle_Reverse").checked) {
-				SavedJson_ProfileList.sort((a,b) => {
-					if (a.UserTitle === b.UserTitle) {
-						return 0;
-					} else {
-						return (a.UserTitle < b.UserTitle) ? 1 : -1;
-					}
-				});
-			} else if (document.getElementById("SortSetting_Profile_UserHandle").checked) {
-					SavedJson_ProfileList.sort((a,b) => {
-					if (a.UserHandle === b.UserHandle) {
-						return 0;
-					} else {
-						return (a.UserHandle < b.UserHandle) ? -1 : 1;
-					}
-				});
-			} else if (document.getElementById("SortSetting_Profile_UserHandle_Reverse").checked) {
-					SavedJson_ProfileList.sort((a,b) => {
-					if (a.UserHandle === b.UserHandle) {
-						return 0;
-					} else {
-						return (a.UserHandle < b.UserHandle) ? 1 : -1;
-					}
-				});
-			}
-			let Count_ProfileBeforeFilter = SavedJson_ProfileList.length
-			document.getElementById("Output_Statistic_ProfileCount_BeforeFilter").innerText = BigInt(Count_ProfileBeforeFilter).toString(10)
-			
-			let FilteredProfileList = SavedJson_ProfileList.filter((Profile) => {
-				let hasBackgroundImage = false
-				let hasAvatar = false
-				let hasLinkInBio = false
-			
-				if (Profile.BackgroundImg)
-					hasBackgroundImage = true
-				if (Profile.UserAvatar)
-					hasAvatar = true
-				
-				try {
-					let TestURL = Profile.TextContent.Links[0]
-					hasLinkInBio = true
-				} catch {}
-				
-				//Requirement rules
-					if (document.getElementById("FilterInclude_Profile_BackgroundImage").checked && (!hasBackgroundImage)) { //If background is required and not have one, filter out
-						return false
-					}
-					if (document.getElementById("FilterInclude_Profile_Avatar").checked && (!hasAvatar)) { //If avatar is required and not have one, filter out
-						return false
-					}
-					if (document.getElementById("FilterInclude_Profile_LinkInBio").checked && (!hasLinkInBio)) { //If link in the bio is required and not have one, filter out
-						return false
-					}
-				//Prohibited rules
-					if (document.getElementById("FilterExclude_Profile_BackgroundImage").checked && (hasBackgroundImage)) { //If background is prohibited and have one, filter out
-						return false
-					}
-					if (document.getElementById("FilterExclude_Profile_Avatar").checked && (hasAvatar)) { //If avatar is prohibited and have one, filter out
-						return false
-					}
-					if (document.getElementById("FilterExclude_Profile_LinkInBio").checked && (hasLinkInBio)) { //If link in the bio is prohibited and not have one, filter out
-						return false
-					}
-				return true
-			})
-			let Count_ProfileAfterFilter = FilteredProfileList.length
-			document.getElementById("Output_Statistic_ProfileCount_AfterFilter").innerText = BigInt(Count_ProfileAfterFilter).toString(10)
-			document.getElementById("Output_Statistic_ProfileCount_Removed").innerText = BigInt(Count_ProfileBeforeFilter-Count_ProfileAfterFilter).toString(10)
-		//Output
-			let OutputObject = {
-				ListOfProfiles: FilteredProfileList,
-				ListOfPosts: FilteredPostList
-			}
-			
-			let JsonIndentReadble = 0
-			if (document.getElementById("Output_DisplaySetting_ReadableJSON").checked) {
-				JsonIndentReadble = 1
-			}
-			
-			document.getElementById("Output_Plaintext").value = JSON.stringify(OutputObject, null, JsonIndentReadble)
+				document.getElementById("Output_Plaintext").value = JSON.stringify(OutputObject, null, JsonIndentReadble)
+		} catch (JSError) {
+			document.getElementById("Output_Plaintext").value = "Error, certain data is missing (JSON missing attributes):\n " + JSError
+		}
 	}
 	
 	function isJsonString(str) {

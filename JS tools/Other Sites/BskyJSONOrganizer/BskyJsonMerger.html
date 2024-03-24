@@ -149,108 +149,132 @@
 				}
 				JsonData1 = JSON.parse(JsonEnteredData1)
 			}
-			//Stat (before cleaning dupes)
-				let Count_PostCount_ReplaceBox_BeforeDupeRemoved = JsonData0.ListOfPosts.length
-				let Count_PostCount_ReplaceWithBox_BeforeDupeRemoved = JsonData1.ListOfPosts.length
-				document.getElementById("Output_Statistic_PostCount_Replace").innerText = BigInt(Count_PostCount_ReplaceBox_BeforeDupeRemoved).toString(10)
-				document.getElementById("Output_Statistic_PostCount_ReplaceWith").innerText = BigInt(Count_PostCount_ReplaceWithBox_BeforeDupeRemoved).toString(10)
-				
-				
-				let Count_ProfileCount_ReplaceBox_BeforeDupeRemoved = JsonData0.ListOfProfiles.length
-				let Count_ProfileCount_ReplaceWithBox_BeforeDupeRemoved = JsonData1.ListOfProfiles.length
-				document.getElementById("Output_Statistic_ProfileCount_Replace").innerText = BigInt(Count_ProfileCount_ReplaceBox_BeforeDupeRemoved).toString(10)
-				document.getElementById("Output_Statistic_ProfileCount_ReplaceWith").innerText = BigInt(Count_ProfileCount_ReplaceWithBox_BeforeDupeRemoved).toString(10)
-		
+			let Count_PostCount_ReplaceBox_BeforeDupeRemoved = -1
+			let Count_PostCount_ReplaceWithBox_BeforeDupeRemoved = -1
+			let Count_ProfileCount_ReplaceBox_BeforeDupeRemoved = -1
+			let Count_ProfileCount_ReplaceWithBox_BeforeDupeRemoved = -1
+			try {
+				//Stat (before cleaning dupes)
+					Count_PostCount_ReplaceBox_BeforeDupeRemoved = JsonData0.ListOfPosts.length
+					Count_PostCount_ReplaceWithBox_BeforeDupeRemoved = JsonData1.ListOfPosts.length
+					document.getElementById("Output_Statistic_PostCount_Replace").innerText = BigInt(Count_PostCount_ReplaceBox_BeforeDupeRemoved).toString(10)
+					document.getElementById("Output_Statistic_PostCount_ReplaceWith").innerText = BigInt(Count_PostCount_ReplaceWithBox_BeforeDupeRemoved).toString(10)
+					
+					Count_ProfileCount_ReplaceBox_BeforeDupeRemoved = JsonData0.ListOfProfiles.length
+					Count_ProfileCount_ReplaceWithBox_BeforeDupeRemoved = JsonData1.ListOfProfiles.length
+					document.getElementById("Output_Statistic_ProfileCount_Replace").innerText = BigInt(Count_ProfileCount_ReplaceBox_BeforeDupeRemoved).toString(10)
+					document.getElementById("Output_Statistic_ProfileCount_ReplaceWith").innerText = BigInt(Count_ProfileCount_ReplaceWithBox_BeforeDupeRemoved).toString(10)
+			} catch (JSError) {
+				document.getElementById("Output_Plaintext").value = "Invalid object layout or missing attribute detected in one of the JSONs entered.\n (" + JSError + ")"
+				document.getElementById("Output_Statistic_PostCount_Replace").innerText = "Error"
+				document.getElementById("Output_Statistic_PostCount_ReplaceWith").innerText = "Error"
+				document.getElementById("Output_Statistic_ProfileCount_Replace").innerText = "Error"
+				document.getElementById("Output_Statistic_ProfileCount_ReplaceWith").innerText = "Error"
+				ErrorStats()
+				return
+			}
 		
 		//Remove dupes (in each json)
+			let DupeList_Profile_Replace0 = []
+			let Json_NoDupes_ProfileList0 = []
 			//Profiles
-				let DupeList_Profile_Replace0 = []
-				let Json_NoDupes_ProfileList0 = []
-				JsonData0.ListOfProfiles.forEach((Profile, EnteredReplaceIndex) => {
-					let ItemIndex = Json_NoDupes_ProfileList0.findIndex((NonDupeProfile) => {
-						let isDupe = NonDupeProfile.ProfileURL == Profile.ProfileURL
-						if (isDupe) {
-							let ItemIndexDupe = DupeList_Profile_Replace0.findIndex((DupeItem) => {
-								return DupeItem.URL == Profile.ProfileURL
+				try {
+					JsonData0.ListOfProfiles.forEach((Profile, EnteredReplaceIndex) => {
+						let ItemIndex = Json_NoDupes_ProfileList0.findIndex((NonDupeProfile) => {
+							let isDupe = NonDupeProfile.ProfileURL == Profile.ProfileURL
+							if (isDupe) {
+								let ItemIndexDupe = DupeList_Profile_Replace0.findIndex((DupeItem) => {
+									return DupeItem.URL == Profile.ProfileURL
+								})
+								
+								if (ItemIndexDupe == -1) {
+									DupeList_Profile_Replace0.push({
+										URL: Profile.ProfileURL,
+										AtArrayIndex: [EnteredReplaceIndex]
+									})
+								} else {
+									DupeList_Profile_Replace0[ItemIndexDupe].AtArrayIndex.push(EnteredReplaceIndex)
+								}
+							}
+							return isDupe
+						})
+						if (ItemIndex == -1) { //If there is already a dupe within one json object the user entered, only the first will be listed
+							Json_NoDupes_ProfileList0.push(Profile)
+						}
+					})
+					//Stat (after cleaning dupes from the replace)
+						let Profile_HowManyRemoved_Replace = Count_ProfileCount_ReplaceBox_BeforeDupeRemoved - Json_NoDupes_ProfileList0.length
+						document.getElementById("Output_Statistic_ProfileCountWithoutDupes_Replace").innerText = BigInt(Json_NoDupes_ProfileList0.length).toString(10)
+						if (Profile_HowManyRemoved_Replace != 0) {
+							document.getElementById("Output_Statistic_ProfileCountWithoutDupes_Replace").innerText += " (" + BigInt(Profile_HowManyRemoved_Replace) + " dup(s) removed)"
+						}
+						DupeList_Profile_Replace0.forEach((DupeItem, LineIndex, DupeArray) => {
+							document.getElementById("Output_DupeList_Replace").value += DupeItem.URL + " " + BigInt(DupeItem.AtArrayIndex.length).toString(10) + " time(s). At indexes: "
+							DupeItem.AtArrayIndex.forEach((DupeIndexes, IndexWhat, Array1) => {
+								document.getElementById("Output_DupeList_Replace").value += BigInt(DupeIndexes).toString(10)
+								if (IndexWhat != Array1.length-1) {
+									document.getElementById("Output_DupeList_Replace").value += ", "
+								}
 							})
 							
-							if (ItemIndexDupe == -1) {
-								DupeList_Profile_Replace0.push({
-									URL: Profile.ProfileURL,
-									AtArrayIndex: [EnteredReplaceIndex]
-								})
-							} else {
-								DupeList_Profile_Replace0[ItemIndexDupe].AtArrayIndex.push(EnteredReplaceIndex)
-							}
-						}
-						return isDupe
-					})
-					if (ItemIndex == -1) { //If there is already a dupe within one json object the user entered, only the first will be listed
-						Json_NoDupes_ProfileList0.push(Profile)
-					}
-				})
-				//Stat (after cleaning dupes from the replace)
-					let Profile_HowManyRemoved_Replace = Count_ProfileCount_ReplaceBox_BeforeDupeRemoved - Json_NoDupes_ProfileList0.length
-					document.getElementById("Output_Statistic_ProfileCountWithoutDupes_Replace").innerText = BigInt(Json_NoDupes_ProfileList0.length).toString(10)
-					if (Profile_HowManyRemoved_Replace != 0) {
-						document.getElementById("Output_Statistic_ProfileCountWithoutDupes_Replace").innerText += " (" + BigInt(Profile_HowManyRemoved_Replace) + " dup(s) removed)"
-					}
-					DupeList_Profile_Replace0.forEach((DupeItem, LineIndex, DupeArray) => {
-						document.getElementById("Output_DupeList_Replace").value += DupeItem.URL + " " + BigInt(DupeItem.AtArrayIndex.length).toString(10) + " time(s). At indexes: "
-						DupeItem.AtArrayIndex.forEach((DupeIndexes, IndexWhat, Array1) => {
-							document.getElementById("Output_DupeList_Replace").value += BigInt(DupeIndexes).toString(10)
-							if (IndexWhat != Array1.length-1) {
-								document.getElementById("Output_DupeList_Replace").value += ", "
-							}
+							document.getElementById("Output_DupeList_Replace").value += "\n"
 						})
-						
-						document.getElementById("Output_DupeList_Replace").value += "\n"
-					})
+				} catch (JSError) {
+					document.getElementById("Output_Plaintext").value = "Invalid object layout or missing attribute (possibly a user profile list) detected in the \"replace\" box.\n (" + JSError + ")"
+					ErrorStats()
+					return
+				}
+			
 				let DupeList_Profile_Replace1 = []
 				let Json_NoDupes_ProfileList1 = []
-				//^Make it so that if there is duplicates within the "replace with" json data,
-				// only the first, not the last, will exist in the final output.
-				JsonData1.ListOfProfiles.forEach((Profile, EnteredReplaceIndex) => {
-					let ItemIndex = Json_NoDupes_ProfileList1.findIndex((NonDupeProfile) => {
-						let isDupe = NonDupeProfile.ProfileURL == Profile.ProfileURL
-						if (isDupe) {
-							let ItemIndexDupe = DupeList_Profile_Replace1.findIndex((DupeItem) => {
-								return DupeItem.URL == Profile.ProfileURL
-							})
-							
-							if (ItemIndexDupe == -1) {
-								DupeList_Profile_Replace1.push({
-									URL: Profile.ProfileURL,
-									AtArrayIndex: [EnteredReplaceIndex]
+				try {
+					//^Make it so that if there is duplicates within the "replace with" json data,
+					// only the first, not the last, will exist in the final output.
+					JsonData1.ListOfProfiles.forEach((Profile, EnteredReplaceIndex) => {
+						let ItemIndex = Json_NoDupes_ProfileList1.findIndex((NonDupeProfile) => {
+							let isDupe = NonDupeProfile.ProfileURL == Profile.ProfileURL
+							if (isDupe) {
+								let ItemIndexDupe = DupeList_Profile_Replace1.findIndex((DupeItem) => {
+									return DupeItem.URL == Profile.ProfileURL
 								})
-							} else {
-								DupeList_Profile_Replace1[ItemIndexDupe].AtArrayIndex.push(EnteredReplaceIndex)
+								
+								if (ItemIndexDupe == -1) {
+									DupeList_Profile_Replace1.push({
+										URL: Profile.ProfileURL,
+										AtArrayIndex: [EnteredReplaceIndex]
+									})
+								} else {
+									DupeList_Profile_Replace1[ItemIndexDupe].AtArrayIndex.push(EnteredReplaceIndex)
+								}
 							}
-						}
-						return isDupe
-					})
-					
-					if (ItemIndex == -1) {
-						Json_NoDupes_ProfileList1.push(Profile) //Not a duplicate, add it.
-					}
-				})
-				//Stat (after cleaning dupes from the replacewith)
-					let Profile_HowManyRemoved_ReplaceWith = Count_ProfileCount_ReplaceWithBox_BeforeDupeRemoved - Json_NoDupes_ProfileList1.length
-					document.getElementById("Output_Statistic_ProfileCountWithoutDupes_ReplaceWith").innerText = BigInt(Json_NoDupes_ProfileList1.length).toString(10)
-					if (Profile_HowManyRemoved_ReplaceWith != 0) {
-						document.getElementById("Output_Statistic_ProfileCountWithoutDupes_ReplaceWith").innerText += " (" + BigInt(Profile_HowManyRemoved_ReplaceWith) + " dup(s) removed)"
-					}
-					DupeList_Profile_Replace1.forEach((DupeItem, LineIndex, DupeArray) => {
-						document.getElementById("Output_DupeList_ReplaceWith").value += DupeItem.URL + " " + BigInt(DupeItem.AtArrayIndex.length).toString(10) + " time(s). At indexes: "
-						DupeItem.AtArrayIndex.forEach((DupeIndexes, IndexWhat, Array1) => {
-							document.getElementById("Output_DupeList_ReplaceWith").value += BigInt(DupeIndexes).toString(10)
-							if (IndexWhat != Array1.length-1) {
-								document.getElementById("Output_DupeList_ReplaceWith").value += ", "
-							}
+							return isDupe
 						})
-						document.getElementById("Output_DupeList_ReplaceWith").value += "\n"
+						
+						if (ItemIndex == -1) {
+							Json_NoDupes_ProfileList1.push(Profile) //Not a duplicate, add it.
+						}
 					})
-					
+					//Stat (after cleaning dupes from the replacewith)
+						let Profile_HowManyRemoved_ReplaceWith = Count_ProfileCount_ReplaceWithBox_BeforeDupeRemoved - Json_NoDupes_ProfileList1.length
+						document.getElementById("Output_Statistic_ProfileCountWithoutDupes_ReplaceWith").innerText = BigInt(Json_NoDupes_ProfileList1.length).toString(10)
+						if (Profile_HowManyRemoved_ReplaceWith != 0) {
+							document.getElementById("Output_Statistic_ProfileCountWithoutDupes_ReplaceWith").innerText += " (" + BigInt(Profile_HowManyRemoved_ReplaceWith) + " dup(s) removed)"
+						}
+						DupeList_Profile_Replace1.forEach((DupeItem, LineIndex, DupeArray) => {
+							document.getElementById("Output_DupeList_ReplaceWith").value += DupeItem.URL + " " + BigInt(DupeItem.AtArrayIndex.length).toString(10) + " time(s). At indexes: "
+							DupeItem.AtArrayIndex.forEach((DupeIndexes, IndexWhat, Array1) => {
+								document.getElementById("Output_DupeList_ReplaceWith").value += BigInt(DupeIndexes).toString(10)
+								if (IndexWhat != Array1.length-1) {
+									document.getElementById("Output_DupeList_ReplaceWith").value += ", "
+								}
+							})
+							document.getElementById("Output_DupeList_ReplaceWith").value += "\n"
+						})
+				} catch (JSError) {
+					document.getElementById("Output_Plaintext").value = "Invalid object layout or missing attribute (possibly a user profile list) detected in the \"replace with\" box.\n (" + JSError + ")"
+					ErrorStats()
+					return
+				}
 				//Combine Profile lists, with the "replace with" replacing the "replace"
 					let OutputJson_NoDupes_ProfileList = Json_NoDupes_ProfileList0
 					Json_NoDupes_ProfileList1.forEach((ReplaceWithProfile) => {
@@ -266,109 +290,123 @@
 			//Posts
 				let DupeList_Post_Replace0 = []
 				let Json_NoDupes_PostList0 = []
-				JsonData0.ListOfPosts.forEach((Post, EnteredReplaceIndex) => {
-					let ItemIndex = Json_NoDupes_PostList0.findIndex((NonDupePost) => {
-						let isDupe = NonDupePost.PostURL == Post.PostURL
-						if (isDupe) {
-							let ItemIndexDupe = DupeList_Post_Replace0.findIndex((DupeItem) => {
-								return DupeItem.URL == Post.PostURL
-							})
-							
-							if (ItemIndexDupe == -1) {
-								DupeList_Post_Replace0.push({
-									URL: Post.PostURL,
-									AtArrayIndex: [EnteredReplaceIndex]
+				try {
+					JsonData0.ListOfPosts.forEach((Post, EnteredReplaceIndex) => {
+						let ItemIndex = Json_NoDupes_PostList0.findIndex((NonDupePost) => {
+							let isDupe = NonDupePost.PostURL == Post.PostURL
+							if (isDupe) {
+								let ItemIndexDupe = DupeList_Post_Replace0.findIndex((DupeItem) => {
+									return DupeItem.URL == Post.PostURL
 								})
-							} else {
-								DupeList_Post_Replace0[ItemIndexDupe].AtArrayIndex.push(EnteredReplaceIndex)
+								
+								if (ItemIndexDupe == -1) {
+									DupeList_Post_Replace0.push({
+										URL: Post.PostURL,
+										AtArrayIndex: [EnteredReplaceIndex]
+									})
+								} else {
+									DupeList_Post_Replace0[ItemIndexDupe].AtArrayIndex.push(EnteredReplaceIndex)
+								}
 							}
-						}
-						return isDupe
-					})
-					
-					if (ItemIndex == -1) { //If there is already a dupe within one json object the user entered, only the first will be listed
-						Json_NoDupes_PostList0.push(Post)
-					}
-				})
-				//Stat (after cleaning dupes from the replace)
-					let Post_HowManyRemoved_Replace = Count_PostCount_ReplaceBox_BeforeDupeRemoved - Json_NoDupes_PostList0.length
-					document.getElementById("Output_Statistic_PostCountWithoutDupes_Replace").innerText = BigInt(Json_NoDupes_PostList0.length).toString(10)
-					if (Post_HowManyRemoved_Replace != 0) {
-						document.getElementById("Output_Statistic_PostCountWithoutDupes_Replace").innerText += " (" + BigInt(Post_HowManyRemoved_Replace) + " dup(s) removed)"
-					}
-					DupeList_Post_Replace0.forEach((DupeItem, LineIndex, DupeArray) => {
-						document.getElementById("Output_DupeList_Replace").value += DupeItem.URL + " " + BigInt(DupeItem.AtArrayIndex.length).toString(10) + " time(s). At indexes: "
-						DupeItem.AtArrayIndex.forEach((DupeIndexes, IndexWhat, Array1) => {
-							document.getElementById("Output_DupeList_Replace").value += BigInt(DupeIndexes).toString(10)
-							if (IndexWhat != Array1.length-1) {
-								document.getElementById("Output_DupeList_Replace").value += ", "
-							}
+							return isDupe
 						})
 						
-						if (LineIndex != DupeArray.length-1) {
-							document.getElementById("Output_DupeList_Replace").value += "\n"
+						if (ItemIndex == -1) { //If there is already a dupe within one json object the user entered, only the first will be listed
+							Json_NoDupes_PostList0.push(Post)
 						}
 					})
+					//Stat (after cleaning dupes from the replace)
+						let Post_HowManyRemoved_Replace = Count_PostCount_ReplaceBox_BeforeDupeRemoved - Json_NoDupes_PostList0.length
+						document.getElementById("Output_Statistic_PostCountWithoutDupes_Replace").innerText = BigInt(Json_NoDupes_PostList0.length).toString(10)
+						if (Post_HowManyRemoved_Replace != 0) {
+							document.getElementById("Output_Statistic_PostCountWithoutDupes_Replace").innerText += " (" + BigInt(Post_HowManyRemoved_Replace) + " dup(s) removed)"
+						}
+						DupeList_Post_Replace0.forEach((DupeItem, LineIndex, DupeArray) => {
+							document.getElementById("Output_DupeList_Replace").value += DupeItem.URL + " " + BigInt(DupeItem.AtArrayIndex.length).toString(10) + " time(s). At indexes: "
+							DupeItem.AtArrayIndex.forEach((DupeIndexes, IndexWhat, Array1) => {
+								document.getElementById("Output_DupeList_Replace").value += BigInt(DupeIndexes).toString(10)
+								if (IndexWhat != Array1.length-1) {
+									document.getElementById("Output_DupeList_Replace").value += ", "
+								}
+							})
+							
+							if (LineIndex != DupeArray.length-1) {
+								document.getElementById("Output_DupeList_Replace").value += "\n"
+							}
+						})
+				} catch (JSError) {
+					document.getElementById("Output_Plaintext").value = "Invalid object layout or missing attribute (possibly a post list) detected in the \"replace\" box.\n (" + JSError + ")"
+					ErrorStats()
+					return
+				}
 				let DupeList_Post_Replace1 = []
 				let Json_NoDupes_PostList1 = []
+				let OutputJson_NoDupes_PostList = []
 				//^Make it so that if there is duplicates within the "replace with" json data,
 				// only the first, not the last, will exist in the final output.
-				JsonData1.ListOfPosts.forEach((Post, EnteredReplaceIndex) => {
-					let ItemIndex = Json_NoDupes_PostList1.findIndex((NonDupePost) => {
-						let isDupe = NonDupePost.PostURL == Post.PostURL
-						if (isDupe) {
-							let ItemIndexDupe = DupeList_Post_Replace1.findIndex((DupeItem) => {
-								return DupeItem.URL == Post.PostURL
+				try {
+					//Clean up post duplicates in the replace with
+						JsonData1.ListOfPosts.forEach((Post, EnteredReplaceIndex) => {
+							let ItemIndex = Json_NoDupes_PostList1.findIndex((NonDupePost) => {
+								let isDupe = NonDupePost.PostURL == Post.PostURL
+								if (isDupe) {
+									let ItemIndexDupe = DupeList_Post_Replace1.findIndex((DupeItem) => {
+										return DupeItem.URL == Post.PostURL
+									})
+									
+									if (ItemIndexDupe == -1) {
+										DupeList_Post_Replace1.push({
+											URL: Post.PostURL,
+											AtArrayIndex: [EnteredReplaceIndex]
+										})
+									} else {
+										DupeList_Post_Replace1[ItemIndexDupe].AtArrayIndex.push(EnteredReplaceIndex)
+									}
+								}
+								return isDupe
 							})
 							
-							if (ItemIndexDupe == -1) {
-								DupeList_Post_Replace1.push({
-									URL: Post.PostURL,
-									AtArrayIndex: [EnteredReplaceIndex]
+							if (ItemIndex == -1) {
+								Json_NoDupes_PostList1.push(Post) //Not a duplicate, add it.
+							}
+						})
+						//Stat (after cleaning dupes from the replacewith)
+							let Post_HowManyRemoved_ReplaceWith = Count_PostCount_ReplaceWithBox_BeforeDupeRemoved - Json_NoDupes_PostList1.length
+							document.getElementById("Output_Statistic_PostCountWithoutDupes_ReplaceWith").innerText = BigInt(Json_NoDupes_PostList1.length).toString(10)
+							if (Post_HowManyRemoved_ReplaceWith != 0) {
+								document.getElementById("Output_Statistic_PostCountWithoutDupes_ReplaceWith").innerText += " (" + BigInt(Post_HowManyRemoved_ReplaceWith) + " dup(s) removed)"
+							}
+							
+							DupeList_Post_Replace1.forEach((DupeItem, LineIndex, DupeArray) => {
+								document.getElementById("Output_DupeList_ReplaceWith").value += DupeItem.URL + " " + BigInt(DupeItem.AtArrayIndex.length).toString(10) + " time(s). At indexes: "
+								DupeItem.AtArrayIndex.forEach((DupeIndexes, IndexWhat, Array1) => {
+									document.getElementById("Output_DupeList_ReplaceWith").value += BigInt(DupeIndexes).toString(10)
+									if (IndexWhat != Array1.length-1) {
+										document.getElementById("Output_DupeList_ReplaceWith").value += ", "
+									}
 								})
+								
+								if (LineIndex != DupeArray.length-1) {
+									document.getElementById("Output_DupeList_Replace").value += "\n"
+								}
+							})
+					//Combine post lists, with the "replace with" replacing the "replace"
+						OutputJson_NoDupes_PostList = Json_NoDupes_PostList0
+						Json_NoDupes_PostList1.forEach((ReplaceWithPost) => {
+							let ItemIndex = OutputJson_NoDupes_PostList.findIndex((NonDupePost) => {
+								return NonDupePost.PostURL == ReplaceWithPost.PostURL
+							})
+							if (ItemIndex == -1) {
+								OutputJson_NoDupes_PostList.push(ReplaceWithPost)
 							} else {
-								DupeList_Post_Replace1[ItemIndexDupe].AtArrayIndex.push(EnteredReplaceIndex)
-							}
-						}
-						return isDupe
-					})
-					
-					if (ItemIndex == -1) {
-						Json_NoDupes_PostList1.push(Post) //Not a duplicate, add it.
-					}
-				})
-				//Stat (after cleaning dupes from the replacewith)
-					let Post_HowManyRemoved_ReplaceWith = Count_PostCount_ReplaceWithBox_BeforeDupeRemoved - Json_NoDupes_PostList1.length
-					document.getElementById("Output_Statistic_PostCountWithoutDupes_ReplaceWith").innerText = BigInt(Json_NoDupes_PostList1.length).toString(10)
-					if (Post_HowManyRemoved_ReplaceWith != 0) {
-						document.getElementById("Output_Statistic_PostCountWithoutDupes_ReplaceWith").innerText += " (" + BigInt(Post_HowManyRemoved_ReplaceWith) + " dup(s) removed)"
-					}
-					
-					DupeList_Post_Replace1.forEach((DupeItem, LineIndex, DupeArray) => {
-						document.getElementById("Output_DupeList_ReplaceWith").value += DupeItem.URL + " " + BigInt(DupeItem.AtArrayIndex.length).toString(10) + " time(s). At indexes: "
-						DupeItem.AtArrayIndex.forEach((DupeIndexes, IndexWhat, Array1) => {
-							document.getElementById("Output_DupeList_ReplaceWith").value += BigInt(DupeIndexes).toString(10)
-							if (IndexWhat != Array1.length-1) {
-								document.getElementById("Output_DupeList_ReplaceWith").value += ", "
+								OutputJson_NoDupes_PostList[ItemIndex] = ReplaceWithPost //Replace it
 							}
 						})
-						
-						if (LineIndex != DupeArray.length-1) {
-							document.getElementById("Output_DupeList_Replace").value += "\n"
-						}
-					})
-				//Combine post lists, with the "replace with" replacing the "replace"
-					let OutputJson_NoDupes_PostList = Json_NoDupes_PostList0
-					Json_NoDupes_PostList1.forEach((ReplaceWithPost) => {
-						let ItemIndex = OutputJson_NoDupes_PostList.findIndex((NonDupePost) => {
-							return NonDupePost.PostURL == ReplaceWithPost.PostURL
-						})
-						if (ItemIndex == -1) {
-							OutputJson_NoDupes_PostList.push(ReplaceWithPost)
-						} else {
-							OutputJson_NoDupes_PostList[ItemIndex] = ReplaceWithPost //Replace it
-						}
-					})
+				} catch (JSError) {
+					document.getElementById("Output_Plaintext").value = "Invalid object layout or missing attribute (possibly a post list) detected in the \"replace with\" box.\n (" + JSError + ")"
+					ErrorStats()
+					return
+				}
 		//Output
 			document.getElementById("Output_Statistic_Merged_Profiles").innerText = BigInt(OutputJson_NoDupes_ProfileList.length).toString(10)
 			document.getElementById("Output_Statistic_Merged_Posts").innerText = BigInt(OutputJson_NoDupes_PostList.length).toString(10)
@@ -417,5 +455,20 @@
 	function DeleteCopyMessage() {
 		document.getElementById("CopiedTextMessage").innerHTML = ""
 	}
+	function ErrorStats() {
+		document.getElementById("Output_Statistic_ProfileCount_Replace").innerText = "Error"
+		document.getElementById("Output_Statistic_ProfileCountWithoutDupes_Replace").innerText = "Error"
+		document.getElementById("Output_Statistic_PostCount_Replace").innerText = "Error"
+		document.getElementById("Output_Statistic_PostCountWithoutDupes_Replace").innerText = "Error"
+		document.getElementById("Output_DupeList_Replace").value = "Error"
 	
+		document.getElementById("Output_Statistic_ProfileCount_ReplaceWith").innerText = "Error"
+		document.getElementById("Output_Statistic_ProfileCountWithoutDupes_ReplaceWith").innerText = "Error"
+		document.getElementById("Output_Statistic_PostCount_ReplaceWith").innerText = "Error"
+		document.getElementById("Output_Statistic_PostCountWithoutDupes_ReplaceWith").innerText = "Error"
+		document.getElementById("Output_DupeList_ReplaceWith").value = "Error"
+		
+		document.getElementById("Output_Statistic_Merged_Profiles").innerText = "Error"
+		document.getElementById("Output_Statistic_Merged_Posts").innerText = "Error"
+	}
 </script>
