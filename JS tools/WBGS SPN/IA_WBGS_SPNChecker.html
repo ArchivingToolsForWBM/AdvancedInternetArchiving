@@ -688,16 +688,16 @@ Misc:
 		Array.from(document.getElementsByTagName("span")).filter((ArrayElement) => { //Clear Statistic table
 			return /^Statistic_/.test(ArrayElement.id)
 		}).forEach(ArrayElement => {
-			ArrayElement.innerHTML = "0"
+			ArrayElement.textContent = "0"
 			ArrayElement.parentElement.parentElement.style = ""
 		})
 
 		//Earliest and latest date
-			document.getElementById("StatisticDate_Earliest").innerHTML = "?"
-			document.getElementById("StatisticDate_Latest").innerHTML = "?"
-		document.getElementById("OutputPlaintextItemCount").innerHTML = "0"
+			document.getElementById("StatisticDate_Earliest").textContent = "?"
+			document.getElementById("StatisticDate_Latest").textContent = "?"
+		document.getElementById("OutputPlaintextItemCount").textContent = "0"
 		document.getElementById("Output_Plaintext").value = ""
-		document.getElementById("Output_table").innerHTML = ""
+		document.getElementById("Output_table").textContent = ""
 	}
 	function escapeHTMLChars(string) {
 		//Should the user's input contains "<", ">", and "&", prevent the innerHTML from treating these as HTML tags/escapes

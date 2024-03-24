@@ -117,38 +117,38 @@ Sort:
 		ClearOutput()
 	}
 	function ClearOutput() {
-		document.getElementById("OutputTable").innerHTML = ""
-		document.getElementById("HTML_LineCount").innerHTML = "0"
+		document.getElementById("OutputTable").textContent = ""
+		document.getElementById("HTML_LineCount").textContent = "0"
 		//How many after filtering
 			document.getElementById("HTML_BarGraph_HowManyAfterFilter").style = ""
-			document.getElementById("HTML_HowManyAfterFilter").innerHTML = "0"
+			document.getElementById("HTML_HowManyAfterFilter").textContent = "0"
 		//How many removed after filtering
 			document.getElementById("HTML_BarGraph_HowManyRemovedAfterFilter").style = ""
-			document.getElementById("HTML_HowManyRemovedAfterFilter").innerHTML = "0"
+			document.getElementById("HTML_HowManyRemovedAfterFilter").textContent = "0"
 		//Originals
 			document.getElementById("HTML_BarGraph_OriginalItemCount").style = ""
-			document.getElementById("HTML_OriginalItemCount").innerHTML = "0"
+			document.getElementById("HTML_OriginalItemCount").textContent = "0"
 		//Duplicates
 			document.getElementById("HTML_BarGraph_DupeCount").style = ""
-			document.getElementById("HTML_DupeCount").innerHTML = "0"
+			document.getElementById("HTML_DupeCount").textContent = "0"
 		//Empty lines
 			document.getElementById("HTML_BarGraph_EmptyCount").style = ""
-			document.getElementById("HTML_EmptyCount").innerHTML = "0"
+			document.getElementById("HTML_EmptyCount").textContent = "0"
 		//Just space
 			document.getElementById("HTML_BarGraph_SpaceCount").style = ""
-			document.getElementById("HTML_SpaceCount").innerHTML = "0"
+			document.getElementById("HTML_SpaceCount").textContent = "0"
 		//Blacklist
 			document.getElementById("HTML_BarGraph_BlacklistCount").style = ""
-			document.getElementById("HTML_BlacklistCount").innerHTML = "0"
+			document.getElementById("HTML_BlacklistCount").textContent = "0"
 		//Dupe and blacklist
 			document.getElementById("HTML_BarGraph_DuplicateBlacklistCount").style = ""
-			document.getElementById("HTML_DuplicateBlacklistCount").innerHTML = "0"
+			document.getElementById("HTML_DuplicateBlacklistCount").textContent = "0"
 		document.getElementById("TextOutput").value = ""
 	}
 	function UpdateBlacklistCount() {
 		let InputBlacklist = [...new Set(((document.getElementById("TextInput_Blacklist").value).split('\n')))]
 		InputBlacklist = new Set(InputBlacklist.filter((ArrayElement) => {return !(/^\s*$/.test(ArrayElement))}))
-		document.getElementById("UniqueBlacklistCount").innerHTML = BigInt(InputBlacklist.size).toString(10)
+		document.getElementById("UniqueBlacklistCount").textContent = BigInt(InputBlacklist.size).toString(10)
 		
 		return InputBlacklist
 	}
