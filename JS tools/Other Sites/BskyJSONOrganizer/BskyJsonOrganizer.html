@@ -158,7 +158,7 @@
 					})
 				}
 				let Count_PostBeforeFilter = SavedJson_PostList.length
-				document.getElementById("Output_Statistic_PostCount_BeforeFilter").innerText = BigInt(Count_PostBeforeFilter).toString(10)
+				document.getElementById("Output_Statistic_PostCount_BeforeFilter").textContent = BigInt(Count_PostBeforeFilter).toString(10)
 				
 				let FilteredPostList = SavedJson_PostList.filter((Post) => {
 					let hasMedia = Boolean(Post.PostContent.Segments.find((PostSegment) => {return PostSegment.ContentType == "Media"}))
@@ -209,8 +209,8 @@
 					return true
 				})
 				let Count_PostAfterFilter = FilteredPostList.length
-				document.getElementById("Output_Statistic_PostCount_AfterFilter").innerText = BigInt(Count_PostAfterFilter).toString(10)
-				document.getElementById("Output_Statistic_PostCount_Removed").innerText = BigInt(Count_PostBeforeFilter-Count_PostAfterFilter).toString(10)
+				document.getElementById("Output_Statistic_PostCount_AfterFilter").textContent = BigInt(Count_PostAfterFilter).toString(10)
+				document.getElementById("Output_Statistic_PostCount_Removed").textContent = BigInt(Count_PostBeforeFilter-Count_PostAfterFilter).toString(10)
 			//Do the same with profiles
 				if (document.getElementById("SortSetting_Profile_UserTitle").checked) {
 					SavedJson_ProfileList.sort((a,b) => {
@@ -246,7 +246,7 @@
 					});
 				}
 				let Count_ProfileBeforeFilter = SavedJson_ProfileList.length
-				document.getElementById("Output_Statistic_ProfileCount_BeforeFilter").innerText = BigInt(Count_ProfileBeforeFilter).toString(10)
+				document.getElementById("Output_Statistic_ProfileCount_BeforeFilter").textContent = BigInt(Count_ProfileBeforeFilter).toString(10)
 				
 				let FilteredProfileList = SavedJson_ProfileList.filter((Profile) => {
 					let hasBackgroundImage = false
@@ -286,8 +286,8 @@
 					return true
 				})
 				let Count_ProfileAfterFilter = FilteredProfileList.length
-				document.getElementById("Output_Statistic_ProfileCount_AfterFilter").innerText = BigInt(Count_ProfileAfterFilter).toString(10)
-				document.getElementById("Output_Statistic_ProfileCount_Removed").innerText = BigInt(Count_ProfileBeforeFilter-Count_ProfileAfterFilter).toString(10)
+				document.getElementById("Output_Statistic_ProfileCount_AfterFilter").textContent = BigInt(Count_ProfileAfterFilter).toString(10)
+				document.getElementById("Output_Statistic_ProfileCount_Removed").textContent = BigInt(Count_ProfileBeforeFilter-Count_ProfileAfterFilter).toString(10)
 			//Output
 				let OutputObject = {
 					ListOfProfiles: FilteredProfileList,
@@ -303,12 +303,12 @@
 		} catch (JSError) {
 			document.getElementById("Output_Plaintext").value = "Error, certain data is missing (JSON missing attributes):\n " + JSError
 			
-			document.getElementById("Output_Statistic_ProfileCount_BeforeFilter").innerText = "Error"
-			document.getElementById("Output_Statistic_ProfileCount_AfterFilter").innerText = "Error"
-			document.getElementById("Output_Statistic_ProfileCount_Removed").innerText = "Error"
-			document.getElementById("Output_Statistic_PostCount_BeforeFilter").innerText = "Error"
-			document.getElementById("Output_Statistic_PostCount_AfterFilter").innerText = "Error"
-			document.getElementById("Output_Statistic_PostCount_Removed").innerText = "Error"
+			document.getElementById("Output_Statistic_ProfileCount_BeforeFilter").textContent = "Error"
+			document.getElementById("Output_Statistic_ProfileCount_AfterFilter").textContent = "Error"
+			document.getElementById("Output_Statistic_ProfileCount_Removed").textContent = "Error"
+			document.getElementById("Output_Statistic_PostCount_BeforeFilter").textContent = "Error"
+			document.getElementById("Output_Statistic_PostCount_AfterFilter").textContent = "Error"
+			document.getElementById("Output_Statistic_PostCount_Removed").textContent = "Error"
 		}
 	}
 	
