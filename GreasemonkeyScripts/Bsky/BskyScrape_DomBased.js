@@ -1185,19 +1185,23 @@
 					switch (HTMLTag.tagName) {
 						case "IMG":
 							MediaOutput.URL = HttpToTtp(FullResConvert(HTMLTag.src))
-							{(() => { //Need this curly braces on outermost so it doesn't cause promise issues (scoping issue)
-								let ButtonForLabel = AscendNode(HTMLTag, 3)
-								if (!ButtonForLabel.IsSuccessful) {
-									return
-								}
-								if (ButtonForLabel.OutputNode.tagName != "BUTTON") {
-									return
-								}
-								if (/^(?:Image)?$/.test(ButtonForLabel.OutputNode.ariaLabel)) {
-									return
-								}
-								MediaOutput.Caption = ButtonForLabel.OutputNode.ariaLabel
-							})();}
+							if (HTMLTag.alt) {
+								MediaOutput.alt = HTMLTag.alt
+							}
+//							{(() => { //Need this curly braces on outermost so it doesn't cause promise issues (scoping issue)
+//								let ButtonForLabel = AscendNode(HTMLTag, 3)
+//								if (!ButtonForLabel.IsSuccessful) {
+//									return
+//								}
+//								if (ButtonForLabel.OutputNode.tagName != "BUTTON") {
+//									return
+//								}
+//								if (/^(?:Image)?$/.test(ButtonForLabel.OutputNode.ariaLabel)) {
+//									return
+//								}
+//								MediaOutput.Caption = ButtonForLabel.OutputNode.ariaLabel
+//								
+//							})();}
 							break
 					}
 					
