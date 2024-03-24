@@ -15,6 +15,9 @@
 	//-Best to have URLs have the "http" substring replaced with "ttps" because firefox truncate long links and doesn't keep the original full URL when copying them (the middle is
 	// replaced with ellipsis).
 	//-Chrome will truncate object parts printed on the console log, and those aren't preserved
+	//-Chrome, for some reason have "innerText" be a blank string if it is an element far offscreen. However this code does have a failsafe that if such data is missing (like user handle),
+	// it will not accept storing that. This means if you are using google chrome, will not extract all posts that exists in the HTML rather extracts only posts that is on-screen, unlike
+	// firefox.
 	//-If you navigate to (click on links) another bsky page, the list of process stored here will not unload posts that are no longer visible that were once visible before you navigate
 	// due to the entire page not refreshing. This means that if you say navigate from the user profile page to a posts, several posts from the profile page persist while being on a
 	// post page. This script will detect loaded-but-invisible lists and ignore them.
