@@ -302,6 +302,13 @@
 				document.getElementById("Output_Plaintext").value = JSON.stringify(OutputObject, null, JsonIndentReadble)
 		} catch (JSError) {
 			document.getElementById("Output_Plaintext").value = "Error, certain data is missing (JSON missing attributes):\n " + JSError
+			
+			document.getElementById("Output_Statistic_ProfileCount_BeforeFilter").innerText = "Error"
+			document.getElementById("Output_Statistic_ProfileCount_AfterFilter").innerText = "Error"
+			document.getElementById("Output_Statistic_ProfileCount_Removed").innerText = "Error"
+			document.getElementById("Output_Statistic_PostCount_BeforeFilter").innerText = "Error"
+			document.getElementById("Output_Statistic_PostCount_AfterFilter").innerText = "Error"
+			document.getElementById("Output_Statistic_PostCount_Removed").innerText = "Error"
 		}
 	}
 	
