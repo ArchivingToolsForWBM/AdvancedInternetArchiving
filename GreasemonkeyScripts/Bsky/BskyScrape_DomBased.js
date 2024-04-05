@@ -431,9 +431,6 @@
 												//}
 											}
 										}
-										if (PostURL == "https://bsky.app/profile/00sunmoon.bsky.social/post/3kmofkyrfcm23") {
-											let breakpoint = 0
-										}
 										let NodeOfPostContent = DescendNode(Post, [0,0,1,1,1+ReplyToOffset])
 										if (NodeOfPostContent.IsSuccessful) {
 											PostContent = GetPostContent(NodeOfPostContent.OutputNode, "Post_UserFontPage")

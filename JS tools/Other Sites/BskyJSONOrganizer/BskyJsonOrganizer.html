@@ -135,6 +135,7 @@
 			let JsonEnteredData = document.getElementById("JsonScrapedBskyData").value
 			if (!isJsonString(JsonEnteredData)) {
 				document.getElementById("Output_Plaintext").value = "Invalid JSON"
+				ErrorStatistics()
 				return
 			}
 			let JsonData = JSON.parse(JsonEnteredData)
@@ -302,13 +303,7 @@
 				document.getElementById("Output_Plaintext").value = JSON.stringify(OutputObject, null, JsonIndentReadble)
 		} catch (JSError) {
 			document.getElementById("Output_Plaintext").value = "Error, certain data is missing (JSON missing attributes):\n " + JSError
-			
-			document.getElementById("Output_Statistic_ProfileCount_BeforeFilter").textContent = "Error"
-			document.getElementById("Output_Statistic_ProfileCount_AfterFilter").textContent = "Error"
-			document.getElementById("Output_Statistic_ProfileCount_Removed").textContent = "Error"
-			document.getElementById("Output_Statistic_PostCount_BeforeFilter").textContent = "Error"
-			document.getElementById("Output_Statistic_PostCount_AfterFilter").textContent = "Error"
-			document.getElementById("Output_Statistic_PostCount_Removed").textContent = "Error"
+			ErrorStatistics()
 		}
 	}
 	
@@ -343,5 +338,13 @@
 	}
 	function DeleteCopyMessage() {
 		document.getElementById("CopiedTextMessage").innerHTML = ""
+	}
+	function ErrorStatistics() {
+		document.getElementById("Output_Statistic_ProfileCount_BeforeFilter").textContent = "Error"
+		document.getElementById("Output_Statistic_ProfileCount_AfterFilter").textContent = "Error"
+		document.getElementById("Output_Statistic_ProfileCount_Removed").textContent = "Error"
+		document.getElementById("Output_Statistic_PostCount_BeforeFilter").textContent = "Error"
+		document.getElementById("Output_Statistic_PostCount_AfterFilter").textContent = "Error"
+		document.getElementById("Output_Statistic_PostCount_Removed").textContent = "Error"
 	}
 </script>
