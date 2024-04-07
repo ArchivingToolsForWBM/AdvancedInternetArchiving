@@ -50,7 +50,7 @@
 			</ul>
 			Sort:
 			<ul>
-				<li><label><input type="radio" id="Sort_Post_Setting_Date" name="SortSetting_Post" onchange="AutoUpdate()">Date</label> (<label><input type="radio" id="Sort_Post_Setting_Date_Reverse" name="SortSetting_Post" onchange="AutoUpdate()" checked>Reverse</label>)</li>
+				<li><label><input type="radio" id="SortSetting_Post_Date" name="SortSetting_Post" onchange="AutoUpdate()">Date</label> (<label><input type="radio" id="SortSetting_Post_Date_Reverse" name="SortSetting_Post" onchange="AutoUpdate()" checked>Reverse</label>)</li>
 			</ul>
 		</td>
 		<td>
@@ -149,11 +149,11 @@
 		
 		try {
 			//sort and then filter list of posts (unlike the super-optimized way of filtering first so we can preserve the order)
-				if (document.getElementById("Sort_Post_Setting_Date").checked) {
+				if (document.getElementById("SortSetting_Post_Date").checked) {
 					SavedJson_PostList.sort((a,b) => {
 						return a.PostTimeStamp.TimestampMillisecondsEpoch - b.PostTimeStamp.TimestampMillisecondsEpoch
 					})
-				} else if (document.getElementById("Sort_Post_Setting_Date_Reverse").checked) {
+				} else if (document.getElementById("SortSetting_Post_Date_Reverse").checked) {
 					SavedJson_PostList.sort((a,b) => {
 						return b.PostTimeStamp.TimestampMillisecondsEpoch - a.PostTimeStamp.TimestampMillisecondsEpoch
 					})
@@ -230,7 +230,7 @@
 						}
 					});
 				} else if (document.getElementById("SortSetting_Profile_UserHandle").checked) {
-						SavedJson_ProfileList.sort((a,b) => {
+					SavedJson_ProfileList.sort((a,b) => {
 						if (a.UserHandle === b.UserHandle) {
 							return 0;
 						} else {
@@ -238,7 +238,7 @@
 						}
 					});
 				} else if (document.getElementById("SortSetting_Profile_UserHandle_Reverse").checked) {
-						SavedJson_ProfileList.sort((a,b) => {
+					SavedJson_ProfileList.sort((a,b) => {
 						if (a.UserHandle === b.UserHandle) {
 							return 0;
 						} else {
