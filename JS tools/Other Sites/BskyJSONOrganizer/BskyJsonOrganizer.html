@@ -29,30 +29,10 @@
 <textarea id="JsonScrapedBskyData" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" oninput="JSONTextareaChanged(); AutoUpdate()"></textarea><br><br>
 <table>
 	<tr>
-		<th>Posts</th>
 		<th>Profiles</th>
+		<th>Posts</th>
 	</tr>
 	<tr>
-		<td>
-			
-			
-			Include: <button onclick="ChangeFilterSettings('FilterInclude_Posts', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterInclude_Posts', 0); AutoUpdate()">Unheck all</button><button onclick="ChangeFilterSettings('FilterInclude_Posts', 2); AutoUpdate()">Invert</button>
-			<ul>MediaText
-				<li><label><input type="checkbox" class="FilterInclude_Posts" onchange="AutoUpdate()" id="FilterInclude_Posts_Media">Has media</label></li>
-				<li><label><input type="checkbox" class="FilterInclude_Posts" onchange="AutoUpdate()" id="FilterInclude_Posts_Text">Has text in content</label></li>
-				<li><label><input type="checkbox" class="FilterInclude_Posts" onchange="AutoUpdate()" id="FilterInclude_Posts_Quote">Has quoted post</label></li>
-			</ul>
-			Exclude: <button onclick="ChangeFilterSettings('FilterExclude_Posts', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterExclude_Posts', 0); AutoUpdate()">Unheck all</button><button onclick="ChangeFilterSettings('FilterExclude_Posts', 2); AutoUpdate()">Invert</button>
-			<ul>
-				<li><label><input type="checkbox" class="FilterExclude_Posts" onchange="AutoUpdate()" id="FilterExclude_Posts_Media">Has media</label></li>
-				<li><label><input type="checkbox" class="FilterExclude_Posts" onchange="AutoUpdate()" id="FilterExclude_Posts_Text">Has text in content</label></li>
-				<li><label><input type="checkbox" class="FilterExclude_Posts" onchange="AutoUpdate()" id="FilterExclude_Posts_Quote">Has quoted post</label></li>
-			</ul>
-			Sort:
-			<ul>
-				<li><label><input type="radio" id="SortSetting_Post_Date" name="SortSetting_Post" onchange="AutoUpdate()">Date</label> (<label><input type="radio" id="SortSetting_Post_Date_Reverse" name="SortSetting_Post" onchange="AutoUpdate()" checked>Reverse</label>)</li>
-			</ul>
-		</td>
 		<td>
 			Include: <button onclick="ChangeFilterSettings('FilterInclude_Profile', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterInclude_Profile', 0); AutoUpdate()">Unheck all</button><button onclick="ChangeFilterSettings('FilterInclude_Profile', 2); AutoUpdate()">Invert</button>
 			<ul>
@@ -68,8 +48,26 @@
 			</ul>
 			Sort:
 			<ul>
-				<li><label><input type="radio" id="SortSetting_Profile_UserTitle" name="SortSetting_Profile" onchange="AutoUpdate()" checked>By user title</label> (<label><input type="radio" id="SortSetting_Profile_UserTitle_Reverse" name="SortSetting_Profile" onchange="AutoUpdate()">Reverse</label>)</li>
-				<li><label><input type="radio" id="SortSetting_Profile_UserHandle" name="SortSetting_Profile" onchange="AutoUpdate()">By user handle</label> (<label><input type="radio" id="SortSetting_Profile_UserHandle_Reverse" name="SortSetting_Profile" onchange="AutoUpdate()">Reverse</label>)</li>
+				<li><label><input type="radio" id="SortSetting_Profile_UserTitle" name="SortSetting_Profile" onchange="AutoUpdate()">By user title</label> (<label><input type="radio" id="SortSetting_Profile_UserTitle_Reverse" name="SortSetting_Profile" onchange="AutoUpdate()">Reverse</label>)</li>
+				<li><label><input type="radio" id="SortSetting_Profile_UserHandle" name="SortSetting_Profile" onchange="AutoUpdate()" checked>By user handle</label> (<label><input type="radio" id="SortSetting_Profile_UserHandle_Reverse" name="SortSetting_Profile" onchange="AutoUpdate()">Reverse</label>)</li>
+			</ul>
+		</td>
+		<td>
+			Include: <button onclick="ChangeFilterSettings('FilterInclude_Posts', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterInclude_Posts', 0); AutoUpdate()">Unheck all</button><button onclick="ChangeFilterSettings('FilterInclude_Posts', 2); AutoUpdate()">Invert</button>
+			<ul>MediaText
+				<li><label><input type="checkbox" class="FilterInclude_Posts" onchange="AutoUpdate()" id="FilterInclude_Posts_Media">Has media</label></li>
+				<li><label><input type="checkbox" class="FilterInclude_Posts" onchange="AutoUpdate()" id="FilterInclude_Posts_Text">Has text in content</label></li>
+				<li><label><input type="checkbox" class="FilterInclude_Posts" onchange="AutoUpdate()" id="FilterInclude_Posts_Quote">Has quoted post</label></li>
+			</ul>
+			Exclude: <button onclick="ChangeFilterSettings('FilterExclude_Posts', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterExclude_Posts', 0); AutoUpdate()">Unheck all</button><button onclick="ChangeFilterSettings('FilterExclude_Posts', 2); AutoUpdate()">Invert</button>
+			<ul>
+				<li><label><input type="checkbox" class="FilterExclude_Posts" onchange="AutoUpdate()" id="FilterExclude_Posts_Media">Has media</label></li>
+				<li><label><input type="checkbox" class="FilterExclude_Posts" onchange="AutoUpdate()" id="FilterExclude_Posts_Text">Has text in content</label></li>
+				<li><label><input type="checkbox" class="FilterExclude_Posts" onchange="AutoUpdate()" id="FilterExclude_Posts_Quote">Has quoted post</label></li>
+			</ul>
+			Sort:
+			<ul>
+				<li><label><input type="radio" id="SortSetting_Post_Date" name="SortSetting_Post" onchange="AutoUpdate()">Date</label> (<label><input type="radio" id="SortSetting_Post_Date_Reverse" name="SortSetting_Post" onchange="AutoUpdate()" checked>Reverse</label>)</li>
 			</ul>
 		</td>
 	</tr>
