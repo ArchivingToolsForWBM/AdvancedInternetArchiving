@@ -1398,7 +1398,7 @@
 								} else {
 									//PostSegment contains multiple sub-boxes here
 									//https://bsky.app/profile/dumjaveln.bsky.social/post/3klkgthv63q2z quoted post
-									let Node_QuoteSubBox = DescendNode(PostSegment, [0]) //Go down a div level
+									let Node_QuoteSubBox = DescendNode(PostSegment, [0, 0]) //Go down a div level
 									if (Node_QuoteSubBox.IsSuccessful) {
 										if (Node_QuoteSubBox.OutputNode.tagName != "A") {
 											let SubBoxesContent = []
