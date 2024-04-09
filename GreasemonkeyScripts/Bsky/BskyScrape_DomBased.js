@@ -1385,7 +1385,27 @@
 						if (NodeForDivs.IsSuccessful) {
 							if (typeof NodeForDivs.OutputNode.getElementsByTagName === "function") {
 								//^"Reply to ..." can happen if this code executes before their "Reply to" fully loads, causing NodeForDivs.OutputNode to be a text node instead of a tag node
-								if (Array.from(NodeForDivs.OutputNode.getElementsByTagName("DIV")).length == 0) { //If there is no more div levels down, then this is user-posted text EDIT: uhh problem if the post contains hashtags! Each tag is in a div!
+								let SegmentType = (() => {
+									let ListOfInnerDivs = [...NodeForDivs.OutputNode.getElementsByTagName("DIV")]
+									//If there is no more div levels down, then this is user-posted text.
+									if (ListOfInnerDivs.length == 0) {
+										return "PlainText"
+									} else {
+										//Hashtags are inside a div -> button -> span
+										//Find a div that isn't a hashtag, if not, then this is a plaintext
+										let NonHash = ListOfInnerDivs.findIndex((Hashtags) => {
+											return (!/^#[^\s\/\,\.]+$/.test(Hashtags.textContent))
+										})
+										if (NonHash == -1) {
+											return "PlainText"
+										} else {
+											return "TextWithFormattedContent"
+										}
+									}
+								})();
+								
+								
+								if (SegmentType == "PlainText") {
 									let TextContentObject = {
 										ContentType: "Text",
 										UserPostedText: PostSegment.textContent
