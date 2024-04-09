@@ -1385,7 +1385,7 @@
 						if (NodeForDivs.IsSuccessful) {
 							if (typeof NodeForDivs.OutputNode.getElementsByTagName === "function") {
 								//^"Reply to ..." can happen if this code executes before their "Reply to" fully loads, causing NodeForDivs.OutputNode to be a text node instead of a tag node
-								if (Array.from(NodeForDivs.OutputNode.getElementsByTagName("DIV")).length == 0) { //If there is no more div levels down, then this is user-posted text
+								if (Array.from(NodeForDivs.OutputNode.getElementsByTagName("DIV")).length == 0) { //If there is no more div levels down, then this is user-posted text EDIT: uhh problem if the post contains hashtags! Each tag is in a div!
 									let TextContentObject = {
 										ContentType: "Text",
 										UserPostedText: PostSegment.textContent
