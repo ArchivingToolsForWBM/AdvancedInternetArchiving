@@ -108,7 +108,7 @@ Sort:
 			//2023-12-10 note: I noticed that twitter's media section including on the search results now only display a grid of images instead of tweets
 			//until the image is clicked, and that it only displays the first image of a tweet when there are multiple (including if its loaded in the HTML)
 			//Therefore if you try to extract URLs, you'll only get the URL of the first image and the tweet.
-		const Setting_Nitter_Instance_ConvertFrom = "https://nitter.moomoo.me"
+		const Setting_Nitter_Instance_ConvertFrom = "https://nitter.privacydev.net"
 			//^Same as above, but when you are scraping from nitter instance A, but get URLs from instance B.
 		
 		//Don't touch these. It corrects the instance URLs in the event your browser appends a slash symbol at the end of the domain name.
@@ -251,6 +251,12 @@ Sort:
 				Type:"normal",
 				FindWhat:RegExp("(?:" + NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "|https:\\/\\/twitter\\.com|https?:\\/\\/(?:www\\.)?x\\.com)" + "\\/((?!(about|intent|logo\\.png|search|settings|pic))[a-zA-Z0-9\\-_]+).*$"),
 				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "/$1", KeyName:"Nitter_UserProfile_Front"}, {Replacement:Nitter_Instance_ConvertTo + "/$1/with_replies", KeyName:"Nitter_UserProfile_Replies"}, {Replacement:Nitter_Instance_ConvertTo + "/$1/media", KeyName:"Nitter_UserProfile_Media"}]
+			},
+			{
+				//Profile images
+				Type:"normal",
+				FindWhat:RegExp("^" + NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/pbs\\.twimg\\.com%2Fprofile_images%2F(\\d+)%2F([a-zA-Z\\d\\-\\.]+$)"),
+				ReplaceWith:[{Replacement:"https://pbs.twimg.com/profile_images/$1/$2", KeyName:"Twitter_Images_Profile_Orig"}]
 			},
 			{
 				//Tweets
