@@ -41,8 +41,13 @@ Filter:<br>
 			<li><label><input type="checkbox" onchange="AutoUpdateCode()" class="FilterSettings" checked id="FilterList_NotSaved" data-savedlist_status_name="NotSaved">Include URLs that haven't been saved</label></li>
 		</ul>
 	</li>
-	<li>Is within a given date range: <abbr title="Inclusive, URLs before this date will be excluded.">Start</abbr>: <input type="date" oninput="AutoUpdateCode()" id="DateRangeStart" onchange="ValidateDateRange()"> <abbr title="Exclusive, URLs on or after this date will be excluded">End</abbr>: <input type="date" oninput="AutoUpdateCode()" id="DateRangeEnd" onchange="ValidateDateRange()">
-	Any date that is not valid (such as missing year, month and/or day) will not apply its exclusion (example: having just the end date would mean ALL URLs before it will be shown in the output). If you entered a date and wish to invalidate it, use BACKSPACE, when editing the text string (in Google Chrome, make sure the <a href="https://en.wikipedia.org/wiki/Date_picker">date picker</a> isn't present).</li>
+	<li>Is within a given date range:
+		<ul>
+			<li><abbr title="Inclusive, URLs before this date will be excluded.">Start</abbr>: <input type="date" oninput="AutoUpdateCode()" id="DateRangeStart" onchange="ValidateDateRange()"> <span id="MinDateAppliedState" hidden style="color: #00FF00">Applied</span></li>
+			<li><abbr title="Exclusive, URLs on or after this date will be excluded">End</abbr>: <input type="date" oninput="AutoUpdateCode()" id="DateRangeEnd" onchange="ValidateDateRange()"> <span id="MaxDateAppliedState" hidden style="color: #00FF00">Applied</span></li>
+		</ul>
+	*Any date that is not valid (such as missing year, month and/or day) will not apply its exclusion (example: having just the end date would mean ALL URLs before it will be shown in the output). If you entered a date and wish to invalidate it, use BACKSPACE, when editing the text string (in Google Chrome, make sure the <a href="https://en.wikipedia.org/wiki/Date_picker">date picker</a> isn't present).
+	</li>
 </ul>
 Misc:
 <p hidden>dev comment: These NEED to call SaveStatusesChanged, which sets IsListOrModeChanged to true, so the system correctly realizes it is in fact a change on treating certain things (http and https for example, have different results depending on the ignore for that) </p>
@@ -136,7 +141,20 @@ Sort:<br>
 		AutoUpdateCode()
 	}
 	function ValidateDateRange() {
-		if ((document.getElementById("DateRangeStart").value != "")&&(document.getElementById("DateRangeEnd").value != "")&&(document.getElementById("DateRangeEnd").value < document.getElementById("DateRangeStart").value)) {
+		let DateEarliestString = document.getElementById("DateRangeStart").value
+		let DateLatestString = document.getElementById("DateRangeEnd").value
+		if (DateEarliestString != "") {
+			document.getElementById("MinDateAppliedState").hidden = false
+		} else {
+			document.getElementById("MinDateAppliedState").hidden = true
+		}
+		if (DateLatestString != "") {
+			document.getElementById("MaxDateAppliedState").hidden = false
+		} else {
+			document.getElementById("MaxDateAppliedState").hidden = true
+		}
+
+		if ((DateEarliestString != "")&&(DateLatestString != "")&&(DateLatestString < DateEarliestString)) {
 			document.getElementById("SubmitButton").disabled = true
 			document.getElementById("InvalidDateMessage").innerHTML = "<kbd style='color: #ff0000'>End date is before the start!</kbd>"
 		} else {
@@ -307,24 +325,24 @@ Sort:<br>
 		//Output
 			//Statistics
 				//Total
-					document.getElementById("Statistic_NumberOfItems_TotalURLs").innerHTML = BigInt(Count_TotalUrls).toString(10)
+					document.getElementById("Statistic_NumberOfItems_TotalURLs").textContent = BigInt(Count_TotalUrls).toString(10)
 				//How many saved
-					document.getElementById("Statistic_NumberOfItems_Saved").innerHTML = BigInt(Count_Saved).toString(10) + " (" + BetterPercentageUsingInts(Count_Saved, Count_TotalUrls, 2, true) + ")"
+					document.getElementById("Statistic_NumberOfItems_Saved").textContent = BigInt(Count_Saved).toString(10) + " (" + BetterPercentageUsingInts(Count_Saved, Count_TotalUrls, 2, true) + ")"
 					document.getElementById("StatisticPercentage_NumberOfItems_Saved").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Saved, Count_TotalUrls, "to right", "#008000", "#000000")
 				//How many redirects
-					document.getElementById("Statistic_NumberOfItems_SavedRedirected").innerHTML = BigInt(Count_Redirected).toString(10) + " (" + BetterPercentageUsingInts(Count_Redirected, Count_TotalUrls, 2, true) + ")"
+					document.getElementById("Statistic_NumberOfItems_SavedRedirected").textContent = BigInt(Count_Redirected).toString(10) + " (" + BetterPercentageUsingInts(Count_Redirected, Count_TotalUrls, 2, true) + ")"
 					document.getElementById("StatisticPercentage_NumberOfItems_SavedRedirected").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Redirected, Count_TotalUrls, "to right", "#808000", "#000000")
 				//How many not saved
-					document.getElementById("Statistic_NumberOfItems_NotSaved").innerHTML = BigInt(Count_NotSaved).toString(10) + " (" + BetterPercentageUsingInts(Count_NotSaved, Count_TotalUrls, 2, true) + ")"
+					document.getElementById("Statistic_NumberOfItems_NotSaved").textContent = BigInt(Count_NotSaved).toString(10) + " (" + BetterPercentageUsingInts(Count_NotSaved, Count_TotalUrls, 2, true) + ")"
 					document.getElementById("StatisticPercentage_NumberOfItems_NotSaved").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_NotSaved, Count_TotalUrls, "to right", "#800000", "#000000")
 				//Earliest and latest date found
-					document.getElementById("StatisticTimestamp_Earliest").innerHTML = Date_Earliest
-					document.getElementById("StatisticTimestamp_Latest").innerHTML = Date_Latest
+					document.getElementById("StatisticTimestamp_Earliest").textContent = Date_Earliest
+					document.getElementById("StatisticTimestamp_Latest").textContent = Date_Latest
 				//How many in the output (post-filtering)
-					document.getElementById("Statistic_NumberOfItems_FilteredRemaining").innerHTML = BigInt(InputList.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length, Count_TotalUrls, 2, true) + ")"
+					document.getElementById("Statistic_NumberOfItems_FilteredRemaining").textContent = BigInt(InputList.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length, Count_TotalUrls, 2, true) + ")"
 					document.getElementById("StatisticPercentage_NumberOfItems_FilteredRemaining").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(InputList.length, Count_TotalUrls, "to right", "#0000ff", "#000000")
 					
-					document.getElementById("Statistic_NumberOfItems_FilteredRemoved").innerHTML = BigInt(Count_TotalUrls-InputList.length).toString(10) + " (" + BetterPercentageUsingInts(Count_TotalUrls-InputList.length, Count_TotalUrls, 2, true) + ")"
+					document.getElementById("Statistic_NumberOfItems_FilteredRemoved").textContent = BigInt(Count_TotalUrls-InputList.length).toString(10) + " (" + BetterPercentageUsingInts(Count_TotalUrls-InputList.length, Count_TotalUrls, 2, true) + ")"
 					document.getElementById("StatisticPercentage_NumberOfItems_FilteredRemoved").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_TotalUrls-InputList.length, Count_TotalUrls, "to right", "#0000ff", "#000000")
 			//List
 				Output = ""

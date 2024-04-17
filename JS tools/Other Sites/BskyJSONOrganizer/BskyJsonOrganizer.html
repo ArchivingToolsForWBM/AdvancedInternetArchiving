@@ -64,6 +64,13 @@
 				<li><label><input type="checkbox" class="FilterExclude_Posts" onchange="AutoUpdate()" id="FilterExclude_Posts_Media">Has media</label></li>
 				<li><label><input type="checkbox" class="FilterExclude_Posts" onchange="AutoUpdate()" id="FilterExclude_Posts_Text">Has text in content</label></li>
 				<li><label><input type="checkbox" class="FilterExclude_Posts" onchange="AutoUpdate()" id="FilterExclude_Posts_Quote">Has quoted post</label></li>
+				<li>Is within date range (UTC):
+					<ul>
+						<li>No earlier than: <input type="date" id="FilterExclude_Posts_DateEarliest" onchange="ValidateDateRange(); AutoUpdate()"> <span id="MinDateAppliedState" hidden style="color: #00FF00">Applied</span></li>
+						<li>Not on or later than: <input type="date" id="FilterExclude_Posts_DateLatest" onchange="ValidateDateRange(); AutoUpdate()"> <span id="MaxDateAppliedState" hidden style="color: #00FF00">Applied</span></li></li>
+					</ul>
+					<span id="DateEndBeforeStartMsg" hidden style="color: #FF0000">End date is before start date!</span>
+				</li>
 			</ul>
 			Sort:
 			<ul>
@@ -126,6 +133,25 @@
 			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
 				document.getElementsByClassName(ElementClass)[i].checked = document.getElementsByClassName(ElementClass)[i].checked ^ 1
 			}
+		}
+	}
+	function ValidateDateRange() {
+		let DateEarliestString = document.getElementById("FilterExclude_Posts_DateEarliest").value
+		let DateLatestString = document.getElementById("FilterExclude_Posts_DateLatest").value
+		if (DateEarliestString != "") {
+			document.getElementById("MinDateAppliedState").hidden = false
+		} else {
+			document.getElementById("MinDateAppliedState").hidden = true
+		}
+		if (DateLatestString != "") {
+			document.getElementById("MaxDateAppliedState").hidden = false
+		} else {
+			document.getElementById("MaxDateAppliedState").hidden = true
+		}
+		if ((DateEarliestString != "" && DateLatestString != "") && DateLatestString < DateEarliestString) {
+			document.getElementById("DateEndBeforeStartMsg").hidden = false
+		} else {
+			document.getElementById("DateEndBeforeStartMsg").hidden = true
 		}
 	}
 	function MainCode() {
@@ -203,6 +229,14 @@
 							return false
 						}
 						if (document.getElementById("FilterExclude_Posts_Quote").checked && (hasQuote)) { //If quote is prohibited and not have one, filter out
+							return false
+						}
+					//No earlier than
+						if (document.getElementById("FilterExclude_Posts_DateEarliest").value != "" && Post.PostTimeStamp.Date_UTC.match(/\d{4}-\d{2}-\d{2}/) < document.getElementById("FilterExclude_Posts_DateEarliest").value) { //If earliest date applied and the post earlier than it, filter out
+							return false
+						}
+					//Not on or later than
+						if (document.getElementById("FilterExclude_Posts_DateLatest").value != "" && Post.PostTimeStamp.Date_UTC.match(/\d{4}-\d{2}-\d{2}/) > document.getElementById("FilterExclude_Posts_DateLatest").value) { //If latest date applied and the post later than it, filter out
 							return false
 						}
 					return true
