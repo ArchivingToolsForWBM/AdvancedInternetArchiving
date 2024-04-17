@@ -439,7 +439,7 @@ Sort:
 				//https://rimgo.totaldarkness.net/<id>
 				//https://rimgo.totaldarkness.net/<id>.<extension>
 				Type:"normal",
-				FindWhat:/https:\/\/i\.imgur\.com\/(([^\/\.]+)\.[^\/\.]+)/,
+				FindWhat:/https:\/\/i\.imgur\.com\/(([^\/\.]+)\.[^\/\.\d]+).*$/,
 				ReplaceWith:[
 					{Replacement: Setting_Imgur_AlternativeFrontendInstance.replace(/\/$/, "") + "/$1", KeyName:"Imgur_AFE_Image"},
 					{Replacement: Setting_Imgur_AlternativeFrontendInstance.replace(/\/$/, "") + "/$2", KeyName:"Imgur_AFE_PageImage"},
