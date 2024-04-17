@@ -133,6 +133,11 @@ Sort:
 		//https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:<hash1>/<hash2>@jpeg
 		//https://cdn.bsky.app/img/avatar/plain/did:plc:<hash1>/<hash2>@jpeg
 			const BSkyDomainName_CDN_Domain = "(?:https:\\/\\/(?:cdn.bsky.app))"
+	//Imgur (see archiveteam: https://wiki.archiveteam.org/index.php/Imgur)
+	//"On 2024-02-26, Imgur started redirecting direct image links to the corresponding page."
+	//WBM is also having trouble saving the pages as well.
+		const Setting_Imgur_AlternativeFrontendInstance = "https://rimgo.totaldarkness.net"
+			//^Same rule as for nitter's Setting_Nitter_Instance_ConvertTo on that string.
 	//An array containing a list of objects specifying the replacement.
 	//-When "Type" is "normal": performs a simple replacement (replace a substring or remove a part of the string), the attributes are:
 	//--FindWhat: <Regex>: A regular expression the URLs in the input must match with to identify what appropriate replacement to perform a URL conversion.
@@ -234,40 +239,40 @@ Sort:
 			//https://nitter.ktachibana.party
 			{
 				Type:"blacklisted",
-				FindWhat:RegExp("(" + (NitterInstance_StringToRegex(Nitter_Instance_ConvertTo) + "|" + NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom)) + ")\\/(pic\\/media.*name%3Dsmall|search|[a-zA-Z0-9\\-_]+\\/status\\/\\d+\\/(favoriters|retweeters)|about$|logo\\.png$|search$|settings)")
+				FindWhat:RegExp("(" + (AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertTo) + "|" + AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom)) + ")\\/(pic\\/media.*name%3Dsmall|search|[a-zA-Z0-9\\-_]+\\/status\\/\\d+\\/(favoriters|retweeters)|about$|logo\\.png$|search$|settings)")
 			},
 			{
 				//We don't want the home page consisting just a search bar.
 				Type:"blacklisted",
-				FindWhat:RegExp("^(" + (NitterInstance_StringToRegex(Nitter_Instance_ConvertTo) + "|" + NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom)) + ")\\/?$"),
+				FindWhat:RegExp("^(" + (AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertTo) + "|" + AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom)) + ")\\/?$"),
 			},
 			{
 				Type:"blacklisted",
 				//FindWhat:/https:\/\/liberapay\.com\/zedeus.*$/
-				FindWhat:RegExp("(" + (NitterInstance_StringToRegex(Nitter_Instance_ConvertTo) + "|" + NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom)) + ")" + "\/zedeus.*$")
+				FindWhat:RegExp("(" + (AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertTo) + "|" + AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom)) + ")" + "\/zedeus.*$")
 			},
 			{
 				//Profile pages
 				Type:"normal",
-				FindWhat:RegExp("(?:" + NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "|https:\\/\\/twitter\\.com|https?:\\/\\/(?:www\\.)?x\\.com)" + "\\/((?!(about|intent|logo\\.png|search|settings|pic))[a-zA-Z0-9\\-_]+).*$"),
+				FindWhat:RegExp("(?:" + AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "|https:\\/\\/twitter\\.com|https?:\\/\\/(?:www\\.)?x\\.com)" + "\\/((?!(about|intent|logo\\.png|search|settings|pic))[a-zA-Z0-9\\-_]+).*$"),
 				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "/$1", KeyName:"Nitter_UserProfile_Front"}, {Replacement:Nitter_Instance_ConvertTo + "/$1/with_replies", KeyName:"Nitter_UserProfile_Replies"}, {Replacement:Nitter_Instance_ConvertTo + "/$1/media", KeyName:"Nitter_UserProfile_Media"}]
 			},
 			{
 				//Profile images
 				Type:"normal",
-				FindWhat:RegExp("^" + NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/pbs\\.twimg\\.com%2Fprofile_images%2F(\\d+)%2F([a-zA-Z\\d\\-\\.]+$)"),
+				FindWhat:RegExp("^" + AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/pbs\\.twimg\\.com%2Fprofile_images%2F(\\d+)%2F([a-zA-Z\\d\\-\\.]+$)"),
 				ReplaceWith:[{Replacement:"https://pbs.twimg.com/profile_images/$1/$2", KeyName:"Twitter_Images_Profile_Orig"}]
 			},
 			{
 				//Tweets
 				Type:"normal",
-				FindWhat:RegExp("(?:" + NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "|https:\\/\\/twitter\\.com|https?:\\/\\/(?:www\\.)?x\\.com)" + "(\\/((?!(about|logo\\.png|search|pic))[a-zA-Z0-9\\-_]+)\\/status\\/\\d+).*$"),
+				FindWhat:RegExp("(?:" + AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "|https:\\/\\/twitter\\.com|https?:\\/\\/(?:www\\.)?x\\.com)" + "(\\/((?!(about|logo\\.png|search|pic))[a-zA-Z0-9\\-_]+)\\/status\\/\\d+).*$"),
 				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "$1", KeyName:"Nitter_Tweet"}]
 			},
 			{
 				//Images (convert nitter images to twitter modern images)
 				Type:"normal",
-				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/orig\\/media%2F([a-zA-Z0-9\\-_]+)\\.([a-zA-Z0-9]+)$"),
+				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/orig\\/media%2F([a-zA-Z0-9\\-_]+)\\.([a-zA-Z0-9]+)$"),
 				ReplaceWith:[{Replacement:"https://pbs.twimg.com/media/$1?format=$2&name=orig", KeyName:"Twitter_Images_Modern_Orig"},{Replacement:"https://pbs.twimg.com/media/$1?format=$2&name=thumb", KeyName:"Twitter_Images_Modern_thumb"}]
 			},
 			{
@@ -276,20 +281,20 @@ Sort:
 				
 				//Nitter images (from a tweet that has pictures)
 				Type:"normal",
-				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "(\\/pic\\/orig\\/media%2F[a-zA-Z0-9\\-_]+\\.[a-zA-Z0-9]+)$"),
+				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "(\\/pic\\/orig\\/media%2F[a-zA-Z0-9\\-_]+\\.[a-zA-Z0-9]+)$"),
 				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "$1", KeyName:"Nitter_Images"}]
 			},
 			{
 				//Profile images and banners
 				Type:"normal",
-				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "(\\/pic\\/(https%3A%2F%2Fpbs\\.twimg\\.com%2Fprofile_banners%2F|pbs\\.twimg\\.com%2Fprofile_images%2F|profile_images%2F).*$)"),
+				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "(\\/pic\\/(https%3A%2F%2Fpbs\\.twimg\\.com%2Fprofile_banners%2F|pbs\\.twimg\\.com%2Fprofile_images%2F|profile_images%2F).*$)"),
 				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "$1", KeyName:"Nitter_ProfileBannersAndImages"}]
 			},
 			{
 				//Thumbnails on profile pages, converted to nitter images.
 				//https://nitter.x86-64-unknown-linux-gnu.zip/pic/media%2FF4gd6gjakAAFhsD.jpg%3Athumb
 				Type:"normal",
-				FindWhat:RegExp(NitterInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/media%2F([a-zA-Z0-9\\-_]+)\\.([a-zA-Z0-9]+).*$"),
+				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/media%2F([a-zA-Z0-9\\-_]+)\\.([a-zA-Z0-9]+).*$"),
 				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "/pic/orig/media%2F$1.$2", KeyName:"Nitter_Images"}]
 			},
 			//Rid out links from nitter linking to non-savable twitter pages and https://liberapay.com/zedeus
@@ -394,7 +399,7 @@ Sort:
 				PageNumberStartsAt:1,
 				KeyName:"Github_Repository_ReleasesList"
 			},
-			//Project bluesky (YAY it is open to public!!) Right now WBM have trouble saving them (white blank page)
+			//Project bluesky (YAY it is open to public!!) Right now WBM have trouble saving them (blank page)
 			{
 				//Userpage
 				Type:"normal",
@@ -424,6 +429,26 @@ Sort:
 				Type:"normal",
 				FindWhat: RegExp("(" + BSkyDomainName_CDN_Domain + "\\/img\\/banner\\/plain\\/.*$)"),
 				ReplaceWith:[{Replacement:"$1",KeyName:"Bsky_Img_Banner"}]
+			},
+			//imgur is getting worse! Photobucket 2.0?
+			{
+				//Image links
+				//https://imgur.com/<id>
+				//https://i.imgur.com/<id>.<extension>
+				//
+				//https://rimgo.totaldarkness.net/<id>
+				//https://rimgo.totaldarkness.net/<id>.<extension>
+				Type:"normal",
+				FindWhat:/https:\/\/i\.imgur\.com\/(([^\/\.]+)\.[^\/\.]+)/,
+				ReplaceWith:[
+					{Replacement: Setting_Imgur_AlternativeFrontendInstance.replace(/\/$/, "") + "/$1", KeyName:"Imgur_AFE_Image"},
+					{Replacement: Setting_Imgur_AlternativeFrontendInstance.replace(/\/$/, "") + "/$2", KeyName:"Imgur_AFE_PageImage"},
+				]
+			},
+			{
+				Type:"normal",
+				FindWhat:/https:\/\/imgur\.com\/([^\/\.]+)/,
+				ReplaceWith:[{Replacement: Setting_Imgur_AlternativeFrontendInstance.replace(/\/$/, "") + "/$1", KeyName:"Imgur_AFE_PageImage"}]
 			}
 		]
 	window.onload = LoadCustomToggableFilters
@@ -469,7 +494,7 @@ Sort:
 		document.getElementById("Parent_ToggleableCustomFilters").insertBefore(UnorderedListOfKeynameFilters, document.getElementById("ToggleableCustomFilters"));
 	}
 	
-	function NitterInstance_StringToRegex(StringInput) {
+	function AlternativeFrontendInstance_StringToRegex(StringInput) {
 		return StringInput.replace("/", "\\/").replace(".", "\\.")
 	}
 	function Auto_update() {
