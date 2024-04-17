@@ -66,8 +66,8 @@
 				<li><label><input type="checkbox" class="FilterExclude_Posts" onchange="AutoUpdate()" id="FilterExclude_Posts_Quote">Has quoted post</label></li>
 				<li>Is within date range (UTC):
 					<ul>
-						<li>No earlier than: <input type="date" id="FilterExclude_Posts_DateEarliest" onchange="ValidateDateRange(); AutoUpdate()"> <span id="MinDateAppliedState" hidden style="color: #00FF00">Applied</span></li>
-						<li>Not on or later than: <input type="date" id="FilterExclude_Posts_DateLatest" onchange="ValidateDateRange(); AutoUpdate()"> <span id="MaxDateAppliedState" hidden style="color: #00FF00">Applied</span></li></li>
+						<li>Exclude posts earlier than: <input type="date" id="FilterExclude_Posts_DateEarliest" onchange="ValidateDateRange(); AutoUpdate()"> <span id="MinDateAppliedState" hidden style="color: #00FF00">Applied</span></li>
+						<li>Exclude posts on or later than: <input type="date" id="FilterExclude_Posts_DateLatest" onchange="ValidateDateRange(); AutoUpdate()"> <span id="MaxDateAppliedState" hidden style="color: #00FF00">Applied</span></li></li>
 					</ul>
 					<span id="DateEndBeforeStartMsg" hidden style="color: #FF0000">End date is before start date!</span>
 				</li>
@@ -83,27 +83,32 @@
 <button onclick="MainCode()">Submit</button>
 <hr>
 <table>
-
 	<tr>
-		<td></td>
-		<th>Before filter</th>
-		<th>After filter</th>
-		<th>How many removed</th>
+		<th colspan="2">Type</th>
+		<th>Count</th>
 	</tr>
 	<tr>
-		<th>Number of profiles:</th>
-		<td><kbd id="Output_Statistic_ProfileCount_BeforeFilter">0</kbd></td>
-		<td><kbd id="Output_Statistic_ProfileCount_AfterFilter">0</kbd></td>
-		<td><kbd id="Output_Statistic_ProfileCount_Removed">0</kbd></td>
+		<th rowspan="3">Profiles</th>
+		<td><kbd>Originally have</kbd></td><td><kbd id="Output_Statistic_ProfileCount_BeforeFilter">0</kbd></td>
 	</tr>
 	<tr>
-		<th>Number of posts prior:</th>
-		<td><kbd id="Output_Statistic_PostCount_BeforeFilter">0</kbd></td>
-		<td><kbd id="Output_Statistic_PostCount_AfterFilter">0</kbd></td>
-		<td><kbd id="Output_Statistic_PostCount_Removed">0</kbd></td>
+		<td><kbd>After filtered</kbd></td><td id="Output_Statistic_ProfileCountBarGraph_AfterFilter"><kbd id="Output_Statistic_ProfileCount_AfterFilter">0</kbd></td>
 	</tr>
-
+	<tr>
+		<td><kbd>Removed</kbd></td><td id="Output_Statistic_ProfileCountBarGraph_Removed"><kbd id="Output_Statistic_ProfileCount_Removed">0</kbd></td>
+	</tr>
+	<tr>
+		<th rowspan="3">Posts</th>
+		<td><kbd>Originally have</kbd></td><td><kbd id="Output_Statistic_PostCount_BeforeFilter">0</kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>After filtered</kbd></td><td id="Output_Statistic_PostCountBarGraph_AfterFilter"><kbd id="Output_Statistic_PostCount_AfterFilter">0</kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Removed</kbd></td><td id="Output_Statistic_PostCountBarGraph_Removed"><kbd id="Output_Statistic_PostCount_Removed">0</kbd></td>
+	</tr>
 </table>
+
 <textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
 <button onclick="setClipboard(document.getElementById('Output_Plaintext').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
 <script>
@@ -242,8 +247,11 @@
 					return true
 				})
 				let Count_PostAfterFilter = FilteredPostList.length
-				document.getElementById("Output_Statistic_PostCount_AfterFilter").textContent = BigInt(Count_PostAfterFilter).toString(10)
-				document.getElementById("Output_Statistic_PostCount_Removed").textContent = BigInt(Count_PostBeforeFilter-Count_PostAfterFilter).toString(10)
+				document.getElementById("Output_Statistic_PostCount_AfterFilter").textContent = BigInt(Count_PostAfterFilter).toString(10) + " (" + BetterPercentageUsingInts(Count_PostAfterFilter, Count_PostBeforeFilter, 2, true) + ")"
+				document.getElementById("Output_Statistic_PostCountBarGraph_AfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_PostAfterFilter, Count_PostBeforeFilter, "to right", "#0000FF", "#000000")
+				
+				document.getElementById("Output_Statistic_PostCount_Removed").textContent = BigInt(Count_PostBeforeFilter-Count_PostAfterFilter).toString(10) + " (" + BetterPercentageUsingInts(Count_PostBeforeFilter-Count_PostAfterFilter, Count_PostBeforeFilter, 2, true) + ")"
+				document.getElementById("Output_Statistic_PostCountBarGraph_Removed").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_PostBeforeFilter-Count_PostAfterFilter, Count_PostBeforeFilter, "to right", "#0000FF", "#000000")
 			//Do the same with profiles
 				if (document.getElementById("SortSetting_Profile_UserTitle").checked) {
 					SavedJson_ProfileList.sort((a,b) => {
@@ -319,8 +327,11 @@
 					return true
 				})
 				let Count_ProfileAfterFilter = FilteredProfileList.length
-				document.getElementById("Output_Statistic_ProfileCount_AfterFilter").textContent = BigInt(Count_ProfileAfterFilter).toString(10)
-				document.getElementById("Output_Statistic_ProfileCount_Removed").textContent = BigInt(Count_ProfileBeforeFilter-Count_ProfileAfterFilter).toString(10)
+				document.getElementById("Output_Statistic_ProfileCount_AfterFilter").textContent = BigInt(Count_ProfileAfterFilter).toString(10) + " (" + BetterPercentageUsingInts(Count_ProfileAfterFilter, Count_ProfileBeforeFilter, 2, true) + ")"
+				document.getElementById("Output_Statistic_ProfileCountBarGraph_AfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_ProfileAfterFilter, Count_ProfileBeforeFilter, "to right", "#0000FF", "#000000")
+				
+				document.getElementById("Output_Statistic_ProfileCount_Removed").textContent = BigInt(Count_ProfileBeforeFilter-Count_ProfileAfterFilter).toString(10) + " (" + BetterPercentageUsingInts(Count_ProfileBeforeFilter-Count_ProfileAfterFilter, Count_ProfileBeforeFilter, 2, true) + ")"
+				document.getElementById("Output_Statistic_ProfileCountBarGraph_Removed").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_ProfileBeforeFilter-Count_ProfileAfterFilter, Count_ProfileBeforeFilter, "to right", "#0000FF", "#000000")
 			//Output
 				let OutputObject = {
 					ListOfProfiles: FilteredProfileList,
@@ -378,5 +389,132 @@
 		document.getElementById("Output_Statistic_PostCount_BeforeFilter").textContent = "Error"
 		document.getElementById("Output_Statistic_PostCount_AfterFilter").textContent = "Error"
 		document.getElementById("Output_Statistic_PostCount_Removed").textContent = "Error"
+	}
+//Other functions
+	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec, Clamped) {
+		//Quantity = Amount in relation of MaxQuantity
+		//MaxQuantity = Total
+		//Clamped = (boolean): false = allow greater than 100%, true = only 0%-100% will display.
+		//This function calculates a percentage of a value (must be bigint), and returns a
+		//string representing a percentage using fixed-point arithmetic (https://en.wikipedia.org/wiki/Fixed-point_arithmetic ).
+		//Unlike a typical Quantity*100/MaxQuantity (or Quantity / MaxQuantity * 100)
+		//This also reports if rounding to 0 or 100% have occurred.
+		//Note: Don't use negative or decimal numbers for any of the parameters!
+		
+		//Output: A string:
+		//"--" if MaxQuantity is 0 (division by zero in bigint is not handled unlike double-precision floating point)
+		//"<number>%" a percentage. Rounds half-up.
+		//"Greater than <1*(10**(2+NumberOfDigitsAfterDec_BigInt))-1>" if results between 99.99..% and 100% (avoids rounding up towards 100%).
+		//"Less than <1/(10**NumberOfDigitsAfterDec_BigInt)>" is same as above but avoids rounding towards 0%.
+		
+		//100.0 is 1000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 1
+		//100.00 is 10000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 2
+		//100.000 is 100000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 3
+		Quantity = BigInt(Quantity)
+		MaxQuantity = BigInt(MaxQuantity)
+		NumberOfDigitsAfterDec_BigInt = BigInt(NumberOfDigitsAfterDec)
+		if (MaxQuantity == 0n) {
+			return "--"
+		} else {
+			let Percentage = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) / MaxQuantity
+			let Modulo = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) % MaxQuantity
+			//Check if remainder is greater than or equal to half of MaxQuantity, if so, increment
+			//Percentage by 1 unit.
+			
+			//Get halfway point, note: this must be rounded half up as well so that if Modulo is 0.5 greater in the case MaxQuantity is an odd number,
+			//would correctly round upwards. Example: 3/2 is 1.5 (default round to 1), since we are dealing with integers, Remainder being 2 or more should be
+			//consider a round up for percentage
+				let HalfwayPointOfMaxQuantity = MaxQuantity / 2n
+				if ((MaxQuantity % 2n) != 0n) {
+					HalfwayPointOfMaxQuantity++
+				}
+			//Round half-up
+				if (Modulo >= HalfwayPointOfMaxQuantity) { //round upwards
+					Percentage++
+					if (Clamped) {Percentage = BigintClamp(Percentage, 0n, 100n * 10n ** (NumberOfDigitsAfterDec_BigInt))}
+					//We rounded the number up (actually increased the value), but it can potentially be at 100%, lets check it and if it did, override it.
+					if (Percentage == 100n*10n**NumberOfDigitsAfterDec_BigInt) {
+						//Rounded to 100% detected
+						//Note to self:
+						//Should say 99% if NumberOfDigitsAfterDec_BigInt = 0
+						//Should say 99.9% if NumberOfDigitsAfterDec_BigInt = 1
+						//99.99 if NumberOfDigitsAfterDec_BigInt = 2
+						//and so on.
+						//So basically the number of 9s after the decimal
+						//is NumberOfDigitsAfterDec_BigInt.
+							let DecimalPortion = ""
+							if (NumberOfDigitsAfterDec_BigInt != 0n) {
+								DecimalPortion += "."
+								for (let NineCount = 0; NineCount < NumberOfDigitsAfterDec; NineCount++) {
+									DecimalPortion += "9"
+								}
+							}
+						return "Greater than 99" + DecimalPortion + "%"
+					}
+				} else {
+					//Rounded downwards (default)
+					
+					if ((Modulo != 0n)&&(Percentage == 0n)) {
+						//Rounded to 0% detected
+						//Note to self:
+						//Should say 1% if NumberOfDigitsAfterDec_BigInt = 0
+						//Should say 0.1% if NumberOfDigitsAfterDec_BigInt = 1
+						//0.01% if NumberOfDigitsAfterDec_BigInt = 2
+						//and so on.
+						//Basically, if NumberOfDigitsAfterDec_BigInt = 2, the number of zeros
+						//between the decimal point and "1" is NumberOfDigitsAfterDec_BigInt - 1
+							let DecimalPortion = ""
+							if (NumberOfDigitsAfterDec_BigInt != 0n) {
+								DecimalPortion += "."
+								for (let ZeroCount = 0; ZeroCount < NumberOfDigitsAfterDec - 1; ZeroCount++) {
+									DecimalPortion += "0"
+								}
+								return "Less than 0" + DecimalPortion + "1%"
+							} else {
+								return "Less than 1%"
+							}
+					}
+				}
+				//Split the number separated by decimal point.
+					if (Clamped) {Percentage = BigintClamp(Percentage, 0n, 100n * 10n ** (NumberOfDigitsAfterDec_BigInt))}
+					let OutputString = Percentage.toString(10)
+					let WholeNumberPart = OutputString.substring(0, OutputString.length - NumberOfDigitsAfterDec)
+					if (WholeNumberPart == "") {
+						WholeNumberPart = "0"
+					}
+					//This make sure that leading zeros (when less than 1%) exists, should the value in fixed point have fewer digits
+					//so that it can display things like 0.01 (stored internally in fixed point as 1) instead of 0.1 when NumberOfDigitsAfterDec is set to 2.
+					//It is due to the fact that toString(10) removes all leading zeros.
+						if (OutputString.length < NumberOfDigitsAfterDec) {
+							let NumberOfLeadingZeroesNeeded = NumberOfDigitsAfterDec - OutputString.length //example: 34 (length = 2) which is supposed to be 0.00034% when NumberOfDigitsAfterDec = 5, so 5-2 = 3, so 3 0s are needed.
+							let LeadingZeroes = ""
+							for (let Count = 0; Count < NumberOfLeadingZeroesNeeded; Count++) {
+								LeadingZeroes += "0"
+							}
+							OutputString = LeadingZeroes + OutputString
+						}
+					let DecimalPart = OutputString.substring(OutputString.length - NumberOfDigitsAfterDec)
+			return WholeNumberPart + "." + DecimalPart + "%"
+		}
+	}
+	function CSSBackgroundImageLinearGradiantPercentageBarGraph(Quantity, MaxQuantity, Direction, Color_Full, Color_Empty) {
+		//Returns a percentage displayed as a background image representing a bar graph as CSS.
+		let Percentage = 0
+		if (MaxQuantity != 0) {
+			Percentage = Quantity * 100/MaxQuantity //Multiply first so that it only rounds at the last step, minimizing rounding errors.
+		}
+		Percentage = clamp(Percentage, 0, 100)
+		return "background-image: linear-gradient("+Direction+", "+Color_Full+" "+Percentage+"%, "+Color_Empty+" "+Percentage+"% 100%);"
+	}
+	function BigintClamp(num, min, max) {
+		//Restrict a number within a specified range, bigInt edition (since NaN cannot be represented in bigint).
+			return num <= min ? min : num >= max ? max : num;
+	}
+	function clamp(num, min, max) {
+		//Restrict a number within a specified range.
+			if (isNaN(num) == true) {
+				num = 0
+			}
+			return num <= min ? min : num >= max ? max : num;
 	}
 </script>
