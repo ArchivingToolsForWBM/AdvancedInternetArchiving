@@ -72,6 +72,12 @@
 					<span id="DateEndBeforeStartMsg" hidden style="color: #FF0000">End date is before start date!</span>
 				</li>
 			</ul>
+			User handle filter: (will not exclude any posts if blank)<br>
+			<select onchange="AutoUpdate()">
+				<option id="Handle_OnlyTheseHandles">Allow posts only from these handles</option>
+				<option id="Handle_BlacklistTheseHandles">Blacklist posts from these handles</option>
+			</select><br>
+			<textarea id="Filter_HandleList" onchange="AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" cols="50" rows="12"></textarea><br>
 			Sort:
 			<ul>
 				<li><label><input type="radio" id="SortSetting_Post_Date" name="SortSetting_Post" onchange="AutoUpdate()">Date</label> (<label><input type="radio" id="SortSetting_Post_Date_Reverse" name="SortSetting_Post" onchange="AutoUpdate()" checked>Reverse</label>)</li>
@@ -190,6 +196,12 @@
 				let Count_PostBeforeFilter = SavedJson_PostList.length
 				document.getElementById("Output_Statistic_PostCount_BeforeFilter").textContent = BigInt(Count_PostBeforeFilter).toString(10)
 				
+				let ListOfHandlesToFilter = document.getElementById("Filter_HandleList").value.match(/@[A-Za-z\d\-\.]+/g)
+				if (ListOfHandlesToFilter == null) {
+					ListOfHandlesToFilter = []
+				}
+				ListOfHandlesToFilter = new Set(ListOfHandlesToFilter)
+				
 				let FilteredPostList = SavedJson_PostList.filter((Post) => {
 					let hasMedia = Boolean(Post.PostContent.Segments.find((PostSegment) => {return PostSegment.ContentType == "Media"}))
 					let hasText = Boolean(Post.PostContent.Segments.find((PostSegment) => {return PostSegment.ContentType == "Text"}))
@@ -243,6 +255,18 @@
 					//Not on or later than
 						if (document.getElementById("FilterExclude_Posts_DateLatest").value != "" && Post.PostTimeStamp.Date_UTC.match(/\d{4}-\d{2}-\d{2}/) > document.getElementById("FilterExclude_Posts_DateLatest").value) { //If latest date applied and the post later than it, filter out
 							return false
+						}
+					//Filter by handle
+						if (ListOfHandlesToFilter.size != 0) {
+							if (document.getElementById("Handle_OnlyTheseHandles").selected) {
+								if (!ListOfHandlesToFilter.has(Post.UserHandle)) {
+									return false
+								}
+							} else if (document.getElementById("Handle_BlacklistTheseHandles").selected) {
+								if (ListOfHandlesToFilter.has(Post.UserHandle)) {
+									return false
+								}
+							}
 						}
 					return true
 				})
