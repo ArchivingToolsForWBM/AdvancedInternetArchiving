@@ -7,9 +7,9 @@
 			font-family: sans-serif;
 			}
 			
-			table, th, td {
-			border: 1px solid white;
-			border-collapse: collapse;
+			table:not(.calendar), th:not(.calendar), td:not(.calendar) {
+			 border: 1px solid white;
+			 border-collapse: collapse;
 			}
 			
 			span.NoLineBreak {
@@ -138,6 +138,8 @@
 	let SavedJson_PostListCalandar = []
 	let HasInputTextareaChanged = false
 	
+	const CalendarStaticStyleTableData = "vertical-align: top; width: 10px; height: 10px; border-collapse: collapse;"
+	const CalendarStaticStyleTableRow = "height: 12px; border: 0px"
 	
 	onload = (event) => {
 		//Get current year for default value for the calendar viewer
@@ -442,49 +444,45 @@
 			"Fri",
 			"Sat"
 			]
-			let CalendarTable = document.createElement("table")
-			let CalendarTableDayRow = document.createElement("tr")
-			CalendarTable.appendChild(CalendarTableDayRow)
-			for (let i=0; i<32; i++) {
-				let CalendarTableDayCountCell = document.createElement("th")
-				if (i != 0) {
-					CalendarTableDayCountCell.appendChild(document.createTextNode(pad(i.toString(10), 2)))
-				}
-				CalendarTableDayRow.appendChild(CalendarTableDayCountCell)
+		let CalendarTable = document.createElement("table")
+		CalendarTable.setAttribute("class", "calendar")
+		let ProcessedDay = GetBeginningOfWeek(new Date(inputYear.toString(10) + "-01-01T00:00:00.000Z"))
+		let CurrentWeekTableRow = null
+		for (let DayCount=0; DayCount<371; DayCount++) {
+			let DayOfWeek = ProcessedDay.getUTCDay()
+			if (DayOfWeek == 0) {
+				CurrentWeekTableRow = document.createElement("tr")
+				CurrentWeekTableRow.setAttribute("class", "calendar")
+				CurrentWeekTableRow.setAttribute("style", CalendarStaticStyleTableRow)
 			}
-			for (let i=0;i<12;i++) { //Loop each month
-				let CalendarTableMonthRows = document.createElement("tr")
-				let CalendarTableMonthName = document.createElement("th")
-				CalendarTableMonthRows.appendChild(CalendarTableMonthName)
-				let NumberOfDays = numDaysInMonth(inputYear, i+1)
-				for (let j=0; j<NumberOfDays; j++) {
-					let TableData_Day = document.createElement("td")
-					TableData_Day.setAttribute("style", "vertical-align: top; background-color: #303030;")
-					TableData_Day.id = "CalendarDisplay_" + inputYear.toString(10) + "-" + pad(i+1, 2) + "-" + pad(j+1, 2)
-					TableData_Day.dataset.dailypostcount = "0"
-					
-					//"2011-10-05T14:48:00.000Z"
-					let DayWithinWeek = new Date(inputYear.toString(10) + "-" + pad(i+1, 2) + "-" + pad(j+1, 2) + "T00:00:00.000Z").getUTCDay()
-					TableData_Day.setAttribute("title", DayNames[DayWithinWeek] + ", " + MonthNames[i] + " " + (j+1).toString(10))
-					CalendarTableMonthRows.appendChild(TableData_Day)
-				}
-				CalendarTableMonthName.appendChild(document.createTextNode(MonthNames[i]))
-				CalendarTableMonthName.setAttribute("style", "vertical-align: top; text-align: start;")
-				CalendarTable.appendChild(CalendarTableMonthRows)
+			if (CurrentWeekTableRow != null) {
+				let TableDayBox = document.createElement("td")
+				TableDayBox.setAttribute("class", "calendar")
+				TableDayBox.setAttribute("style", CalendarStaticStyleTableData + "background-color: #303030")
+				TableDayBox.setAttribute("title", DayNames[DayOfWeek] + " " + MonthNames[ProcessedDay.getUTCMonth()] + " " + pad(ProcessedDay.getUTCDate().toString(), 2) + ", " + ProcessedDay.getUTCFullYear())
+				TableDayBox.dataset.dailypostcount = "0"
+				TableDayBox.id = "CalendarDisplay_" + ProcessedDay.toISOString().match(/\d+-\d+-\d+/)[0]
+				CurrentWeekTableRow.appendChild(TableDayBox)
 			}
-			document.getElementById("CalendarDisplay").appendChild(CalendarTable)
+			CalendarTable.appendChild(CurrentWeekTableRow)
+			ProcessedDay.setUTCDate(ProcessedDay.getUTCDate()+1)
+		}
+		document.getElementById("CalendarDisplay").appendChild(CalendarTable)
+	}
+	function GetBeginningOfWeek(InputDate) {
+		let DayOffset = InputDate.getUTCDay()
+		return new Date(InputDate.setUTCDate(InputDate.getUTCDate()-DayOffset))
 	}
 	function UpdateCalandarPostCount() {
 		SavedJson_PostListCalandar.forEach((Post) => {
 			let PostCalandarDay = document.getElementById("CalendarDisplay_" + Post.PostTimeStamp.Date_UTC.match(/\d+-\d{2}-\d{2}/)[0])
 			if (PostCalandarDay != null) {
-				//PostCalandarDay.dataset.dailypostcount = (++parseInt(PostCalandarDay.dataset.dailypostcount)).toString(10)
 				let Count = parseInt(PostCalandarDay.dataset.dailypostcount)
 				Count++
 				PostCalandarDay.dataset.dailypostcount = Count.toString(10)
 				PostCalandarDay.textContent = Count.toString(10)
 				let HeatmapColor = clamp((Count*240)/75+120, 120, 360)
-				PostCalandarDay.setAttribute("style", "vertical-align: top; background-color: hsl(" + HeatmapColor.toString(10) + "deg 100% 25%);")
+				PostCalandarDay.setAttribute("style", CalendarStaticStyleTableData + "background-color: hsl(" + HeatmapColor.toString(10) + "deg 100% 25%);")
 			}
 		});
 	}
