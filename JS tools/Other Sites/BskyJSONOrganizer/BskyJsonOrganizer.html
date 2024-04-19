@@ -441,50 +441,57 @@
 			"Fri",
 			"Sat"
 			]
-		let CalendarTable = document.createElement("table")
-		CalendarTable.setAttribute("class", "calendar")
-		let ProcessedDay = GetBeginningOfWeek(new Date(inputYear.toString(10) + "-01-01T00:00:00.000Z"))
-		let CurrentWeekTableRow = null
-		let MonthLineSeperatorCountdown = 0
-		for (let DayCount=0; DayCount<371; DayCount++) {
-			let DayOfWeek = ProcessedDay.getUTCDay()
-			if (DayOfWeek == 0) {
-				CurrentWeekTableRow = document.createElement("tr")
-				CurrentWeekTableRow.setAttribute("class", "calendar")
-				CurrentWeekTableRow.style.height = "11px"
-			}
-			if (CurrentWeekTableRow != null) {
-				let TableDayBox = document.createElement("td")
-				TableDayBox.setAttribute("class", "calendar")
-				TableDayBox.setAttribute("title", DayNames[DayOfWeek] + " " + MonthNames[ProcessedDay.getUTCMonth()] + " " + pad(ProcessedDay.getUTCDate().toString(), 2) + ", " + ProcessedDay.getUTCFullYear())
-				TableDayBox.style.width = "10px"
-				TableDayBox.style.height = "10px"
-				TableDayBox.style.padding = "0px"
-				if (ProcessedDay.getUTCDate() == 1) { //Start of each month, start a 7-day countdown to draw a horizontal line at the top to separate months.
-					MonthLineSeperatorCountdown = 7
-					if (DayOfWeek != 0) {
-						TableDayBox.style.borderLeft = "1px solid white" //On the first day of the month, draw a vertical border on left side
+		try {
+			let CalendarTable = document.createElement("table")
+			CalendarTable.setAttribute("class", "calendar")
+			let ProcessedDay = GetBeginningOfWeek(new Date(inputYear.toString(10) + "-01-01T00:00:00.000Z"))
+			let CurrentWeekTableRow = null
+			let MonthLineSeperatorCountdown = 0
+			for (let DayCount=0; DayCount<371; DayCount++) {
+				let DayOfWeek = ProcessedDay.getUTCDay()
+				if (DayOfWeek == 0) {
+					CurrentWeekTableRow = document.createElement("tr")
+					CurrentWeekTableRow.setAttribute("class", "calendar")
+					CurrentWeekTableRow.style.height = "11px"
+				}
+				if (CurrentWeekTableRow != null) {
+					let TableDayBox = document.createElement("td")
+					TableDayBox.setAttribute("class", "calendar")
+					TableDayBox.setAttribute("title", DayNames[DayOfWeek] + " " + MonthNames[ProcessedDay.getUTCMonth()] + " " + pad(ProcessedDay.getUTCDate().toString(), 2) + ", " + ProcessedDay.getUTCFullYear())
+					TableDayBox.style.width = "10px"
+					TableDayBox.style.height = "10px"
+					TableDayBox.style.padding = "0px"
+					if (ProcessedDay.getUTCDate() == 1) { //Start of each month, start a 7-day countdown to draw a horizontal line at the top to separate months.
+						MonthLineSeperatorCountdown = 7
+						if (DayOfWeek != 0) {
+							TableDayBox.style.borderLeft = "1px solid white" //On the first day of the month, draw a vertical border on left side
+						} else {
+							TableDayBox.style.borderLeft = "1px solid #303030"
+						}
 					} else {
 						TableDayBox.style.borderLeft = "1px solid #303030"
 					}
-				} else {
-					TableDayBox.style.borderLeft = "1px solid #303030"
+					if (MonthLineSeperatorCountdown > 0) {
+						TableDayBox.style.borderTop = "1px solid white"
+						MonthLineSeperatorCountdown--
+					} else {
+						TableDayBox.style.borderTop = "1px solid #303030"
+					}
+					TableDayBox.style.backgroundColor = "#303030"
+					TableDayBox.dataset.dailypostcount = "0"
+					TableDayBox.id = "CalendarDisplay_" + ProcessedDay.toISOString().match(/\d+-\d+-\d+/)[0]
+					CurrentWeekTableRow.appendChild(TableDayBox)
 				}
-				if (MonthLineSeperatorCountdown > 0) {
-					TableDayBox.style.borderTop = "1px solid white"
-					MonthLineSeperatorCountdown--
-				} else {
-					TableDayBox.style.borderTop = "1px solid #303030"
-				}
-				TableDayBox.style.backgroundColor = "#303030"
-				TableDayBox.dataset.dailypostcount = "0"
-				TableDayBox.id = "CalendarDisplay_" + ProcessedDay.toISOString().match(/\d+-\d+-\d+/)[0]
-				CurrentWeekTableRow.appendChild(TableDayBox)
+				CalendarTable.appendChild(CurrentWeekTableRow)
+				ProcessedDay.setUTCDate(ProcessedDay.getUTCDate()+1)
 			}
-			CalendarTable.appendChild(CurrentWeekTableRow)
-			ProcessedDay.setUTCDate(ProcessedDay.getUTCDate()+1)
+			CalendarDiv.appendChild(CalendarTable)
+		} catch {
+			let OutOfRangeMsg = document.createElement("span")
+			OutOfRangeMsg.style.color = "#ff0000"
+			OutOfRangeMsg.appendChild(document.createTextNode("Out of range!"))
+			CalendarDiv.appendChild(OutOfRangeMsg)
 		}
-		document.getElementById("CalendarDisplay").appendChild(CalendarTable)
 	}
 	function GetBeginningOfWeek(InputDate) {
 		let DayOffset = InputDate.getUTCDay()
