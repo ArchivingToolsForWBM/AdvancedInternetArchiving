@@ -114,14 +114,36 @@
 		<td><kbd>Removed</kbd></td><td id="Output_Statistic_PostCountBarGraph_Removed"><kbd id="Output_Statistic_PostCount_Removed">0</kbd></td>
 	</tr>
 </table>
-
-<textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
-<button onclick="setClipboard(document.getElementById('Output_Plaintext').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
+<br>
+<table>
+	<tr>
+		<th>Output JSON</th>
+		<th>Daily number of posts calendar view</th>
+	</tr>
+	<tr>
+		<td>
+			<textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
+			<button onclick="setClipboard(document.getElementById('Output_Plaintext').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
+		</td>
+		<td style="vertical-align: top;">
+			Year to view: <input type="number" min="1970" id="CalendarViewer_YearToView" onchange="UpdateCalandarDisplay()">
+			<div id="CalendarDisplay"></div>
+		</td>
+		
+	</tr>
+</table>
 <script>
-	let SavedJson_ProfileList = [] //Save two lists into memory so you can have hibrid sorting (thank you JS for mandating stable sorts)
+	let SavedJson_ProfileList = [] //Save two lists into memory so you can have hybrid sorting (thank you JS for mandating stable sorts)
 	let SavedJson_PostList = []
+	let SavedJson_PostListCalandar = []
 	let HasInputTextareaChanged = false
 	
+	
+	onload = (event) => {
+		//Get current year for default value for the calendar viewer
+			document.getElementById("CalendarViewer_YearToView").value = (new Date().getFullYear()).toString(10)
+			UpdateCalandarDisplay()
+	};
 	function JSONTextareaChanged() {
 		HasInputTextareaChanged = true
 	}
@@ -226,8 +248,6 @@
 						}
 					}
 					
-					
-					
 					//Requirement rules
 						if (document.getElementById("FilterInclude_Posts_Media").checked && (!hasMedia)) { //If media is required and not have one, filter out
 							return false
@@ -253,7 +273,7 @@
 							return false
 						}
 					//Not on or later than
-						if (document.getElementById("FilterExclude_Posts_DateLatest").value != "" && Post.PostTimeStamp.Date_UTC.match(/\d{4}-\d{2}-\d{2}/) > document.getElementById("FilterExclude_Posts_DateLatest").value) { //If latest date applied and the post later than it, filter out
+						if (document.getElementById("FilterExclude_Posts_DateLatest").value != "" && Post.PostTimeStamp.Date_UTC.match(/\d{4}-\d{2}-\d{2}/) >= document.getElementById("FilterExclude_Posts_DateLatest").value) { //If latest date applied and the post later than it, filter out
 							return false
 						}
 					//Filter by handle
@@ -271,6 +291,8 @@
 					return true
 				})
 				let Count_PostAfterFilter = FilteredPostList.length
+				DisplayCalendar(parseInt(document.getElementById("CalendarViewer_YearToView").value, 10)) //Reset it (so daily post count should not pick up where it left off)
+				
 				document.getElementById("Output_Statistic_PostCount_AfterFilter").textContent = BigInt(Count_PostAfterFilter).toString(10) + " (" + BetterPercentageUsingInts(Count_PostAfterFilter, Count_PostBeforeFilter, 2, true) + ")"
 				document.getElementById("Output_Statistic_PostCountBarGraph_AfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_PostAfterFilter, Count_PostBeforeFilter, "to right", "#0000FF", "#000000")
 				
@@ -350,6 +372,7 @@
 						}
 					return true
 				})
+				
 				let Count_ProfileAfterFilter = FilteredProfileList.length
 				document.getElementById("Output_Statistic_ProfileCount_AfterFilter").textContent = BigInt(Count_ProfileAfterFilter).toString(10) + " (" + BetterPercentageUsingInts(Count_ProfileAfterFilter, Count_ProfileBeforeFilter, 2, true) + ")"
 				document.getElementById("Output_Statistic_ProfileCountBarGraph_AfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_ProfileAfterFilter, Count_ProfileBeforeFilter, "to right", "#0000FF", "#000000")
@@ -357,6 +380,8 @@
 				document.getElementById("Output_Statistic_ProfileCount_Removed").textContent = BigInt(Count_ProfileBeforeFilter-Count_ProfileAfterFilter).toString(10) + " (" + BetterPercentageUsingInts(Count_ProfileBeforeFilter-Count_ProfileAfterFilter, Count_ProfileBeforeFilter, 2, true) + ")"
 				document.getElementById("Output_Statistic_ProfileCountBarGraph_Removed").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_ProfileBeforeFilter-Count_ProfileAfterFilter, Count_ProfileBeforeFilter, "to right", "#0000FF", "#000000")
 			//Output
+				SavedJson_PostListCalandar = FilteredPostList //Save it for calendar display
+				UpdateCalandarPostCount()
 				let OutputObject = {
 					ListOfProfiles: FilteredProfileList,
 					ListOfPosts: FilteredPostList
@@ -373,7 +398,106 @@
 			ErrorStatistics()
 		}
 	}
-	
+	function UpdateCalandarDisplay() {
+		let CalendarDisplay_YearNumber = parseInt(document.getElementById("CalendarViewer_YearToView").value, 10)
+		if (Number.isNaN(CalendarDisplay_YearNumber)) {
+			CalendarDisplay_YearNumber = new Date().getFullYear()
+		} else {
+			let MinYear = parseInt(document.getElementById("CalendarViewer_YearToView").min)
+			if (CalendarDisplay_YearNumber < MinYear) {
+				CalendarDisplay_YearNumber = MinYear
+			}
+		}
+		document.getElementById("CalendarViewer_YearToView").value = CalendarDisplay_YearNumber.toString(10)
+		DisplayCalendar(parseInt(document.getElementById("CalendarViewer_YearToView").value, 10)) //Reset it (so daily post count should not pick up where it left off)
+		UpdateCalandarPostCount()
+	}
+	function DisplayCalendar(inputYear) {
+		//First clear out the calendar display (resets the calendar as well as the post counts each day.)
+			let CalendarDiv = document.getElementById("CalendarDisplay")
+			while (CalendarDiv.lastElementChild) {
+				CalendarDiv.removeChild(CalendarDiv.lastElementChild);
+			}
+		//Now generate calendar
+			let MonthNames = [
+				"Jan",
+				"Feb",
+				"Mar",
+				"Apr",
+				"May",
+				"Jun",
+				"Jul",
+				"Aug",
+				"Sep",
+				"Oct",
+				"Nov",
+				"Dec",
+			]
+			let DayNames = [
+			"Sun",
+			"Mon",
+			"Tue",
+			"Wed",
+			"Thu",
+			"Fri",
+			"Sat"
+			]
+			let CalendarTable = document.createElement("table")
+			let CalendarTableDayRow = document.createElement("tr")
+			CalendarTable.appendChild(CalendarTableDayRow)
+			for (let i=0; i<32; i++) {
+				let CalendarTableDayCountCell = document.createElement("th")
+				if (i != 0) {
+					CalendarTableDayCountCell.appendChild(document.createTextNode(pad(i.toString(10), 2)))
+				}
+				CalendarTableDayRow.appendChild(CalendarTableDayCountCell)
+			}
+			for (let i=0;i<12;i++) { //Loop each month
+				let CalendarTableMonthRows = document.createElement("tr")
+				let CalendarTableMonthName = document.createElement("th")
+				CalendarTableMonthRows.appendChild(CalendarTableMonthName)
+				let NumberOfDays = numDaysInMonth(inputYear, i+1)
+				for (let j=0; j<NumberOfDays; j++) {
+					let TableData_Day = document.createElement("td")
+					TableData_Day.setAttribute("style", "vertical-align: top; background-color: #303030;")
+					TableData_Day.id = "CalendarDisplay_" + inputYear.toString(10) + "-" + pad(i+1, 2) + "-" + pad(j+1, 2)
+					TableData_Day.dataset.dailypostcount = "0"
+					
+					//"2011-10-05T14:48:00.000Z"
+					let DayWithinWeek = new Date(inputYear.toString(10) + "-" + pad(i+1, 2) + "-" + pad(j+1, 2) + "T00:00:00.000").getDay()
+						//^Not sure why new Date("2024-01-01T00:00:00.000Z") keeps returning eastern standard time, and offsets it
+						//(to me, I got "Sun Dec 31 2023 19:00:00 GMT-0500 (Eastern Standard Time)")
+						//Removing the "Z" seems to fixed it, but I'm not 100% sure if it works properly in other time zones.
+					TableData_Day.setAttribute("title", DayNames[DayWithinWeek] + ", " + MonthNames[i] + " " + (j+1).toString(10))
+					CalendarTableMonthRows.appendChild(TableData_Day)
+				}
+				CalendarTableMonthName.appendChild(document.createTextNode(MonthNames[i]))
+				CalendarTableMonthName.setAttribute("style", "vertical-align: top; text-align: start;")
+				CalendarTable.appendChild(CalendarTableMonthRows)
+			}
+			document.getElementById("CalendarDisplay").appendChild(CalendarTable)
+	}
+	function UpdateCalandarPostCount() {
+		SavedJson_PostListCalandar.forEach((Post) => {
+			let PostCalandarDay = document.getElementById("CalendarDisplay_" + Post.PostTimeStamp.Date_UTC.match(/\d+-\d{2}-\d{2}/)[0])
+			if (PostCalandarDay != null) {
+				//PostCalandarDay.dataset.dailypostcount = (++parseInt(PostCalandarDay.dataset.dailypostcount)).toString(10)
+				let Count = parseInt(PostCalandarDay.dataset.dailypostcount)
+				Count++
+				PostCalandarDay.dataset.dailypostcount = Count.toString(10)
+				PostCalandarDay.textContent = Count.toString(10)
+				let HeatmapColor = clamp((Count*50)/15+25, 25, 75)
+				PostCalandarDay.setAttribute("style", "vertical-align: top; background-color: rgb(0% " + HeatmapColor.toString(10) + "% 0%);")
+			}
+		});
+	}
+	const numDaysInMonth = (y, m) => new Date(y, m, 0).getDate();
+	function pad(num, size) {
+		//This adds leading zeroes. [size] is the number of digits at minimum to show (less than that will fill this with 0s).
+			let s = num+"";
+			while (s.length < size) s = "0" + s;
+			return s;
+	}
 	function isJsonString(str) {
 		//https://stackoverflow.com/questions/3710204/how-to-check-if-a-string-is-a-valid-json-string
 		try {
@@ -413,6 +537,11 @@
 		document.getElementById("Output_Statistic_PostCount_BeforeFilter").textContent = "Error"
 		document.getElementById("Output_Statistic_PostCount_AfterFilter").textContent = "Error"
 		document.getElementById("Output_Statistic_PostCount_Removed").textContent = "Error"
+		
+		let CalendarDiv = document.getElementById("CalendarDisplay")
+		while (CalendarDiv.lastElementChild) {
+			CalendarDiv.removeChild(CalendarDiv.lastElementChild);
+		}
 	}
 //Other functions
 	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec, Clamped) {
