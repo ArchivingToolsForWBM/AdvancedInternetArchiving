@@ -464,10 +464,7 @@
 					TableData_Day.dataset.dailypostcount = "0"
 					
 					//"2011-10-05T14:48:00.000Z"
-					let DayWithinWeek = new Date(inputYear.toString(10) + "-" + pad(i+1, 2) + "-" + pad(j+1, 2) + "T00:00:00.000").getDay()
-						//^Not sure why new Date("2024-01-01T00:00:00.000Z") keeps returning eastern standard time, and offsets it
-						//(to me, I got "Sun Dec 31 2023 19:00:00 GMT-0500 (Eastern Standard Time)")
-						//Removing the "Z" seems to fixed it, but I'm not 100% sure if it works properly in other time zones.
+					let DayWithinWeek = new Date(inputYear.toString(10) + "-" + pad(i+1, 2) + "-" + pad(j+1, 2) + "T00:00:00.000Z").getUTCDay()
 					TableData_Day.setAttribute("title", DayNames[DayWithinWeek] + ", " + MonthNames[i] + " " + (j+1).toString(10))
 					CalendarTableMonthRows.appendChild(TableData_Day)
 				}
