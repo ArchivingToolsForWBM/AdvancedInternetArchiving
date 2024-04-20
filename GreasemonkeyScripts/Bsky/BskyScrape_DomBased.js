@@ -1393,10 +1393,10 @@
 									} else {
 										//Hashtags are inside a div -> button -> span
 										//Find a div that isn't a hashtag, if not, then this is a plaintext
-										let NonHash = ListOfInnerDivs.findIndex((Hashtags) => {
-											return (!/^#[^\s\/\,\.]+$/.test(Hashtags.textContent))
+										let NonHashOrUserHandle = ListOfInnerDivs.findIndex((HashtagsOrHandleLink) => {
+											return (!/^(?:#[^\s\/\,\.]+|@[a-zA-Z\d\.\-]+)$/.test(HashtagsOrHandleLink.textContent))
 										})
-										if (NonHash == -1) {
+										if (NonHashOrUserHandle == -1) {
 											return "PlainText"
 										} else {
 											return "TextWithFormattedContent"
@@ -1431,7 +1431,7 @@
 													
 													//SubBox.childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
 													//https://bsky.app/profile/kimscaravelli.bsky.social/post/3klaue65stp2x
-													let NodeOfPostDate1 = DescendNode(SubBox, [0,0,3])
+													let NodeOfPostDate1 = DescendNode(SubBox, [0,3])
 													
 													
 													if (NodeOfPostDate.IsSuccessful) { //This HAS to be a quote (if attachments have both a media and a quote, thus both wrapped in a div)
@@ -1440,7 +1440,7 @@
 														}
 													} else if (NodeOfPostDate1.IsSuccessful) { //If there is only a single attachment, then this isn't div-wrapped
 														if (NodeOfPostDate1.OutputNode.dataset.tooltip != "") {
-															SubBoxesContent.push(GetQuoteBoxData(SubBox))
+															SubBoxesContent.push(GetQuoteBoxData(SubBox.parentNode))
 														}
 													}
 												} else {
@@ -1488,7 +1488,7 @@
 			let DescendMap_PostURLAndTimestamp = [0,0,3]
 			let DescendMap_UserTitle = [0,0,1,0,0]
 			let DescendMap_UserHandle = [0,0,1,0,2]
-			let DescendMap_UserAvatar = [0,0,0,0,0,1]
+			let DescendMap_UserAvatar = [0,0,0,0,0,0,0,1]
 			let DescendMap_PostContentText = [1,0]
 			
 			let OutputObject = {
