@@ -7,7 +7,7 @@
 			font-family: sans-serif;
 			}
 			
-			table:not(.calendar), th:not(.calendar), td:not(.calendar) {
+			table:not(.NoBorders), th:not(.NoBorders), td:not(.NoBorders) {
 			 border: 1px solid white;
 			 border-collapse: collapse;
 			}
@@ -126,8 +126,16 @@
 			<button onclick="setClipboard(document.getElementById('Output_Plaintext').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
 		</td>
 		<td style="vertical-align: top;">
-			Year to view: <input type="number" min="1970" id="CalendarViewer_YearToView" onchange="UpdateCalandarDisplay()">
-			<div id="CalendarDisplay"></div>
+			Year to view: <input type="number" min="1970" id="CalendarViewer_YearToView" onchange="UpdateCalendarDisplay()"><br>
+			<ul>
+				<li>Left click on a day to exclude days before it. Hold CTRL and left click to include.</li>
+				<li>Right click on a day to exclude that day and after it. Hold CTRL and right click to include.</li>
+			</ul>
+			<table>
+				<tr>
+					<td><div style="overflow-y: scroll; height: 600px;border: solid 1px; resize: vertical;" id="CalendarDisplay"></div></td>
+				</tr>
+			</table>
 		</td>
 		
 	</tr>
@@ -135,13 +143,13 @@
 <script>
 	let SavedJson_ProfileList = [] //Save two lists into memory so you can have hybrid sorting (thank you JS for mandating stable sorts)
 	let SavedJson_PostList = []
-	let SavedJson_PostListCalandar = []
+	let SavedJson_PostListCalendar = []
 	let HasInputTextareaChanged = false
 	
 	onload = (event) => {
 		//Get current year for default value for the calendar viewer
 			document.getElementById("CalendarViewer_YearToView").value = (new Date().getFullYear()).toString(10)
-			UpdateCalandarDisplay()
+			UpdateCalendarDisplay()
 	};
 	function JSONTextareaChanged() {
 		HasInputTextareaChanged = true
@@ -379,8 +387,8 @@
 				document.getElementById("Output_Statistic_ProfileCount_Removed").textContent = BigInt(Count_ProfileBeforeFilter-Count_ProfileAfterFilter).toString(10) + " (" + BetterPercentageUsingInts(Count_ProfileBeforeFilter-Count_ProfileAfterFilter, Count_ProfileBeforeFilter, 2, true) + ")"
 				document.getElementById("Output_Statistic_ProfileCountBarGraph_Removed").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_ProfileBeforeFilter-Count_ProfileAfterFilter, Count_ProfileBeforeFilter, "to right", "#0000FF", "#000000")
 			//Output
-				SavedJson_PostListCalandar = FilteredPostList //Save it for calendar display
-				UpdateCalandarPostCount()
+				SavedJson_PostListCalendar = FilteredPostList //Save it for calendar display
+				FillCalendarWithData() //Fill calendar with post info
 				let OutputObject = {
 					ListOfProfiles: FilteredProfileList,
 					ListOfPosts: FilteredPostList
@@ -397,7 +405,7 @@
 			ErrorStatistics()
 		}
 	}
-	function UpdateCalandarDisplay() {
+	function UpdateCalendarDisplay() {
 		let CalendarDisplay_YearNumber = parseInt(document.getElementById("CalendarViewer_YearToView").value, 10)
 		if (Number.isNaN(CalendarDisplay_YearNumber)) {
 			CalendarDisplay_YearNumber = new Date().getFullYear()
@@ -409,7 +417,7 @@
 		}
 		document.getElementById("CalendarViewer_YearToView").value = CalendarDisplay_YearNumber.toString(10)
 		DisplayCalendar(parseInt(document.getElementById("CalendarViewer_YearToView").value, 10)) //Reset it (so daily post count should not pick up where it left off)
-		UpdateCalandarPostCount()
+		FillCalendarWithData()
 	}
 	function DisplayCalendar(inputYear) {
 		//First clear out the calendar display (resets the calendar as well as the post counts each day.)
@@ -443,24 +451,67 @@
 			]
 		try {
 			let CalendarTable = document.createElement("table")
-			CalendarTable.setAttribute("class", "calendar")
-			let ProcessedDay = GetBeginningOfWeek(new Date(inputYear.toString(10) + "-01-01T00:00:00.000Z"))
+			CalendarTable.addEventListener(
+				"contextmenu",
+				function (e) {
+					e.preventDefault();
+				}
+			)
+			CalendarTable.style.overflow = "hidden"
+			CalendarTable.style.tableLayout = "fixed"
+			CalendarTable.setAttribute("class", "NoBorders")
+			//let ProcessedDay = GetBeginningOfWeek()
+			let  ProcessedDay = (() => {
+				let InputDate = new Date(inputYear.toString(10) + "-01-01T00:00:00.000Z")
+				let DayOffset = InputDate.getUTCDay()
+				return new Date(InputDate.setUTCDate(InputDate.getUTCDate()-DayOffset))
+			})();
 			let CurrentWeekTableRow = null
 			let MonthLineSeperatorCountdown = 0
 			for (let DayCount=0; DayCount<371; DayCount++) {
 				let DayOfWeek = ProcessedDay.getUTCDay()
 				if (DayOfWeek == 0) {
 					CurrentWeekTableRow = document.createElement("tr")
-					CurrentWeekTableRow.setAttribute("class", "calendar")
-					CurrentWeekTableRow.style.height = "11px"
+					CurrentWeekTableRow.setAttribute("class", "NoBorders")
+					CurrentWeekTableRow.style.height = "21px"
+					CurrentWeekTableRow.style.maxHeight = "21px"
+					CurrentWeekTableRow.overflow = "hidden"
+					CurrentWeekTableRow.style.tableLayout = "fixed"
 				}
 				if (CurrentWeekTableRow != null) {
 					let TableDayBox = document.createElement("td")
-					TableDayBox.setAttribute("class", "calendar")
+					let CurrentDateString = ProcessedDay.toISOString().match(/\d+-\d+-\d+/)[0]
+					TableDayBox.addEventListener( //User clicks on a day
+						"mouseup",
+						function (e) {
+							switch (e.button) {
+								case 0:
+									if (!e.ctrlKey) {
+										document.getElementById("FilterExclude_Posts_DateEarliest").value = this.id.match(/\d+-\d+-\d+/)[0]
+									} else {
+										document.getElementById("FilterExclude_Posts_DateEarliest").value = ""
+									}
+									break
+								case 2:
+									if (!e.ctrlKey) {
+										document.getElementById("FilterExclude_Posts_DateLatest").value = this.id.match(/\d+-\d+-\d+/)[0]
+									} else {
+										document.getElementById("FilterExclude_Posts_DateLatest").value = ""
+									}
+							}
+							e.preventDefault()
+							ValidateDateRange()
+							MainCode()
+						}
+					)
+					TableDayBox.setAttribute("class", "NoBorders")
 					TableDayBox.setAttribute("title", DayNames[DayOfWeek] + " " + MonthNames[ProcessedDay.getUTCMonth()] + " " + pad(ProcessedDay.getUTCDate().toString(), 2) + ", " + ProcessedDay.getUTCFullYear())
-					TableDayBox.style.width = "10px"
-					TableDayBox.style.height = "10px"
+					TableDayBox.style.width = "20px"
+					TableDayBox.style.height = "20px"
+					TableDayBox.style.maxWidth = "20px"
+					TableDayBox.style.maxHeight = "20px"
 					TableDayBox.style.padding = "0px"
+					TableDayBox.style.borderCollapse = "collapse"
 					if (ProcessedDay.getUTCDate() == 1) { //Start of each month, start a 7-day countdown to draw a horizontal line at the top to separate months.
 						MonthLineSeperatorCountdown = 7
 						if (DayOfWeek != 0) {
@@ -479,7 +530,23 @@
 					}
 					TableDayBox.style.backgroundColor = "#303030"
 					TableDayBox.dataset.dailypostcount = "0"
-					TableDayBox.id = "CalendarDisplay_" + ProcessedDay.toISOString().match(/\d+-\d+-\d+/)[0]
+					TableDayBox.id = "CalendarDisplay_" + CurrentDateString //ID we can point to later
+					
+					let TableDayBoxDiv = document.createElement("div") //We write our stuff inside a div inside a td to prevent cell size being set to content
+					TableDayBoxDiv.style.tableLayout = "fixed"
+					TableDayBoxDiv.style.width = "20px"
+					TableDayBoxDiv.style.height = "20px"
+					TableDayBoxDiv.style.fontSize = "10px"
+					TableDayBoxDiv.id = "CalendarDisplayDiv_" + CurrentDateString //ID we can point to later
+					
+					if (document.getElementById("FilterExclude_Posts_DateEarliest").value != "" && (CurrentDateString < document.getElementById("FilterExclude_Posts_DateEarliest").value)) {
+						TableDayBoxDiv.style.background = "linear-gradient(45deg, black 0%, white 100%)"
+					}
+					if (document.getElementById("FilterExclude_Posts_DateLatest").value != "" && (CurrentDateString >= document.getElementById("FilterExclude_Posts_DateLatest").value)) {
+						TableDayBoxDiv.style.background = "linear-gradient(45deg, white 0%, black 100%)"
+					}
+					TableDayBox.appendChild(TableDayBoxDiv)
+					
 					CurrentWeekTableRow.appendChild(TableDayBox)
 				}
 				CalendarTable.appendChild(CurrentWeekTableRow)
@@ -493,22 +560,27 @@
 			CalendarDiv.appendChild(OutOfRangeMsg)
 		}
 	}
-	function GetBeginningOfWeek(InputDate) {
-		let DayOffset = InputDate.getUTCDay()
-		return new Date(InputDate.setUTCDate(InputDate.getUTCDate()-DayOffset))
-	}
-	function UpdateCalandarPostCount() {
-		SavedJson_PostListCalandar.forEach((Post) => {
-			let PostCalandarDay = document.getElementById("CalendarDisplay_" + Post.PostTimeStamp.Date_UTC.match(/\d+-\d{2}-\d{2}/)[0])
-			if (PostCalandarDay != null) {
-				let Count = parseInt(PostCalandarDay.dataset.dailypostcount)
+	function FillCalendarWithData() {
+		SavedJson_PostListCalendar.forEach((Post) => {
+			let PostCalendarDay = document.getElementById("CalendarDisplay_" + Post.PostTimeStamp.Date_UTC.match(/\d+-\d{2}-\d{2}/)[0])
+			let PostCalendarDayDiv = document.getElementById("CalendarDisplayDiv_" + Post.PostTimeStamp.Date_UTC.match(/\d+-\d{2}-\d{2}/)[0])
+			if (PostCalendarDay != null) {
+				let Count = parseInt(PostCalendarDay.dataset.dailypostcount)
 				Count++
-				PostCalandarDay.dataset.dailypostcount = Count.toString(10)
-				//PostCalandarDay.textContent = Count.toString(10)
+				PostCalendarDay.dataset.dailypostcount = Count.toString(10)
+				if (Count < 99) {
+					PostCalendarDayDiv.textContent = Count.toString(10)
+				} else {
+					PostCalendarDayDiv.textContent = "99+"
+				}
 				let HeatmapColor = HeatmapColorCalculate(Count, 75, 120, 360)
-				PostCalandarDay.style.backgroundColor = "hsl(" + HeatmapColor.toString(10) + "deg 100% 25%)"
+				PostCalendarDay.style.backgroundColor = "hsl(" + HeatmapColor.toString(10) + "deg 100% 25%)"
 			}
 		});
+		let CurrentDayBox = document.getElementById("CalendarDisplayDiv_" + new Date(Date.now()).toISOString().match(/\d+-\d+-\d+/)[0])
+		if (CurrentDayBox != null) {
+			CurrentDayBox.style.border = "1px solid yellow"
+		}
 	}
 	function HeatmapColorCalculate(Quantity, MaxQuantity, HueDegreeMin, HueDegreeMax) {
 		return clamp(Quantity * (HueDegreeMax-HueDegreeMin)/MaxQuantity + HueDegreeMin, HueDegreeMin, HueDegreeMax)
