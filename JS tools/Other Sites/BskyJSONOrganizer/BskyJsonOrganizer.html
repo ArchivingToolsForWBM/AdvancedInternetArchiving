@@ -460,27 +460,57 @@
 			CalendarTable.style.overflow = "hidden"
 			CalendarTable.style.tableLayout = "fixed"
 			CalendarTable.setAttribute("class", "NoBorders")
-			//let ProcessedDay = GetBeginningOfWeek()
-			let  ProcessedDay = (() => {
+			let  ProcessedDay = (() => { //Start at Sunday, the last beginning of the week that has a new year in it.
 				let InputDate = new Date(inputYear.toString(10) + "-01-01T00:00:00.000Z")
 				let DayOffset = InputDate.getUTCDay()
 				return new Date(InputDate.setUTCDate(InputDate.getUTCDate()-DayOffset))
 			})();
 			let CurrentWeekTableRow = null
+			let MonthTableCell = null
 			let MonthLineSeperatorCountdown = 0
+			let PreviousMonth = -1
+			let HaveGeneratedFirstMonthCell = false //Make it so that month cells other than the first week have a border
 			for (let DayCount=0; DayCount<371; DayCount++) {
+				let CurrentDateString = ProcessedDay.toISOString().match(/\d+-\d+-\d+/)[0]
+				let CurrentDateMonth = ProcessedDay.getUTCMonth()
+				let CurrentDateYear = ProcessedDay.getUTCFullYear()
 				let DayOfWeek = ProcessedDay.getUTCDay()
-				if (DayOfWeek == 0) {
+				if (DayOfWeek == 0) { //Start of week
 					CurrentWeekTableRow = document.createElement("tr")
 					CurrentWeekTableRow.setAttribute("class", "NoBorders")
 					CurrentWeekTableRow.style.height = "21px"
 					CurrentWeekTableRow.style.maxHeight = "21px"
 					CurrentWeekTableRow.overflow = "hidden"
 					CurrentWeekTableRow.style.tableLayout = "fixed"
+					if (PreviousMonth != CurrentDateMonth) {
+						MonthTableCell = document.createElement("th")
+						MonthTableCell.rowspan = "1"
+						MonthTableCell.setAttribute("class", "NoBorders")
+						if (HaveGeneratedFirstMonthCell) { //White border on each month except the one that is the first week
+							MonthTableCell.style.borderTop = "1px solid white"
+						}
+						HaveGeneratedFirstMonthCell = true
+						let DivMonthName = document.createElement("div")
+						DivMonthName.style.fontSize = "8px"
+						DivMonthName.style.tableLayout = "fixed"
+						DivMonthName.appendChild(document.createTextNode(MonthNames[CurrentDateMonth]))
+						//OtherYear
+						if (CurrentDateYear != inputYear) { //If the day of the week we start on is on a previous month before January, write the previous year number.
+							DivMonthName.appendChild(document.createElement("br"))
+							DivMonthName.appendChild(document.createTextNode(CurrentDateYear.toString(10)))
+						}
+						MonthTableCell.appendChild(DivMonthName)
+						CurrentWeekTableRow.appendChild(MonthTableCell)
+						
+						PreviousMonth = CurrentDateMonth
+					} else {
+						let RowSpan = parseInt(MonthTableCell.rowSpan)
+						RowSpan++
+						MonthTableCell.rowSpan = RowSpan.toString(10)
+					}
 				}
 				if (CurrentWeekTableRow != null) {
 					let TableDayBox = document.createElement("td")
-					let CurrentDateString = ProcessedDay.toISOString().match(/\d+-\d+-\d+/)[0]
 					TableDayBox.addEventListener( //User clicks on a day
 						"mouseup",
 						function (e) {
