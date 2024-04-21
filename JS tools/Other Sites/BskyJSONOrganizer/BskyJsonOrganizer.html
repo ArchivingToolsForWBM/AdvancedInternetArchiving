@@ -512,6 +512,7 @@
 					TableDayBox.style.maxHeight = "20px"
 					TableDayBox.style.padding = "0px"
 					TableDayBox.style.borderCollapse = "collapse"
+					TableDayBox.style.boxSizing = "border-box"
 					if (ProcessedDay.getUTCDate() == 1) { //Start of each month, start a 7-day countdown to draw a horizontal line at the top to separate months.
 						MonthLineSeperatorCountdown = 7
 						if (DayOfWeek != 0) {
@@ -539,11 +540,20 @@
 					TableDayBoxDiv.style.fontSize = "10px"
 					TableDayBoxDiv.id = "CalendarDisplayDiv_" + CurrentDateString //ID we can point to later
 					
-					if (document.getElementById("FilterExclude_Posts_DateEarliest").value != "" && (CurrentDateString < document.getElementById("FilterExclude_Posts_DateEarliest").value)) {
-						TableDayBoxDiv.style.background = "linear-gradient(45deg, black 0%, white 100%)"
+					let FilterDateMin = document.getElementById("FilterExclude_Posts_DateEarliest").value
+					let FilterDateMax = document.getElementById("FilterExclude_Posts_DateLatest").value
+					let IsDateInOverlappedMaxAndMin = (FilterDateMin != "" && FilterDateMax != "" && CurrentDateString < FilterDateMin && CurrentDateString >= FilterDateMax) //Max date before min, and current day is in the overlap of max and min violated.
+					if (FilterDateMin != "" && (CurrentDateString < FilterDateMin) && (!IsDateInOverlappedMaxAndMin)) {
+							TableDayBoxDiv.style.background = "#808080"
+							TableDayBoxDiv.textContent = "↓"
 					}
-					if (document.getElementById("FilterExclude_Posts_DateLatest").value != "" && (CurrentDateString >= document.getElementById("FilterExclude_Posts_DateLatest").value)) {
-						TableDayBoxDiv.style.background = "linear-gradient(45deg, white 0%, black 100%)"
+					if (FilterDateMax != "" && (CurrentDateString >= FilterDateMax) && (!IsDateInOverlappedMaxAndMin)) {
+						TableDayBoxDiv.style.background = "#808080"
+						TableDayBoxDiv.textContent = "↑"
+					}
+					if (FilterDateMin != "" && FilterDateMax != "" && (CurrentDateString >= FilterDateMax) && (CurrentDateString < FilterDateMin)) {
+						TableDayBoxDiv.style.background = "#B0B0B0"
+						TableDayBoxDiv.textContent = "X"
 					}
 					TableDayBox.appendChild(TableDayBoxDiv)
 					
@@ -580,6 +590,7 @@
 		let CurrentDayBox = document.getElementById("CalendarDisplayDiv_" + new Date(Date.now()).toISOString().match(/\d+-\d+-\d+/)[0])
 		if (CurrentDayBox != null) {
 			CurrentDayBox.style.border = "1px solid yellow"
+			CurrentDayBox.style.boxSizing = "border-box"
 		}
 	}
 	function HeatmapColorCalculate(Quantity, MaxQuantity, HueDegreeMin, HueDegreeMax) {
