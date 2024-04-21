@@ -486,12 +486,15 @@
 						MonthTableCell = document.createElement("th")
 						MonthTableCell.rowspan = "1"
 						MonthTableCell.setAttribute("class", "NoBorders")
+						MonthTableCell.style.boxSizing = "border-box"
 						if (HaveGeneratedFirstMonthCell) { //White border on each month except the one that is the first week
 							MonthTableCell.style.borderTop = "1px solid white"
 						}
 						HaveGeneratedFirstMonthCell = true
 						let DivMonthName = document.createElement("div")
-						DivMonthName.style.fontSize = "8px"
+						DivMonthName.style.fontSize = "10px"
+						DivMonthName.style.width = "20px"
+						DivMonthName.style.height = "19px"
 						DivMonthName.style.tableLayout = "fixed"
 						DivMonthName.appendChild(document.createTextNode(MonthNames[CurrentDateMonth]))
 						//OtherYear
