@@ -498,6 +498,7 @@
 				let CurrentDateString = ProcessedDay.toISOString().match(/\d+-\d+-\d+/)[0]
 				let CurrentDateMonth = ProcessedDay.getUTCMonth()
 				let CurrentDateYear = ProcessedDay.getUTCFullYear()
+				let CurrentDayOfMonth = ProcessedDay.getUTCDate()
 				let DayOfWeek = ProcessedDay.getUTCDay()
 				if (DayOfWeek == 0) { //Start of week (Sunday)
 					CurrentWeekTableRow = document.createElement("tr")
@@ -512,7 +513,7 @@
 						YearTableCell.setAttribute("class", "NoBorders")
 						YearTableCell.style.boxSizing = "border-box"
 						YearTableCell.style.verticalAlign = "top"
-						if (HaveGeneratedFirstYearCell) {
+						if (HaveGeneratedFirstYearCell || (CurrentDateMonth == 0 && CurrentDayOfMonth == 1)) {
 							YearTableCell.style.borderTop = "1px solid white"
 						}
 						HaveGeneratedFirstYearCell = true
@@ -533,7 +534,7 @@
 						MonthTableCell.rowSpan = "1"
 						MonthTableCell.setAttribute("class", "NoBorders")
 						MonthTableCell.style.boxSizing = "border-box"
-						if (HaveGeneratedFirstMonthCell) { //White border on each month except the one that is the first week
+						if (HaveGeneratedFirstMonthCell ||(CurrentDayOfMonth == 1)) { //White border on each month except the one that is the first week
 							MonthTableCell.style.borderTop = "1px solid white"
 						}
 						HaveGeneratedFirstMonthCell = true
@@ -597,7 +598,9 @@
 					} else {
 						TableDayBox.style.borderLeft = "1px solid #303030"
 					}
-					if (MonthLineSeperatorCountdown > 0) {
+					let SevenDaysAgo = new Date(ProcessedDay)
+					SevenDaysAgo.setUTCDate(SevenDaysAgo.getUTCDate()-7) //Draw a line on the first rendered row if 7 days ago ("straight up" on calendar grid) is the previous month
+					if ((MonthLineSeperatorCountdown > 0)|| SevenDaysAgo.getUTCMonth() != CurrentDateMonth) {
 						TableDayBox.style.borderTop = "1px solid white"
 						MonthLineSeperatorCountdown--
 					} else {
@@ -637,10 +640,10 @@
 				ProcessedDay.setUTCDate(ProcessedDay.getUTCDate()+1) //Next day
 			}
 			CalendarDiv.appendChild(CalendarTable)
-		} catch {
+		} catch (Error) {
 			let OutOfRangeMsg = document.createElement("span")
 			OutOfRangeMsg.style.color = "#ff0000"
-			OutOfRangeMsg.appendChild(document.createTextNode("Out of range or invalid date!"))
+			OutOfRangeMsg.appendChild(document.createTextNode("Out of range or invalid date! Error: " + Error))
 			CalendarDiv.appendChild(OutOfRangeMsg)
 		}
 	}
