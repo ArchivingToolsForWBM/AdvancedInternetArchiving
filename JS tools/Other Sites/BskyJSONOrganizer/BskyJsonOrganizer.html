@@ -126,14 +126,15 @@
 			<button onclick="setClipboard(document.getElementById('Output_Plaintext').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
 		</td>
 		<td style="vertical-align: top;">
-			Year to view: <input type="number" min="1970" id="CalendarViewer_YearToView" onchange="UpdateCalendarDisplay()"><br>
+			Date to view: <input type="date" min="1970-01-01" id="CalendarViewer_DateToView" onchange="UpdateCalendarDisplay()"><br>
 			<ul>
 				<li>Left click on a day to exclude days before it. Hold CTRL and left click to include.</li>
 				<li>Right click on a day to exclude that day and after it. Hold CTRL and right click to include.</li>
+				<li>Have your mouse on the calendar and move the scroll wheel to scroll through the calendar.</li>
 			</ul>
 			<table>
 				<tr>
-					<td><div style="overflow-y: scroll; height: 600px;border: solid 1px; resize: vertical;" id="CalendarDisplay"></div></td>
+					<td><div id="CalendarDisplay"></div></td>
 				</tr>
 			</table>
 		</td>
@@ -145,11 +146,13 @@
 	let SavedJson_PostList = []
 	let SavedJson_PostListCalendar = []
 	let HasInputTextareaChanged = false
+	const CalendarScrollSize = 2 //Number of weeks to scroll up or down by each wheel movement on the mouse
 	
 	onload = (event) => {
 		//Get current year for default value for the calendar viewer
-			document.getElementById("CalendarViewer_YearToView").value = (new Date().getFullYear()).toString(10)
+			document.getElementById("CalendarViewer_DateToView").value = (new Date().getFullYear()).toString(10) + "-01-01"
 			UpdateCalendarDisplay()
+			CalendarScroll()
 	};
 	function JSONTextareaChanged() {
 		HasInputTextareaChanged = true
@@ -298,7 +301,7 @@
 					return true
 				})
 				let Count_PostAfterFilter = FilteredPostList.length
-				DisplayCalendar(parseInt(document.getElementById("CalendarViewer_YearToView").value, 10)) //Reset it (so daily post count should not pick up where it left off)
+				DisplayCalendar(document.getElementById("CalendarViewer_DateToView").value) //Reset it (so daily post count should not pick up where it left off)
 				
 				document.getElementById("Output_Statistic_PostCount_AfterFilter").textContent = BigInt(Count_PostAfterFilter).toString(10) + " (" + BetterPercentageUsingInts(Count_PostAfterFilter, Count_PostBeforeFilter, 2, true) + ")"
 				document.getElementById("Output_Statistic_PostCountBarGraph_AfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_PostAfterFilter, Count_PostBeforeFilter, "to right", "#0000FF", "#000000")
@@ -406,20 +409,38 @@
 		}
 	}
 	function UpdateCalendarDisplay() {
-		let CalendarDisplay_YearNumber = parseInt(document.getElementById("CalendarViewer_YearToView").value, 10)
-		if (Number.isNaN(CalendarDisplay_YearNumber)) {
-			CalendarDisplay_YearNumber = new Date().getFullYear()
-		} else {
-			let MinYear = parseInt(document.getElementById("CalendarViewer_YearToView").min)
-			if (CalendarDisplay_YearNumber < MinYear) {
-				CalendarDisplay_YearNumber = MinYear
+		let CalendarViewerSetting = document.getElementById("CalendarViewer_DateToView")
+			let CorrectedDate = CalendarViewerSetting.value
+			if (CorrectedDate == "") {
+				CorrectedDate = (new Date().getFullYear()).toString(10) + "-01-01"
+			} else {
+				if (CorrectedDate < "1970-01-01") {
+					CorrectedDate = "1970-01-01"
+				}
 			}
-		}
-		document.getElementById("CalendarViewer_YearToView").value = CalendarDisplay_YearNumber.toString(10)
-		DisplayCalendar(parseInt(document.getElementById("CalendarViewer_YearToView").value, 10)) //Reset it (so daily post count should not pick up where it left off)
+			//CalendarViewerSetting.value = CorrectedDate
+		DisplayCalendar(CalendarViewerSetting.value) //Reset it (so daily post count should not pick up where it left off)
 		FillCalendarWithData()
 	}
-	function DisplayCalendar(inputYear) {
+	function CalendarScroll() {
+		document.getElementById("CalendarDisplay").addEventListener(
+			"wheel",
+			function (e) {
+				e.preventDefault()
+				let Displacement = 0
+				if (e.deltaY < 0) {
+					Displacement = -7*CalendarScrollSize
+				} else if (e.deltaY > 0) {
+					Displacement = 7*CalendarScrollSize
+				}
+				let SearchDate = new Date(document.getElementById("CalendarViewer_DateToView").value + "T00:00:00.000Z")
+				SearchDate.setUTCDate(SearchDate.getUTCDate()+Displacement)
+				document.getElementById("CalendarViewer_DateToView").value = SearchDate.toISOString().match(/\d+-\d+-\d+/)[0]
+				UpdateCalendarDisplay()
+			}
+		)
+	}
+	function DisplayCalendar(inputDateString) {
 		//First clear out the calendar display (resets the calendar as well as the post counts each day.)
 			let CalendarDiv = document.getElementById("CalendarDisplay")
 			while (CalendarDiv.lastElementChild) {
@@ -461,30 +482,55 @@
 			CalendarTable.style.tableLayout = "fixed"
 			CalendarTable.setAttribute("class", "NoBorders")
 			let  ProcessedDay = (() => { //Start at Sunday, the last beginning of the week that has a new year in it.
-				let InputDate = new Date(inputYear.toString(10) + "-01-01T00:00:00.000Z")
+				let InputDate = new Date(inputDateString + "T00:00:00.000Z")
 				let DayOffset = InputDate.getUTCDay()
 				return new Date(InputDate.setUTCDate(InputDate.getUTCDate()-DayOffset))
 			})();
 			let CurrentWeekTableRow = null
 			let MonthTableCell = null
+			let YearTableCell = null
 			let MonthLineSeperatorCountdown = 0
 			let PreviousMonth = -1
+			let PreviousYear = -1
+			let HaveGeneratedFirstYearCell = false
 			let HaveGeneratedFirstMonthCell = false //Make it so that month cells other than the first week have a border
-			for (let DayCount=0; DayCount<371; DayCount++) {
+			for (let DayCount=0; DayCount<371; DayCount++) { //Loop to generate each day.
 				let CurrentDateString = ProcessedDay.toISOString().match(/\d+-\d+-\d+/)[0]
 				let CurrentDateMonth = ProcessedDay.getUTCMonth()
 				let CurrentDateYear = ProcessedDay.getUTCFullYear()
 				let DayOfWeek = ProcessedDay.getUTCDay()
-				if (DayOfWeek == 0) { //Start of week
+				if (DayOfWeek == 0) { //Start of week (Sunday)
 					CurrentWeekTableRow = document.createElement("tr")
 					CurrentWeekTableRow.setAttribute("class", "NoBorders")
 					CurrentWeekTableRow.style.height = "21px"
 					CurrentWeekTableRow.style.maxHeight = "21px"
 					CurrentWeekTableRow.overflow = "hidden"
 					CurrentWeekTableRow.style.tableLayout = "fixed"
-					if (PreviousMonth != CurrentDateMonth) {
+					
+					if (PreviousYear != CurrentDateYear) {
+						YearTableCell = document.createElement("th")
+						YearTableCell.setAttribute("class", "NoBorders")
+						YearTableCell.style.boxSizing = "border-box"
+						YearTableCell.style.verticalAlign = "top"
+						if (HaveGeneratedFirstYearCell) {
+							YearTableCell.style.borderTop = "1px solid white"
+						}
+						HaveGeneratedFirstYearCell = true
+						YearTableCell.rowSpan = "1"
+						let YearDiv = document.createElement("div")
+						YearDiv.style.fontSize = "10px"
+						YearDiv.textContent = CurrentDateYear.toString(10)
+						YearTableCell.appendChild(YearDiv)
+						CurrentWeekTableRow.appendChild(YearTableCell)
+						PreviousYear = CurrentDateYear
+					} else {
+						let RowSpan = parseInt(YearTableCell.rowSpan)
+						RowSpan++
+						YearTableCell.rowSpan = RowSpan.toString(10)
+					}
+					if (PreviousMonth != CurrentDateMonth) { //On the next month's sunday
 						MonthTableCell = document.createElement("th")
-						MonthTableCell.rowspan = "1"
+						MonthTableCell.rowSpan = "1"
 						MonthTableCell.setAttribute("class", "NoBorders")
 						MonthTableCell.style.boxSizing = "border-box"
 						if (HaveGeneratedFirstMonthCell) { //White border on each month except the one that is the first week
@@ -497,16 +543,11 @@
 						DivMonthName.style.height = "19px"
 						DivMonthName.style.tableLayout = "fixed"
 						DivMonthName.appendChild(document.createTextNode(MonthNames[CurrentDateMonth]))
-						//OtherYear
-						if (CurrentDateYear != inputYear) { //If the day of the week we start on is on a previous month before January, write the previous year number.
-							DivMonthName.appendChild(document.createElement("br"))
-							DivMonthName.appendChild(document.createTextNode(CurrentDateYear.toString(10)))
-						}
 						MonthTableCell.appendChild(DivMonthName)
 						CurrentWeekTableRow.appendChild(MonthTableCell)
 						
 						PreviousMonth = CurrentDateMonth
-					} else {
+					} else { //On the next week within the same month
 						let RowSpan = parseInt(MonthTableCell.rowSpan)
 						RowSpan++
 						MonthTableCell.rowSpan = RowSpan.toString(10)
@@ -593,13 +634,13 @@
 					CurrentWeekTableRow.appendChild(TableDayBox)
 				}
 				CalendarTable.appendChild(CurrentWeekTableRow)
-				ProcessedDay.setUTCDate(ProcessedDay.getUTCDate()+1)
+				ProcessedDay.setUTCDate(ProcessedDay.getUTCDate()+1) //Next day
 			}
 			CalendarDiv.appendChild(CalendarTable)
 		} catch {
 			let OutOfRangeMsg = document.createElement("span")
 			OutOfRangeMsg.style.color = "#ff0000"
-			OutOfRangeMsg.appendChild(document.createTextNode("Out of range!"))
+			OutOfRangeMsg.appendChild(document.createTextNode("Out of range or invalid date!"))
 			CalendarDiv.appendChild(OutOfRangeMsg)
 		}
 	}
