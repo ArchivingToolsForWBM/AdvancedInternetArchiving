@@ -91,7 +91,7 @@
 <table>
 	<tr>
 		<th colspan="2">Type</th>
-		<th>Count</th>
+		<th>Value</th>
 	</tr>
 	<tr>
 		<th rowspan="3">Profiles</th>
@@ -104,7 +104,7 @@
 		<td><kbd>Removed</kbd></td><td id="Output_Statistic_ProfileCountBarGraph_Removed"><kbd id="Output_Statistic_ProfileCount_Removed">0</kbd></td>
 	</tr>
 	<tr>
-		<th rowspan="3">Posts</th>
+		<th rowspan="5">Posts</th>
 		<td><kbd>Originally have</kbd></td><td><kbd id="Output_Statistic_PostCount_BeforeFilter">0</kbd></td>
 	</tr>
 	<tr>
@@ -112,6 +112,12 @@
 	</tr>
 	<tr>
 		<td><kbd>Removed</kbd></td><td id="Output_Statistic_PostCountBarGraph_Removed"><kbd id="Output_Statistic_PostCount_Removed">0</kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Earliest post (after-filtered)</kbd></td><td><kbd id="Output_Statistic_EarliestPostDate">?</kbd></td>
+	</tr>
+	<tr>
+		<td><kbd>Latest post (after-filtered)</kbd></td><td><kbd id="Output_Statistic_LatestPostDate">?</kbd></td>
 	</tr>
 </table>
 <br>
@@ -300,6 +306,26 @@
 						}
 					return true
 				})
+				//Get earliest and latest dates
+					let FilteredDateEarliest = Infinity
+					let FilteredDateLatest = -Infinity
+					document.getElementById("Output_Statistic_EarliestPostDate").textContent = "?"
+					document.getElementById("Output_Statistic_LatestPostDate").textContent = "?"
+					FilteredPostList.forEach((Post) => {
+						let TimeStamp = new Date(Post.PostTimeStamp.Date_UTC.replace(" ", "T") + ":00.000Z")
+						if (TimeStamp < FilteredDateEarliest) {
+							FilteredDateEarliest = TimeStamp
+						}
+						if (TimeStamp > FilteredDateLatest) {
+							FilteredDateLatest = TimeStamp
+						}
+					})
+					if (FilteredDateEarliest !== Infinity) {
+						document.getElementById("Output_Statistic_EarliestPostDate").textContent = FilteredDateEarliest.toISOString().match(/\d+-\d+-\d+T\d+:\d+/)[0].replace("T", " ")
+					}
+					if (FilteredDateLatest !== -Infinity) {
+						document.getElementById("Output_Statistic_LatestPostDate").textContent = FilteredDateLatest.toISOString().match(/\d+-\d+-\d+T\d+:\d+/)[0].replace("T", " ")
+					}
 				let Count_PostAfterFilter = FilteredPostList.length
 				DisplayCalendar(document.getElementById("CalendarViewer_DateToView").value) //Reset it (so daily post count should not pick up where it left off)
 				
