@@ -136,11 +136,11 @@
 			<ul>
 				<li>Left click on a day to exclude days before it. Hold CTRL and left click to include.</li>
 				<li>Right click on a day to exclude that day and after it. Hold CTRL and right click to include.</li>
-				<li>Have your mouse on the calendar and move the scroll wheel to scroll through the calendar.</li>
+				<li>Have your mouse on the calendar and move the scroll wheel to scroll through the calendar. Alternatively, you can click on the calendar (including the year and month name) to focus on it and press up or down.</li>
 			</ul>
 			<table>
 				<tr>
-					<td><div id="CalendarDisplay"></div></td>
+					<td><div id="CalendarDisplay" tabindex="0"></div></td>
 				</tr>
 			</table>
 		</td>
@@ -154,12 +154,20 @@
 	let HasInputTextareaChanged = false
 	const CalendarScrollSize = 2 //Number of weeks to scroll up or down by each wheel movement on the mouse
 	
-	onload = (event) => {
+	window.addEventListener("load", (e) => {
+		//Add arrow keys reaction for the calendar display
+			document.getElementById("CalendarDisplay").addEventListener("keydown", (e) => {
+				if (e.key == "ArrowUp") {
+					InputScrollCalendar(e)
+				} else if (e.key == "ArrowDown") {
+					InputScrollCalendar(e)
+				}
+			})
 		//Get current year for default value for the calendar viewer
 			document.getElementById("CalendarViewer_DateToView").value = (new Date().getFullYear()).toString(10) + "-01-01"
 			UpdateCalendarDisplay()
 			CalendarScroll()
-	};
+	})
 	function JSONTextareaChanged() {
 		HasInputTextareaChanged = true
 	}
@@ -452,19 +460,22 @@
 		document.getElementById("CalendarDisplay").addEventListener(
 			"wheel",
 			function (e) {
-				e.preventDefault()
-				let Displacement = 0
-				if (e.deltaY < 0) {
-					Displacement = -7*CalendarScrollSize
-				} else if (e.deltaY > 0) {
-					Displacement = 7*CalendarScrollSize
-				}
-				let SearchDate = new Date(document.getElementById("CalendarViewer_DateToView").value + "T00:00:00.000Z")
-				SearchDate.setUTCDate(SearchDate.getUTCDate()+Displacement)
-				document.getElementById("CalendarViewer_DateToView").value = SearchDate.toISOString().match(/\d+-\d+-\d+/)[0]
-				UpdateCalendarDisplay()
+				InputScrollCalendar(e)
 			}
 		)
+	}
+	function InputScrollCalendar(e) {
+		e.preventDefault()
+		let Displacement = 0
+		if (e.deltaY < 0 || e.key == "ArrowUp") {
+			Displacement = -7*CalendarScrollSize
+		} else if (e.deltaY > 0 || e.key == "ArrowDown") {
+			Displacement = 7*CalendarScrollSize
+		}
+		let SearchDate = new Date(document.getElementById("CalendarViewer_DateToView").value + "T00:00:00.000Z")
+		SearchDate.setUTCDate(SearchDate.getUTCDate()+Displacement)
+		document.getElementById("CalendarViewer_DateToView").value = SearchDate.toISOString().match(/\d+-\d+-\d+/)[0]
+		UpdateCalendarDisplay()
 	}
 	function DisplayCalendar(inputDateString) {
 		//First clear out the calendar display (resets the calendar as well as the post counts each day.)
