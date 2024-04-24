@@ -376,15 +376,16 @@
 										}
 										//User handle
 										{
-											let UserHandleElement = DescendNode(Post, [0, 0, 1, 1, 0, 0, 0, 2])
+											//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[1].childNodes[0].textContent
+											let UserHandleElement = DescendNode(Post, [0,0,1,1,0,0,1,0])
 											if (UserHandleElement.IsSuccessful) {
-												UserHandle = UserHandleElement.OutputNode.innerText
+												UserHandle = UserHandleElement.OutputNode.textContent.replace(/^\s/, "")
 											}
 										}
 										//User Avatar
 										{
-											//Post.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1]
-											let AvatarImgElement = DescendNode(Post, [0, 0, 1, 0, 0, 0, 0, 1])
+											//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+											let AvatarImgElement = DescendNode(Post, [0,0,1,0,0,0,0,01])
 											if (AvatarImgElement.IsSuccessful) {
 												if (typeof AvatarImgElement.OutputNode.src != "undefined") {
 													UserAvatar = HttpToTtp(AvatarImgElement.OutputNode.src)
@@ -652,8 +653,8 @@
 									PostURL = PostURL.replace(/(https:\/\/bsky\.app\/profile\/)[a-zA-Z\d\-\.:]+(\/post\/[a-zA-Z\d\-]+\/?)/, "$1" + UserHandleNoAt + "$2")
 								}
 								
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1]
-								let NodeOfAvatarImg = DescendNode(Box, [0,0,0,0,0,0,0,1])
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+								let NodeOfAvatarImg = DescendNode(Box, [0,0,0,0,0,0,0,0,1])
 								if (NodeOfAvatarImg.IsSuccessful) {
 									UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
 								}
@@ -711,7 +712,8 @@
 								}
 								
 								//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-								let NodeOfAvatarImg = DescendNode(Box, [0,1,0,0,0,0,0,1])
+								//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+								let NodeOfAvatarImg = DescendNode(Box, [0,1,0,0,0,0,0,0,1])
 								if (NodeOfAvatarImg.IsSuccessful) {
 									UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
 								}
@@ -761,11 +763,11 @@
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
 								UserTitle = DescendNode(Box, [0,0,0,1,1,0,0,0,0]).OutputNode.textContent
 								
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[2].innerText
-								UserHandle = DescendNode(Box, [0,0,0,1,1,0,0,0,2]).OutputNode.innerText
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/^\s/, "")
+								UserHandle = DescendNode(Box, [0,0,0,1,1,0,0,1]).OutputNode.textContent.replace(/^\s/, "")
 								
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-								let NodeOfAvatarImg = DescendNode(Box, [0,0,0,1,0,0,0,0,1])
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+								let NodeOfAvatarImg = DescendNode(Box, [0,0,0,1,0,0,0,0,0,1])
 								if (NodeOfAvatarImg.IsSuccessful) {
 									UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
 								}
@@ -872,14 +874,19 @@
 								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].href
 								PostURL = HttpToTtp(DescendNode(Post, [0,0,1,0,2]).OutputNode.href)
 								
+								if (PostURL == "https://bsky.app/profile/infosec.skyfleet.blue/post/3kckxbmmwdj2g") {
+									let breakpoint = 0
+								}
+								
 								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
 								UserTitle = DescendNode(Post, [0,0,1,0,0,0,0]).OutputNode.textContent
 								
-								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[2].innerText
-								UserHandle = DescendNode(Post, [0,0,1,0,0,0,2]).OutputNode.innerText
+								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/^\s/, "")
+								UserHandle = DescendNode(Post, [0,0,1,0,0,1]).OutputNode.textContent.replace(/^\s/, "")
 								
 								//Post.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-								let NodeOfAvatar = DescendNode(Post, [0,0,0,0,0,0,1])
+								//Post.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+								let NodeOfAvatar = DescendNode(Post, [0,0,0,0,0,0,0,1])
 								if (NodeOfAvatar.IsSuccessful) {
 									UserAvatar = HttpToTtp(NodeOfAvatar.OutputNode.src)
 								}
@@ -901,7 +908,7 @@
 								
 								
 								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1]
-								PostContent = GetPostContent(DescendNode(Post, [0,0,1,1+ReplyToOffset]).OutputNode)
+								PostContent = GetPostContent(DescendNode(Post, [0,0,1,1+ReplyToOffset]).OutputNode, "SearchPage")
 								
 								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes
 								let NodeOfReplyRepostLikes_Array = []
@@ -917,7 +924,7 @@
 									RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
 									LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
 								}
-								if ((PostURL != "")&&(UserTitle != "")&&(UserHandle != "")) {
+								if ((PostURL != "")&&(UserTitle != "")&&(UserHandle != "")&&(PostContent.Segments.length != 0)) {
 									ListOfPosts.push({
 										RepostedByUserTitle: RepostedByUserTitle,
 										PostURL: PostURL,
@@ -1379,7 +1386,7 @@
 			
 			PostContent.Segments = []
 			PostSegments.forEach((PostSegment) => { //Each post segments
-				if (!(/(?:^(?:ALT)?$)/.test(PostSegment.innerText))) { //Content has text (besides blank or "ALT")
+				if (!(/(?:^(?:ALT)?$)/.test(PostSegment.textContent))) { //Content has text (besides blank or "ALT")
 					if (typeof PostSegment.childNodes != "undefined") { //Has children
 						let NodeForDivs = DescendNode(PostSegment, [0])
 						if (NodeForDivs.IsSuccessful) {

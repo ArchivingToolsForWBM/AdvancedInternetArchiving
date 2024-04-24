@@ -473,9 +473,11 @@
 			Displacement = 7*CalendarScrollSize
 		}
 		let SearchDate = new Date(document.getElementById("CalendarViewer_DateToView").value + "T00:00:00.000Z")
-		SearchDate.setUTCDate(SearchDate.getUTCDate()+Displacement)
-		document.getElementById("CalendarViewer_DateToView").value = SearchDate.toISOString().match(/\d+-\d+-\d+/)[0]
-		UpdateCalendarDisplay()
+		if (SearchDate.toString() != "Invalid Date") {
+			SearchDate.setUTCDate(SearchDate.getUTCDate()+Displacement)
+			document.getElementById("CalendarViewer_DateToView").value = SearchDate.toISOString().match(/\d+-\d+-\d+/)[0]
+			UpdateCalendarDisplay()
+		}
 	}
 	function DisplayCalendar(inputDateString) {
 		//First clear out the calendar display (resets the calendar as well as the post counts each day.)
