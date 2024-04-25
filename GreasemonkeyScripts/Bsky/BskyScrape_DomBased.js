@@ -1178,33 +1178,18 @@
 			//Returns an array whose items are objects representing its URL, type and caption.
 			let Output = []
 			if (Node.childNodes.length != 0) {
-				Output = Array.from(Node.getElementsByTagName("img")).map((HTMLTag) => {
+				Output = Array.from(Node.querySelectorAll("img, video")).map((HTMLTag) => {
 					//WIP, once bsky allows other media types besides images, this is to be updated to accept multiple tags (img, video, etc.)
+					
 					let MediaOutput = {
 						Type: HTMLTag.tagName,
 						URL: ""
 					}
-					switch (HTMLTag.tagName) {
-						case "IMG":
-							MediaOutput.URL = HttpToTtp(FullResConvert(HTMLTag.src))
-							if (HTMLTag.alt) {
-								MediaOutput.alt = HTMLTag.alt
-							}
-//							{(() => { //Need this curly braces on outermost so it doesn't cause promise issues (scoping issue)
-//								let ButtonForLabel = AscendNode(HTMLTag, 3)
-//								if (!ButtonForLabel.IsSuccessful) {
-//									return
-//								}
-//								if (ButtonForLabel.OutputNode.tagName != "BUTTON") {
-//									return
-//								}
-//								if (/^(?:Image)?$/.test(ButtonForLabel.OutputNode.ariaLabel)) {
-//									return
-//								}
-//								MediaOutput.Caption = ButtonForLabel.OutputNode.ariaLabel
-//								
-//							})();}
-							break
+					if ((HTMLTag.tagName == "IMG")||(HTMLTag.tagName == "VIDEO")) {
+						MediaOutput.URL = HttpToTtp(FullResConvert(HTMLTag.src))
+						if (HTMLTag.alt) {
+							MediaOutput.alt = HTMLTag.alt
+						}
 					}
 					
 					return MediaOutput
@@ -1432,6 +1417,7 @@
 			//
 			let HasImages = false
 			let HasPostImages = false
+			let HasVideo = false
 			let HasTimestamp = false
 			let HasAHref = false
 			let HasLinkToExternalSite = false
@@ -1443,6 +1429,11 @@
 						HasPostImages = true
 					}
 				}
+				
+				if (HTMLElementThing.tagName == "VIDEO") {
+					HasVideo = true
+				}
+				
 				if (HTMLElementThing.tagName == "A") {
 					HasAHref = true
 					if (/https:\/\/bsky\.app\/profile\/.*\/post\//.test(HTMLElementThing.href)) {
@@ -1450,7 +1441,7 @@
 					}
 				}
 			})
-			if ((!HasImages)&&(!HasTimestamp)) {
+			if ((!HasImages)&&(!HasTimestamp)&&(!HasVideo)) {
 				return "PlainText"
 			}
 			if (HasPostImages && (!HasAHref)) {
