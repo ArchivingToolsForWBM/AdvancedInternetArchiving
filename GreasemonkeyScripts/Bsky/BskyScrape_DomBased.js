@@ -1066,11 +1066,6 @@
 				RaceConditionLock = false
 			}
 		}
-	//UI functions
-		function UpdateDisplay_ScanFrequency() {
-			let a = 0
-			
-		}
 	//reused/helper Functions
 		function ConsoleLoggingURL(URL_String) {
 			let URL_truncateProof = URL_String.replace(/^http/, "ttp")
@@ -1362,7 +1357,6 @@
 			//YYYY-MM-DDTHH:mm:ss.sssZ or ±YYYYYY-MM-DDTHH:mm:ss.sssZ
 			return ISOString.replace("T", " ").replace(/\.\d{3}Z$/, "") + " UTC"
 		}
-		
 		function GetPostContent(Node, Type) {
 			//Node should be the outermost div tag that covers only the post and not the header/footer
 			let PostContent = {}
@@ -1386,113 +1380,83 @@
 			
 			PostContent.Segments = []
 			PostSegments.forEach((PostSegment) => { //Each post segments
-				if (!(/(?:^(?:ALT)?$)/.test(PostSegment.textContent))) { //Content has text (besides blank or "ALT")
-					if (typeof PostSegment.childNodes != "undefined") { //Has children
-						let NodeForDivs = DescendNode(PostSegment, [0])
-						if (NodeForDivs.IsSuccessful) {
-							if (typeof NodeForDivs.OutputNode.getElementsByTagName === "function") {
-								//^"Reply to ..." can happen if this code executes before their "Reply to" fully loads, causing NodeForDivs.OutputNode to be a text node instead of a tag node
-								let SegmentType = (() => {
-									let ListOfInnerDivs = [...NodeForDivs.OutputNode.getElementsByTagName("DIV")]
-									//If there is no more div levels down, then this is user-posted text.
-									if (ListOfInnerDivs.length == 0) {
-										return "PlainText"
-									} else {
-										//Hashtags are inside a div -> button -> span
-										//Find a div that isn't a hashtag, if not, then this is a plaintext
-										let NonHashOrUserHandle = ListOfInnerDivs.findIndex((HashtagsOrHandleLink) => {
-											return (!/^(?:#[^\s\/\,\.]+|@[a-zA-Z\d\.\-]+)$/.test(HashtagsOrHandleLink.textContent))
-										})
-										if (NonHashOrUserHandle == -1) {
-											return "PlainText"
-										} else {
-											return "TextWithFormattedContent"
-										}
-									}
-								})();
-								
-								
-								if (SegmentType == "PlainText") {
-									let TextContentObject = {
-										ContentType: "Text",
-										UserPostedText: PostSegment.textContent
-									}
-									let ListOfLinks = GetLinksURLs(PostSegment)
-									if (ListOfLinks.length != 0) {
-										TextContentObject.Links = ListOfLinks
-									}
-									PostContent.Segments.push(TextContentObject)
-								} else {
-									//PostSegment contains multiple sub-boxes here
-									//https://bsky.app/profile/dumjaveln.bsky.social/post/3klkgthv63q2z quoted post
-									let Node_QuoteSubBox = DescendNode(PostSegment, [0, 0]) //Go down a div level
-									if (/https?:\/\/bsky\.app\/search\?q=.*$/.test(window.location.href)) {
-										Node_QuoteSubBox = DescendNode(PostSegment, [0]) //Go down a div level
-									}
-									if (Node_QuoteSubBox.IsSuccessful) {
-										if (Node_QuoteSubBox.OutputNode.tagName != "A") {
-											let SubBoxesContent = []
-											let SubBoxes = Array.from(Node_QuoteSubBox.OutputNode.childNodes)
-											SubBoxes.forEach((SubBox) => { //Loop each inner boxes (text, images, quotes)
-												if (!(/(?:^$|^(?:ALT\n)*ALT$)/.test(SubBox.innerText))) {
-													//Test if there is a post date
-													//SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
-													let NodeOfPostDate = DescendNode(SubBox, [0,0,0,3])
-													
-													//SubBox.childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
-													//https://bsky.app/profile/kimscaravelli.bsky.social/post/3klaue65stp2x
-													let NodeOfPostDate1 = DescendNode(SubBox, [0,3])
-													
-													
-													if (NodeOfPostDate.IsSuccessful) { //This HAS to be a quote (if attachments have both a media and a quote, thus both wrapped in a div)
-														if (NodeOfPostDate.OutputNode.dataset.tooltip != "") { //If has a date
-															SubBoxesContent.push(GetQuoteBoxData(SubBox.childNodes[0]))
-														}
-													} else if (NodeOfPostDate1.IsSuccessful) { //If there is only a single attachment, then this isn't div-wrapped
-														if (NodeOfPostDate1.OutputNode.dataset.tooltip != "") {
-															SubBoxesContent.push(GetQuoteBoxData(SubBox.parentNode))
-														}
-													}
-												} else {
-													//Post has quotes and media
-													let QuoteMedia = {
-														ContentType: "Media"
-													}
-													let MediaURLs = GetMediaURLs(SubBox)
-													if (MediaURLs.length != 0) {
-														QuoteMedia.MediaURLs = MediaURLs
-														SubBoxesContent.push(QuoteMedia)
-													}
-												}
-											})
-											PostContent.Segments.push({
-												ContentType: "Attachment",
-												Content: SubBoxesContent
-											})
-										} else { //Link to external site, have a preview of the page, e.g. https://bsky.app/profile/pappahutten.bsky.social/post/3klxhuy6wbc2h
-											let LinkPreview = Node_QuoteSubBox.OutputNode
-											let LinkPreviewObject = LinkPreviewNodeToJson(LinkPreview)
-											PostContent.Segments.push(LinkPreviewObject)
-										}
-									}
-								}
-							} else {
-								return "Error"
-							}
+				let PostSegmentType = IdentifyPostSegmentType(PostSegment)
+				if (PostSegmentType == "PlainText") {
+					if (!/^\s*$/.test(PostSegment.textContent)) {
+						let PlainTextContent = {
+							ContentType: "Text",
+							UserPostedText: PostSegment.textContent
 						}
+						let ListOfLinks = GetLinksURLs(PostSegment)
+						if (ListOfLinks.length != 0) {
+							PlainTextContent.Links = ListOfLinks
+						}
+						PostContent.Segments.push(PlainTextContent)
 					}
-				} else {
+				} else if (PostSegmentType == "ImageGallery") {
 					let MediaContent = {
 						ContentType: "Media"
 					}
 					let MediaURLs = GetMediaURLs(PostSegment)
-					if (MediaURLs.length != 0) {
+					if (MediaURLs.length != 0) { //If no images, don't even push
 						MediaContent.MediaURLs = MediaURLs
 						PostContent.Segments.push(MediaContent)
 					}
+				} else { //Attachments, the DOM structor can be recursive (quoting a post that contains an external link)
+					let AttachmentObject = {
+						Type: "Attachments",
+						ContentHTML: PostSegment.innerHTML
+					}
+					let ListOfLinks = GetLinksURLs(PostSegment)
+					ListOfLinks = [...new Set(ListOfLinks)]
+					if (ListOfLinks.length != 0) {
+						AttachmentObject.Links = ListOfLinks
+					}
+					let MediaURLs = GetMediaURLs(PostSegment)
+					MediaURLs = [...new Set(MediaURLs)]
+					if (MediaURLs.length != 0) {
+						AttachmentObject.MediaURLs = MediaURLs
+						PostContent.Segments.push(AttachmentObject)
+					}
+					
+					
+					PostContent.Segments.push(AttachmentObject)
 				}
 			})
 			return PostContent
+		}
+		function IdentifyPostSegmentType(ElementContainingPostSegments) {
+			//Tests:
+			// https://bsky.app/profile/mobute.bsky.social/post/3kqtldm7r6h27 -> A post quoting another post, no images besides avatar images.
+			// https://bsky.app/profile/dumjaveln.bsky.social/post/3klkgthv63q2z - > A post with plain text, image, and a quote that contains text and image
+			//
+			let HasImages = false
+			let HasPostImages = false
+			let HasTimestamp = false
+			let HasAHref = false
+			let HasLinkToExternalSite = false
+			let IsLinkToAnotherPost = false
+			Array.from(ElementContainingPostSegments.getElementsByTagName("*")).forEach((HTMLElementThing) => { //Loop through all children elements to determine type
+				if (HTMLElementThing.tagName == "IMG") {
+					HasImages = true
+					if (/https:\/\/cdn\.bsky\.app\/img\/feed_thumbnail\//.test(HTMLElementThing.src)) {
+						HasPostImages = true
+					}
+				}
+				if (HTMLElementThing.tagName == "A") {
+					HasAHref = true
+					if (/https:\/\/bsky\.app\/profile\/.*\/post\//.test(HTMLElementThing.href)) {
+						IsLinkToAnotherPost = true
+					}
+				}
+			})
+			if ((!HasImages)&&(!HasTimestamp)) {
+				return "PlainText"
+			}
+			if (HasPostImages && (!HasAHref)) {
+				return "ImageGallery"
+			}
+			return "Attachments"
 		}
 		function GetQuoteBoxData(Node_SubBox) {
 			let DescendMap_PostURLAndTimestamp = [0,0,3]
