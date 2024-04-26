@@ -1483,7 +1483,9 @@
 										let NodeOfExternalLink = DescendNode(QuotedPostSegment, [0,0])
 										if (NodeOfExternalLink.IsSuccessful) {
 											if (!/^https:\/\/bsky\.app\/profile/.test(NodeOfExternalLink.OutputNode.href)) {
-												ExternalLink = NodeOfExternalLink.OutputNode.href
+												if (typeof NodeOfExternalLink.OutputNode.href != "undefined") {
+													ExternalLink = NodeOfExternalLink.OutputNode.href
+												}
 											}
 										}
 										if (!/^\s*$/.test(QuotedPostSegment.textContent)&&(ExternalLink == "")) {
@@ -1506,6 +1508,11 @@
 												}
 											})
 											QuotedContent.Contents.PostContent.Segments.push({Type: "ExternalLink", Link: ExternalLink, Content: ExternalLinkOutput})
+										} else {
+											let MediaList = GetMediaURLs(QuotedPostSegment) //has image or video
+											if (MediaList.length != 0) {
+												QuotedContent.Contents.PostContent.Segments.push(MediaList)
+											}
 										}
 									})
 									AttachmentOutput.AttachmentContents.push(QuotedContent)
