@@ -432,6 +432,7 @@
 												//}
 											}
 										}
+										
 										let NodeOfPostContent = DescendNode(Post, [0,0,1,1,1+ReplyToOffset])
 										if (NodeOfPostContent.IsSuccessful) {
 											PostContent = GetPostContent(NodeOfPostContent.OutputNode, "Post_UserFontPage")
@@ -774,6 +775,10 @@
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
 								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,0,0,1,1,0,2]).OutputNode.dataset.tooltip)
+								
+								if (PostURL == "https://bsky.app/profile/rainmanbun.bsky.social/post/3kqvbhcuskm2p") {
+									let a = 0
+								}
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1] - This also contains the header and footer...
 								let NodeOfPostContent = DescendNode(Box, [0,0,0,1,1])
@@ -1387,28 +1392,155 @@
 						MediaContent.MediaURLs = MediaURLs
 						PostContent.Segments.push(MediaContent)
 					}
-				} else { //Attachments, the DOM structor can be recursive (quoting a post that contains an external link)
-					let AttachmentObject = {
-						Type: "Attachments",
-						ContentHTML: PostSegment.innerHTML
+				} else if (PostSegmentType == "Attachments") { //Attachments (div under post text containing a mixture of images, quotes, and links to another page)
+					let AttachmentListNode = DescendNode(PostSegment, [0])
+					if (AttachmentListNode.IsSuccessful) {
+						let AttachmentOutput = {
+							Type: "Attachment",
+							AttachmentContents: []
+						}
+						let AttachmentList = Array.from(AttachmentListNode.OutputNode.childNodes)
+						AttachmentList.forEach((Node) => {
+							AttachmentPostType = IdentifyPostSegmentType(Node)
+							if (AttachmentPostType == "ImageGallery") {
+								let MediaContent = {
+									ContentType: "Media"
+								}
+								let MediaURLs = GetMediaURLs(Node)
+								if (MediaURLs.length != 0) { //If no images, don't even push
+									MediaContent.MediaURLs = MediaURLs
+									AttachmentOutput.AttachmentContents.push(MediaContent)
+								}
+							} else if (AttachmentPostType == "Attachments") {
+								let SubAttachmentType = (function () {
+									let QuotedPost = Array.from(Node.querySelectorAll("a")).find((HTMLElement) => {
+										return /^https:\/\/bsky\.app\/profile\//.test(HTMLElement.href)
+									})
+									if (typeof QuotedPost != "undefined") {
+										return "QuotedPost"
+									}
+								})(Node);
+								
+								if (SubAttachmentType == "QuotedPost") {
+									let QuotedContent = {
+										ContentType: "QuotedPost",
+										Contents: {
+											PostURL: "",
+											UserTitle: "",
+											UserHandle: "",
+											UserAvatar: "",
+											PostTimeStamp: {},
+											PostContent: {
+												Segments: []
+											}
+										}
+									}
+									
+									//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[3].href - for "Post_CurrentlyViewed_AtTop"
+									//Node.childNodes[0].childNodes[0].childNodes[3].href - for "Post_NotCurrentlyViewed"
+									//Can't use "Type" because it is scoped only to "GetPostContent", thus inner functions cannot access it.
+									let NodeOfPostURL = DescendNode(Node, [0,0,0,3])
+									let AdjustFor_Post_NotCurrentlyViewed = false
+									if (NodeOfPostURL.IsSuccessful) {
+									} else {
+										AdjustFor_Post_NotCurrentlyViewed = true
+										NodeOfPostURL = DescendNode(Node, [0,0,3])
+									}
+									QuotedContent.Contents.PostURL = NodeOfPostURL.OutputNode.href
+									//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].textContent
+									let NodeOfUserTitle = DescendNode(Node, AdjustQuotedPostLayout([0,0,0,1,0], AdjustFor_Post_NotCurrentlyViewed))
+									if (NodeOfUserTitle.IsSuccessful) {
+										QuotedContent.Contents.UserTitle = NodeOfUserTitle.OutputNode.textContent
+									}
+									//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].textContent.replace(/^\s/, "")
+									let NodeOfUserHandle = DescendNode(Node, AdjustQuotedPostLayout([0,0,0,1,1], AdjustFor_Post_NotCurrentlyViewed))
+									if (NodeOfUserHandle.IsSuccessful) {
+										QuotedContent.Contents.UserHandle = NodeOfUserHandle.OutputNode.textContent.replace(/^\s/, "")
+									}
+									//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+									let NodeOfUserAvatar = DescendNode(Node, AdjustQuotedPostLayout([0,0,0,0,0,0,0,0,1], AdjustFor_Post_NotCurrentlyViewed))
+									if (NodeOfUserAvatar.IsSuccessful) {
+										QuotedContent.Contents.UserAvatar = NodeOfUserAvatar.OutputNode.src
+									}
+									//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
+									let NodeOfPostTimeStamp = DescendNode(Node, AdjustQuotedPostLayout([0,0,0,3], AdjustFor_Post_NotCurrentlyViewed))
+									if (NodeOfPostTimeStamp.IsSuccessful) {
+										QuotedContent.Contents.PostTimeStamp = PostDateInfo(NodeOfPostTimeStamp.OutputNode.dataset.tooltip)
+									}
+									//Node.childNodes[0].childNodes
+									//Get quoted post content
+									let ArrayOfPostSegments = []
+									if (!AdjustFor_Post_NotCurrentlyViewed) {
+										ArrayOfPostSegments = Array.from(Node.childNodes[0].childNodes)
+									} else {
+										ArrayOfPostSegments = Array.from(Node.childNodes)
+									}
+									
+									ArrayOfPostSegments.shift() //Remove the header showing the avatar, name, handle, etc. All stuff beyond that are content
+									ArrayOfPostSegments.forEach((QuotedPostSegment) => {
+										let ExternalLink = ""
+										//QuotedPostSegment.childNodes[0].childNodes[0].href
+										let NodeOfExternalLink = DescendNode(QuotedPostSegment, [0,0])
+										if (NodeOfExternalLink.IsSuccessful) {
+											if (!/^https:\/\/bsky\.app\/profile/.test(NodeOfExternalLink.OutputNode.href)) {
+												ExternalLink = NodeOfExternalLink.OutputNode.href
+											}
+										}
+										if (!/^\s*$/.test(QuotedPostSegment.textContent)&&(ExternalLink == "")) {
+											QuotedContent.Contents.PostContent.Segments.push({
+												ContentType: "Text",
+												UserPostedText: QuotedPostSegment.textContent
+											})
+										} else if (ExternalLink != "") {
+											//QuotedPostSegment.childNodes[0].childNodes[0].childNodes[0].childNodes
+											let PartsOfExternalLinkPreview = Array.from(QuotedPostSegment.childNodes[0].childNodes[0].childNodes[0].childNodes)
+											let ExternalLinkOutput = []
+											PartsOfExternalLinkPreview.forEach((HTMLElement) => {
+												if (/^\s*$/.test(HTMLElement.TextContent)) { 
+													let MediaList = GetMediaURLs(HTMLElement) //has image or video
+													if (MediaList.length != 0) {
+														ExternalLinkOutput.push(MediaList)
+													}
+												} else {
+													ExternalLinkOutput.push({ExternalLinkText: HTMLElement.textContent})
+												}
+											})
+											QuotedContent.Contents.PostContent.Segments.push({Type: "ExternalLink", Link: ExternalLink, Content: ExternalLinkOutput})
+										}
+									})
+									AttachmentOutput.AttachmentContents.push(QuotedContent)
+								}
+							}
+						})
+						PostContent.Segments.push(AttachmentOutput)
 					}
-					let ListOfLinks = GetLinksURLs(PostSegment)
-					ListOfLinks = [...new Set(ListOfLinks)]
-					if (ListOfLinks.length != 0) {
-						AttachmentObject.Links = ListOfLinks
-					}
-					let MediaURLs = GetMediaURLs(PostSegment)
-					MediaURLs = [...new Set(MediaURLs)]
-					if (MediaURLs.length != 0) {
-						AttachmentObject.MediaURLs = MediaURLs
-						PostContent.Segments.push(AttachmentObject)
-					}
-					
-					
-					PostContent.Segments.push(AttachmentObject)
+//					let AttachmentObject = {
+//						Type: "Attachments",
+//						ContentHTML: PostSegment.innerHTML
+//					}
+//					let ListOfLinks = GetLinksURLs(PostSegment)
+//					ListOfLinks = [...new Set(ListOfLinks)]
+//					if (ListOfLinks.length != 0) {
+//						AttachmentObject.Links = ListOfLinks
+//					}
+//					let MediaURLs = GetMediaURLs(PostSegment)
+//					MediaURLs = [...new Set(MediaURLs)]
+//					if (MediaURLs.length != 0) {
+//						AttachmentObject.MediaURLs = MediaURLs
+//						PostContent.Segments.push(AttachmentObject)
+//					}
+//					PostContent.Segments.push(AttachmentObject)
 				}
 			})
 			return PostContent
+		}
+		function AdjustQuotedPostLayout(ArrayThing, Adjust) {
+			if (!Adjust) {
+				return ArrayThing
+			} else {
+				ArrayThing.shift()
+				return ArrayThing
+			}
 		}
 		function IdentifyPostSegmentType(ElementContainingPostSegments) {
 			//Tests:
