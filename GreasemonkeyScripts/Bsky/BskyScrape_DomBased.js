@@ -776,9 +776,10 @@
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
 								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,0,0,1,1,0,2]).OutputNode.dataset.tooltip)
 								
-								if (PostURL == "https://bsky.app/profile/rainmanbun.bsky.social/post/3kqvbhcuskm2p") {
-									let a = 0
+								if (PostURL == "https://bsky.app/profile/dorris13rabiu.bsky.social/post/3koh65u6cxc25") {
+									let breakpoint = 0
 								}
+								
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1] - This also contains the header and footer...
 								let NodeOfPostContent = DescendNode(Box, [0,0,0,1,1])
@@ -878,10 +879,6 @@
 								
 								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].href
 								PostURL = HttpToTtp(DescendNode(Post, [0,0,1,0,2]).OutputNode.href)
-								
-								if (PostURL == "https://bsky.app/profile/infosec.skyfleet.blue/post/3kckxbmmwdj2g") {
-									let breakpoint = 0
-								}
 								
 								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
 								UserTitle = DescendNode(Post, [0,0,1,0,0,0,0]).OutputNode.textContent
@@ -1308,7 +1305,7 @@
 		}
 		function PostDateInfo(StringTimestamp) {
 			if (typeof StringTimestamp == "undefined") {
-				return "uhh"
+				return "Invalid date"
 			}
 			
 			//Info got from: https://stackoverflow.com/questions/78018427/how-do-i-convert-the-local-date-and-time-e-g-est-to-utc
@@ -1338,9 +1335,7 @@
 				
 				return ReturnObject
 			} else {
-				return({
-					Error: "Invalid date"
-				})
+				return "Invalid date"
 			}
 		}
 		function ISOString_to_YYYY_MM_DD_HH_MM_SS(ISOString) {
@@ -1419,135 +1414,46 @@
 									if (typeof QuotedPost != "undefined") {
 										return "QuotedPost"
 									}
+									let ExernalLinkPost = Array.from(Node.querySelectorAll("a")).find((ExternalLink) => {
+										return !(/^https:\/\/bsky\.app\/profile\//.test(ExternalLink.href))
+										
+									})
+									if (typeof ExernalLinkPost != "undefined") {
+										return "ExternalLink"
+									}
 								})(Node);
 								
 								if (SubAttachmentType == "QuotedPost") {
-									let QuotedContent = {
-										ContentType: "QuotedPost",
-										Contents: {
-											PostURL: "",
-											UserTitle: "",
-											UserHandle: "",
-											UserAvatar: "",
-											PostTimeStamp: {},
-											PostContent: {
-												Segments: []
-											}
-										}
+									//The levels where the node of quoted posts resides varies depending on the post layout type
+									let QuotedPost = null
+									let DateDomTest = 0
+									try {
+										let DateInfoData = Node.childNodes[0].childNodes[3].dataset.tooltip
+									} catch {
+										DateDomTest = 1
 									}
 									
-									//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[3].href - for "Post_CurrentlyViewed_AtTop"
-									//Node.childNodes[0].childNodes[0].childNodes[3].href - for "Post_NotCurrentlyViewed"
-									//Can't use "Type" because it is scoped only to "GetPostContent", thus inner functions cannot access it.
-									let NodeOfPostURL = DescendNode(Node, [0,0,0,3])
-									let AdjustFor_Post_NotCurrentlyViewed = false
-									if (NodeOfPostURL.IsSuccessful) {
+									if (DateDomTest == 0) {
+										QuotedPost = GetQuotedPost(Node.parentNode)
 									} else {
-										AdjustFor_Post_NotCurrentlyViewed = true
-										NodeOfPostURL = DescendNode(Node, [0,0,3])
+										QuotedPost = GetQuotedPost(Node)
 									}
-									QuotedContent.Contents.PostURL = NodeOfPostURL.OutputNode.href
-									//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].textContent
-									let NodeOfUserTitle = DescendNode(Node, AdjustQuotedPostLayout([0,0,0,1,0], AdjustFor_Post_NotCurrentlyViewed))
-									if (NodeOfUserTitle.IsSuccessful) {
-										QuotedContent.Contents.UserTitle = NodeOfUserTitle.OutputNode.textContent
-									}
-									//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].textContent.replace(/^\s/, "")
-									let NodeOfUserHandle = DescendNode(Node, AdjustQuotedPostLayout([0,0,0,1,1], AdjustFor_Post_NotCurrentlyViewed))
-									if (NodeOfUserHandle.IsSuccessful) {
-										QuotedContent.Contents.UserHandle = NodeOfUserHandle.OutputNode.textContent.replace(/^\s/, "")
-									}
-									//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-									let NodeOfUserAvatar = DescendNode(Node, AdjustQuotedPostLayout([0,0,0,0,0,0,0,0,1], AdjustFor_Post_NotCurrentlyViewed))
-									if (NodeOfUserAvatar.IsSuccessful) {
-										QuotedContent.Contents.UserAvatar = NodeOfUserAvatar.OutputNode.src
-									}
-									//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
-									let NodeOfPostTimeStamp = DescendNode(Node, AdjustQuotedPostLayout([0,0,0,3], AdjustFor_Post_NotCurrentlyViewed))
-									if (NodeOfPostTimeStamp.IsSuccessful) {
-										QuotedContent.Contents.PostTimeStamp = PostDateInfo(NodeOfPostTimeStamp.OutputNode.dataset.tooltip)
-									}
-									//Node.childNodes[0].childNodes
-									//Get quoted post content
-									let ArrayOfPostSegments = []
-									if (!AdjustFor_Post_NotCurrentlyViewed) {
-										ArrayOfPostSegments = Array.from(Node.childNodes[0].childNodes)
-									} else {
-										ArrayOfPostSegments = Array.from(Node.childNodes)
-									}
+									AttachmentOutput.AttachmentContents.push(QuotedPost)
+								} else if (SubAttachmentType == "ExternalLink") {
+									let ExternalLinkObject = GetExternalLinkPreview(Node.childNodes[0])
 									
-									ArrayOfPostSegments.shift() //Remove the header showing the avatar, name, handle, etc. All stuff beyond that are content
-									ArrayOfPostSegments.forEach((QuotedPostSegment) => {
-										let ExternalLink = ""
-										//QuotedPostSegment.childNodes[0].childNodes[0].href
-										let NodeOfExternalLink = DescendNode(QuotedPostSegment, [0,0])
-										if (NodeOfExternalLink.IsSuccessful) {
-											if (!/^https:\/\/bsky\.app\/profile/.test(NodeOfExternalLink.OutputNode.href)) {
-												if (typeof NodeOfExternalLink.OutputNode.href != "undefined") {
-													ExternalLink = NodeOfExternalLink.OutputNode.href
-												}
-											}
-										}
-										if (!/^\s*$/.test(QuotedPostSegment.textContent)&&(ExternalLink == "")) {
-											QuotedContent.Contents.PostContent.Segments.push({
-												ContentType: "Text",
-												UserPostedText: QuotedPostSegment.textContent
-											})
-										} else if (ExternalLink != "") {
-											//QuotedPostSegment.childNodes[0].childNodes[0].childNodes[0].childNodes
-											let PartsOfExternalLinkPreview = Array.from(QuotedPostSegment.childNodes[0].childNodes[0].childNodes[0].childNodes)
-											let ExternalLinkOutput = []
-											PartsOfExternalLinkPreview.forEach((HTMLElement) => {
-												if (/^\s*$/.test(HTMLElement.TextContent)) { 
-													let MediaList = GetMediaURLs(HTMLElement) //has image or video
-													if (MediaList.length != 0) {
-														ExternalLinkOutput.push(MediaList)
-													}
-												} else {
-													ExternalLinkOutput.push({ExternalLinkText: HTMLElement.textContent})
-												}
-											})
-											QuotedContent.Contents.PostContent.Segments.push({Type: "ExternalLink", Link: ExternalLink, Content: ExternalLinkOutput})
-										} else {
-											let MediaList = GetMediaURLs(QuotedPostSegment) //has image or video
-											if (MediaList.length != 0) {
-												QuotedContent.Contents.PostContent.Segments.push(MediaList)
-											}
-										}
-									})
-									AttachmentOutput.AttachmentContents.push(QuotedContent)
+									AttachmentOutput.AttachmentContents.push(ExternalLinkObject)
 								}
+							} else if (AttachmentPostType == "ExternalLink") {
+								let a = GetExternalLinkPreview(Node)
+								AttachmentOutput.AttachmentContents.push(a)
 							}
 						})
 						PostContent.Segments.push(AttachmentOutput)
 					}
-//					let AttachmentObject = {
-//						Type: "Attachments",
-//						ContentHTML: PostSegment.innerHTML
-//					}
-//					let ListOfLinks = GetLinksURLs(PostSegment)
-//					ListOfLinks = [...new Set(ListOfLinks)]
-//					if (ListOfLinks.length != 0) {
-//						AttachmentObject.Links = ListOfLinks
-//					}
-//					let MediaURLs = GetMediaURLs(PostSegment)
-//					MediaURLs = [...new Set(MediaURLs)]
-//					if (MediaURLs.length != 0) {
-//						AttachmentObject.MediaURLs = MediaURLs
-//						PostContent.Segments.push(AttachmentObject)
-//					}
-//					PostContent.Segments.push(AttachmentObject)
 				}
 			})
 			return PostContent
-		}
-		function AdjustQuotedPostLayout(ArrayThing, Adjust) {
-			if (!Adjust) {
-				return ArrayThing
-			} else {
-				ArrayThing.shift()
-				return ArrayThing
-			}
 		}
 		function IdentifyPostSegmentType(ElementContainingPostSegments) {
 			//Tests:
@@ -1561,25 +1467,29 @@
 			let HasAHref = false
 			let HasLinkToExternalSite = false
 			let IsLinkToAnotherPost = false
-			Array.from(ElementContainingPostSegments.getElementsByTagName("*")).forEach((HTMLElementThing) => { //Loop through all children elements to determine type
-				if (HTMLElementThing.tagName == "IMG") {
-					HasImages = true
-					if (/https:\/\/cdn\.bsky\.app\/img\/feed_thumbnail\//.test(HTMLElementThing.src)) {
-						HasPostImages = true
+			if (ElementContainingPostSegments.tagName != "A" && (!/https:\/\/bsky\.app\/profile\//.test(ElementContainingPostSegments.href))) {
+				Array.from(ElementContainingPostSegments.getElementsByTagName("*")).forEach((HTMLElementThing) => { //Loop through all children elements to determine type
+					if (HTMLElementThing.tagName == "IMG") {
+						HasImages = true
+						if (/https:\/\/cdn\.bsky\.app\/img\/feed_thumbnail\//.test(HTMLElementThing.src)) {
+							HasPostImages = true
+						}
 					}
-				}
-				
-				if (HTMLElementThing.tagName == "VIDEO") {
-					HasVideo = true
-				}
-				
-				if (HTMLElementThing.tagName == "A") {
-					HasAHref = true
-					if (/https:\/\/bsky\.app\/profile\/.*\/post\//.test(HTMLElementThing.href)) {
-						IsLinkToAnotherPost = true
+					
+					if (HTMLElementThing.tagName == "VIDEO") {
+						HasVideo = true
 					}
-				}
-			})
+					
+					if (HTMLElementThing.tagName == "A") {
+						HasAHref = true
+						if (/https:\/\/bsky\.app\/profile\/.*\/post\//.test(HTMLElementThing.href)) {
+							IsLinkToAnotherPost = true
+						}
+					}
+				})
+			} else {
+				return "ExternalLink"
+			}
 			if ((!HasImages)&&(!HasTimestamp)&&(!HasVideo)) {
 				return "PlainText"
 			}
@@ -1588,106 +1498,116 @@
 			}
 			return "Attachments"
 		}
-		function GetQuoteBoxData(Node_SubBox) {
-			let DescendMap_PostURLAndTimestamp = [0,0,3]
-			let DescendMap_UserTitle = [0,0,1,0,0]
-			let DescendMap_UserHandle = [0,0,1,0,2]
-			let DescendMap_UserAvatar = [0,0,0,0,0,0,0,1]
-			let DescendMap_PostContentText = [1,0]
-			
-			let OutputObject = {
-				ContentType: "Quote"
+		function GetExternalLinkPreview(Node) {
+			let OutputLinkPreview = {
+				Type: "LinkPreview",
+				Content: []
 			}
 			
-			OutputObject.PostURL = HttpToTtp(DescendNode(Node_SubBox, DescendMap_PostURLAndTimestamp).OutputNode.href)
-			
-			//Node_SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0]
-			OutputObject.UserTitle = DescendNode(Node_SubBox, DescendMap_UserTitle).OutputNode.textContent
-			
-			//Node_SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].innerText
-			OutputObject.UserHandle = DescendNode(Node_SubBox, DescendMap_UserHandle).OutputNode.innerText
-			
-			//Node_SubBox.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-			OutputObject.UserAvatar = ""
-			let NodeOfAvatarImg = DescendNode(Node_SubBox, DescendMap_UserAvatar)
-			if (NodeOfAvatarImg.IsSuccessful) {
-				OutputObject.UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
+			if (Node.tagName != "A") {
+				return null
 			}
-			
-			OutputObject.PostTimeStamp = PostDateInfo(DescendNode(Node_SubBox, DescendMap_PostURLAndTimestamp).OutputNode.dataset.tooltip)
-			
-			
-			OutputObject.PostContentText = ""
-			OutputObject.QuotedMedia = []
-			let QuoteContentArray = Array.from(Node_SubBox.childNodes).slice(1) //Get everything after the user title/handle/timestamp
-			QuoteContentArray.forEach((QuotePiece, Index) => {
-				if (Index == 0) {
-					if (QuotePiece.textContent != "" && (OutputObject.PostContentText == "")) {
-						OutputObject.PostContentText = QuotePiece.textContent
+			if (/https:\/\/bsky\.app\/profile\//.test(Node.href)) {
+				return null
+			}
+			OutputLinkPreview.Link = Node.href
+			let ImageAndTextPreview = Array.from(Node.childNodes)
+			ImageAndTextPreview.forEach((Part) => {
+				let NodeOfImage = DescendNode(Part, [0,0])
+				if (NodeOfImage.IsSuccessful) {
+					if ((typeof NodeOfImage.OutputNode.src != "undefined") &&(NodeOfImage.OutputNode.src != "")) {
+						OutputLinkPreview.Content.push({
+							ExternalLinkImage: NodeOfImage.OutputNode.src
+						})
 					}
 				}
-				if (QuotePiece.tagName != "A") {
-					OutputObject.QuotedMedia = GetMediaURLs(QuotePiece)
-				}
-				if (QuotePiece.tagName == "A") {
-					OutputObject.LinkPreviewObject = LinkPreviewNodeToJson(QuotePiece)
+				if (Part.textContent != "") {
+					let TextSegments = Array.from(Part.childNodes)
+					let OutputText = {ExternalLinkTexts: []}
+					TextSegments.forEach((TextSegment) => {
+						OutputText.ExternalLinkTexts.push(TextSegment.textContent)
+					})
+					OutputLinkPreview.Content.push(OutputText)
 				}
 			})
-			
-			//Node_SubBox.childNodes[0].childNodes[1].childNodes[0].textContent
-			//Postception - https://bsky.app/profile/anyainlove.bsky.social/post/3klxhf4wnoi2z (post containing a quote containing a link preview)
-			
-			return OutputObject
+			return OutputLinkPreview
 		}
-		
-		function LinkPreviewNodeToJson(Node) {
-			let LinkPreviewObject = {
-				ContentType: "LinkPreview",
-				LinkTo: HttpToTtp(Node.href)
-			}
-			let ImagePreviewURL = ""
-			
-			//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[0]
-			let NodeOfImage = DescendNode(Node, [0,0,0,0])
-			if (NodeOfImage.IsSuccessful) {
-				if (NodeOfImage.OutputNode.tagName == "IMG") {
-					ImagePreviewURL = HttpToTtp(FullResConvert(NodeOfImage.OutputNode.src))
-				}
-			}
-			LinkPreviewObject.ImagePreviewURL = ImagePreviewURL
-			
-			//Node.childNodes[0].childNodes[1] - text content
-			let NodeOfTextContent_LinkPreview = DescendNode(Node, [0,1])
-			if (NodeOfTextContent_LinkPreview.IsSuccessful) {
-				let TextArray = Array.from(NodeOfTextContent_LinkPreview.OutputNode.childNodes)
-				TextArray.forEach((Part, Index) => {
-					if (Index == 0) {
-						LinkPreviewObject.ExternalLink_DomainName = Part.innerText
-					} else if (Index == 1) {
-						LinkPreviewObject.ExternalLink_Title = Part.innerText
-						
-					} else {
-						LinkPreviewObject.ExternalLink_PreviewTextContent = Part.innerText
+		function GetQuotedPost(Node) {
+			let QuotedContent = {
+				ContentType: "QuotedPost",
+				Contents: {
+					PostURL: "",
+					UserTitle: "",
+					UserHandle: "",
+					UserAvatar: "",
+					PostTimeStamp: {},
+					PostContent: {
+						Segments: []
 					}
-				})
-			} else { //No image preview
-				//https://bsky.app/profile/socialmedialab.ca/post/3kklyg6hlss2b
-				//Node.childNodes[0].childNodes[0].childNodes
-				let TextOnlyLinkPreview = DescendNode(Node, [0,0])
-				if (TextOnlyLinkPreview.IsSuccessful) {
-					let TextArray = Array.from(TextOnlyLinkPreview.OutputNode.childNodes)
-					TextArray.forEach((Part, Index) => {
-						if (Index == 0) {
-							LinkPreviewObject.ExternalLink_DomainName = Part.innerText
-						} else if (Index == 1) {
-							LinkPreviewObject.ExternalLink_Title = Part.innerText
-						} else {
-							LinkPreviewObject.ExternalLink_PreviewTextContent = Part.innerText
-						}
-					})
 				}
 			}
-			return LinkPreviewObject
+			
+			//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[3].href - for "Post_CurrentlyViewed_AtTop"
+			//Node.childNodes[0].childNodes[0].childNodes[3].href - for "Post_NotCurrentlyViewed"
+			//Node.childNodes[0].childNodes[0].childNodes[3].href
+			//Can't use "Type" because it is scoped only to "GetPostContent", thus inner functions cannot access it.
+			let NodeOfPostURL = DescendNode(Node, [0,0,3])
+			if (NodeOfPostURL.IsSuccessful) {
+				QuotedContent.Contents.PostURL = NodeOfPostURL.OutputNode.href
+			}
+			
+			//Node.childNodes[0].childNodes[0].childNodes[1].childNodes[0].textContent
+			let NodeOfUserTitle = DescendNode(Node, [0,0,1,0])
+			if (NodeOfUserTitle.IsSuccessful) {
+				QuotedContent.Contents.UserTitle = NodeOfUserTitle.OutputNode.textContent
+			}
+			//Node.childNodes[0].childNodes[0].childNodes[1].childNodes[1].textContent.replace(/^\s/, "")
+			let NodeOfUserHandle = DescendNode(Node, [0,0,1,1])
+			if (NodeOfUserHandle.IsSuccessful) {
+				QuotedContent.Contents.UserHandle = NodeOfUserHandle.OutputNode.textContent.replace(/^\s/, "")
+			}
+			//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+			let NodeOfUserAvatar = DescendNode(Node, [0,0,0,0,0,0,0,1])
+			if (NodeOfUserAvatar.IsSuccessful) {
+				QuotedContent.Contents.UserAvatar = NodeOfUserAvatar.OutputNode.src
+			}
+			//Node.childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
+			let NodeOfPostTimeStamp = DescendNode(Node, [0,0,3])
+			if (NodeOfPostTimeStamp.IsSuccessful) {
+				QuotedContent.Contents.PostTimeStamp = PostDateInfo(NodeOfPostTimeStamp.OutputNode.dataset.tooltip)
+			}
+			//Node.childNodes[0].childNodes
+			//Get quoted post content
+			let ArrayOfPostSegments = Array.from(Node.childNodes)
+			
+			ArrayOfPostSegments.shift() //Remove the header showing the avatar, name, handle, etc. All stuff beyond that are content
+			ArrayOfPostSegments.forEach((QuotedPostSegment) => {
+				let ExternalLink = ""
+				//QuotedPostSegment.childNodes[0].childNodes[0].href
+				let NodeOfExternalLink = DescendNode(QuotedPostSegment, [0,0])
+				if (NodeOfExternalLink.IsSuccessful) {
+					if (!/^https:\/\/bsky\.app\/profile/.test(NodeOfExternalLink.OutputNode.href)) {
+						if (typeof NodeOfExternalLink.OutputNode.href != "undefined") {
+							ExternalLink = NodeOfExternalLink.OutputNode.href
+						}
+					}
+				}
+				if (!/^\s*$/.test(QuotedPostSegment.textContent)&&(ExternalLink == "")) {
+					QuotedContent.Contents.PostContent.Segments.push({
+						ContentType: "Text",
+						UserPostedText: QuotedPostSegment.textContent
+					})
+				} else if (ExternalLink != "") {
+					let ExternalLinkObject = GetExternalLinkPreview(QuotedPostSegment.childNodes[0].childNodes[0])
+					QuotedContent.Contents.PostContent.Segments.push(ExternalLinkObject)
+				} else {
+					let MediaList = GetMediaURLs(QuotedPostSegment) //has image or video
+					if (MediaList.length != 0) {
+						QuotedContent.Contents.PostContent.Segments.push(MediaList)
+					}
+				}
+			})
+			return QuotedContent
 		}
 		async function UpdateSavedValues() {
 			Saved_Setting_StartStop = await GM.getValue("BskyScrape_StartStopFlag", false).catch( () => {
