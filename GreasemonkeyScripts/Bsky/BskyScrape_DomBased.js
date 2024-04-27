@@ -776,10 +776,6 @@
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
 								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,0,0,1,1,0,2]).OutputNode.dataset.tooltip)
 								
-								if (PostURL == "https://bsky.app/profile/dorris13rabiu.bsky.social/post/3koh65u6cxc25") {
-									let breakpoint = 0
-								}
-								
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1] - This also contains the header and footer...
 								let NodeOfPostContent = DescendNode(Box, [0,0,0,1,1])
@@ -908,6 +904,9 @@
 									}
 								}
 								
+								if (PostURL == "https://bsky.app/profile/ravirockks.bsky.social/post/3kcaahutkoa22") {
+									let breakpoint = 0
+								}
 								
 								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1]
 								PostContent = GetPostContent(DescendNode(Post, [0,0,1,1+ReplyToOffset]).OutputNode, "SearchPage")
@@ -1364,12 +1363,12 @@
 			}
 			
 			PostContent.Segments = []
-			PostSegments.forEach((PostSegment) => { //Each post segments
-				let PostSegmentType = IdentifyPostSegmentType(PostSegment)
+			PostSegments.forEach((PostSegment, PostSegmentIndex) => { //Each post segments
+				let PostSegmentType = IdentifyPostSegmentType(PostSegment, PostSegmentIndex)
 				if (PostSegmentType == "PlainText") {
 					if (!/^\s*$/.test(PostSegment.textContent)) {
 						let PlainTextContent = {
-							ContentType: "Text",
+							Type: "Text",
 							UserPostedText: PostSegment.textContent
 						}
 						let ListOfLinks = GetLinksURLs(PostSegment)
@@ -1380,7 +1379,7 @@
 					}
 				} else if (PostSegmentType == "ImageGallery") {
 					let MediaContent = {
-						ContentType: "Media"
+						Type: "Media"
 					}
 					let MediaURLs = GetMediaURLs(PostSegment)
 					if (MediaURLs.length != 0) { //If no images, don't even push
@@ -1399,7 +1398,7 @@
 							AttachmentPostType = IdentifyPostSegmentType(Node)
 							if (AttachmentPostType == "ImageGallery") {
 								let MediaContent = {
-									ContentType: "Media"
+									Type: "Media"
 								}
 								let MediaURLs = GetMediaURLs(Node)
 								if (MediaURLs.length != 0) { //If no images, don't even push
@@ -1445,17 +1444,26 @@
 									AttachmentOutput.AttachmentContents.push(ExternalLinkObject)
 								}
 							} else if (AttachmentPostType == "ExternalLink") {
-								let a = GetExternalLinkPreview(Node)
-								AttachmentOutput.AttachmentContents.push(a)
+								let Link = GetExternalLinkPreview(PostSegment)
+								AttachmentOutput.AttachmentContents.push(PostSegment)
 							}
 						})
 						PostContent.Segments.push(AttachmentOutput)
 					}
+				} else if (PostSegmentType == "LinkPreview") {
+					let Link = null
+					if (typeof PostSegment.childNodes[0].childNodes[0].childNodes[0].href == "string") {
+						Link = GetExternalLinkPreview(PostSegment.childNodes[0].childNodes[0].childNodes[0])
+					} else if (typeof PostSegment.childNodes[0].childNodes[0].href == "string") {
+						Link = GetExternalLinkPreview(PostSegment.childNodes[0].childNodes[0])
+					}
+					
+					PostContent.Segments.push(Link)
 				}
 			})
 			return PostContent
 		}
-		function IdentifyPostSegmentType(ElementContainingPostSegments) {
+		function IdentifyPostSegmentType(ElementContainingPostSegments, PostSegmentIndex) {
 			//Tests:
 			// https://bsky.app/profile/mobute.bsky.social/post/3kqtldm7r6h27 -> A post quoting another post, no images besides avatar images.
 			// https://bsky.app/profile/dumjaveln.bsky.social/post/3klkgthv63q2z - > A post with plain text, image, and a quote that contains text and image
@@ -1467,6 +1475,7 @@
 			let HasAHref = false
 			let HasLinkToExternalSite = false
 			let IsLinkToAnotherPost = false
+			let IsLinkPreview = false
 			if (ElementContainingPostSegments.tagName != "A" && (!/https:\/\/bsky\.app\/profile\//.test(ElementContainingPostSegments.href))) {
 				Array.from(ElementContainingPostSegments.getElementsByTagName("*")).forEach((HTMLElementThing) => { //Loop through all children elements to determine type
 					if (HTMLElementThing.tagName == "IMG") {
@@ -1485,16 +1494,22 @@
 						if (/https:\/\/bsky\.app\/profile\/.*\/post\//.test(HTMLElementThing.href)) {
 							IsLinkToAnotherPost = true
 						}
+						if (HTMLElementThing.querySelector("div") != null) {
+							IsLinkPreview = true
+						}
 					}
 				})
 			} else {
 				return "ExternalLink"
 			}
-			if ((!HasImages)&&(!HasTimestamp)&&(!HasVideo)) {
+			if ((!HasImages)&&(!HasTimestamp)&&(!HasVideo)&&(!IsLinkPreview)) {
 				return "PlainText"
 			}
 			if (HasPostImages && (!HasAHref)) {
 				return "ImageGallery"
+			}
+			if (IsLinkPreview) {
+				return "LinkPreview"
 			}
 			return "Attachments"
 		}
@@ -1534,7 +1549,7 @@
 		}
 		function GetQuotedPost(Node) {
 			let QuotedContent = {
-				ContentType: "QuotedPost",
+				Type: "QuotedPost",
 				Contents: {
 					PostURL: "",
 					UserTitle: "",
@@ -1594,7 +1609,7 @@
 				}
 				if (!/^\s*$/.test(QuotedPostSegment.textContent)&&(ExternalLink == "")) {
 					QuotedContent.Contents.PostContent.Segments.push({
-						ContentType: "Text",
+						Type: "Text",
 						UserPostedText: QuotedPostSegment.textContent
 					})
 				} else if (ExternalLink != "") {
