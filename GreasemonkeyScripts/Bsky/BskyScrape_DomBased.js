@@ -1501,6 +1501,12 @@
 						if (HTMLElementThing.querySelector("div") != null) {
 							IsLinkPreview = true
 						}
+						if (typeof HTMLElementThing.dataset.tooltip != "undefined") {
+							let TestDate = PostDateInfo(HTMLElementThing.dataset.tooltip)
+							if (typeof TestDate == "object") {
+								HasTimestamp = true
+							}
+						}
 					}
 				})
 			} else {
@@ -1512,7 +1518,7 @@
 			if (HasPostImages && (!HasAHref)) {
 				return "ImageGallery"
 			}
-			if (IsLinkPreview) {
+			if (IsLinkPreview&&(!HasTimestamp)) {
 				return "LinkPreview"
 			}
 			return "Attachments"
