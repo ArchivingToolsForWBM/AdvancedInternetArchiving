@@ -1427,7 +1427,7 @@
 									let QuotedPost = null
 									let DateDomTest = 0
 									try {
-										let DateInfoData = Node.childNodes[0].childNodes[3].dataset.tooltip
+										let DateInfoData = Node.childNodes[0].childNodes[3].dataset.tooltip //Test if it can get the tooltip
 									} catch {
 										DateDomTest = 1
 									}
@@ -1451,14 +1451,18 @@
 						PostContent.Segments.push(AttachmentOutput)
 					}
 				} else if (PostSegmentType == "LinkPreview") {
-					let Link = null
-					if (typeof PostSegment.childNodes[0].childNodes[0].childNodes[0].href == "string") {
-						Link = GetExternalLinkPreview(PostSegment.childNodes[0].childNodes[0].childNodes[0])
-					} else if (typeof PostSegment.childNodes[0].childNodes[0].href == "string") {
-						Link = GetExternalLinkPreview(PostSegment.childNodes[0].childNodes[0])
+					try {
+						let Link = null
+						if (typeof PostSegment.childNodes[0].childNodes[0].childNodes[0].href == "string") {
+							Link = GetExternalLinkPreview(PostSegment.childNodes[0].childNodes[0].childNodes[0])
+						} else if (typeof PostSegment.childNodes[0].childNodes[0].href == "string") {
+							Link = GetExternalLinkPreview(PostSegment.childNodes[0].childNodes[0])
+						}
+						
+						PostContent.Segments.push(Link)
+					} catch (error) {
+						window.alert(error + " Failure at getting link preview")
 					}
-					
-					PostContent.Segments.push(Link)
 				}
 			})
 			return PostContent
