@@ -1393,7 +1393,13 @@
 							Type: "Attachment",
 							AttachmentContents: []
 						}
-						let AttachmentList = Array.from(AttachmentListNode.OutputNode.childNodes)
+						let AttachmentList = []
+						if (/https:\/\/bsky\.app\/profile\//.test(window.location.href)) {
+							AttachmentList = Array.from(AttachmentListNode.OutputNode.childNodes)
+						}
+						if (/https:\/\/bsky\.app\/search/.test(window.location.href)) {
+							AttachmentList = Array.from(PostSegment.childNodes)
+						}
 						AttachmentList.forEach((Node) => {
 							AttachmentPostType = IdentifyPostSegmentType(Node)
 							if (AttachmentPostType == "ImageGallery") {
@@ -1428,14 +1434,25 @@
 									let DateDomTest = 0
 									try {
 										let DateInfoData = Node.childNodes[0].childNodes[3].dataset.tooltip //Test if it can get the tooltip
-									} catch {
-										DateDomTest = 1
+										QuotedPost = GetQuotedPost(Node.parentNode)
+									} catch {}
+									if (QuotedPost == null) {
+										try {
+											let DateInfoData = Node.childNodes[0].childNodes[0].childNodes[3].dataset.tooltip //Test if it can get the tooltip (search page with only text and quoted post, no images in the main post)
+											QuotedPost = GetQuotedPost(Node)
+										} catch {}
+									}
+									if (QuotedPost == null) {
+										try {
+											let DateInfoData = Node.childNodes[0].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
+											QuotedPost = GetQuotedPost(Node.childNodes[0])
+										} catch {}
 									}
 									
 									if (DateDomTest == 0) {
-										QuotedPost = GetQuotedPost(Node.parentNode)
+										
 									} else {
-										QuotedPost = GetQuotedPost(Node)
+										QuotedPost = GetQuotedPost(Node.childNodes[0])
 									}
 									AttachmentOutput.AttachmentContents.push(QuotedPost)
 								} else if (SubAttachmentType == "ExternalLink") {
@@ -1558,6 +1575,10 @@
 			return OutputLinkPreview
 		}
 		function GetQuotedPost(Node) {
+			//This function takes a given "Node" that is a DIV that MUST CONTAIN the lowest DOM node that:
+			//-when going lower from this "Node" will be parts of the quoted post, e.g Node.childNodes[0]
+			// points to the avatar/user-title/handle
+			//-At least all the contents inside the quote, including images if it has it.
 			let QuotedContent = {
 				Type: "QuotedPost",
 				Contents: {
