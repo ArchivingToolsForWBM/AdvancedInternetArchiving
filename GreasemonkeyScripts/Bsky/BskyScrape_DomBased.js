@@ -1079,10 +1079,10 @@
 			let ListOfElements = Array.from(document.getElementsByTagName("A"))
 			let BoxList = []
 			ListOfElements.find((ArrayElement) => { //Search all the a href
-				if (!/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\/?/.test(ArrayElement.href)) { //Is it a link to the profile page?
+				if (!/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+(?:\.[a-zA-Z\d\-]+)*\/?/.test(ArrayElement.href)) { //Is it a link to the profile page?
 					return false
 				}
-				if (!/@[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+$/.test(ArrayElement.innerText)) { //Is the text the user handle?
+				if (!/@[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+(?:\.[a-zA-Z\d\-]+)*$/.test(ArrayElement.innerText)) { //Is the text the user handle?
 					return false
 				}
 				let ReferenceNode = AscendNode(ArrayElement, Levels)
@@ -1426,6 +1426,10 @@
 									if (typeof ExernalLinkPost != "undefined") {
 										return "ExternalLink"
 									}
+									let Video = Node.querySelector("video")
+									if (Video != null) {
+										return "Video"
+									}
 								})(Node);
 								
 								if (SubAttachmentType == "QuotedPost") {
@@ -1459,6 +1463,12 @@
 									let ExternalLinkObject = GetExternalLinkPreview(Node.childNodes[0])
 									
 									AttachmentOutput.AttachmentContents.push(ExternalLinkObject)
+								} else if (SubAttachmentType == "Video") {
+									let MediaURLs = GetMediaURLs(Node)
+									AttachmentOutput.AttachmentContents.push({
+										Type: "Media",
+										MediaURLs: MediaURLs
+									})
 								}
 							} else if (AttachmentPostType == "ExternalLink") {
 								let Link = GetExternalLinkPreview(PostSegment)
