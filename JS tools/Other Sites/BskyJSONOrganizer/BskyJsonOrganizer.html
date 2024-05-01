@@ -25,6 +25,7 @@
 <body>
 
 <p>This tool will sort and filter data scraped from a userscript BSky included in this package.</p>
+<p>NOTE: Times here are UTC unless specified.</p>
 <input type="checkbox" id="AutoUpdate" checked onchange="AutoUpdate()"><label for="AutoUpdate">Auto update</label><br>
 <textarea id="JsonScrapedBskyData" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" oninput="JSONTextareaChanged(); AutoUpdate()"></textarea><br><br>
 <table>
@@ -137,7 +138,8 @@
 				<li>Left click on a day to exclude days before it. Hold CTRL and left click to include.</li>
 				<li>Right click on a day to exclude that day and after it. Hold CTRL and right click to include.</li>
 				<li>Have your mouse on the calendar and move the scroll wheel to scroll through the calendar. Alternatively, you can click on the calendar (including the year and month name) to focus on it and press up or down.</li>
-			</ul>
+			</ul><br>
+			Current time, according to system: <kbd><span id="CurrentTime"></span></kbd>
 			<table>
 				<tr>
 					<td><div id="CalendarDisplay" tabindex="0"></div></td>
@@ -167,7 +169,13 @@
 			document.getElementById("CalendarViewer_DateToView").value = (new Date().getFullYear()).toString(10) + "-01-01"
 			UpdateCalendarDisplay()
 			CalendarScroll()
+		//Display current time (UTC) for element "CurrentTime"
+			UpdateCurrentDisplayTime() //Display at the moment the page loads...
+			setInterval(UpdateCurrentDisplayTime, 60000) //...And after first delay, update it again repeatedly
 	})
+	function UpdateCurrentDisplayTime() {
+		document.getElementById("CurrentTime").textContent = new Date(Date.now()).toISOString().replace("T", " ").replace(/:\d{2}\.\d{3}Z$/, "") + " UTC"
+	}
 	function JSONTextareaChanged() {
 		HasInputTextareaChanged = true
 	}
