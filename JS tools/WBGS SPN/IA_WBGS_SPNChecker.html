@@ -619,33 +619,84 @@ Misc:
 					}
 					document.getElementById("Output_Plaintext").value = Output
 				//Display filtered list using HTML table. Shows the URLs, the color indicator, and the WBM response.
-					Output = ""
-					if (FilteredListForDisplay.length != 0) {
-						Output += "<table>"
-						Output += "<tr>"
-						Output += "<th>Item number</th>"
-						Output += "<th>GS line number</th>"
-						Output += "<th>URLs you&apos;ve sent</th><th>HTTP status</th><th>Save status of URLs or errors</th><th>Timestamp</th><th>Number of outlinks</th><th>Status type</th>"
-						Output += "</tr>"
-						for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
-							//Table
-								Output += "<tr>"
-								Output += "<td style='text-align: center;'><kbd>" + BigInt(Index+1).toString(10) + "</kbd></td>" //Item number
-								Output += "<td style='text-align: center;'><kbd>" + BigInt(FilteredListForDisplay[Index].SpreadSheetRowNumber).toString(10) + "</kbd></td>" //Google sheet line number
-								Output += "<td style='background-color: " + FilteredListForDisplay[Index].StatusColor + ";'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index].SpreadSheetRowData_Array[0]) + "</kbd></td>" //URLs you entered
-								Output += "<td style='background-color: " + FilteredListForDisplay[Index].StatusColor + ";'><kbd>" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[2] + "</kbd></td>" // HTTP status
-								Output += "<td style='background-color: " + FilteredListForDisplay[Index].StatusColor + "'><kbd>" + escapeHTMLChars(FilteredListForDisplay[Index].SpreadSheetRowData_Array[3]) + "</kbd></td>" //WBM save status
-								Output += "<td style='background-color: " + FilteredListForDisplay[Index].StatusColor + "; white-space: nowrap;'><kbd>" + FilteredListForDisplay[Index].Timestamp + "</kbd></td>" //Timestamp
-								Output += "<td style='background-color: " + FilteredListForDisplay[Index].StatusColor + ";'>" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[4] + "</td>" //Number of outlinks
-								Output += "<td style='background-color: " + FilteredListForDisplay[Index].StatusColor + "'><kbd>" + FilteredListForDisplay[Index].SaveStatus + "</kbd></td>" //Status type
-								Output += "</tr>"
-						}
-						Output += "</table>"
-					} else {
-						Output += "<br><kbd>No items found</kbd>"
+					let OutputTable = document.getElementById("Output_table")
+					while (OutputTable.lastElementChild) {
+						OutputTable.removeChild(OutputTable.lastElementChild);
 					}
-					//Done
-						document.getElementById("Output_table").innerHTML = Output
+					if (FilteredListForDisplay.length != 0) {
+						let ResultTable = document.createElement("table")
+						let TableHeaderRow = document.createElement("tr")
+						TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Item number"))
+						TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("GS line number"))
+						TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("URLs you sent"))
+						TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("HTTP status"))
+						TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Save status/Error statement"))
+						TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Timestamp"))
+						TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Outlinks count"))
+						TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Status type"))
+						
+						ResultTable.appendChild(TableHeaderRow)
+						
+						for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
+							let RowItem = document.createElement("tr")
+							let Cell_ItemNumber = document.createElement("td")
+							Cell_ItemNumber.style.fontFamily = "monospace"
+							Cell_ItemNumber.style.textAlign = "center"
+							//Cell_ItemNumber.style.backgroundColor = FilteredListForDisplay[Index].StatusColor
+							Cell_ItemNumber.appendChild(document.createTextNode(BigInt(Index+1).toString(10)))
+							RowItem.appendChild(Cell_ItemNumber)
+							
+							let Cell_GSLineNum = document.createElement("td")
+							Cell_GSLineNum.style.fontFamily = "monospace"
+							Cell_GSLineNum.style.textAlign = "center"
+							//Cell_GSLineNum.style.backgroundColor = FilteredListForDisplay[Index].StatusColor
+							Cell_GSLineNum.appendChild(document.createTextNode(BigInt(FilteredListForDisplay[Index].SpreadSheetRowNumber).toString(10)))
+							RowItem.appendChild(Cell_GSLineNum)
+							
+							let Cell_URLSent = document.createElement("td")
+							Cell_URLSent.style.fontFamily = "monospace"
+							Cell_URLSent.style.backgroundColor = FilteredListForDisplay[Index].StatusColor
+							Cell_URLSent.appendChild(document.createTextNode(FilteredListForDisplay[Index].SpreadSheetRowData_Array[0].replace(/^\"/, "").replace(/\"$/, "")))
+							RowItem.appendChild(Cell_URLSent)
+							
+							let Cell_HTTPStatus = document.createElement("td")
+							Cell_HTTPStatus.style.fontFamily = "monospace"
+							Cell_HTTPStatus.style.backgroundColor = FilteredListForDisplay[Index].StatusColor
+							Cell_HTTPStatus.appendChild(document.createTextNode(FilteredListForDisplay[Index].SpreadSheetRowData_Array[2]))
+							RowItem.appendChild(Cell_HTTPStatus)
+							
+							let Cell_SaveStatus = document.createElement("td")
+							//Cell_SaveStatus.style.fontFamily = "monospace"
+							Cell_SaveStatus.style.backgroundColor = FilteredListForDisplay[Index].StatusColor
+							Cell_SaveStatus_Pre = document.createElement("pre") //In case of forced line breaks
+							Cell_SaveStatus_Pre.appendChild(document.createTextNode(FilteredListForDisplay[Index].SpreadSheetRowData_Array[3].replace(/^\"/, "").replace(/\"$/, "")))
+							Cell_SaveStatus.appendChild(Cell_SaveStatus_Pre)
+							RowItem.appendChild(Cell_SaveStatus)
+							
+							let Cell_Timestamp = document.createElement("td")
+							Cell_Timestamp.style.backgroundColor = FilteredListForDisplay[Index].StatusColor
+							Cell_Timestamp.style.fontFamily = "monospace"
+							Cell_Timestamp.appendChild(document.createTextNode(FilteredListForDisplay[Index].Timestamp))
+							RowItem.appendChild(Cell_Timestamp)
+							
+							let Cell_OutLinksCount = document.createElement("td")
+							Cell_OutLinksCount.style.backgroundColor = FilteredListForDisplay[Index].StatusColor
+							Cell_OutLinksCount.style.fontFamily = "monospace"
+							Cell_OutLinksCount.appendChild(document.createTextNode(FilteredListForDisplay[Index].SpreadSheetRowData_Array[4]))
+							RowItem.appendChild(Cell_OutLinksCount)
+							
+							let Cell_StatusType = document.createElement("td")
+							Cell_StatusType.style.backgroundColor = FilteredListForDisplay[Index].StatusColor
+							Cell_StatusType.style.fontFamily = "monospace"
+							Cell_StatusType.appendChild(document.createTextNode(FilteredListForDisplay[Index].SaveStatus))
+							RowItem.appendChild(Cell_StatusType)
+							
+							ResultTable.appendChild(RowItem)
+						}
+						OutputTable.appendChild(ResultTable)
+					} else {
+						OutputTable.appendChild(document.createElement("div")).appendChild(document.createTextNode("No results"))
+					}
 			} else {
 				ClearOutputs()
 			}
@@ -697,7 +748,10 @@ Misc:
 			document.getElementById("StatisticDate_Latest").textContent = "?"
 		document.getElementById("OutputPlaintextItemCount").textContent = "0"
 		document.getElementById("Output_Plaintext").value = ""
-		document.getElementById("Output_table").textContent = ""
+		let OutputTable = document.getElementById("Output_table")
+		while (OutputTable.lastElementChild) {
+			OutputTable.removeChild(OutputTable.lastElementChild);
+		}
 	}
 	function escapeHTMLChars(string) {
 		//Should the user's input contains "<", ">", and "&", prevent the innerHTML from treating these as HTML tags/escapes
