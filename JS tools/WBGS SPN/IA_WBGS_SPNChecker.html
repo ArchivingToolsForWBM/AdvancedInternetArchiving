@@ -624,7 +624,9 @@ Misc:
 						OutputTable.removeChild(OutputTable.lastElementChild);
 					}
 					if (FilteredListForDisplay.length != 0) {
+						let DocumentFrag = new DocumentFragment()
 						let ResultTable = document.createElement("table")
+						DocumentFrag.appendChild(ResultTable)
 						let TableHeaderRow = document.createElement("tr")
 						TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Item number"))
 						TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("GS line number"))
@@ -693,7 +695,7 @@ Misc:
 							
 							ResultTable.appendChild(RowItem)
 						}
-						OutputTable.appendChild(ResultTable)
+						OutputTable.appendChild(DocumentFrag)
 					} else {
 						OutputTable.appendChild(document.createElement("div")).appendChild(document.createTextNode("No results"))
 					}
