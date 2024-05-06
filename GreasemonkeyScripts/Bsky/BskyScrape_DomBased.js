@@ -893,7 +893,7 @@
 								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
 								PostTimeStamp = PostDateInfo(DescendNode(Post, [0,0,1,0,2]).OutputNode.dataset.tooltip)
 								
-								if (PostURL == "https://bsky.app/profile/alexh.bsky.social/post/3kky6xhjsk42x") {
+								if (PostURL == "https://bsky.app/profile/mvij.org/post/3jzodjl2y4g2w") {
 									let breakpoint = 0
 								}
 								
@@ -1474,9 +1474,19 @@
 										MediaURLs: MediaURLs
 									})
 								}
-							} else if (AttachmentPostType == "ExternalLink") {
-								let Link = GetExternalLinkPreview(PostSegment)
-								AttachmentOutput.AttachmentContents.push(PostSegment)
+							} else if (AttachmentPostType == "LinkPreview") {
+								let NodeOfLink = null
+								try {
+									NodeOfLink = Node.childNodes[0].childNodes[0]
+								} catch (error) {
+									window.alert(error)
+								}
+								let Link = GetExternalLinkPreview(NodeOfLink)
+								AttachmentOutput.AttachmentContents.push(Link)
+							} else if (AttachmentPostType == "Deleted") {
+								AttachmentOutput.AttachmentContents.push({
+									Type: "DeletedContent"
+								})
 							}
 						})
 						PostContent.Segments.push(AttachmentOutput)
@@ -1511,6 +1521,10 @@
 			let HasLinkToExternalSite = false
 			let IsLinkToAnotherPost = false
 			let IsLinkPreview = false
+			let HasSVG = false
+			if (ElementContainingPostSegments.textContent == "Deleted") {
+				return "Deleted"
+			}
 			if (ElementContainingPostSegments.tagName != "A" && (!/https:\/\/bsky\.app\/profile\//.test(ElementContainingPostSegments.href))) {
 				Array.from(ElementContainingPostSegments.getElementsByTagName("*")).forEach((HTMLElementThing) => { //Loop through all children elements to determine type
 					if (HTMLElementThing.tagName == "IMG") {
@@ -1518,13 +1532,9 @@
 						if (/https:\/\/cdn\.bsky\.app\/img\/feed_thumbnail\//.test(HTMLElementThing.src)) {
 							HasPostImages = true
 						}
-					}
-					
-					if (HTMLElementThing.tagName == "VIDEO") {
+					} else if (HTMLElementThing.tagName == "VIDEO") {
 						HasVideo = true
-					}
-					
-					if (HTMLElementThing.tagName == "A") {
+					} else if (HTMLElementThing.tagName == "A") {
 						HasAHref = true
 						if (/https:\/\/bsky\.app\/profile\/.*\/post\//.test(HTMLElementThing.href)) {
 							IsLinkToAnotherPost = true
@@ -1538,18 +1548,20 @@
 								HasTimestamp = true
 							}
 						}
+					} else if (HTMLElementThing.tagName == "svg") {
+						HasSVG = true
 					}
 				})
 			} else {
 				return "ExternalLink"
 			}
-			if ((!HasImages)&&(!HasTimestamp)&&(!HasVideo)&&(!IsLinkPreview)) {
+			if ((!HasImages)&&(!HasTimestamp)&&(!HasVideo)&&(!IsLinkPreview)&&(!HasSVG)) {
 				return "PlainText"
 			}
 			if (HasPostImages && (!HasAHref)) {
 				return "ImageGallery"
 			}
-			if (IsLinkPreview&&(!HasTimestamp)) {
+			if (IsLinkPreview&&(!HasTimestamp)&&(!HasSVG)) {
 				return "LinkPreview"
 			}
 			return "Attachments"
