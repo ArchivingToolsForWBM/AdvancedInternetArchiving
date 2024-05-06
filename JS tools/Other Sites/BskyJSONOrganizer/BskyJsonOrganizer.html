@@ -73,12 +73,12 @@
 					<span id="DateEndBeforeStartMsg" hidden style="color: #FF0000">End date is before start date!</span>
 				</li>
 			</ul>
-			User handle filter: (will not exclude any posts if blank)<br>
-			<select onchange="AutoUpdate()">
-				<option id="Handle_OnlyTheseHandles">Allow posts only from these handles</option>
-				<option id="Handle_BlacklistTheseHandles">Blacklist posts from these handles</option>
-			</select><br>
+			Filter by handle: (this will not exclude any posts if no handles are provided)<br>
+			<ul>
+			<li><label><input type="radio" name="FilterSetting_Handle" onchange="AutoUpdate()" id="Handle_OnlyTheseHandles" checked>Only posts by these handles</label></li>
+			<li><label><input type="radio" name="FilterSetting_Handle" onchange="AutoUpdate()" id="Handle_BlacklistTheseHandles">Posts not by these handles</label></li>
 			<textarea id="Filter_HandleList" onchange="AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" cols="50" rows="12"></textarea><br>
+			</ul>
 			Sort:
 			<ul>
 				<li><label><input type="radio" id="SortSetting_Post_Date" name="SortSetting_Post" onchange="AutoUpdate()">Date</label> (<label><input type="radio" id="SortSetting_Post_Date_Reverse" name="SortSetting_Post" onchange="AutoUpdate()" checked>Reverse</label>)</li>
@@ -310,11 +310,11 @@
 						}
 					//Filter by handle
 						if (ListOfHandlesToFilter.size != 0) {
-							if (document.getElementById("Handle_OnlyTheseHandles").selected) {
+							if (document.getElementById("Handle_OnlyTheseHandles").checked) {
 								if (!ListOfHandlesToFilter.has(Post.UserHandle)) {
 									return false
 								}
-							} else if (document.getElementById("Handle_BlacklistTheseHandles").selected) {
+							} else if (document.getElementById("Handle_BlacklistTheseHandles").checked) {
 								if (ListOfHandlesToFilter.has(Post.UserHandle)) {
 									return false
 								}

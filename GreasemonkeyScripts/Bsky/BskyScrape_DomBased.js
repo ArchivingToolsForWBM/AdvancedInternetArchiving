@@ -13,7 +13,7 @@
 	//NOTES:
 	//Best works on firefox because of my testing:
 	//-Best to have URLs have the "http" substring replaced with "ttps" because firefox truncate long links and doesn't keep the original full URL when copying them (the middle is
-	// replaced with ellipsis).
+	// replaced with ellipsis), if you are using the devtools.
 	//-Chrome will truncate object parts printed on the console log, and those aren't preserved
 	//-Chrome, for some reason have "innerText" be a blank string if it is an element far offscreen. However this code does have a failsafe that if such data is missing (like user handle),
 	// it will not accept storing that. This means if you are using google chrome, will not extract all posts that exists in the HTML rather extracts only posts that is on-screen, unlike
@@ -28,6 +28,7 @@
 	// are because users can sometimes have their post content hidden from public view.
 	//-While this script is scanning the document, I don't recommend doing so while content is loading. This includes scrolling while the scanning is active. Best way to handle this
 	// is hit "start" only when loading is done and you are not scrolling, then hit stop. Preferably scroll down as far as you can go, then start-stop.
+	//-The bsky home page after logging in won't work due to different layout, and also a potential privacy concern (like leaving the script running.)
 	//Settings
 	// Note: Changes apply when the page is refreshed. Either reload the page via a browser or enter the address bar. It's not a reload if only part of the page loads content while
 	// everything else persist.
@@ -1263,6 +1264,9 @@
 				let NodeToLookAt_TimeStampCurrentlyViewedPostNotTop = DescendNode(PostBox, [0,1,0,1,0,0,1])
 				let NodeToLookAt_TimeStampOtherThanCurrentPost = DescendNode(PostBox, [0,0,0,1,1,0,2])
 				let IdentifiedType = ""
+				if (PostBox.textContent == "Deleted post.") {
+					return "DeletedPost"
+				}
 				if (NodeToLookAt_ReplyButton.LevelsPassed == 2) {
 					if (NodeToLookAt_ReplyButton.OutputNode.tagName == "BUTTON") {
 						return "NonPost_ReplyButton"
