@@ -856,7 +856,7 @@
 						}
 						ListOfPosts.push(...PostGroup)
 					} else if (/https:\/\/bsky\.app\/search/.test(window.location.href)) { //Search page
-						UserPostArea = GetPostBoxesByLink(7)
+						UserPostArea = GetPostBoxesByLink(8)
 						
 						UserPostArea.forEach((Post) => {
 							if (Post.textContent != "") {
@@ -880,8 +880,8 @@
 								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
 								UserTitle = DescendNode(Post, [0,0,1,0,0,0,0]).OutputNode.textContent
 								
-								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/^\s/, "")
-								UserHandle = DescendNode(Post, [0,0,1,0,0,1]).OutputNode.textContent.replace(/^\s/, "")
+								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/^\s/, "")
+								UserHandle = DescendNode(Post, [0,0,1,0,0,0,1]).OutputNode.textContent.replace(/^\s/, "")
 								
 								//Post.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
 								//Post.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
@@ -893,20 +893,20 @@
 								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
 								PostTimeStamp = PostDateInfo(DescendNode(Post, [0,0,1,0,2]).OutputNode.dataset.tooltip)
 								
+								if (PostURL == "https://bsky.app/profile/alexh.bsky.social/post/3kky6xhjsk42x") {
+									let breakpoint = 0
+								}
 								
 								let ReplyToOffset = 0
-								let NodeOfReplyTo = DescendNode(Post, [0,0,1,1])
+								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].textContent
+								let NodeOfReplyTo = DescendNode(Post, [0,0,1,1,1])
 								if (NodeOfReplyTo.IsSuccessful) {
-									if (/^Reply to/.test(NodeOfReplyTo.OutputNode.innerText)) {
+									if (/^Reply to/.test(NodeOfReplyTo.OutputNode.textContent)) {
 										//let ReplyToLink = Array.from(NodeOfReplyTo.OutputNode.getElementsByTagName("a"))
 										//if (ReplyToLink.length != 0) {
 											ReplyToOffset++
 										//}
 									}
-								}
-								
-								if (PostURL == "https://bsky.app/profile/ravirockks.bsky.social/post/3kcaahutkoa22") {
-									let breakpoint = 0
 								}
 								
 								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1]
