@@ -257,7 +257,7 @@
 				ListOfHandlesToFilter = new Set(ListOfHandlesToFilter)
 				
 				let FilteredPostList = SavedJson_PostList.filter((Post) => {
-					let hasMedia = Boolean(Post.PostContent.Segments.find((PostSegment) => {return PostSegment.ContentType == "Media"}))
+					let hasMedia = Boolean(Post.PostContent.Segments.find((PostSegment) => {return (PostSegment.ContentType == "Media"||PostSegment.Type === "Media")}))
 					let hasText = Boolean(Post.PostContent.Segments.find((PostSegment) => {return PostSegment.ContentType == "Text"}))
 					let hasQuote = false
 					{
