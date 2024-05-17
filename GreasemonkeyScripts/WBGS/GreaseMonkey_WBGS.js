@@ -96,7 +96,7 @@
 				CurrentWBGSURL = window.location.href
 				if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=archive") {
 					let Element_SaveInNewSheetOption = Array.from(document.querySelectorAll('input[type=checkbox]')).find((CheckBox) => {
-						return CheckBox.parentElement.innerText == "Save results in a new Sheet."
+						return CheckBox.parentElement.textContent == "Save results in a new Sheet."
 					});
 					if (typeof Element_SaveInNewSheetOption != "undefined") {
 						if (!Element_SaveInNewSheetOption.checked) {
@@ -108,21 +108,22 @@
 					// does not fire the onchange event because it is changing the attribute.
 				}
 				let ProcessTrackingURLString = ""
-				if (document.querySelectorAll("small")[1] !== undefined) {
-					if (/^Tracking URL/.test(document.querySelectorAll("small")[1].innerText)) {
-						if (!HavePrintedListOfProcess) {
-							ProcessTrackingURLString = document.querySelectorAll("small")[1].innerText.match(/https:\/\/archive\.org\/services\/wayback-gsheets\/check[^\s]+$/)[0]
-							//console.log("Tracking URL: " + ProcessTrackingURLString.replace(/^https/, "ttps")) //URLs in the console log gets truncated and the text may not be preserved depending on browser.
-							let OBJ_WBGS_TrackingURL = {
-								TrackingURL: HttpToTtp(ProcessTrackingURLString), //URLs in the console log gets truncated and the text may not be preserved depending on browser.
-								GoogleSheetURL: HttpToTtp(ProcessTrackingURLString.replace(/^.+?\&google_sheet_url=/g, "").replaceAll("%3A", ":").replaceAll("%2F", "/").replaceAll("%23", "#").replaceAll("%3D", "=")),
-								JobID: ProcessTrackingURLString.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
-								TimestampOfInitalProcess: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
-							}
-							
-							JSONTextarea.textContent = JSON.stringify(OBJ_WBGS_TrackingURL, "", " ")
-							HavePrintedListOfProcess = true
+				let TrackingURL = Array.from(document.querySelectorAll("small")).find((HTMLElement) => {
+					return /Tracking URL: https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=/.test(HTMLElement.textContent)
+				})
+				if (typeof TrackingURL !== "undefined") {
+					if (!HavePrintedListOfProcess) {
+						ProcessTrackingURLString = TrackingURL.textContent.match(/https:\/\/archive\.org\/services\/wayback-gsheets\/check[^\s]+$/)[0]
+						//console.log("Tracking URL: " + ProcessTrackingURLString.replace(/^https/, "ttps")) //URLs in the console log gets truncated and the text may not be preserved depending on browser.
+						let OBJ_WBGS_TrackingURL = {
+							TrackingURL: HttpToTtp(ProcessTrackingURLString), //URLs in the console log gets truncated and the text may not be preserved depending on browser.
+							GoogleSheetURL: HttpToTtp(ProcessTrackingURLString.replace(/^.+?\&google_sheet_url=/g, "").replaceAll("%3A", ":").replaceAll("%2F", "/").replaceAll("%23", "#").replaceAll("%3D", "=")),
+							JobID: ProcessTrackingURLString.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
+							TimestampOfInitalProcess: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
 						}
+						
+						JSONTextarea.textContent = JSON.stringify(OBJ_WBGS_TrackingURL, "", " ")
+						HavePrintedListOfProcess = true
 					}
 				}
 				if (/https:\/\/archive\.org\/services\/wayback-gsheets\/options.*/.test(CurrentWBGSURL)) { //While on WBGS home page
@@ -131,7 +132,7 @@
 						let ListOfProcesses = TableListingProcess[0]
 						let ListOfProcessesItems = Array.from(ListOfProcesses.getElementsByTagName("tr")).filter((WBGSProcess) => { //Get the running processes
 							let ColCountCorrect = WBGSProcess.childNodes.length == 6 //Get only items that have 6 columns (exclude row with "There are no running processes.")
-							let IsRowAProcess = /https:\/\/docs\.google\.com\/spreadsheets\//.test(WBGSProcess.childNodes[0].innerText) //Exclude the table headers row
+							let IsRowAProcess = /https:\/\/docs\.google\.com\/spreadsheets\//.test(WBGSProcess.childNodes[0].textContent) //Exclude the table headers row
 							return (ColCountCorrect && IsRowAProcess)
 						})
 						if (DisplayEasyCopyableListOfProcess && (!HavePrintedListOfProcess) && ListOfProcessesItems.length != 0) {
@@ -140,9 +141,9 @@
 								return {
 									TrackingURL: HttpToTtp(TrackingURL),
 									JobID: TrackingURL.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
-									GSheetURL: HttpToTtp(WBGSProcess.childNodes[0].innerText),
-									StartedTime: WBGSProcess.childNodes[1].innerText,
-									Status: WBGSProcess.childNodes[4].innerText
+									GSheetURL: HttpToTtp(WBGSProcess.childNodes[0].textContent),
+									StartedTime: WBGSProcess.childNodes[1].textContent,
+									Status: WBGSProcess.childNodes[4].textContent
 								}
 							})
 							JSONTextarea.textContent = "WBGS homepage info obtained on " + ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString()) + " \n" + JSON.stringify(OBJ_WBGS_Info, "", " ")
@@ -150,7 +151,7 @@
 						}
 						
 						let ListOfFinishLockedProcesses = ListOfProcessesItems.filter((WBGSProcess) => {
-							return WBGSProcess.childNodes[4].innerText == "SUCCESS" //Find only processes that are labeled "SUCCESS"
+							return WBGSProcess.childNodes[4].textContent == "SUCCESS" //Find only processes that are labeled "SUCCESS"
 						})
 						if ((ClickAllAbortsCount < MaxClickAllAborts)&&(ListOfFinishLockedProcesses.length != 0)) {
 							ListOfFinishLockedProcesses.forEach((WBGSProcess) => {
