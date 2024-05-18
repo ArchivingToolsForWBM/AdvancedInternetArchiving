@@ -126,7 +126,7 @@ Sort:
 		//https://bsky.app/profile/Username.bsky.social )
 		//https://bsky.app/profile/Username.bsky.social/post/<hash>
 			const BSkyDomainName = "(?:https:\\/\\/(?:bsky\\.app))"
-			const UsernameHandle = "[^\\/\\.]+"
+			const UsernameHandle = "[^\\/]+"
 			const BSkyInstances = "(?:bsky\\.social)"
 			const BskyPostHash = "[a-zA-Z\\d]+"
 		//https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:<hash1>/<hash2>4@jpeg
@@ -403,13 +403,14 @@ Sort:
 			{
 				//Userpage
 				Type:"normal",
-				FindWhat: RegExp("(" + BSkyDomainName + "\\/profile\\/" + UsernameHandle + "\\." + BSkyInstances + ").*$"),
+				FindWhat: RegExp("(" + BSkyDomainName + "\\/profile\\/" + UsernameHandle + ").*$"),
 				ReplaceWith:[{Replacement:"$1", KeyName:"Bsky_Userpage"}]
 			},
 			{
 				//Post
+				//https://bsky.app/profile/hedgie.pt/post/3k7tkbzbj7n2q
 				Type:"normal",
-				FindWhat: RegExp("(" + BSkyDomainName + "\\/profile\\/" + UsernameHandle + "\\." + BSkyInstances + "\\/post\\/" + BskyPostHash + ")"),
+				FindWhat: RegExp("(" + BSkyDomainName + "\\/profile\\/" + UsernameHandle + "\\/post\\/" + BskyPostHash + ")"),
 				ReplaceWith:[{Replacement:"$1", KeyName:"Bsky_Post"}]
 			},
 			{
