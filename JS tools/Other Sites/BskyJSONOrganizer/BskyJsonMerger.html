@@ -74,6 +74,7 @@
 
 <button onclick="MainCode()">Submit</button>
 <hr>
+<kbd>Current time: <span id="CurrentTime"></span></kbd>
 <table>
 	<tr>
 		<td></td>
@@ -127,6 +128,9 @@
 <textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
 <button onclick="setClipboard(document.getElementById('Output_Plaintext').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
 <script>
+	//Display current time (UTC) for element "CurrentTime"
+		UpdateCurrentDisplayTime() //Display at the moment the page loads...
+		setInterval(UpdateCurrentDisplayTime, 60000) //...And after first delay, update it again repeatedly
 	
 	let HasInputTextareaChanged = false
 	
@@ -138,7 +142,9 @@
 			MainCode()
 		}
 	}
-	
+	function UpdateCurrentDisplayTime() {
+		document.getElementById("CurrentTime").textContent = new Date(Date.now()).toISOString().replace("T", " ").replace(/:\d{2}\.\d{3}Z$/, "") + " UTC"
+	}
 	function MainCode() {
 		//Clear output
 			document.getElementById("Output_Statistic_ProfileCount_Replace").textContent = "0"
