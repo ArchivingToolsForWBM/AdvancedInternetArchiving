@@ -29,6 +29,7 @@
 	//-While this script is scanning the document, I don't recommend doing so while content is loading. This includes scrolling while the scanning is active. Best way to handle this
 	// is hit "start" only when loading is done and you are not scrolling, then hit stop. Preferably scroll down as far as you can go, then start-stop.
 	//-The bsky home page after logging in won't work due to different layout, and also a potential privacy concern (like leaving the script running.)
+	//-Does not work if the URL is "base-64 mode", e.g. https://bsky.app/profile/did:plc:<base_64_string>
 	//Settings
 	// Note: Changes apply when the page is refreshed. Either reload the page via a browser or enter the address bar. It's not a reload if only part of the page loads content while
 	// everything else persist.
@@ -1083,7 +1084,7 @@
 				if (!/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+(?:\.[a-zA-Z\d\-]+)*\/?/.test(ArrayElement.href)) { //Is it a link to the profile page?
 					return false
 				}
-				if (!/@[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+(?:\.[a-zA-Z\d\-]+)*$/.test(ArrayElement.innerText)) { //Is the text the user handle?
+				if (!/ @[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+(?:\.[a-zA-Z\d\-]+)*$/.test(ArrayElement.textContent)) { //Is the text the user handle? (note the non-breaking space, it's not a normal space character before the handle)
 					return false
 				}
 				let ReferenceNode = AscendNode(ArrayElement, Levels)
@@ -1665,7 +1666,7 @@
 						}
 					}
 				}
-				if (!/^\s*$/.test(QuotedPostSegment.textContent)&&(ExternalLink == "")) {
+				if (!/^(\s|ALT)*$/.test(QuotedPostSegment.textContent)&&(ExternalLink == "")) {
 					QuotedContent.Contents.PostContent.Segments.push({
 						Type: "Text",
 						UserPostedText: QuotedPostSegment.textContent
