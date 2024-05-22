@@ -94,74 +94,95 @@
 					HavePrintedListOfProcess = false //if the user moves to a different URL, we need to update the textarea
 				}
 				CurrentWBGSURL = window.location.href
-				if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=archive") {
-					let Element_SaveInNewSheetOption = Array.from(document.querySelectorAll('input[type=checkbox]')).find((CheckBox) => {
-						return CheckBox.parentElement.textContent == "Save results in a new Sheet."
-					});
-					if (typeof Element_SaveInNewSheetOption != "undefined") {
-						if (!Element_SaveInNewSheetOption.checked) {
-							Element_SaveInNewSheetOption.click()
+				
+				//Check the "save results in a new sheets" option
+					if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=archive") {
+						let Element_SaveInNewSheetOption = Array.from(document.querySelectorAll('input[type=checkbox]')).find((CheckBox) => {
+							return CheckBox.parentElement.textContent == "Save results in a new Sheet."
+						});
+						if (typeof Element_SaveInNewSheetOption != "undefined") {
+							if (!Element_SaveInNewSheetOption.checked) {
+								Element_SaveInNewSheetOption.click()
+							}
 						}
+						//^Had to use .click() instead of just directly setting the checked state to true bc if user interacts with other inputs, it will uncheck it.
+						// Probably because of this: https://stackoverflow.com/questions/30488218/checkbox-onchange-event-not-firing that JS setting checked to true
+						// does not fire the onchange event because it is changing the attribute.
 					}
-					//^Had to use .click() instead of just directly setting the checked state to true bc if user interacts with other inputs, it will uncheck it.
-					// Probably because of this: https://stackoverflow.com/questions/30488218/checkbox-onchange-event-not-firing that JS setting checked to true
-					// does not fire the onchange event because it is changing the attribute.
-				}
-				let ProcessTrackingURLString = ""
-				let TrackingURL = Array.from(document.querySelectorAll("small")).find((HTMLElement) => {
-					return /Tracking URL: https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=/.test(HTMLElement.textContent)
-				})
-				if (typeof TrackingURL !== "undefined") {
-					if (!HavePrintedListOfProcess) {
-						ProcessTrackingURLString = TrackingURL.textContent.match(/https:\/\/archive\.org\/services\/wayback-gsheets\/check[^\s]+$/)[0]
-						//console.log("Tracking URL: " + ProcessTrackingURLString.replace(/^https/, "ttps")) //URLs in the console log gets truncated and the text may not be preserved depending on browser.
-						let OBJ_WBGS_TrackingURL = {
-							TrackingURL: HttpToTtp(ProcessTrackingURLString), //URLs in the console log gets truncated and the text may not be preserved depending on browser.
-							GoogleSheetURL: HttpToTtp(ProcessTrackingURLString.replace(/^.+?\&google_sheet_url=/g, "").replaceAll("%3A", ":").replaceAll("%2F", "/").replaceAll("%23", "#").replaceAll("%3D", "=")),
-							JobID: ProcessTrackingURLString.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
-							TimestampOfInitalProcess: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
-						}
-						
-						JSONTextarea.textContent = JSON.stringify(OBJ_WBGS_TrackingURL, "", " ")
-						HavePrintedListOfProcess = true
-					}
-				}
-				if (/https:\/\/archive\.org\/services\/wayback-gsheets\/options.*/.test(CurrentWBGSURL)) { //While on WBGS home page
-					let TableListingProcess = document.getElementsByClassName("table table-bordered table-sm") //Get entire table of running processes
-					if (TableListingProcess.length != 0) {
-						let ListOfProcesses = TableListingProcess[0]
-						let ListOfProcessesItems = Array.from(ListOfProcesses.getElementsByTagName("tr")).filter((WBGSProcess) => { //Get the running processes
-							let ColCountCorrect = WBGSProcess.childNodes.length == 6 //Get only items that have 6 columns (exclude row with "There are no running processes.")
-							let IsRowAProcess = /https:\/\/docs\.google\.com\/spreadsheets\//.test(WBGSProcess.childNodes[0].textContent) //Exclude the table headers row
-							return (ColCountCorrect && IsRowAProcess)
-						})
-						if (DisplayEasyCopyableListOfProcess && (!HavePrintedListOfProcess) && ListOfProcessesItems.length != 0) {
-							let OBJ_WBGS_Info = ListOfProcessesItems.map((WBGSProcess) => {
-								let TrackingURL = WBGSProcess.childNodes[5].childNodes[0].href
-								return {
-									TrackingURL: HttpToTtp(TrackingURL),
-									JobID: TrackingURL.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
-									GSheetURL: HttpToTtp(WBGSProcess.childNodes[0].textContent),
-									StartedTime: WBGSProcess.childNodes[1].textContent,
-									Status: WBGSProcess.childNodes[4].textContent
-								}
-							})
-							JSONTextarea.textContent = "WBGS homepage info obtained on " + ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString()) + " \n" + JSON.stringify(OBJ_WBGS_Info, "", " ")
+				//On any given start process page, get the process tracking URL and extract various info from it, and write it to the textarea
+					let ProcessTrackingURLString = ""
+					let TrackingURL = Array.from(document.querySelectorAll("small")).find((HTMLElement) => {
+						return /Tracking URL: https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=/.test(HTMLElement.textContent)
+					})
+					if (typeof TrackingURL !== "undefined") {
+						if (!HavePrintedListOfProcess) {
+							ProcessTrackingURLString = TrackingURL.textContent.match(/https:\/\/archive\.org\/services\/wayback-gsheets\/check[^\s]+$/)[0]
+							//console.log("Tracking URL: " + ProcessTrackingURLString.replace(/^https/, "ttps")) //URLs in the console log gets truncated and the text may not be preserved depending on browser.
+							let OBJ_WBGS_TrackingURL = {
+								TrackingURL: HttpToTtp(ProcessTrackingURLString), //URLs in the console log gets truncated and the text may not be preserved depending on browser.
+								GoogleSheetURL: HttpToTtp(ProcessTrackingURLString.replace(/^.+?\&google_sheet_url=/g, "").replaceAll("%3A", ":").replaceAll("%2F", "/").replaceAll("%23", "#").replaceAll("%3D", "=")),
+								JobID: ProcessTrackingURLString.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
+								TimestampOfInitalProcess: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
+							}
+							
+							JSONTextarea.textContent = JSON.stringify(OBJ_WBGS_TrackingURL, "", " ")
 							HavePrintedListOfProcess = true
 						}
-						
-						let ListOfFinishLockedProcesses = ListOfProcessesItems.filter((WBGSProcess) => {
-							return WBGSProcess.childNodes[4].textContent == "SUCCESS" //Find only processes that are labeled "SUCCESS"
-						})
-						if ((ClickAllAbortsCount < MaxClickAllAborts)&&(ListOfFinishLockedProcesses.length != 0)) {
-							ListOfFinishLockedProcesses.forEach((WBGSProcess) => {
-								let AbortButton = WBGSProcess.childNodes[5].childNodes[1]
-								AbortButton.click()
+					}
+				//Extract info from the WBGS home page
+					if (/https:\/\/archive\.org\/services\/wayback-gsheets\/options.*/.test(CurrentWBGSURL)) {
+						let JsonExtractedInfo = {
+							CurrentDateTime: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString()),
+							ListOfProcesses: [],
+							SystemQueueMessage: ""
+						}
+						let TableListingProcess = document.querySelector("table") //Get entire table of running processes
+						if (TableListingProcess != null) {
+							let ListOfProcesses = Array.from(TableListingProcess.querySelectorAll("tr"))
+							let ListOfProcessesItems = ListOfProcesses.filter((WBGSProcess) => { //Get the running processes
+								let ColCountCorrect = WBGSProcess.childNodes.length == 6 //Get only items that have 6 columns (exclude row with "There are no running processes.")
+								let IsRowAProcess = /https:\/\/docs\.google\.com\/spreadsheets\//.test(WBGSProcess.childNodes[0].textContent) //Exclude the table headers row
+								return (ColCountCorrect && IsRowAProcess)
 							})
-							ClickAllAbortsCount++
+							if (DisplayEasyCopyableListOfProcess && (!HavePrintedListOfProcess) && ListOfProcessesItems.length != 0) {
+								//Convert into json info containing process info
+									let OBJ_WBGS_ListOfProcesses = ListOfProcessesItems.map((WBGSProcess) => {
+										let TrackingURL = WBGSProcess.childNodes[5].childNodes[0].href
+										return {
+											TrackingURL: HttpToTtp(TrackingURL),
+											JobID: TrackingURL.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
+											GSheetURL: HttpToTtp(WBGSProcess.childNodes[0].textContent),
+											StartedTime: WBGSProcess.childNodes[1].textContent,
+											Status: WBGSProcess.childNodes[4].textContent
+										}
+									})
+									JsonExtractedInfo.ListOfProcesses = OBJ_WBGS_ListOfProcesses
+								//Get queue quantity
+									let DivMsgQueueWarning = Array.from(document.querySelectorAll("div"))
+									DivMsgQueueWarning = DivMsgQueueWarning.find((Element) => {
+										return /^There are \d+ processes waiting in the system queue!/.test(Element.textContent)
+									})
+									if (typeof DivMsgQueueWarning != "undefined") {
+										JsonExtractedInfo.SystemQueueMessage = DivMsgQueueWarning.textContent
+									}
+								
+								//Output the json
+									JSONTextarea.textContent = JSON.stringify(JsonExtractedInfo, "", " ")
+									HavePrintedListOfProcess = true
+							}
+							
+							let ListOfFinishLockedProcesses = ListOfProcessesItems.filter((WBGSProcess) => {
+								return WBGSProcess.childNodes[4].textContent == "SUCCESS" //Find only processes that are labeled "SUCCESS"
+							})
+							if ((ClickAllAbortsCount < MaxClickAllAborts)&&(ListOfFinishLockedProcesses.length != 0)) {
+								ListOfFinishLockedProcesses.forEach((WBGSProcess) => {
+									let AbortButton = WBGSProcess.childNodes[5].childNodes[1]
+									AbortButton.click()
+								})
+								ClickAllAbortsCount++
+							}
 						}
 					}
-				}
 				RaceConditionLock = false
 			}
 		}
