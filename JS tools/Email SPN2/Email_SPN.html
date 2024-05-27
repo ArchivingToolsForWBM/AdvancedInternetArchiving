@@ -33,6 +33,7 @@
 </table>
 <button onclick="MainFunction()">Process</button>
 <hr>
+<span hidden id="AllSavedIndicator" style="color: #00ff00; font-size: 150%;">All URLs have been saved successfully!</span>
 <table>
 	<tr><th colspan="2">Statistics</th></tr>
 	<tr>
@@ -226,7 +227,7 @@
 					for (let i2=0;i2<ListOfWBMResult.length;i2++) { //Loop through every WBM result to find a match (if multiple matches on WBMResult, only the first is read), if not, 
 						if (ListOfWBMResult[i2].InputURLMatchWith == -1) {
 						//^Optimization, when matches are found not to check this WBM result again. Also prevents an issue where
-						//having duplicate submitted URLs can result in a WBM result's matchwith to be set to the last URL that is a duplicate.
+						//having duplicate submitted URLs can result in a WBM result's match with to be set to the last URL that is a duplicate.
 							let URLOfResult = ""
 							if (ListOfWBMResult[i2].Result.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/) != null) {
 								URLOfResult = ListOfWBMResult[i2].Result.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/)[0]
@@ -287,11 +288,18 @@
 				ListOfWBMResult = OutputList.WBMResultList
 			}
 			//Display
+			let Count_Success_Total = Count_Success_FirstArchive + Count_Success_SavedBefore
+			if (Count_Success_Total == ListOfURLs.length && (ListOfURLs.length != 0)) {
+				document.getElementById("AllSavedIndicator").hidden = false
+			} else {
+				document.getElementById("AllSavedIndicator").hidden = true
+			}
+			
 			Filtered_ListOfURLs = ListOfURLs.filter((ArrayElement) => {
 				return document.getElementById("FilterSetting_"+ArrayElement.StatusType).checked
 			});
 
-			document.getElementById("Statistic_NumberOfItems_TotalURLs").textContent  = BigInt(ListOfURLs.length).toString(10)
+			document.getElementById("Statistic_NumberOfItems_TotalURLs").textContent = BigInt(ListOfURLs.length).toString(10)
 			
 			document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").textContent  = BigInt(Filtered_ListOfURLs.length).toString(10) + " (" + BetterPercentageUsingInts(Filtered_ListOfURLs.length, ListOfURLs.length, 2, true) +")"
 			document.getElementById("StatisticPercentage_NumberOfItems_RemainingAfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Filtered_ListOfURLs.length, ListOfURLs.length, "to right", "#0000ff", "#000000")
@@ -311,8 +319,8 @@
 			document.getElementById("Statistic_NumberOfItems_Unsure_NoMatch").textContent  = BigInt(Count_Unsure_NoMatch).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_NoMatch, ListOfURLs.length, 2, true) +")"
 			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_NoMatch").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_NoMatch, ListOfURLs.length, "to right", "#808000", "#000000")
 
-			document.getElementById("Statistic_NumberOfItems_Success_Total").textContent  = BigInt(Count_Success_FirstArchive + Count_Success_SavedBefore).toString(10) + " (" + BetterPercentageUsingInts(Count_Success_FirstArchive + Count_Success_SavedBefore, ListOfURLs.length, 2, true) +")"
-			document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_FirstArchive + Count_Success_SavedBefore, ListOfURLs.length, "to right", "#0000ff", "#000000")
+			document.getElementById("Statistic_NumberOfItems_Success_Total").textContent  = BigInt(Count_Success_Total).toString(10) + " (" + BetterPercentageUsingInts(Count_Success_Total, ListOfURLs.length, 2, true) +")"
+			document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_Total, ListOfURLs.length, "to right", "#0000ff", "#000000")
 
 			document.getElementById("Statistic_NumberOfItems_Unsure_Total").textContent  = BigInt(Count_Unsure_Error + Count_Unsure_NoMatch).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Error + Count_Unsure_NoMatch, ListOfURLs.length, 2, true) +")"
 			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Error + Count_Unsure_NoMatch, ListOfURLs.length, "to right", "#0000ff", "#000000")
