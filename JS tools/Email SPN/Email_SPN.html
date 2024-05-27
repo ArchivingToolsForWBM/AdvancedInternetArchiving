@@ -120,7 +120,7 @@
 		</td>
 	</tr>
 	<tr>
-		<td><span id="Output_table"></span></td>
+		<td><div id="Output_table" style="overflow: scroll; height: 600px;border: solid 1px; resize: both;"></div></td>
 		<td></td>
 	</tr>
 </table>
@@ -170,7 +170,7 @@
 		function MainFunction() {
 			let ListOfURLs = []
 			let ListOfWBMResult = []
-			document.getElementById("URLsToWBMResultRatioMismatchWarning").innerHTML = ""
+			document.getElementById("URLsToWBMResultRatioMismatchWarning").textContent = ""
 			if (InputChanged) {
 				Count_Success_SavedBefore = 0
 				Count_Success_FirstArchive = 0
@@ -461,7 +461,7 @@
 			document.getElementById("Textarea_LeftoverWBMResult").value = Plaintext_ListOfLeftOverWBMResult
 			
 			if (ListOfURLs.length > ListOfWBMResult.length) {
-				document.getElementById("URLsToWBMResultRatioMismatchWarning").innerHTML = "The WBM result have "+ BigInt(ListOfURLs.length - ListOfWBMResult.length).toString(10) + " fewer result(s) than your entered URLs. It is possible you entered more URLs than what is allowed. (There are " + BigInt(ListOfURLs.length).toString(10) + " entered URLs and " + BigInt(ListOfWBMResult.length).toString(10) +" WBM results)"
+				document.getElementById("URLsToWBMResultRatioMismatchWarning").textContent = "The WBM result have "+ BigInt(ListOfURLs.length - ListOfWBMResult.length).toString(10) + " fewer result(s) than your entered URLs. It is possible you entered more URLs than what is allowed. (There are " + BigInt(ListOfURLs.length).toString(10) + " entered URL(s) and " + BigInt(ListOfWBMResult.length).toString(10) +" WBM result(s))"
 			}
 		}
 	}
