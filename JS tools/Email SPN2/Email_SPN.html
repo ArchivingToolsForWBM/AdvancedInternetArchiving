@@ -120,7 +120,7 @@
 		</td>
 	</tr>
 	<tr>
-		<td><span id="EnteredURL_Status_Table"></span></td>
+		<td><span id="Output_table"></span></td>
 		<td></td>
 	</tr>
 </table>
@@ -377,32 +377,74 @@
 					}
 				});
 			}
-			document.getElementById("Textarea_EnteredURLResult").value = ""
+			//Display filtered list using HTML table. Shows the URLs, the color indicator, and the WBM response.
+			let OutputTable = document.getElementById("Output_table")
+			while (OutputTable.lastElementChild) {
+				OutputTable.removeChild(OutputTable.lastElementChild);
+			}
+			let TextArea_EnteredURLResult = document.getElementById("Textarea_EnteredURLResult")
+			TextArea_EnteredURLResult.value = ""
 			let Plaintext_ListOfEnteredURLsResult = ""
-			let HTMLTable_ListOfEnteredURLsResult = ""
-			
-			HTMLTable_ListOfEnteredURLsResult += "<table>"
-			HTMLTable_ListOfEnteredURLsResult += "<tr><th>Position</th><th>URL</th><th>Save result</th><th>Timestamp</th><th>Status identified</th></tr>"
-			Filtered_ListOfURLs.forEach((ArrayElement, Index, ArrayItself) => {
-				Plaintext_ListOfEnteredURLsResult += ArrayElement.GivenURL
-				if (document.getElementById("Option_IncludeStatusAsPlaintext").checked) {
-					Plaintext_ListOfEnteredURLsResult += "\t" + ArrayElement.StatusMessage + "\t" + ArrayElement.StatusType
-				}
-				if (Index != ArrayItself.length-1) {
-					Plaintext_ListOfEnteredURLsResult += "\n"
-				}
-				
-				HTMLTable_ListOfEnteredURLsResult += "<tr>"
-				HTMLTable_ListOfEnteredURLsResult += "<td style='background-color: " + ArrayElement.StatusColor + "; text-align: center;'><pre>"+ BigInt(ArrayElement.Position+1).toString(10) +"</pre></td>"
-				HTMLTable_ListOfEnteredURLsResult += "<td style='background-color: " + ArrayElement.StatusColor + ";'><pre>"+escapeHTMLChars(ArrayElement.GivenURL)+"</pre></td>"
-				HTMLTable_ListOfEnteredURLsResult += "<td style='background-color: " + ArrayElement.StatusColor + ";'><pre>"+ArrayElement.StatusMessage+"</pre></td>"
-				HTMLTable_ListOfEnteredURLsResult += "<td style='background-color: " + ArrayElement.StatusColor + ";'><pre>"+ArrayElement.Timestamp+"</pre></td>"
-				HTMLTable_ListOfEnteredURLsResult += "<td style='background-color: " + ArrayElement.StatusColor + ";'><pre>"+ArrayElement.StatusType+"</pre></td>"
-				HTMLTable_ListOfEnteredURLsResult += "</tr>"
-			});
-			HTMLTable_ListOfEnteredURLsResult += "</table>"
-			document.getElementById("Textarea_EnteredURLResult").value = Plaintext_ListOfEnteredURLsResult
-			document.getElementById("EnteredURL_Status_Table").innerHTML = HTMLTable_ListOfEnteredURLsResult
+			if (Filtered_ListOfURLs.length != 0) {
+				let DocumentFrag = new DocumentFragment()
+				let ResultTable = document.createElement("table")
+				DocumentFrag.appendChild(ResultTable)
+				let TableHeaderRow = document.createElement("tr")
+				TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Position"))
+				TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("URL"))
+				TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Save result"))
+				TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Timestamp"))
+				TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Status identified"))
+				ResultTable.appendChild(TableHeaderRow)
+				Filtered_ListOfURLs.forEach((ArrayElement, Index, ArrayItself) => {
+					Plaintext_ListOfEnteredURLsResult += ArrayElement.GivenURL
+					if (document.getElementById("Option_IncludeStatusAsPlaintext").checked) {
+						Plaintext_ListOfEnteredURLsResult += "\t" + ArrayElement.StatusMessage + "\t" + ArrayElement.StatusType
+					}
+					if (Index != ArrayItself.length-1) {
+						Plaintext_ListOfEnteredURLsResult += "\n"
+					}
+					
+					
+					let RowItem = document.createElement("tr")
+					
+					let Cell_Position = document.createElement("td")
+					Cell_Position.style.fontFamily = "monospace"
+					Cell_Position.style.textAlign = "center"
+					Cell_Position.style.backgroundColor = ArrayElement.StatusColor
+					Cell_Position.appendChild(document.createTextNode(BigInt(ArrayElement.Position+1).toString(10)))
+					RowItem.appendChild(Cell_Position)
+					
+					let Cell_URL = document.createElement("td")
+					Cell_URL.style.fontFamily = "monospace"
+					Cell_URL.style.backgroundColor = ArrayElement.StatusColor
+					Cell_URL.appendChild(document.createTextNode(ArrayElement.GivenURL))
+					RowItem.appendChild(Cell_URL)
+					
+					let Cell_SaveResult = document.createElement("td")
+					Cell_SaveResult.style.fontFamily = "monospace"
+					Cell_SaveResult.style.backgroundColor = ArrayElement.StatusColor
+					Cell_SaveResult.appendChild(document.createTextNode(ArrayElement.StatusMessage))
+					RowItem.appendChild(Cell_SaveResult)
+					
+					let Cell_Timestamp = document.createElement("td")
+					Cell_Timestamp.style.fontFamily = "monospace"
+					Cell_Timestamp.style.whiteSpace = "nowrap"
+					Cell_Timestamp.style.backgroundColor = ArrayElement.StatusColor
+					Cell_Timestamp.appendChild(document.createTextNode(ArrayElement.Timestamp))
+					RowItem.appendChild(Cell_Timestamp)
+					
+					let Cell_StatusType = document.createElement("td")
+					Cell_StatusType.style.fontFamily = "monospace"
+					Cell_StatusType.style.backgroundColor = ArrayElement.StatusColor
+					Cell_StatusType.appendChild(document.createTextNode(ArrayElement.StatusType))
+					RowItem.appendChild(Cell_StatusType)
+					
+					ResultTable.appendChild(RowItem)
+				});
+				OutputTable.appendChild(DocumentFrag)
+				TextArea_EnteredURLResult.value = Plaintext_ListOfEnteredURLsResult
+			}
 			
 			let Filtered_ListOfWBMResult = ListOfWBMResult.filter((ArrayElement) => {
 				return (ArrayElement.InputURLMatchWith == -1)
