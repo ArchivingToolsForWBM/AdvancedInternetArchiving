@@ -46,10 +46,11 @@
 		<td><textarea id="JsonScrapedBskyData1" cols="50" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" oninput="JSONTextareaChanged(); AutoUpdate()"></textarea></td>
 	</tr>
 </table>
-<label><input type="checkbox" id="Output_DisplaySetting_ReadableJSON" onchange="AutoUpdate()" checked>Readable JSON format</label><br>
-<p>
-	Post sort settings:
-</p>
+Settings:<br>
+	<ul>
+		<li><label><input type="checkbox" id="Output_DisplaySetting_ReadableJSON" onchange="AutoUpdate()" checked>Readable JSON format</label></li>
+		<li><label><input type="checkbox" id="Output_Misc_ConnectOutdatedReplies" onchange="AutoUpdate()"><abbr title="Example: If you have post A and then post B, and post B is a reply to A, with A not having B listed in its reply, this setting will update post A&apos;s to include the newer reply B.">Update older post's reply lists for newer replies.</abbr></label></li>
+	</ul>
 <table>
 	<tr>
 		<th>Sort profile</th>
@@ -440,6 +441,21 @@
 					ErrorStats()
 					return
 				}
+		//Update the replies lists in older posts.
+			if (document.getElementById("Output_Misc_ConnectOutdatedReplies").checked) {
+				OutputJson_NoDupes_PostList.forEach((Post, Index, Self) => { //Loop through each post's "ReplyToURL"...
+					if (Post.ReplyToURL != "") {
+						let RepliedPost = Self.find((RepliedPost) => { //...find its "PostURL" that matches
+							return Post.ReplyToURL == RepliedPost.PostURL
+						})
+						if (typeof RepliedPost != "undefined") { //If match found, update its replies list
+							let SetOfReplies = new Set(RepliedPost.RepliesURLs)
+							SetOfReplies.add(Post.PostURL)
+							RepliedPost.RepliesURLs = [...SetOfReplies]
+						}
+					}
+				})
+			}
 		//Sort profiles
 			if (document.getElementById("SortSetting_Profile_UserTitle").checked) {
 				OutputJson_NoDupes_ProfileList.sort((a,b) => {
