@@ -118,11 +118,27 @@
 						if (!HavePrintedListOfProcess) {
 							ProcessTrackingURLString = TrackingURL.textContent.match(/https:\/\/archive\.org\/services\/wayback-gsheets\/check[^\s]+$/)[0]
 							//console.log("Tracking URL: " + ProcessTrackingURLString.replace(/^https/, "ttps")) //URLs in the console log gets truncated and the text may not be preserved depending on browser.
+							let ProcessType = ((URL) => {
+								let TypeInURL = ""
+								try {
+									TypeInURL = URL.match(/(?<=check\?method=).*$/)[0]
+								} catch {
+									TypeInURL = ""
+								}
+								let ListOfProcessTypes = { //Object literal technique -> mapping strings to another string, credit - FlutterMapp on youtube.
+									"archive": "Archive URLs",
+									"availability": "Check if URLs are archived in the Wayback Machine",
+									"live": "Check if URLs are available in the Live Web"
+								}
+								return ListOfProcessTypes[TypeInURL] ?? "Unknown"
+							})(window.location.href);
+							
 							let OBJ_WBGS_TrackingURL = {
 								TrackingURL: HttpToTtp(ProcessTrackingURLString), //URLs in the console log gets truncated and the text may not be preserved depending on browser.
 								GoogleSheetURL: HttpToTtp(ProcessTrackingURLString.replace(/^.+?\&google_sheet_url=/g, "").replaceAll("%3A", ":").replaceAll("%2F", "/").replaceAll("%23", "#").replaceAll("%3D", "=")),
 								JobID: ProcessTrackingURLString.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
-								TimestampOfInitalProcess: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
+								TimestampOfInitalProcess: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString()),
+								ProcessType: ProcessType
 							}
 							
 							JSONTextarea.textContent = JSON.stringify(OBJ_WBGS_TrackingURL, "", " ")
