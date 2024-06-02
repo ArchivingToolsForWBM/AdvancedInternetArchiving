@@ -325,47 +325,86 @@ Sort:
 					//Dupe and blacklist
 						document.getElementById("HTML_BarGraph_DuplicateBlacklistCount").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_DuplicateBlacklisted, Count_Lines, "to right", "#ff6666", "#000000")
 						document.getElementById("HTML_DuplicateBlacklistCount").textContent = BigInt(Count_DuplicateBlacklisted).toString(10) + " (" + BetterPercentageUsingInts(Count_DuplicateBlacklisted, Count_Lines, 2, true) + ")"
-				//Plaintext
-					let OutputTextArea = ""
-					for (let Index = 0; Index < InputList.length; Index++) {
-						OutputTextArea += InputList[Index][0]
-						if (Index != InputList.length - 1) {
-							OutputTextArea += "\n"
+				//Plaintext and table
+					let OutputTextArea = document.getElementById("TextOutput")
+					let OutputTable = document.getElementById("OutputTable")
+					while (OutputTable.lastElementChild) {
+						OutputTable.removeChild(OutputTable.lastElementChild);
+					}
+					let OutputTextArea_String = ""
+					
+					let DocumentFrag = new DocumentFragment()
+					let ResultTable = document.createElement("table")
+					DocumentFrag.appendChild(ResultTable)
+					let TableHeaderRow = document.createElement("tr")
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Line number prior altering"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Line number after altering"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("String"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Status"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Dupe info"))
+					
+					ResultTable.appendChild(TableHeaderRow)
+					
+					for (let i=0; i<InputList.length; i++) {
+						let ListedItem = InputList[i]
+						OutputTextArea_String += ListedItem[0]
+						if (i != InputList.length-1) {
+							OutputTextArea_String += "\n"
 						}
-					}
-					document.getElementById("TextOutput").value = OutputTextArea
-				//Table of statuses
-					let OutputHTMLText = ""
-					OutputHTMLText += "<table><th>Line number prior altering</th><th>Line number after altering</th><th>String</th><th>Status</th><th>Duplicate info</th>"
-					for (let Index = 0; Index < InputList.length; Index++) {
-						OutputHTMLText += "<tr>"
-						//Line number
-							OutputHTMLText += "<td style='background-color: " + ColorCodedAlteredLineNumber(InputList[Index][1], Index) + "; text-align: center;'><kbd>" + BigInt(InputList[Index][1] + 1).toString(10) + "</kbd></td>"
-						//Line number after altering
-							OutputHTMLText += "<td style='background-color: " + ColorCodedAlteredLineNumber(InputList[Index][1], Index) + "; text-align: center;'><kbd>" + BigInt(Index + 1).toString(10) + "</kbd></td>"
-						//Text (string)
-							OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>" + escapeHTMLChars(InputList[Index][0]) + "</kbd></td>"
-						//Status
-							OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>" + InputList[Index][2] + "</kbd></td>"
-						//Duplicate info
-							OutputHTMLText += "<td style='background-color: " + ColorCodedStatus(InputList[Index][2]) + "'><kbd>"
-							if ((InputList[Index][3] != 0 && InputList[Index][2] != "OriginalItem")) {
-								OutputHTMLText += "Duplicate of: Line " + BigInt(InputList[Index][5] + 1).toString(10)
-								if (InputList[Index][3] != 0) {
-									OutputHTMLText += ", "
-								}
-							}
-							if (InputList[Index][3] != 0) {
-								OutputHTMLText += "Number of copies: " + BigInt(InputList[Index][3]).toString(10)
-							} else if ((InputList[Index][2] == "EmptyLine" || InputList[Index][2] == "JustSpace") == false) {
-								OutputHTMLText += "No duplicate exists"
-							}
-							OutputHTMLText += "</kbd></td>"
 						
-						OutputHTMLText += "</tr>"
+						let RowItem = document.createElement("tr")
+						let Cell_LineNumPrior = document.createElement("td")
+						Cell_LineNumPrior.style.fontFamily = "monospace"
+						Cell_LineNumPrior.style.textAlign = "center"
+						Cell_LineNumPrior.style.backgroundColor = ColorCodedAlteredLineNumber(ListedItem[1], i)
+						Cell_LineNumPrior.appendChild(document.createTextNode(BigInt(ListedItem[1]+1).toString(10)))
+						RowItem.appendChild(Cell_LineNumPrior)
+						
+						let Cell_LineNumAfter = document.createElement("td")
+						Cell_LineNumAfter.style.fontFamily = "monospace"
+						Cell_LineNumAfter.style.textAlign = "center"
+						Cell_LineNumAfter.style.backgroundColor = ColorCodedAlteredLineNumber(ListedItem[1], i)
+						Cell_LineNumAfter.appendChild(document.createTextNode(BigInt(i+1).toString(10)))
+						RowItem.appendChild(Cell_LineNumAfter)
+						
+						let Cell_String = document.createElement("td")
+						let PreformattedText = document.createElement("pre")
+						Cell_String.style.backgroundColor = ColorCodedStatus(ListedItem[2])
+						PreformattedText.appendChild(document.createTextNode(ListedItem[0]))
+						Cell_String.appendChild(PreformattedText)
+						RowItem.appendChild(Cell_String)
+						
+						let Cell_Status = document.createElement("td")
+						Cell_Status.style.fontFamily = "monospace"
+						Cell_Status.style.backgroundColor = ColorCodedStatus(ListedItem[2])
+						Cell_Status.appendChild(document.createTextNode(ListedItem[2]))
+						RowItem.appendChild(Cell_Status)
+						
+						let Cell_DupeInfo = document.createElement("td")
+						Cell_DupeInfo.style.fontFamily = "monospace"
+						Cell_DupeInfo.style.backgroundColor = ColorCodedStatus(ListedItem[2])
+						let DupeInfoText = ""
+						
+						if ((ListedItem[3] != 0 && ListedItem[2] != "OriginalItem")) {
+							DupeInfoText += "Duplicate of: Line " + BigInt(ListedItem[5] + 1).toString(10)
+							if (ListedItem[3] != 0) {
+								DupeInfoText += ", "
+							}
+						}
+						if (ListedItem[3] != 0) {
+							DupeInfoText += "Number of copies: " + BigInt(ListedItem[3]).toString(10)
+						} else if ((ListedItem[2] == "EmptyLine" || ListedItem[2] == "JustSpace") == false) {
+							DupeInfoText += "No duplicate exists"
+						}
+						Cell_DupeInfo.appendChild(document.createTextNode(DupeInfoText))
+						RowItem.appendChild(Cell_DupeInfo)
+						
+						
+						ResultTable.appendChild(RowItem)
 					}
-					OutputHTMLText += "</table>"
-					document.getElementById("OutputTable").innerHTML = OutputHTMLText
+					
+					OutputTextArea.value = OutputTextArea_String
+					OutputTable.appendChild(DocumentFrag)
 		}
 	}
 	function ColorCodedAlteredLineNumber(LinePriorAlter, LineAfterAlter) {
