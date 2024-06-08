@@ -100,6 +100,7 @@ Sort:<br>
 		<td><kbd id="StatisticTimestamp_Latest">?</kbd></td>
 	</tr>
 </table><br>
+<kbd><span id="TextareaCount">0</span> result(s)</kbd><br>
 <textarea readonly id="Output_List" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
 <button onclick="setClipboard(document.getElementById('Output_List').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br>
 <div style="overflow: scroll; height: 600px;border: solid 1px; resize: both;">
@@ -344,6 +345,8 @@ Sort:<br>
 					
 					document.getElementById("Statistic_NumberOfItems_FilteredRemoved").textContent = BigInt(Count_TotalUrls-InputList.length).toString(10) + " (" + BetterPercentageUsingInts(Count_TotalUrls-InputList.length, Count_TotalUrls, 2, true) + ")"
 					document.getElementById("StatisticPercentage_NumberOfItems_FilteredRemoved").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_TotalUrls-InputList.length, Count_TotalUrls, "to right", "#0000ff", "#000000")
+					
+					document.getElementById("TextareaCount").textContent = BigInt(InputList.length).toString(10)
 			//Display output
 				document.getElementById("Output_List").value = ""
 				let OutputTable = document.getElementById("Output_table")
