@@ -702,75 +702,54 @@ Sort:
 					}
 				});
 			}
-//			let OutputString = ""
-//			
-//			Filtered_OutputURLObjects.forEach((ArrayElement, ArrayIndex, ArrayItself) => {
-//				OutputString += ArrayElement.URL
-//				if (ArrayIndex != ArrayItself.length - 1) {
-//					OutputString += "\n"
-//				}
-//			});
-//			document.getElementById("Textarea_OutputList").value = OutputString
-//			
-//			let OutputHTMLTableString = ""
-//			OutputHTMLTableString += "<table>"
-//			OutputHTMLTableString += "<tr><th>URL</th><th>Identified Type</th><th>Key name</th></tr>"
-//			Filtered_OutputURLObjects.forEach((ArrayElement) => {
-//				OutputHTMLTableString += "<tr><td><kbd>"+escapeHTMLChars(ArrayElement.URL)+"</kbd></td><td><kbd>"+ArrayElement.IdentifiedType+"</kbd></td><td><kbd>"+ArrayElement.KeyName+"</kbd></td></tr>"
-//			});
-//			OutputHTMLTableString += "</table>"
-//			document.getElementById("URL_OutputTable").innerHTML = OutputHTMLTableString
-
-			document.getElementById("Textarea_OutputList").value = ""
-			let OutputTable = document.getElementById("URL_OutputTable")
-			while (OutputTable.lastElementChild) {
-				OutputTable.removeChild(OutputTable.lastElementChild);
-			}
-			if (Filtered_OutputURLObjects.length != 0) {
-				let DocumentFrag = new DocumentFragment()
-				let ResultTable = document.createElement("table")
-				DocumentFrag.appendChild(ResultTable)
-				let TableHeaderRow = document.createElement("tr")
-				TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("URL"))
-				TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("IdentifiedType"))
-				TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Key name"))
-				
-				ResultTable.appendChild(TableHeaderRow)
-				
-				let TextareaString = ""
-				for (let i=0; i<Filtered_OutputURLObjects.length; i++) {
-					let ArrayElement = Filtered_OutputURLObjects[i]
-					//Textarea for output string
-						TextareaString += ArrayElement.URL
-						if (i != Filtered_OutputURLObjects.length - 1) {
-							TextareaString += "\n"
-						}
-					//Table
-						let RowItem = document.createElement("tr")
-						
-						let Cell_URL = document.createElement("td")
-						Cell_URL.style.fontFamily = "monospace"
-						Cell_URL.appendChild(document.createTextNode(ArrayElement.URL))
-						RowItem.appendChild(Cell_URL)
-						
-						let Cell_IdentifiedType = document.createElement("td")
-						Cell_IdentifiedType.style.fontFamily = "monospace"
-						Cell_IdentifiedType.appendChild(document.createTextNode(ArrayElement.IdentifiedType))
-						RowItem.appendChild(Cell_IdentifiedType)
-						
-						let Cell_KeyName = document.createElement("td")
-						Cell_KeyName.style.fontFamily = "monospace"
-						Cell_KeyName.appendChild(document.createTextNode(ArrayElement.KeyName))
-						RowItem.appendChild(Cell_KeyName)
-						
-						ResultTable.appendChild(RowItem)
+			//Display output
+				document.getElementById("Textarea_OutputList").value = ""
+				let OutputTable = document.getElementById("URL_OutputTable")
+				while (OutputTable.lastElementChild) {
+					OutputTable.removeChild(OutputTable.lastElementChild);
 				}
-				document.getElementById("Textarea_OutputList").value = TextareaString
-				OutputTable.appendChild(DocumentFrag)
-			}
-
-
-
+				if (Filtered_OutputURLObjects.length != 0) {
+					let DocumentFrag = new DocumentFragment()
+					let ResultTable = document.createElement("table")
+					DocumentFrag.appendChild(ResultTable)
+					let TableHeaderRow = document.createElement("tr")
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("URL"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("IdentifiedType"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Key name"))
+					
+					ResultTable.appendChild(TableHeaderRow)
+					
+					let TextareaString = ""
+					for (let i=0; i<Filtered_OutputURLObjects.length; i++) {
+						let ArrayElement = Filtered_OutputURLObjects[i]
+						//Textarea for output string
+							TextareaString += ArrayElement.URL
+							if (i != Filtered_OutputURLObjects.length - 1) {
+								TextareaString += "\n"
+							}
+						//Table
+							let RowItem = document.createElement("tr")
+							
+							let Cell_URL = document.createElement("td")
+							Cell_URL.style.fontFamily = "monospace"
+							Cell_URL.appendChild(document.createTextNode(ArrayElement.URL))
+							RowItem.appendChild(Cell_URL)
+							
+							let Cell_IdentifiedType = document.createElement("td")
+							Cell_IdentifiedType.style.fontFamily = "monospace"
+							Cell_IdentifiedType.appendChild(document.createTextNode(ArrayElement.IdentifiedType))
+							RowItem.appendChild(Cell_IdentifiedType)
+							
+							let Cell_KeyName = document.createElement("td")
+							Cell_KeyName.style.fontFamily = "monospace"
+							Cell_KeyName.appendChild(document.createTextNode(ArrayElement.KeyName))
+							RowItem.appendChild(Cell_KeyName)
+							
+							ResultTable.appendChild(RowItem)
+					}
+					document.getElementById("Textarea_OutputList").value = TextareaString
+					OutputTable.appendChild(DocumentFrag)
+				}
 		}
 		function AddToOutput(URLObject) {
 			if (!OutputSet.has(URLObject.URL)) {	//If output not have the URL, add it to the list
@@ -804,13 +783,5 @@ Sort:
 				}
 			}
 		}
-	}
-	function escapeHTMLChars(string) {
-		//Should the user's input contains "<", ">", and "&", prevent the innerHTML from treating these as HTML tags/escapes
-			string = string.replaceAll("&", "&amp;") //This must be done first, to avoid replacing already-replaced symbol's ampersand character.
-			string = string.replaceAll("<", "&lt;")
-			string = string.replaceAll(">", "&gt;")
-			string = string.replaceAll("\n", "<br>") //Again just in case if WBGS would ever use linebreaks in a cell.
-			return string
 	}
 </script>
