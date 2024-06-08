@@ -40,7 +40,7 @@
 			//^true = PostTimeStamp sub-object will contain the local timestamp
 			//^false = no (will only show the UTC and milliseconds (page only shows minutes as lowest units of time, so it assumes whole minutes) since epoch)
 		const Setting_PostImageFullRes = true
-			//^true = all image URLs in the post will be full resolution versions
+			//^true = all image URLs in the post will be full resolution versions (including external link preview images)
 			// false = use potentially downsized resolution from the HTML.
 		const Setting_MaxNumberOfPosts = -1
 			//^-1 = No limit on how many posts
@@ -1583,8 +1583,12 @@
 				let NodeOfImage = DescendNode(Part, [0,0])
 				if (NodeOfImage.IsSuccessful) {
 					if ((typeof NodeOfImage.OutputNode.src != "undefined") &&(NodeOfImage.OutputNode.src != "")) {
+						let Image = NodeOfImage.OutputNode.src
+						if (Setting_PostImageFullRes) {
+							Image = Image.replace(/https?:\/\/cdn\.bsky\.app\/img\/feed_thumbnail/, "https://cdn.bsky.app/img/feed_fullsize")
+						}
 						OutputLinkPreview.Content.push({
-							ExternalLinkImage: NodeOfImage.OutputNode.src
+							ExternalLinkImage: Image
 						})
 					}
 				}
