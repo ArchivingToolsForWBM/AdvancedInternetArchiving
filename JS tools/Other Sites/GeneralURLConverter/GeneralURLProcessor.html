@@ -63,8 +63,8 @@ Sort:
 </ul>
 <hr>
 <kbd><span id="Output_URL_Count">0</span> URLs generated.</kbd><br>
-<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="HTML_OutputString" cols="100" rows="30" readonly></textarea><br>
-<button onclick="setClipboard(document.getElementById('HTML_OutputString').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br><br>
+<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="Textarea_OutputList" cols="100" rows="30" readonly></textarea><br>
+<button onclick="setClipboard(document.getElementById('Textarea_OutputList').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br><br>
 <div style="overflow: scroll; height: 600px; border: solid 1px; resize: both;">
 <span id="URL_OutputTable"></span>
 </div>
@@ -702,24 +702,75 @@ Sort:
 					}
 				});
 			}
-			let OutputString = ""
-			
-			Filtered_OutputURLObjects.forEach((ArrayElement, ArrayIndex, ArrayItself) => {
-				OutputString += ArrayElement.URL
-				if (ArrayIndex != ArrayItself.length - 1) {
-					OutputString += "\n"
+//			let OutputString = ""
+//			
+//			Filtered_OutputURLObjects.forEach((ArrayElement, ArrayIndex, ArrayItself) => {
+//				OutputString += ArrayElement.URL
+//				if (ArrayIndex != ArrayItself.length - 1) {
+//					OutputString += "\n"
+//				}
+//			});
+//			document.getElementById("Textarea_OutputList").value = OutputString
+//			
+//			let OutputHTMLTableString = ""
+//			OutputHTMLTableString += "<table>"
+//			OutputHTMLTableString += "<tr><th>URL</th><th>Identified Type</th><th>Key name</th></tr>"
+//			Filtered_OutputURLObjects.forEach((ArrayElement) => {
+//				OutputHTMLTableString += "<tr><td><kbd>"+escapeHTMLChars(ArrayElement.URL)+"</kbd></td><td><kbd>"+ArrayElement.IdentifiedType+"</kbd></td><td><kbd>"+ArrayElement.KeyName+"</kbd></td></tr>"
+//			});
+//			OutputHTMLTableString += "</table>"
+//			document.getElementById("URL_OutputTable").innerHTML = OutputHTMLTableString
+
+			document.getElementById("Textarea_OutputList").value = ""
+			let OutputTable = document.getElementById("URL_OutputTable")
+			while (OutputTable.lastElementChild) {
+				OutputTable.removeChild(OutputTable.lastElementChild);
+			}
+			if (Filtered_OutputURLObjects.length != 0) {
+				let DocumentFrag = new DocumentFragment()
+				let ResultTable = document.createElement("table")
+				DocumentFrag.appendChild(ResultTable)
+				let TableHeaderRow = document.createElement("tr")
+				TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("URL"))
+				TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("IdentifiedType"))
+				TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Key name"))
+				
+				ResultTable.appendChild(TableHeaderRow)
+				
+				let TextareaString = ""
+				for (let i=0; i<Filtered_OutputURLObjects.length; i++) {
+					let ArrayElement = Filtered_OutputURLObjects[i]
+					//Textarea for output string
+						TextareaString += ArrayElement.URL
+						if (i != Filtered_OutputURLObjects.length - 1) {
+							TextareaString += "\n"
+						}
+					//Table
+						let RowItem = document.createElement("tr")
+						
+						let Cell_URL = document.createElement("td")
+						Cell_URL.style.fontFamily = "monospace"
+						Cell_URL.appendChild(document.createTextNode(ArrayElement.URL))
+						RowItem.appendChild(Cell_URL)
+						
+						let Cell_IdentifiedType = document.createElement("td")
+						Cell_IdentifiedType.style.fontFamily = "monospace"
+						Cell_IdentifiedType.appendChild(document.createTextNode(ArrayElement.IdentifiedType))
+						RowItem.appendChild(Cell_IdentifiedType)
+						
+						let Cell_KeyName = document.createElement("td")
+						Cell_KeyName.style.fontFamily = "monospace"
+						Cell_KeyName.appendChild(document.createTextNode(ArrayElement.KeyName))
+						RowItem.appendChild(Cell_KeyName)
+						
+						ResultTable.appendChild(RowItem)
 				}
-			});
-			document.getElementById("HTML_OutputString").value = OutputString
-			
-			let OutputHTMLTableString = ""
-			OutputHTMLTableString += "<table>"
-			OutputHTMLTableString += "<tr><th>URL</th><th>Identified Type</th><th>Key name</th></tr>"
-			Filtered_OutputURLObjects.forEach((ArrayElement) => {
-				OutputHTMLTableString += "<tr><td><kbd>"+escapeHTMLChars(ArrayElement.URL)+"</kbd></td><td><kbd>"+ArrayElement.IdentifiedType+"</kbd></td><td><kbd>"+ArrayElement.KeyName+"</kbd></td></tr>"
-			});
-			OutputHTMLTableString += "</table>"
-			document.getElementById("URL_OutputTable").innerHTML = OutputHTMLTableString
+				document.getElementById("Textarea_OutputList").value = TextareaString
+				OutputTable.appendChild(DocumentFrag)
+			}
+
+
+
 		}
 		function AddToOutput(URLObject) {
 			if (!OutputSet.has(URLObject.URL)) {	//If output not have the URL, add it to the list
