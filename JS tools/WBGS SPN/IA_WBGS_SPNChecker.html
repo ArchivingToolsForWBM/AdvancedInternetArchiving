@@ -640,57 +640,58 @@ Misc:
 						ResultTable.appendChild(TableHeaderRow)
 						
 						for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
+							let Item = FilteredListForDisplay[Index]
 							let RowItem = document.createElement("tr")
 							let Cell_ItemNumber = document.createElement("td")
 							Cell_ItemNumber.style.fontFamily = "monospace"
 							Cell_ItemNumber.style.textAlign = "center"
-							//Cell_ItemNumber.style.backgroundColor = FilteredListForDisplay[Index].StatusColor
+							//Cell_ItemNumber.style.backgroundColor = Item.StatusColor
 							Cell_ItemNumber.appendChild(document.createTextNode(BigInt(Index+1).toString(10)))
 							RowItem.appendChild(Cell_ItemNumber)
 							
 							let Cell_GSLineNum = document.createElement("td")
 							Cell_GSLineNum.style.fontFamily = "monospace"
 							Cell_GSLineNum.style.textAlign = "center"
-							//Cell_GSLineNum.style.backgroundColor = FilteredListForDisplay[Index].StatusColor
-							Cell_GSLineNum.appendChild(document.createTextNode(BigInt(FilteredListForDisplay[Index].SpreadSheetRowNumber).toString(10)))
+							//Cell_GSLineNum.style.backgroundColor = Item.StatusColor
+							Cell_GSLineNum.appendChild(document.createTextNode(BigInt(Item.SpreadSheetRowNumber).toString(10)))
 							RowItem.appendChild(Cell_GSLineNum)
 							
 							let Cell_URLSent = document.createElement("td")
 							Cell_URLSent.style.fontFamily = "monospace"
-							Cell_URLSent.style.backgroundColor = FilteredListForDisplay[Index].StatusColor
-							Cell_URLSent.appendChild(document.createTextNode(FilteredListForDisplay[Index].SpreadSheetRowData_Array[0].replace(/^\"/, "").replace(/\"$/, "")))
+							Cell_URLSent.style.backgroundColor = Item.StatusColor
+							Cell_URLSent.appendChild(document.createTextNode(Item.SpreadSheetRowData_Array[0].replace(/^\"/, "").replace(/\"$/, "")))
 							RowItem.appendChild(Cell_URLSent)
 							
 							let Cell_HTTPStatus = document.createElement("td")
 							Cell_HTTPStatus.style.fontFamily = "monospace"
-							Cell_HTTPStatus.style.backgroundColor = FilteredListForDisplay[Index].StatusColor
-							Cell_HTTPStatus.appendChild(document.createTextNode(FilteredListForDisplay[Index].SpreadSheetRowData_Array[2]))
+							Cell_HTTPStatus.style.backgroundColor = Item.StatusColor
+							Cell_HTTPStatus.appendChild(document.createTextNode(Item.SpreadSheetRowData_Array[2]))
 							RowItem.appendChild(Cell_HTTPStatus)
 							
 							let Cell_SaveStatus = document.createElement("td")
 							//Cell_SaveStatus.style.fontFamily = "monospace"
-							Cell_SaveStatus.style.backgroundColor = FilteredListForDisplay[Index].StatusColor
+							Cell_SaveStatus.style.backgroundColor = Item.StatusColor
 							Cell_SaveStatus_Pre = document.createElement("pre") //In case of forced line breaks
-							Cell_SaveStatus_Pre.appendChild(document.createTextNode(FilteredListForDisplay[Index].SpreadSheetRowData_Array[3].replace(/^\"/, "").replace(/\"$/, "")))
+							Cell_SaveStatus_Pre.appendChild(document.createTextNode(Item.SpreadSheetRowData_Array[3].replace(/^\"/, "").replace(/\"$/, "")))
 							Cell_SaveStatus.appendChild(Cell_SaveStatus_Pre)
 							RowItem.appendChild(Cell_SaveStatus)
 							
 							let Cell_Timestamp = document.createElement("td")
-							Cell_Timestamp.style.backgroundColor = FilteredListForDisplay[Index].StatusColor
+							Cell_Timestamp.style.backgroundColor = Item.StatusColor
 							Cell_Timestamp.style.fontFamily = "monospace"
-							Cell_Timestamp.appendChild(document.createTextNode(FilteredListForDisplay[Index].Timestamp))
+							Cell_Timestamp.appendChild(document.createTextNode(Item.Timestamp))
 							RowItem.appendChild(Cell_Timestamp)
 							
 							let Cell_OutLinksCount = document.createElement("td")
-							Cell_OutLinksCount.style.backgroundColor = FilteredListForDisplay[Index].StatusColor
+							Cell_OutLinksCount.style.backgroundColor = Item.StatusColor
 							Cell_OutLinksCount.style.fontFamily = "monospace"
-							Cell_OutLinksCount.appendChild(document.createTextNode(FilteredListForDisplay[Index].SpreadSheetRowData_Array[4]))
+							Cell_OutLinksCount.appendChild(document.createTextNode(Item.SpreadSheetRowData_Array[4]))
 							RowItem.appendChild(Cell_OutLinksCount)
 							
 							let Cell_StatusType = document.createElement("td")
-							Cell_StatusType.style.backgroundColor = FilteredListForDisplay[Index].StatusColor
+							Cell_StatusType.style.backgroundColor = Item.StatusColor
 							Cell_StatusType.style.fontFamily = "monospace"
-							Cell_StatusType.appendChild(document.createTextNode(FilteredListForDisplay[Index].SaveStatus))
+							Cell_StatusType.appendChild(document.createTextNode(Item.SaveStatus))
 							RowItem.appendChild(Cell_StatusType)
 							
 							ResultTable.appendChild(RowItem)

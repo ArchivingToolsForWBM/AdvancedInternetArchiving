@@ -34,7 +34,7 @@ OriginalURL	YES/NO	WBMURL</pre></td></tr></table>
 <textarea id="InputList" cols="100" rows="30" oninput="SaveStatusesChanged(); AutoUpdateCode()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
 Filter:<br>
 <ul>
-	<li>Availability: <button onclick="CheckAllFilters()">Check All</button><button onclick="UncheckAllFilters()">Uncheck all</button><button onclick="InvertFilters()">Invert</button><br>
+	<li>Availability: <button onclick="ChangeFilterSettings('FilterSettings', 1); AutoUpdateCode()">Check All</button><button onclick="ChangeFilterSettings('FilterSettings', 0); AutoUpdateCode()">Uncheck all</button><button onclick="ChangeFilterSettings('FilterSettings', 2); AutoUpdateCode()">Invert</button> <button onclick="FilterByNonSaved(); AutoUpdateCode()">Get only non-archived</button><br>
 		<ul>
 			<li><label><input type="checkbox" onchange="AutoUpdateCode()" class="FilterSettings" checked id="FilterList_Saved" data-savedlist_status_name="Saved">Include URLs that have been saved</label></li>
 			<li><label><input type="checkbox" onchange="AutoUpdateCode()" class="FilterSettings" checked id="FilterList_SavedRedirected" data-savedlist_status_name="SavedRedirected">Include URLs that have been saved and got a different URL.</label></li>
@@ -60,7 +60,7 @@ Sort:<br>
 <li><label><input type="radio" onchange="AutoUpdateCode()" id="Sort_None" name="SortURLs" checked>Keep the same order you sent</label></li>
 <li><label><input type="radio" onchange="AutoUpdateCode()" id="Sort_Date" name="SortURLs">Sort by date (non-saved URLs are treated as the latest/highest position).</label><label><input type="radio" onchange="AutoUpdateCode()" id="Sort_Date_Reverse" name="SortURLs">Reverse</label></li>
 </ul>
-<button onclick="Submit()" id="SubmitButton">Submit</button> <span id="InvalidDateMessage"></span>
+<button onclick="Submit()" id="SubmitButton">Submit</button> <span id="InvalidDateMessage" hidden><kbd style='color: #ff0000'>End date is before the start!</kbd></span>
 <hr>
 <span id="Output_Statistics"></span><br>
 <table>
@@ -100,45 +100,45 @@ Sort:<br>
 		<td><kbd id="StatisticTimestamp_Latest">?</kbd></td>
 	</tr>
 </table><br>
-<textarea readonly id="Output_List" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
+<textarea readonly id="Output_List" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
 <button onclick="setClipboard(document.getElementById('Output_List').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br>
 <div style="overflow: scroll; height: 600px;border: solid 1px; resize: both;">
-	<span id="Output_Table"></span>
+	<span id="Output_table"></span>
 </div>
 </body>
 <script>
-	var IsListOrModeChanged = false
-	var SavedList = []
+	let IsListOrModeChanged = false
+	let SavedList = []
 	
-	var Count_TotalUrls = 0
-	var Count_Saved = 0
-	var Count_Redirected = 0
-	var Count_NotSaved = 0
+	let Count_TotalUrls = 0
+	let Count_Saved = 0
+	let Count_Redirected = 0
+	let Count_NotSaved = 0
 
-	var Date_Earliest = "?"
-	var Date_Latest = "?"
+	let Date_Earliest = "?"
+	let Date_Latest = "?"
 	
 	const String2Regex_IA_URLPartBeforeTimestamp = "https:\\/\\/web\\.archive\\.org\\/web\\/"
-	function CheckAllFilters() {
-		let FilterSettingsList = document.getElementsByClassName("FilterSettings")
-		for (let Index = 0; Index < FilterSettingsList.length; Index++) {
-			FilterSettingsList[Index].checked = 1
+	function ChangeFilterSettings(ElementClass, Setting) {
+		//ElementClass: the element class to be affected by this function
+		//Setting:
+		//0 = uncheck
+		//1 = check
+		//2+ = invert
+		if (Setting < 2) {
+			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
+				document.getElementsByClassName(ElementClass)[i].checked = Setting
+			}
+		} else {
+			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
+				document.getElementsByClassName(ElementClass)[i].checked = document.getElementsByClassName(ElementClass)[i].checked ^ 1
+			}
 		}
-		AutoUpdateCode()
 	}
-	function UncheckAllFilters() {
-		let FilterSettingsList = document.getElementsByClassName("FilterSettings")
-		for (let Index = 0; Index < FilterSettingsList.length; Index++) {
-			FilterSettingsList[Index].checked = 0
-		}
-		AutoUpdateCode()
-	}
-	function InvertFilters() {
-		let FilterSettingsList = document.getElementsByClassName("FilterSettings")
-		for (let Index = 0; Index < FilterSettingsList.length; Index++) {
-			FilterSettingsList[Index].checked = FilterSettingsList[Index].checked ^ 1
-		}
-		AutoUpdateCode()
+	function FilterByNonSaved() {
+		document.getElementById("FilterList_Saved").checked = false
+		document.getElementById("FilterList_SavedRedirected").checked = false
+		document.getElementById("FilterList_NotSaved").checked = true
 	}
 	function ValidateDateRange() {
 		let DateEarliestString = document.getElementById("DateRangeStart").value
@@ -156,10 +156,10 @@ Sort:<br>
 
 		if ((DateEarliestString != "")&&(DateLatestString != "")&&(DateLatestString < DateEarliestString)) {
 			document.getElementById("SubmitButton").disabled = true
-			document.getElementById("InvalidDateMessage").innerHTML = "<kbd style='color: #ff0000'>End date is before the start!</kbd>"
+			document.getElementById("InvalidDateMessage").hidden = false
 		} else {
 			document.getElementById("SubmitButton").disabled = false
-			document.getElementById("InvalidDateMessage").innerHTML = ""
+			document.getElementById("InvalidDateMessage").hidden = true
 		}
 	}
 	function AutoUpdateCode() {
@@ -344,38 +344,65 @@ Sort:<br>
 					
 					document.getElementById("Statistic_NumberOfItems_FilteredRemoved").textContent = BigInt(Count_TotalUrls-InputList.length).toString(10) + " (" + BetterPercentageUsingInts(Count_TotalUrls-InputList.length, Count_TotalUrls, 2, true) + ")"
 					document.getElementById("StatisticPercentage_NumberOfItems_FilteredRemoved").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_TotalUrls-InputList.length, Count_TotalUrls, "to right", "#0000ff", "#000000")
-			//List
-				Output = ""
-				for (var Index = 0; Index < InputList.length; Index++) {
-					Output += InputList[Index].SubmittedURL
-					if (Index != InputList.length - 1) {
-						Output += "\n"
+			//Display output
+				document.getElementById("Output_List").value = ""
+				let OutputTable = document.getElementById("Output_table")
+				while (OutputTable.lastElementChild) {
+					OutputTable.removeChild(OutputTable.lastElementChild);
+				}
+				
+				if (InputList.length != 0) {
+					let DocumentFrag = new DocumentFragment()
+					let ResultTable = document.createElement("table")
+					DocumentFrag.appendChild(ResultTable)
+					let TableHeaderRow = document.createElement("tr")
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("GS - Sent URLs"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("GS - YES/NO"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("WBM link"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Timestamp"))
+					
+					ResultTable.appendChild(TableHeaderRow)
+					
+					let TextAreaString = ""
+					for (let i=0; i<InputList.length; i++) {
+						let Item = InputList[i]
+						//Textarea for output string
+							TextAreaString += Item.SubmittedURL
+							if (i != InputList.length - 1) {
+								TextAreaString += "\n"
+							}
+						//Table
+							let RowItem = document.createElement("tr")
+						
+							let Cell_EnteredURLs = document.createElement("td")
+							Cell_EnteredURLs.style.fontFamily = "monospace"
+							Cell_EnteredURLs.style.backgroundColor = Item.StatusColor
+							Cell_EnteredURLs.appendChild(document.createTextNode(Item.SubmittedURL))
+							RowItem.appendChild(Cell_EnteredURLs)
+							
+							let Cell_YesNo = document.createElement("td")
+							Cell_YesNo.style.fontFamily = "monospace"
+							Cell_YesNo.style.backgroundColor = Item.StatusColor
+							Cell_YesNo.appendChild(document.createTextNode(Item.SpreadSheetData[1]))
+							RowItem.appendChild(Cell_YesNo)
+							
+							let Cell_WBMVersion = document.createElement("td")
+							Cell_WBMVersion.style.fontFamily = "monospace"
+							Cell_WBMVersion.style.backgroundColor = Item.StatusColor
+							Cell_WBMVersion.appendChild(document.createTextNode(Item.WBMPageVersion))
+							RowItem.appendChild(Cell_WBMVersion)
+							
+							let Cell_TimeStamp = document.createElement("td")
+							Cell_TimeStamp.style.fontFamily = "monospace"
+							Cell_TimeStamp.style.backgroundColor = Item.StatusColor
+							Cell_TimeStamp.appendChild(document.createTextNode(Item.Timestamp))
+							RowItem.appendChild(Cell_TimeStamp)
+							
+							ResultTable.appendChild(RowItem)
 					}
+					document.getElementById("Output_List").value = TextAreaString
+					OutputTable.appendChild(DocumentFrag)
 				}
-				document.getElementById("Output_List").hidden = false
-				document.getElementById("Output_List").value = Output
-			//Table
-				Output = ""
-				Output += "<table>"
-				Output += "<tr><th>Google sheets - Sent URLs</th><th>Google sheets - WBM YES/NO</th><th>WBM URL version</th><th>Date</th></tr>"
-				for (var Index = 0; Index < InputList.length; Index++) {
-					Output += "<tr>"
-					Output += "<td style='background-color: " + InputList[Index].StatusColor + "'><kbd>" + escapeHTMLChars(InputList[Index].SubmittedURL) + "</kbd></td>"
-					Output += "<td style='background-color: " + InputList[Index].StatusColor + "'><kbd>" + escapeHTMLChars(InputList[Index].SpreadSheetData[1]) + "</kbd></td>"
-					Output += "<td style='background-color: " + InputList[Index].StatusColor + "'><kbd>" + escapeHTMLChars(InputList[Index].SpreadSheetData[2]) + "</kbd></td>"
-					Output += "<td style='background-color: " + InputList[Index].StatusColor + "'><kbd><span class='NoLineBreak'>" + InputList[Index].Timestamp + "</span></kbd></td>"
-					Output += "</tr>"
-				}
-				Output += "</table>"
-				document.getElementById("Output_Table").innerHTML = Output
-	}
-	function escapeHTMLChars(string) {
-		//Should the user's input contains "<", ">", and "&", prevent the innerHTML from treating these as HTML tags/escapes
-			string = string.replaceAll("&", "&amp;") //This must be done first, to avoid replacing already-replaced symbol's ampersand character.
-			string = string.replaceAll("<", "&lt;")
-			string = string.replaceAll(">", "&gt;")
-			string = string.replaceAll("\n", "<br>") //Again just in case if WBGS would ever use linebreaks in a cell.
-			return string
 	}
 	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec, Clamped) {
 		//Quantity = Amount in relation of MaxQuantity
