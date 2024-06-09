@@ -547,7 +547,6 @@ Sort:
 		function MainFunction() {
 			OutputSet = new Set() //Reset/clear them to not include previous versions
 			OutputURLObjects = [] //
-			document.getElementById("URL_OutputTable").innerHTML = ""
 			if (InputChanged) {
 				let ListOfURLs = document.getElementById("Input_EnteredURLs").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"\']+/g) //Why ttps instead of https? Blame firefox's URL truncation of long URLs.
 				if (ListOfURLs == null) {
