@@ -24,31 +24,55 @@
 		const Setting_http_ttp = false
 			//^true = All URLs in the output start with "ttp" instead of "http" (to avoid URL truncation like what firefox does; replacing the middle of string with ellipsis).
 			// false = leave it as http
+		const Setting_AlternativeProcessActivityLog = true
+			//Display alternative process activity log. This is if you want to see the time in UTC conveniently.
+			//Note that this is not in sync since despite WBGS updates the display every 10 seconds, that timer starts the moment you start a process, while this script
+			//starts when the page first loads (any subsequent loads besides a refresh does not count).
 	//Don't touch unless you know what you're doing
 		setInterval(Code, IntervalDelay)
+		if (Setting_AlternativeProcessActivityLog) {
+			setInterval(AlternativeProcessActivityLogger, 10000)
+		}
 		setTimeout(Spawn_UI_Panel, 500)
 		
 		
 		let RaceConditionLock = false
 		let ClickAllAbortsCount = 0
 		let HavePrintedListOfProcess = false
+			//^This is a flag to make it only update the text only once (not periodically), until the user refreshes or navigates to another page.
 		
 		let JSONTextarea = {}
+		let TrackingTextarea = {}
 		
 		let CurrentWBGSURL = ""
 		
 		async function Spawn_UI_Panel() {
 			//Element of the main UI
 				let DivBox = document.createElement("div")
-				DivBox.setAttribute("style", "position: fixed;bottom: 40px;right: 40px;z-index: 999; background-color: rgba(64, 64, 64, .5); color: #ffffff; border-radius: 30px; padding: 15px;")
+				DivBox.style.position = "fixed"
+				DivBox.style.bottom = "40px"
+				DivBox.style.right = "40px"
+				DivBox.style.zIndex = "999"
+				DivBox.style.backgroundColor = "rgba(64, 64, 64, .5)"
+				DivBox.style.color = "#ffffff"
+				DivBox.style.borderRadius = "30px"
+				DivBox.style.padding = "15px"
 			//Title
 				let Title = document.createElement("h2")
-				Title.setAttribute("style", "text-align: center;")
+				//Title.setAttribute("style", "text-align: center;")
+				Title.style.textAlign = "center"
 				Title.appendChild(document.createTextNode("WBGS process info"))
 				DivBox.appendChild(Title)
 			//JSON textarea
 				JSONTextarea = document.createElement("textarea")
-				JSONTextarea.setAttribute("style", "white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff; font-family: monospace; resize: both;")
+				JSONTextarea.style.whiteSpace = "pre"
+				JSONTextarea.style.overflowWrap = "normal"
+				JSONTextarea.style.overflowX = "scroll"
+				JSONTextarea.style.backgroundColor = "#000000"
+				JSONTextarea.style.color = "#ffffff"
+				JSONTextarea.style.fontFamily = "monospace"
+				JSONTextarea.style.resize = "both"
+				
 				JSONTextarea.setAttribute("cols", "50")
 				JSONTextarea.setAttribute("rows", "10")
 				JSONTextarea.setAttribute("readonly", "")
@@ -76,9 +100,51 @@
 						HavePrintedListOfProcess = false
 						Code()
 					}
-				
 				)
 				DivBox.appendChild(RefreshTextareaButton)
+			//line seperator
+				DivBox.appendChild(document.createElement("hr"))
+			//Tracking textarea
+				if (Setting_AlternativeProcessActivityLog) {
+					DivBox.appendChild(document.createElement("br"))
+					
+					TrackingTextarea = document.createElement("textarea")
+					TrackingTextarea.style.whiteSpace = "pre"
+					TrackingTextarea.style.overflowWrap = "normal"
+					TrackingTextarea.style.overflowX = "scroll"
+					TrackingTextarea.style.backgroundColor = "#000000"
+					TrackingTextarea.style.color = "#ffffff"
+					TrackingTextarea.style.fontFamily = "monospace"
+					TrackingTextarea.style.resize = "both"
+					
+					TrackingTextarea.setAttribute("cols", "50")
+					TrackingTextarea.setAttribute("rows", "10")
+					TrackingTextarea.setAttribute("readonly", "")
+					
+					DivBox.appendChild(TrackingTextarea)
+					//Copy log button
+						DivBox.appendChild(document.createElement("br"))
+						let CopyAlternativeProcessActivityLogButton = document.createElement("button")
+						CopyAlternativeProcessActivityLogButton.appendChild(document.createTextNode("Copy log"))
+						CopyAlternativeProcessActivityLogButton.addEventListener(
+						"click",
+							function () {
+								GM.setClipboard(TrackingTextarea.textContent)
+							}
+						)
+						DivBox.appendChild(CopyAlternativeProcessActivityLogButton)
+					//Clear button
+						let ClearAlternativeProcessActivityLogButton = document.createElement("button")
+						ClearAlternativeProcessActivityLogButton.appendChild(document.createTextNode("Clear log"))
+						ClearAlternativeProcessActivityLogButton.addEventListener(
+						"click",
+							function () {
+								TrackingTextarea.textContent = ""
+							}
+						)
+						DivBox.appendChild(ClearAlternativeProcessActivityLogButton)
+				}
+				
 			//Add to document
 				let HTMLBody = Array.from(document.getElementsByTagName("BODY")).find((Element) => {return true})
 				let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0])
@@ -202,6 +268,35 @@
 				RaceConditionLock = false
 			}
 		}
+		function AlternativeProcessActivityLogger() {
+			let WBGSProgressLog = document.querySelector("textarea.progress-log")
+			if (WBGSProgressLog != null) {
+				let RecentLine = WBGSProgressLog.value.match(/^(.*)$/m)
+				if (RecentLine != null) {
+					RecentLine = RecentLine[0]
+				}
+				if (RecentLine != "") {
+					RecentLine = RecentLine.replace(/ \d{1,2}:\d{2}:\d{2} (?:A|P)M$/, "")
+				}
+				let a = 0
+				if (RecentLine = "Job queued and waiting for free worker to begin.") {
+					RecentLine = "Queued"
+				} else if (/^Processed [\d,]+ of [\d,]+/.test(RecentLine)) {
+					let URLsTraversed = parseInt(/(?<=Processed )\d+/.match(RecentLine)[0].replaceAll(",", ""))
+					let URLsTotalNum = parseInt(/(?<=of )\d+/.match(RecentLine)[0].replaceAll(",", ""))
+					let URLsRemaining = URLsTotalNum - URLsTraversed
+					
+					RecentLine = URLsTraversed.toString(10) + "/" + URLsTotalNum.toString(10) + " (" + (URLsTraversed*100/URLsTotalNum).toFixed(2) + "%, " + URLsRemaining.toString(10) + " left)"
+						//^Better to calculate a percentage: Progress = Amount*100/Max instead of Progress = Amount/Max*100 so that rounding only happens at the final step.
+				}
+				let CurrentUTC = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
+				
+				let OutputLine = CurrentUTC + ": " + RecentLine + "\n"
+				
+				TrackingTextarea.textContent = OutputLine + TrackingTextarea.textContent
+			}
+		}
+		
 		function ISOString_to_YYYY_MM_DD_HH_MM_SS(ISOString) {
 			//YYYY-MM-DDTHH:mm:ss.sssZ or ±YYYYYY-MM-DDTHH:mm:ss.sssZ
 			return ISOString.replace("T", " ").replace(/\.\d{3}Z$/, "") + " UTC"
