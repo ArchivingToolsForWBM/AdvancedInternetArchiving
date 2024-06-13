@@ -43,6 +43,7 @@
 		
 		let JSONTextarea = {}
 		let TrackingTextarea = {}
+		let ProcessTrackingLog = []
 		
 		let CurrentWBGSURL = ""
 		
@@ -140,6 +141,7 @@
 						"click",
 							function () {
 								TrackingTextarea.textContent = ""
+								ProcessTrackingLog = []
 							}
 						)
 						DivBox.appendChild(ClearAlternativeProcessActivityLogButton)
@@ -271,6 +273,7 @@
 		function AlternativeProcessActivityLogger() {
 			let WBGSProgressLog = document.querySelector("textarea.progress-log")
 			if (WBGSProgressLog != null) {
+				let CurrentUTC = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
 				let RecentLine = WBGSProgressLog.value.match(/^(.*)$/m)
 				if (RecentLine != null) {
 					RecentLine = RecentLine[0]
@@ -278,22 +281,31 @@
 				if (RecentLine != "") {
 					RecentLine = RecentLine.replace(/ \d{1,2}:\d{2}:\d{2} (?:A|P)M$/, "")
 				}
-				let a = 0
-				if (RecentLine = "Job queued and waiting for free worker to begin.") {
-					RecentLine = "Queued"
-				} else if (/^Processed [\d,]+ of [\d,]+/.test(RecentLine)) {
-					let URLsTraversed = parseInt(/(?<=Processed )\d+/.match(RecentLine)[0].replaceAll(",", ""))
-					let URLsTotalNum = parseInt(/(?<=of )\d+/.match(RecentLine)[0].replaceAll(",", ""))
-					let URLsRemaining = URLsTotalNum - URLsTraversed
-					
-					RecentLine = URLsTraversed.toString(10) + "/" + URLsTotalNum.toString(10) + " (" + (URLsTraversed*100/URLsTotalNum).toFixed(2) + "%, " + URLsRemaining.toString(10) + " left)"
-						//^Better to calculate a percentage: Progress = Amount*100/Max instead of Progress = Amount/Max*100 so that rounding only happens at the final step.
-				}
-				let CurrentUTC = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
-				
-				let OutputLine = CurrentUTC + ": " + RecentLine + "\n"
-				
-				TrackingTextarea.textContent = OutputLine + TrackingTextarea.textContent
+				// RecentLine should now contain only the status and not the local time.
+					if (RecentLine != "") {
+						let LastLogged = ProcessTrackingLog.at(-1)
+						if (typeof LastLogged != "undefined") { //If there is a last item in the array (not when the array is empty)
+							if (LastLogged.Text == RecentLine) { //If the text is the same as the one before, merge with the last object
+								LastLogged.End = CurrentUTC
+							} else {
+								let ProcessLogObject = {
+									Start: CurrentUTC,
+									End: CurrentUTC,
+									Text: RecentLine
+								}
+								ProcessTrackingLog.push(ProcessLogObject)
+							}
+						} else { //If array is empty, this is the first item
+							let ProcessLogObject = {
+								Start: CurrentUTC,
+								End: CurrentUTC,
+								Text: RecentLine
+							}
+							ProcessTrackingLog.push(ProcessLogObject)
+						}
+						TrackingTextarea.textContent = JSON.stringify(ProcessTrackingLog, "", " ")
+					}
+
 			}
 		}
 		
@@ -307,7 +319,10 @@
 			}
 			return URLString
 		}
-		
+		function CreateProcessLog() {
+			
+			
+		}
 		
 	//Reused functions
 		function DescendNode(Node, LevelsArray) {
