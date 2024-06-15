@@ -167,6 +167,7 @@
 					HavePrintedListOfProcess = false //if the user moves to a different URL, we need to update the textarea
 				}
 				CurrentWBGSURL = window.location.href
+				let CurrentTimeMS = Date.now()
 				
 				//Check the "save results in a new sheets" option
 					if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=archive") {
@@ -210,7 +211,7 @@
 								TrackingURL: HttpToTtp(ProcessTrackingURLString), //URLs in the console log gets truncated and the text may not be preserved depending on browser.
 								GoogleSheetURL: HttpToTtp(ProcessTrackingURLString.replace(/^.+?\&google_sheet_url=/g, "").replaceAll("%3A", ":").replaceAll("%2F", "/").replaceAll("%23", "#").replaceAll("%3D", "=")),
 								JobID: ProcessTrackingURLString.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
-								TimestampOfInitalProcess: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString()),
+								TimestampOfInitalProcess: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(CurrentTimeMS).toISOString()),
 								ProcessType: ProcessType
 							}
 							
@@ -221,7 +222,7 @@
 				//Extract info from the WBGS home page
 					if (/https:\/\/archive\.org\/services\/wayback-gsheets\/options.*/.test(CurrentWBGSURL)) {
 						let JsonExtractedInfo = {
-							CurrentDateTime: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString()),
+							CurrentDateTime: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(CurrentTimeMS).toISOString()),
 							ListOfProcesses: [],
 							SystemQueueMessage: ""
 						}
@@ -237,11 +238,12 @@
 								//Convert into json info containing process info
 									let OBJ_WBGS_ListOfProcesses = ListOfProcessesItems.map((WBGSProcess) => {
 										let TrackingURL = WBGSProcess.childNodes[5].childNodes[0].href
+										let HowLongAgo = DisplayTimeDuration(CurrentTimeMS - new Date(WBGSProcess.childNodes[1].textContent + " UTC").valueOf()) + " ago"
 										return {
 											TrackingURL: HttpToTtp(TrackingURL),
 											JobID: TrackingURL.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
 											GSheetURL: HttpToTtp(WBGSProcess.childNodes[0].textContent),
-											StartedTime: WBGSProcess.childNodes[1].textContent,
+											StartedTime: WBGSProcess.childNodes[1].textContent + " (" + HowLongAgo + ")",
 											Status: WBGSProcess.childNodes[4].textContent
 										}
 									})
@@ -276,9 +278,10 @@
 			}
 		}
 		function AlternativeProcessActivityLogger() {
+			let CurrentTimeMS = Date.now()
 			let WBGSProgressLog = document.querySelector("textarea.progress-log")
 			if (WBGSProgressLog != null) {
-				let CurrentUTC = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
+				let CurrentUTC = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(CurrentTimeMS).toISOString())
 				let RecentLine = WBGSProgressLog.value.match(/^(.*)$/m)
 				if (RecentLine != null) {
 					RecentLine = RecentLine[0]
@@ -295,33 +298,7 @@
 								let DurationMS = new Date(LastLogged.End).getTime() - new Date(LastLogged.Start).getTime()
 								let DurationString = "Just started"
 								if (DurationMS >= 10000) {
-									DurationString = ""
-									let UnitsOfTimeArray = []
-									let Seconds = Math.floor(DurationMS/1000)
-									UnitsOfTimeArray.unshift({Unit: Seconds % 60, UnitName: "s"})
-									
-									let Minute = Math.floor(Seconds/60)
-									UnitsOfTimeArray.unshift({Unit: Minute % 60, UnitName: "m"})
-									
-									let Hour = Math.floor(Minute/60)
-									UnitsOfTimeArray.unshift({Unit: Hour % 24, UnitName: "h"})
-									
-									let Day = Math.floor(Hour/24)
-									UnitsOfTimeArray.unshift({Unit: Day, UnitName: "d"})
-									
-									let LeadingUnitIsNonZero = false
-									for (let i = 0; i < UnitsOfTimeArray.length; i++) {
-										if (UnitsOfTimeArray[i].Unit != 0) {
-											LeadingUnitIsNonZero = true //Once it's true, stays true. All remaining units are significant
-										}
-										if (LeadingUnitIsNonZero) {
-											DurationString += UnitsOfTimeArray[i].Unit + UnitsOfTimeArray[i].UnitName
-											if (i != UnitsOfTimeArray.length-1) {
-												DurationString += " "
-											}
-										}
-									}
-
+									DurationString = DisplayTimeDuration(DurationMS)
 								}
 								LastLogged.Duration = DurationString
 							} else { //Otherwise create a seperate object
@@ -421,5 +398,37 @@
 				}
 				
 			}
+		}
+		function DisplayTimeDuration(Duration) {
+			let OutputString = ""
+			
+			Duration = Math.abs(Duration)
+			
+			let UnitsOfTimeArray = []
+			let Seconds = Math.floor(Duration/1000)
+			UnitsOfTimeArray.unshift({Unit: Seconds % 60, UnitName: "s"})
+			
+			let Minute = Math.floor(Seconds/60)
+			UnitsOfTimeArray.unshift({Unit: Minute % 60, UnitName: "m"})
+			
+			let Hour = Math.floor(Minute/60)
+			UnitsOfTimeArray.unshift({Unit: Hour % 24, UnitName: "h"})
+			
+			let Day = Math.floor(Hour/24)
+			UnitsOfTimeArray.unshift({Unit: Day, UnitName: "d"})
+			
+			let LeadingUnitIsNonZero = false
+			for (let i = 0; i < UnitsOfTimeArray.length; i++) {
+				if (UnitsOfTimeArray[i].Unit != 0) {
+					LeadingUnitIsNonZero = true //Once it's true, stays true. All remaining units are significant
+				}
+				if (LeadingUnitIsNonZero) {
+					OutputString += UnitsOfTimeArray[i].Unit + UnitsOfTimeArray[i].UnitName
+					if (i != UnitsOfTimeArray.length-1) {
+						OutputString += " "
+					}
+				}
+			}
+			return OutputString
 		}
 })();
