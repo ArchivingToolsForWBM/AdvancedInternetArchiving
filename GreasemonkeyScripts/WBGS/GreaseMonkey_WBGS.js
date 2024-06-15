@@ -31,7 +31,12 @@
 	//Don't touch unless you know what you're doing
 		setInterval(Code, IntervalDelay)
 		if (Setting_AlternativeProcessActivityLog) {
-			setInterval(AlternativeProcessActivityLogger, 10000)
+			setTimeout(AlternativeProcessActivityLoggerStart, 1000)
+			
+			function AlternativeProcessActivityLoggerStart() {
+				setInterval(AlternativeProcessActivityLogger, 10000)
+			}
+			
 		}
 		setTimeout(Spawn_UI_Panel, 500)
 		
@@ -287,10 +292,36 @@
 						if (typeof LastLogged != "undefined") { //If there is a last item in the array (not when the array is empty)
 							if (LastLogged.Text == RecentLine) { //If the text is the same as the one before, merge with the last object
 								LastLogged.End = CurrentUTC
-							} else {
+								let DurationMS = new Date(LastLogged.End).getTime() - new Date(LastLogged.Start).getTime()
+								let DurationString = "Just started"
+								if ((DurationMS >= 10000) && (DurationMS < 60000)) { //At least 10 seconds and less than a minute
+									let SecondCount = DurationMS/1000
+									if (Math.floor(SecondCount) != 1) {
+										DurationString = SecondCount.toFixed(0) + " seconds"
+									} else {
+										DurationString = "A second"
+									}
+								} else if (DurationMS < 3.6e+6) { //At least a minute long and less than an hour
+									let MinuteCount = DurationMS/60000
+									if (Math.floor(MinuteCount) != 1) {
+										DurationString = MinuteCount.toFixed(0) + " minutes"
+									} else {
+										DurationString = "A minute"
+									}
+								} else {
+									let HourCount = DurationMS/3.6e+6
+									if (Math.floor(HourCount) != 1) {
+										DurationString = HourCount.toFixed(1) + " hours"
+									} else {
+										DurationString = "An hour"
+									}
+								}
+								LastLogged.DurationApprox = DurationString
+							} else { //Otherwise create a seperate object
 								let ProcessLogObject = {
 									Start: CurrentUTC,
 									End: CurrentUTC,
+									DurationApprox: "Just started",
 									Text: RecentLine
 								}
 								ProcessTrackingLog.push(ProcessLogObject)
@@ -299,6 +330,7 @@
 							let ProcessLogObject = {
 								Start: CurrentUTC,
 								End: CurrentUTC,
+								DurationApprox: "Just started",
 								Text: RecentLine
 							}
 							ProcessTrackingLog.push(ProcessLogObject)
