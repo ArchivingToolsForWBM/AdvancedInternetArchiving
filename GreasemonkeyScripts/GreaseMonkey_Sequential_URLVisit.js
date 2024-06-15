@@ -96,7 +96,14 @@ onload = (async () => {
 			
 			HTMLElement_DivBox2 = document.createElement("div")
 			HTMLElement_DivBox2.hidden = !StorageSaved_URLs.ToggleUISetting
-			HTMLElement_DivBox2.setAttribute("style", "position: fixed;top: 20px;right: 20px; z-index: 9999999999; background-color: rgba(64, 64, 64, .90); color: #ffffff; border-radius: 30px; padding: 15px;")
+			HTMLElement_DivBox2.style.position = "fixed"
+			HTMLElement_DivBox2.style.top = "20px"
+			HTMLElement_DivBox2.style.right = "20px"
+			HTMLElement_DivBox2.style.zIndex = "9999999999"
+			HTMLElement_DivBox2.style.backgroundColor = "rgba(64, 64, 64, .90)"
+			HTMLElement_DivBox2.style.color = "#ffffff"
+			HTMLElement_DivBox2.style.borderRadius = "30px"
+			HTMLElement_DivBox2.style.padding = "15px"
 		//Title
 			let Title = document.createElement("h2")
 			Title.appendChild(document.createTextNode("URL sequence visit"))
@@ -111,7 +118,16 @@ onload = (async () => {
 		//Textarea to enter URLs
 			HTMLElement_TextareaURLs = document.createElement("textarea")
 			HTMLElement_TextareaURLs.value = StorageSaved_URLs.TextareaURLs
-			HTMLElement_TextareaURLs.setAttribute("style", "white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #ffffff; color : #000000; font-family: monospace; resize: both; min-width: 300px")
+			HTMLElement_TextareaURLs.style.whiteSpace = "pre"
+			HTMLElement_TextareaURLs.style.overflowWrap = "normal"
+			HTMLElement_TextareaURLs.style.overflowX = "scroll"
+			HTMLElement_TextareaURLs.style.backgroundColor = "#ffffff"
+			HTMLElement_TextareaURLs.style.color = "#000000"
+			HTMLElement_TextareaURLs.style.fontFamily = "monospace"
+			HTMLElement_TextareaURLs.style.resize = "both"
+			HTMLElement_TextareaURLs.style.minWidth = "300px"
+			
+			
 			HTMLElement_TextareaURLs.addEventListener(
 				"change",
 				function () {
@@ -146,13 +162,22 @@ onload = (async () => {
 			HTMLElement_DivBox2.appendChild(document.createElement("br"))
 			
 			HTMLElement_ClippedDivBox = document.createElement("div")
-			HTMLElement_ClippedDivBox.setAttribute("style", "overflow: scroll; border: solid 1px; resize: both; background-color : #000000; color : #ffffff;  height: 200px; font-family: monospace; max-width: 300px")
+			HTMLElement_ClippedDivBox.style.overflow = "scroll"
+			HTMLElement_ClippedDivBox.style.border = "solid 1px"
+			HTMLElement_ClippedDivBox.style.resize = "both"
+			HTMLElement_ClippedDivBox.style.backgroundColor = "#000000"
+			HTMLElement_ClippedDivBox.style.color = "#ffffff"
+			HTMLElement_ClippedDivBox.style.height = "200px"
+			HTMLElement_ClippedDivBox.style.fontFamily = "monospace"
+			HTMLElement_ClippedDivBox.style.maxWidth = "300px"
+			
+			
 			DisplayUniqueURLsList(StorageSaved_URLs.ListOfURLs)
 			
 			HTMLElement_DivBox2.appendChild(HTMLElement_ClippedDivBox)
 		//Number of URLs found
 			let DivOfURLCount = document.createElement("div")
-			DivOfURLCount.setAttribute("style", "font-family: monospace;")
+			DivOfURLCount.style.fontFamily = "monospace"
 			
 			HTMLElement_URLCounter = document.createElement("span")
 			HTMLElement_URLCounter.appendChild(document.createTextNode("Number of unique URLs: " + StorageSaved_URLs.ListOfURLs.length))
@@ -170,7 +195,7 @@ onload = (async () => {
 			HTMLElement_ProgressNumber.setAttribute("min", "1")
 			HTMLElement_ProgressNumber.setAttribute("max", StorageSaved_URLs.ListOfURLs.length.toString(10))
 			HTMLElement_ProgressNumber.value = (StorageSaved_URLs.ProgressCount+2).toString(10)
-			HTMLElement_ProgressNumber.setAttribute("style", "font-family: monospace;")
+			HTMLElement_ProgressNumber.style.fontFamily = "monospace"
 			
 			HTMLElement_ProgressNumber.addEventListener(
 				"change",
@@ -206,7 +231,7 @@ onload = (async () => {
 			HTMLElement_DelayBeforeNextPage.setAttribute("max", "10000")
 			HTMLElement_DelayBeforeNextPage.setAttribute("step", "500")
 			HTMLElement_DelayBeforeNextPage.setAttribute("value", StorageSaved_URLs.TimeoutDelay.toString(10))
-			HTMLElement_DelayBeforeNextPage.setAttribute("style", "width: 130px")
+			HTMLElement_DelayBeforeNextPage.style.width = "130px"
 			HTMLElement_DelayBeforeNextPage.addEventListener(
 				"input",
 				function () {
@@ -217,15 +242,14 @@ onload = (async () => {
 			)
 			HTMLElement_DelaySettingDisplay = document.createElement("span")
 			HTMLElement_DelaySettingDisplay.appendChild(document.createTextNode((parseInt(HTMLElement_DelayBeforeNextPage.value)/1000).toFixed(1) + " sec"))
-			HTMLElement_DelaySettingDisplay.setAttribute("style", "font-family: monospace;")
-			
+			HTMLElement_DelaySettingDisplay.style.fontFamily = "monospace"
 			
 			HTMLElement_DivBox2.appendChild(HTMLElement_DelayBeforeNextPage)
 			HTMLElement_DivBox2.appendChild(HTMLElement_DelaySettingDisplay)
 			HTMLElement_DivBox2.appendChild(document.createElement("br"))
 		//start and stop button
 			HTMLElement_StartStopButton = document.createElement("Button")
-			HTMLElement_StartStopButton.setAttribute("style", "width: 50px;")
+			HTMLElement_StartStopButton.style.width = "50px"
 			HTMLElement_StartStopButton.appendChild(document.createTextNode(AlternateStartStop()))
 			HTMLElement_StartStopButton.addEventListener(
 				"click",
@@ -250,7 +274,8 @@ onload = (async () => {
 			HTMLElement_DivBox2.appendChild(document.createElement("br"))
 		//Progress display
 			HTMLElement_ProgressDisplayText = document.createElement("span")
-			HTMLElement_ProgressDisplayText.setAttribute("style", "font-family: monospace")
+			//HTMLElement_ProgressDisplayText.setAttribute("style", "font-family: monospace")
+			HTMLElement_ProgressDisplayText.style.fontFamily = "monospace"
 			
 			HTMLElement_ProgressDisplayBar = document.createElement("div")
 			UpdateProgressDisplay(StorageSaved_URLs.ProgressCount)
@@ -418,12 +443,26 @@ onload = (async () => {
 			}
 			HTMLElement_ProgressNumber.disabled = false
 			HTMLElement_TextareaURLs.disabled = false
-			HTMLElement_TextareaURLs.setAttribute("style", "white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #ffffff; color : #000000; font-family: monospace; resize: both;")
+			HTMLElement_TextareaURLs.style.whiteSpace = "pre"
+			HTMLElement_TextareaURLs.style.overflowWrap = "normal"
+			HTMLElement_TextareaURLs.style.overflowX = "scroll"
+			HTMLElement_TextareaURLs.style.backgroundColor = "#ffffff"
+			HTMLElement_TextareaURLs.style.color = "#000000"
+			HTMLElement_TextareaURLs.style.fontFamily = "monospace"
+			HTMLElement_TextareaURLs.style.resize = "both"
+			
 			HTMLElement_ProgressNumber.disabled = false
 			HTMLElement_DelayBeforeNextPage.disabled = false
 			if (StorageSaved_URLs.Running) {
 				HTMLElement_TextareaURLs.disabled = true
-				HTMLElement_TextareaURLs.setAttribute("style", "white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #ffffff; color : #C0C0C0; font-family: monospace; resize: both;")
+				HTMLElement_TextareaURLs.style.whiteSpace = "pre"
+				HTMLElement_TextareaURLs.style.overflowWrap = "normal"
+				HTMLElement_TextareaURLs.style.overflowX = "scroll"
+				HTMLElement_TextareaURLs.style.backgroundColor = "#ffffff"
+				HTMLElement_TextareaURLs.style.color = "#C0C0C0"
+				HTMLElement_TextareaURLs.style.fontFamily = "monospace"
+				HTMLElement_TextareaURLs.style.resize = "both"
+				
 				HTMLElement_ProgressNumber.disabled = true
 				HTMLElement_DelayBeforeNextPage.disabled = true
 			}
@@ -434,11 +473,20 @@ onload = (async () => {
 		}
 	}
 	function UpdateProgressDisplay(ProgressonNumber) {
-		let ProgressPercentage = clamp(((ProgressonNumber+1) * 100 / StorageSaved_URLs.ListOfURLs.length), 0, 100)
+		let ProgressPercentage = ((ProgressonNumber+1) * 100 / StorageSaved_URLs.ListOfURLs.length)
 		
 		let ProgressText = "Progress: " + (ProgressonNumber+1).toString(10) + "/" + StorageSaved_URLs.ListOfURLs.length.toString(10) + ", " + ProgressPercentage.toFixed(2) + "%, Remaining: " + (StorageSaved_URLs.ListOfURLs.length - (ProgressonNumber+1)).toString(10)
 		HTMLElement_ProgressDisplayText.textContent = ProgressText
 		
-		HTMLElement_ProgressDisplayBar.setAttribute("style", "background: linear-gradient(to right, #ffffff 0% " + ProgressPercentage.toString(10) + "%, #000000 " + ProgressPercentage.toString(10) + "% 100%); width: 300px; height: 10px; border-radius: 5px")
+		HTMLElement_ProgressDisplayBar.style.width = "300px"
+		HTMLElement_ProgressDisplayBar.style.height = "10px"
+		HTMLElement_ProgressDisplayBar.style.borderRadius = "5px"
+		
+		HTMLElement_ProgressDisplayBar.style.background = LinearGradientProgressBar(ProgressPercentage, "to right", "#000000", "#0000ff")
+	}
+	
+	function LinearGradientProgressBar(Percentage, Direction, ColorEmpty, ColorFill) {
+		Percentage = clamp(Percentage, 0, 100)
+		return "linear-gradient(to right, " + ColorFill + " " + Percentage.toString(10) + "% " + Percentage.toString(10) + "%, " + ColorEmpty + " " + Percentage.toString(10) + "% 100%)"
 	}
 })();
