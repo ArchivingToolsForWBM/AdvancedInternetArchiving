@@ -203,12 +203,12 @@
 			ScrapeFrequency_InputRange.setAttribute("min", "500")
 			ScrapeFrequency_InputRange.setAttribute("max", "10000")
 			ScrapeFrequency_InputRange.setAttribute("step", "500")
-			ScrapeFrequency_InputRange.setAttribute("value", Saved_Setting_ScanFrequency.toString(10))
+			ScrapeFrequency_InputRange.setAttribute("value", Saved_Setting_ScanFrequency)
 			ScrapeFrequency_InputRange.addEventListener(
 			"input",
 			async function () {
 				document.getElementById(Setting_BskyReservedElementID_ScanFrequencyNumberDisplay).innerText = (parseInt(this.value)/1000).toFixed(1)
-				await GM.setValue("BskyScrape_ScanFrequency", this.value.toString(10))
+				await GM.setValue("BskyScrape_ScanFrequency", this.value)
 			})
 			TableCell_0_1.appendChild(ScrapeFrequency_InputRange)
 			TableCell_0_1.appendChild(document.createElement("br"))
@@ -232,7 +232,7 @@
 			let TableCell_1_1 = document.createElement("td")
 			let PostCountNumberSpan = document.createElement("span")
 			PostCountNumberSpan.setAttribute("id", Setting_BskyReservedElementID_PostSavedCount)
-			PostCountNumberSpan.appendChild(document.createTextNode(Saved_Extracted_Posts.length.toString(10)))
+			PostCountNumberSpan.appendChild(document.createTextNode(Saved_Extracted_Posts.length.toFixed(0)))
 			TableCell_1_1.appendChild(PostCountNumberSpan)
 			TableRow1.appendChild(TableCell_1_1)
 			
@@ -248,7 +248,7 @@
 			let TableCell_2_1 = document.createElement("td")
 			let ProfileCountNumberSpan = document.createElement("span")
 			ProfileCountNumberSpan.setAttribute("id", Setting_BskyReservedElementID_ProfileSavedCount)
-			ProfileCountNumberSpan.appendChild(document.createTextNode(Saved_Extracted_Profiles.length.toString(10)))
+			ProfileCountNumberSpan.appendChild(document.createTextNode(Saved_Extracted_Profiles.length.toFixed(0)))
 			TableCell_2_1.appendChild(ProfileCountNumberSpan)
 			TableRow2.appendChild(TableCell_2_1)
 			
@@ -1005,11 +1005,11 @@
 						})
 						await GM.setValue("BSkyScrape_PostList", JSON.stringify(SavedBskyPostList)).then(() => {
 							CopiedListOfPosts = JSON.stringify(SavedBskyPostList, null, " ")
-							//console.log("Bsky-scrape: extracted post count: " + SavedBskyPostList.length.toString(10))
+							//console.log("Bsky-scrape: extracted post count: " + SavedBskyPostList.length.toFixed(0))
 							
 							let ElementOfUI_PostCount = document.getElementById(Setting_BskyReservedElementID_PostSavedCount)
 							if (ElementOfUI_PostCount != null) {
-								ElementOfUI_PostCount.innerText = SavedBskyPostList.length.toString(10)
+								ElementOfUI_PostCount.innerText = SavedBskyPostList.length.toFixed(0)
 							}
 						},
 						() => {
@@ -1046,10 +1046,10 @@
 						}
 						await GM.setValue("BSkyScrape_ProfileList", JSON.stringify(SavedBskyProfileList)).then(() => {
 							CopiedListOfProfiles = JSON.stringify(SavedBskyProfileList, null, " ")
-							//console.log("Bsky-scrape: extracted profile count: " + SavedBskyProfileList.length.toString(10))
+							//console.log("Bsky-scrape: extracted profile count: " + SavedBskyProfileList.length.toFixed(0))
 							let ElementOfUI_ProfileCount = document.getElementById(Setting_BskyReservedElementID_ProfileSavedCount)
 							if (ElementOfUI_ProfileCount != null) {
-								ElementOfUI_ProfileCount.innerText = SavedBskyProfileList.length.toString(10)
+								ElementOfUI_ProfileCount.innerText = SavedBskyProfileList.length.toFixed(0)
 							}
 						},
 						() => {
