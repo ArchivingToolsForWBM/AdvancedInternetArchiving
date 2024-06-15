@@ -294,34 +294,41 @@
 								LastLogged.End = CurrentUTC
 								let DurationMS = new Date(LastLogged.End).getTime() - new Date(LastLogged.Start).getTime()
 								let DurationString = "Just started"
-								if ((DurationMS >= 10000) && (DurationMS < 60000)) { //At least 10 seconds and less than a minute
-									let SecondCount = DurationMS/1000
-									if (Math.floor(SecondCount) != 1) {
-										DurationString = SecondCount.toFixed(0) + " seconds"
-									} else {
-										DurationString = "A second"
+								if (DurationMS >= 10000) {
+									DurationString = ""
+									let UnitsOfTimeArray = []
+									let Seconds = Math.floor(DurationMS/1000)
+									UnitsOfTimeArray.unshift({Unit: Seconds % 60, UnitName: "s"})
+									
+									let Minute = Math.floor(Seconds/60)
+									UnitsOfTimeArray.unshift({Unit: Minute % 60, UnitName: "m"})
+									
+									let Hour = Math.floor(Minute/60)
+									UnitsOfTimeArray.unshift({Unit: Hour % 24, UnitName: "h"})
+									
+									let Day = Math.floor(Hour/24)
+									UnitsOfTimeArray.unshift({Unit: Day, UnitName: "d"})
+									
+									let LeadingUnitIsNonZero = false
+									for (let i = 0; i < UnitsOfTimeArray.length; i++) {
+										if (UnitsOfTimeArray[i].Unit != 0) {
+											LeadingUnitIsNonZero = true //Once it's true, stays true. All remaining units are significant
+										}
+										if (LeadingUnitIsNonZero) {
+											DurationString += UnitsOfTimeArray[i].Unit + UnitsOfTimeArray[i].UnitName
+											if (i != UnitsOfTimeArray.length-1) {
+												DurationString += " "
+											}
+										}
 									}
-								} else if (DurationMS < 3.6e+6) { //At least a minute long and less than an hour
-									let MinuteCount = DurationMS/60000
-									if (Math.floor(MinuteCount) != 1) {
-										DurationString = MinuteCount.toFixed(0) + " minutes"
-									} else {
-										DurationString = "A minute"
-									}
-								} else {
-									let HourCount = DurationMS/3.6e+6
-									if (Math.floor(HourCount) != 1) {
-										DurationString = HourCount.toFixed(1) + " hours"
-									} else {
-										DurationString = "An hour"
-									}
+
 								}
-								LastLogged.DurationApprox = DurationString
+								LastLogged.Duration = DurationString
 							} else { //Otherwise create a seperate object
 								let ProcessLogObject = {
 									Start: CurrentUTC,
 									End: CurrentUTC,
-									DurationApprox: "Just started",
+									Duration: "Just started",
 									Text: RecentLine
 								}
 								ProcessTrackingLog.push(ProcessLogObject)
@@ -330,7 +337,7 @@
 							let ProcessLogObject = {
 								Start: CurrentUTC,
 								End: CurrentUTC,
-								DurationApprox: "Just started",
+								Duration: "Just started",
 								Text: RecentLine
 							}
 							ProcessTrackingLog.push(ProcessLogObject)
