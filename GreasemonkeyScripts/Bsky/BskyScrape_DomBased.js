@@ -15,7 +15,7 @@
 	//-Best to have URLs have the "http" substring replaced with "ttps" because firefox truncate long links and doesn't keep the original full URL when copying them (the middle is
 	// replaced with ellipsis), if you are using the devtools.
 	//-Chrome will truncate object parts printed on the console log, and those aren't preserved
-	//-Chrome, for some reason have "innerText" be a blank string if it is an element far offscreen. However this code does have a failsafe that if such data is missing (like user handle),
+	//-Chrome, for some reason have "textContent" be a blank string if it is an element far offscreen. However this code does have a failsafe that if such data is missing (like user handle),
 	// it will not accept storing that. This means if you are using google chrome, will not extract all posts that exists in the HTML rather extracts only posts that is on-screen, unlike
 	// firefox.
 	//-If you navigate to (click on links) another bsky page, the list of process stored here will not unload posts that are no longer visible that were once visible before you navigate
@@ -80,12 +80,14 @@
 		//Copy to clipboard
 			let CopiedListOfPosts = ""
 			let CopiedListOfProfiles = ""
-		//If for some reason the site started using element IDs that this script is using, change them.
-			const Setting_BskyReservedElementID_PostSavedCount = "BskyScrape_Info_PostSavedCount"
-			const Setting_BskyReservedElementID_ProfileSavedCount = "BskyScrape_Info_ProfileSavedCount"
-			const Setting_BskyReservedElementID_StartStopButtonText = "BskyScrape_StopStartButton"
-			const Setting_BskyReservedElementID_ScanFrequency = "BskyScrape_Input_ScanFrequency"
-			const Setting_BskyReservedElementID_ScanFrequencyNumberDisplay = "BskyScrape_Info_ScanSec"
+		//Elements we need to have remember so we can make changes on them
+			let Div_PostSaveCount = {}
+			let Div_ProfileSaveCount = {}
+			let Button_StopStart = {}
+			let Input_ScanFrequency = {}
+			let Span_ScanFrequencySecCount = {}
+			
+			
 		//Counters for display
 			let Counter_Profile_Saved = 0
 			let Counter_Post_Saved = 0
@@ -101,26 +103,25 @@
 			BoxOfUI.appendChild(Title)
 			
 			//Start/stop button
-			let StartStopButton = document.createElement("button")
-			StartStopButton.setAttribute("style", "width: 50px;")
-			StartStopButton.setAttribute("id", Setting_BskyReservedElementID_StartStopButtonText)
+			Button_StopStart = document.createElement("button")
+			Button_StopStart.setAttribute("style", "width: 50px;")
 			let BskyScrape_StartStopFlag = Saved_Setting_StartStop
-			let StartStopButton_Text = "Start"
+			let Button_StopStart_Text = "Start"
 			if (BskyScrape_StartStopFlag) {
-				StartStopButton_Text = "Stop"
+				Button_StopStart_Text = "Stop"
 			}
-			StartStopButton.appendChild(document.createTextNode(StartStopButton_Text))
-			StartStopButton.addEventListener(
+			Button_StopStart.appendChild(document.createTextNode(Button_StopStart_Text))
+			Button_StopStart.addEventListener(
 				"click",
 				async function () {
 					BskyScrape_StartStopFlag = !BskyScrape_StartStopFlag
 					
 					if (BskyScrape_StartStopFlag) {
-						this.innerText = "Stop"
+						this.textContent = "Stop"
 						MainCode()
 						ID_TimeoutMainCode = setTimeout(MainCode, Saved_Setting_ScanFrequency)
 					} else {
-						this.innerText = "Start"
+						this.textContent = "Start"
 						if (typeof ID_TimeoutMainCode != "undefined") {
 							clearTimeout(ID_TimeoutMainCode);
 						}
@@ -129,7 +130,7 @@
 					await GM.setValue("BskyScrape_StartStopFlag", BskyScrape_StartStopFlag)
 				}
 			)
-			BoxOfUI.appendChild(StartStopButton)
+			BoxOfUI.appendChild(Button_StopStart)
 			
 			//Copy data into clipboard button (readable)
 			let CopyToClipboardButton = document.createElement("button")
@@ -158,7 +159,7 @@
 					ConfirmationPause = true
 					if (window.confirm("Bsky-scrape: Are you sure you want to reset?")) {
 						BskyScrape_StartStopFlag = false
-						document.getElementById(Setting_BskyReservedElementID_StartStopButtonText).innerText = "Start"
+						Button_StopStart.textContent = "Start"
 						if (typeof ID_TimeoutMainCode != "undefined") {
 							clearTimeout(ID_TimeoutMainCode);
 						}
@@ -168,14 +169,12 @@
 						await GM.setValue("BSkyScrape_PostList", "[]")
 						await GM.setValue("BSkyScrape_ProfileList", "[]")
 						
-						let Element_ProfileSavedCount = document.getElementById(Setting_BskyReservedElementID_ProfileSavedCount)
-						if (Element_ProfileSavedCount != null) {
-							Element_ProfileSavedCount.innerText = "0"
+						if (Div_ProfileSaveCount != null) {
+							Div_ProfileSaveCount.textContent = "0"
 						}
 						
-						let Element_PostSavedCount = document.getElementById(Setting_BskyReservedElementID_PostSavedCount)
-						if (Element_PostSavedCount != null) {
-							Element_PostSavedCount.innerText = "0"
+						if (Div_PostSaveCount != null) {
+							Div_PostSaveCount.textContent = "0"
 						}
 					}
 					ConfirmationPause = false
@@ -197,27 +196,25 @@
 			TableRow0.appendChild(TableCell_0_0)
 			
 			let TableCell_0_1 = document.createElement("td")
-			let ScrapeFrequency_InputRange = document.createElement("input")
-			ScrapeFrequency_InputRange.setAttribute("id", Setting_BskyReservedElementID_ScanFrequency)
-			ScrapeFrequency_InputRange.setAttribute("type", "range")
-			ScrapeFrequency_InputRange.setAttribute("min", "500")
-			ScrapeFrequency_InputRange.setAttribute("max", "10000")
-			ScrapeFrequency_InputRange.setAttribute("step", "500")
-			ScrapeFrequency_InputRange.setAttribute("value", Saved_Setting_ScanFrequency)
-			ScrapeFrequency_InputRange.addEventListener(
+			Input_ScanFrequency = document.createElement("input")
+			Input_ScanFrequency.setAttribute("type", "range")
+			Input_ScanFrequency.setAttribute("min", "500")
+			Input_ScanFrequency.setAttribute("max", "10000")
+			Input_ScanFrequency.setAttribute("step", "500")
+			Input_ScanFrequency.setAttribute("value", Saved_Setting_ScanFrequency)
+			Input_ScanFrequency.addEventListener(
 			"input",
 			async function () {
-				document.getElementById(Setting_BskyReservedElementID_ScanFrequencyNumberDisplay).innerText = (parseInt(this.value)/1000).toFixed(1)
+				Span_ScanFrequencySecCount.textContent = (parseInt(this.value)/1000).toFixed(1)
 				await GM.setValue("BskyScrape_ScanFrequency", this.value)
 			})
-			TableCell_0_1.appendChild(ScrapeFrequency_InputRange)
+			TableCell_0_1.appendChild(Input_ScanFrequency)
 			TableCell_0_1.appendChild(document.createElement("br"))
 			TableCell_0_1.setAttribute("style", "text-align: center;")
 			
-			let ScrapeFrequency_SecDisplay = document.createElement("span")
-			ScrapeFrequency_SecDisplay.setAttribute("id", Setting_BskyReservedElementID_ScanFrequencyNumberDisplay)
-			ScrapeFrequency_SecDisplay.appendChild(document.createTextNode((Saved_Setting_ScanFrequency/1000).toFixed(1)))
-			TableCell_0_1.appendChild(ScrapeFrequency_SecDisplay)
+			Span_ScanFrequencySecCount = document.createElement("span")
+			Span_ScanFrequencySecCount.appendChild(document.createTextNode((Saved_Setting_ScanFrequency/1000).toFixed(1)))
+			TableCell_0_1.appendChild(Span_ScanFrequencySecCount)
 			TableCell_0_1.appendChild(document.createTextNode(" sec"))
 			TableRow0.appendChild(TableCell_0_1)
 			
@@ -230,10 +227,9 @@
 			TableRow1.appendChild(TableCell_1_0)
 			
 			let TableCell_1_1 = document.createElement("td")
-			let PostCountNumberSpan = document.createElement("span")
-			PostCountNumberSpan.setAttribute("id", Setting_BskyReservedElementID_PostSavedCount)
-			PostCountNumberSpan.appendChild(document.createTextNode(Saved_Extracted_Posts.length.toFixed(0)))
-			TableCell_1_1.appendChild(PostCountNumberSpan)
+			Div_PostSaveCount = document.createElement("span")
+			Div_PostSaveCount.appendChild(document.createTextNode(Saved_Extracted_Posts.length.toFixed(0)))
+			TableCell_1_1.appendChild(Div_PostSaveCount)
 			TableRow1.appendChild(TableCell_1_1)
 			
 			
@@ -246,10 +242,9 @@
 			TableRow2.appendChild(TableCell_2_0)
 			
 			let TableCell_2_1 = document.createElement("td")
-			let ProfileCountNumberSpan = document.createElement("span")
-			ProfileCountNumberSpan.setAttribute("id", Setting_BskyReservedElementID_ProfileSavedCount)
-			ProfileCountNumberSpan.appendChild(document.createTextNode(Saved_Extracted_Profiles.length.toFixed(0)))
-			TableCell_2_1.appendChild(ProfileCountNumberSpan)
+			Div_ProfileSaveCount = document.createElement("span")
+			Div_ProfileSaveCount.appendChild(document.createTextNode(Saved_Extracted_Profiles.length.toFixed(0)))
+			TableCell_2_1.appendChild(Div_ProfileSaveCount)
 			TableRow2.appendChild(TableCell_2_1)
 			
 			BoxOfUI.appendChild(TableUI)
@@ -283,7 +278,7 @@
 					let isLoggedIn = false
 					{
 						let SignUpButton = Array.from(document.getElementsByTagName("BUTTON")).find((Button) => {
-							return (Button.innerText == "Sign up")
+							return (Button.textContent == "Sign up")
 						})
 						if (typeof SignUpButton == "undefined") {//No signup button is found, indicating the user is logged in.
 							isLoggedIn = true
@@ -337,7 +332,7 @@
 									
 									let Post = BoxListingPosts[i]
 									
-									if (Post.innerText != "View full thread") {
+									if (Post.textContent != "View full thread") {
 										//RepostedByUser
 										{
 											let RepostElement = DescendNode(Post, [0, 0, 0, 1, 0, 1, 1])
@@ -454,9 +449,9 @@
 												NodeOfReplyRepostLikes_Array = Array.from(LastNode.childNodes)
 											}
 											if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
-												ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText //prone to errors
-												RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
-												LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
+												ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
+												RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
+												LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
 											}
 											
 										}
@@ -549,7 +544,7 @@
 								let Profile_UserHandle = ""
 								let Node_Profile_UserHandle = DescendNode(ProfileNode, [1,1,1])
 								if (Node_Profile_UserHandle.IsSuccessful) {
-									Profile_UserHandle = Node_Profile_UserHandle.OutputNode.innerText
+									Profile_UserHandle = Node_Profile_UserHandle.OutputNode.textContent
 								}
 								
 								let Profile_Avatar = ""
@@ -650,7 +645,7 @@
 								UserTitle = DescendNode(Box, [0,0,0,1,0,0,0]).OutputNode.textContent
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0]
-								UserHandle = DescendNode(Box, [0,0,0,1,1,0,0]).OutputNode.innerText 
+								UserHandle = DescendNode(Box, [0,0,0,1,1,0,0]).OutputNode.textContent 
 								
 								if (/https:\/\/bsky\.app\/profile\/did:plc/.test(PostURL)) { //"View full thread" button is clicked, goes to a handle-less version of a post URL
 									//Replace the "did:plc:<base64_string>" with the handle.
@@ -665,7 +660,7 @@
 								}
 								
 								//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0]
-								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,0,1,1,0]).OutputNode.innerText)
+								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,0,1,1,0]).OutputNode.textContent)
 								
 								let NodeOfPostContent = DescendNode(Box, [0,0,1,0])
 								if (NodeOfPostContent.IsSuccessful) {
@@ -685,9 +680,9 @@
 									}
 								}
 								if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
-									ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText //prone to errors
-									RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
-									LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
+									ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
+									RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
+									LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
 								}
 								
 								
@@ -707,8 +702,8 @@
 								//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].textContent
 								UserTitle = DescendNode(Box, [0,1,0,1,0,0,0]).OutputNode.textContent
 								
-								//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].innerText
-								UserHandle = DescendNode(Box, [0,1,0,1,1,0,0]).OutputNode.innerText
+								//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].textContent
+								UserHandle = DescendNode(Box, [0,1,0,1,1,0,0]).OutputNode.textContent
 								
 								if (/https:\/\/bsky\.app\/profile\/did:plc/.test(PostURL)) { //"View full thread" button is clicked, goes to a handle-less version of a post URL
 									//Replace the "did:plc:<base64_string>" with the handle.
@@ -723,8 +718,8 @@
 									UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
 								}
 								
-								//Box.childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].innerText
-								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,1,1,1,0]).OutputNode.innerText)
+								//Box.childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].textContent
+								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,1,1,1,0]).OutputNode.textContent)
 								
 
 								//Box.childNodes[0].childNodes[1].childNodes[1].childNodes[0]
@@ -739,9 +734,9 @@
 								NodeOfReplyRepostLikes_Array = Array.from(DescendNode(PostFooter, [0]).OutputNode.childNodes)
 								
 								if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
-									ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText //prone to errors
-									RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
-									LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
+									ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
+									RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
+									LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
 								}
 							} else if (Type == "Post_NotCurrentlyViewed") {
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].href
@@ -797,9 +792,9 @@
 									
 								}
 								if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
-									ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText //prone to errors
-									RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
-									LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
+									ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
+									RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
+									LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
 								}
 								
 							}
@@ -921,9 +916,9 @@
 									
 								}
 								if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
-									ReplyCount = NodeOfReplyRepostLikes_Array[0].innerText //prone to errors
-									RepostCount = NodeOfReplyRepostLikes_Array[1].innerText
-									LikesCount = NodeOfReplyRepostLikes_Array[2].innerText
+									ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
+									RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
+									LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
 								}
 								if ((PostURL != "")&&(UserTitle != "")&&(UserHandle != "")&&(PostContent.Segments.length != 0)) {
 									ListOfPosts.push({
@@ -1007,9 +1002,8 @@
 							CopiedListOfPosts = JSON.stringify(SavedBskyPostList, null, " ")
 							//console.log("Bsky-scrape: extracted post count: " + SavedBskyPostList.length.toFixed(0))
 							
-							let ElementOfUI_PostCount = document.getElementById(Setting_BskyReservedElementID_PostSavedCount)
-							if (ElementOfUI_PostCount != null) {
-								ElementOfUI_PostCount.innerText = SavedBskyPostList.length.toFixed(0)
+							if (Div_PostSaveCount != null) {
+								Div_PostSaveCount.textContent = SavedBskyPostList.length.toFixed(0)
 							}
 						},
 						() => {
@@ -1047,9 +1041,8 @@
 						await GM.setValue("BSkyScrape_ProfileList", JSON.stringify(SavedBskyProfileList)).then(() => {
 							CopiedListOfProfiles = JSON.stringify(SavedBskyProfileList, null, " ")
 							//console.log("Bsky-scrape: extracted profile count: " + SavedBskyProfileList.length.toFixed(0))
-							let ElementOfUI_ProfileCount = document.getElementById(Setting_BskyReservedElementID_ProfileSavedCount)
-							if (ElementOfUI_ProfileCount != null) {
-								ElementOfUI_ProfileCount.innerText = SavedBskyProfileList.length.toFixed(0)
+							if (Div_ProfileSaveCount != null) {
+								Div_ProfileSaveCount.textContent = SavedBskyProfileList.length.toFixed(0)
 							}
 						},
 						() => {
