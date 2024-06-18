@@ -1,0 +1,282 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+			input { font-family: monospace;}
+			
+			label, input[type='checkbox'], input[type='radio'] {
+				cursor: pointer;
+			}
+		</style>
+	</head>
+	
+	Example:<br>
+	<textarea readonly style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color: #000000; color: #ffffff">
+[
+	{
+		"Start": "2020-01-01 00:00:00 UTC",
+		"End": "2020-01-01 00:00:10 UTC",
+		"Text": "Test 1"
+	},
+	{
+		"Start": "2020-01-01 00:00:20 UTC",
+		"End": "2020-01-01 00:00:30 UTC",
+		"Text": "Test 2"
+	}
+]
+	</textarea><br>
+	
+	<label><input type="checkbox" id="AutoUpdate" checked>Auto Update</label><br>
+	
+	<textarea id="JSONInput" cols="100" rows="30" oninput="TextareaChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
+	<span hidden id="InvalidJsonMessage" style="color: #ff0000"> Invalid JSON or JSON format!</span>
+	
+	<br>
+	
+	Zoom: <input type="range" min="1" step="1" value="1" id="GraphZoomLevel" oninput="AutoUpdate()" style="width: 400px "><span id="ZoomLevelDisplay"></span><br>
+	Date and time (UTC): <input type="text" id="DateAndTime" size="25" onchange="CheckDateValid(); AutoUpdate()"><button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button>
+	<span hidden id="InvalidDateMessage" style="color: #ff0000"> Invalid date! Please enter in <kbd>YYYY-MM-DDTHH:mm:ss.sssZ</kbd> or any readable format.</span><br>
+	<svg style="width: 1500px;height:400px; outline: 1px solid; overflow: hidden" id="DrawingSpace"></svg>
+
+<script>
+//Settings
+	const Setting_ZoomDenominator = 10000000
+
+//Don't touch
+	let isTextareaChanged = false
+	let invalidDateState = false
+	
+	let Saved_ListOfDated = []
+	let Saved_EarliestRecordedMS = Infinity
+	let Saved_LatestRecordedMS = -Infinity
+	let DisplayedGraphTimeMS = 0
+	
+	document.getElementById("GraphZoomLevel").max = Setting_ZoomDenominator.toString(10)
+	
+//Code below
+	document.getElementById("DrawingSpace").addEventListener("wheel", (e) => { //Scroll wheel to scroll the graph
+		e.preventDefault()
+		if (invalidDateState) {
+			return
+		}
+		DisplayedGraphTimeMS = DisplayedGraphTimeMS + Math.round(e.deltaY * Setting_ZoomDenominator / document.getElementById("GraphZoomLevel").value.toString(10))
+			//^Normally, the position of the bars representing a period of time is multiplied by Scale then divided by Setting_ZoomDenominator to scale the
+			// graph size, however, we want to make sure that the more we are zoomed in, the shorter the scroll distance on the time have been moved, so we
+			// multiply by the reciprocal of that fraction.
+		document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
+		MainCode()
+	})
+	
+	InitalizeDate()
+	
+	function InitalizeDate() {
+		let HourAgo = Date.now() -  3600000
+		let ISOString = new Date(HourAgo).toISOString()
+		document.getElementById("DateAndTime").value = ISOString
+		DisplayedGraphTimeMS = HourAgo.valueOf()
+		invalidDateState = false
+		document.getElementById("InvalidDateMessage").hidden = true
+	}
+	function AutoUpdate() {
+		if (document.getElementById("AutoUpdate").checked) {
+			MainCode()
+		}
+	}
+	function TextareaChanged() {
+		isTextareaChanged = true //If you edit the textarea, changed the "ignore fragment identifier", those are considered a change to the list.
+	}
+	function CheckDateValid() {
+		let DateString = document.getElementById("DateAndTime").value
+		let DateToCheck = new Date(DateString)
+		invalidDateState = isNaN(DateToCheck.valueOf())
+		document.getElementById("InvalidDateMessage").hidden = !invalidDateState
+		if (!invalidDateState) {
+			document.getElementById("DateAndTime").value = DateToCheck.toISOString()
+			DisplayedGraphTimeMS = DateToCheck.valueOf()
+		}
+	}
+	function JumpToEarliest() {
+		if (Saved_EarliestRecordedMS === Infinity) {
+			return
+		}
+		document.getElementById("DateAndTime").value = new Date(Saved_EarliestRecordedMS).toISOString()
+		DisplayedGraphTimeMS = Saved_EarliestRecordedMS
+		
+	}
+	function JumpToLatest() {
+		if (Saved_LatestRecordedMS === -Infinity) {
+			return
+		}
+		document.getElementById("DateAndTime").value = new Date(Saved_LatestRecordedMS).toISOString()
+		DisplayedGraphTimeMS = Saved_LatestRecordedMS
+	}
+	function MainCode() {
+		let OutputGraph = document.getElementById("DrawingSpace")
+		while (OutputGraph.lastElementChild) {
+			OutputGraph.removeChild(OutputGraph.lastElementChild);
+		}
+		let InputJSONTimelineString = document.getElementById("JSONInput").value
+		let EarliestRecordedMS = Infinity
+		let LatestRecordedMS = -Infinity
+		let ListOfDatedThings = []
+		let ZoomLevel = parseInt(document.getElementById("GraphZoomLevel").value)
+		document.getElementById("ZoomLevelDisplay").textContent = ZoomLevel
+		if (invalidDateState) {
+			return
+		}
+		if (isTextareaChanged) { //Process any new changes in the input textarea
+			if (!isJsonString(InputJSONTimelineString)) {
+				document.getElementById("InvalidJsonMessage").hidden = false
+				return
+			}
+			try {
+				ListOfDatedThings = [...JSON.parse(InputJSONTimelineString)] //Test if the outermost object is array
+				ListOfDatedThings = ListOfDatedThings.map((ArrEle) => {
+					let StartingTimeMS = new Date(ArrEle.Start).valueOf()
+					if (EarliestRecordedMS > StartingTimeMS) {
+						EarliestRecordedMS = StartingTimeMS
+					}
+					let EndingTimeMS =  new Date(ArrEle.End).valueOf()
+					if (LatestRecordedMS < EndingTimeMS) {
+						LatestRecordedMS = EndingTimeMS
+					}
+					return {
+						Original: ArrEle,
+						TimeMS: {
+							StartingTimeMS: StartingTimeMS,
+							EndingTimeMS: EndingTimeMS
+						}
+					}
+				})
+				ListOfDatedThings.sort((a, b) => a.TimeMS.StartingTimeMS - b.TimeMS.StartingTimeMS) //We sort so that we have consistency that any "later" time overlaps the "earlier"
+			} catch (e) {
+				document.getElementById("InvalidJsonMessage").hidden = false
+				return
+			}
+			Saved_EarliestRecordedMS = EarliestRecordedMS
+			Saved_LatestRecordedMS = LatestRecordedMS
+			Saved_ListOfDated = ListOfDatedThings //Save to list
+		} else {
+			ListOfDatedThings = Saved_ListOfDated //Load list
+		}
+		//Display intervals of time (month, day, hours, minutes...)
+		//The for loop's "i" value acts as a failsafe to prevent huge loops
+			let DateInterval = new Date(DisplayedGraphTimeMS)
+			if (ZoomLevel < 3) { //Month increment
+				DateInterval.setUTCDate(1)
+				DateInterval.setUTCHours(0)
+				DateInterval.setUTCMinutes(0)
+				DateInterval.setUTCSeconds(0)
+				DateInterval.setUTCMilliseconds(0)
+			} else if (ZoomLevel < 50) { //Day increment
+				DateInterval.setUTCHours(0)
+				DateInterval.setUTCMinutes(0)
+				DateInterval.setUTCSeconds(0)
+				DateInterval.setUTCMilliseconds(0)
+			} else if (ZoomLevel < 1000) { //Hours
+				DateInterval.setUTCMinutes(0)
+				DateInterval.setUTCSeconds(0)
+				DateInterval.setUTCMilliseconds(0)
+			} else if (ZoomLevel < 10000) { //Minutes
+				DateInterval.setUTCSeconds(0)
+				DateInterval.setUTCMilliseconds(0)
+			}
+			
+			
+			for (let i = 0; i < 1000; i++) {
+				//Get position, terminate if we got to the right side of graph
+					let IntervalLineXPos = CalculateXPos(new Date(DateInterval).valueOf())
+					if (IntervalLineXPos > 1500) { //If last line outside the chart, end the loop
+						break
+					}
+				//Place a vertical line
+					let IntervalLine = createSVGElement("line")
+					IntervalLine.setAttribute("x1", IntervalLineXPos.toString(10))
+					IntervalLine.setAttribute("x2", IntervalLineXPos.toString(10))
+					IntervalLine.setAttribute("y1", "0")
+					IntervalLine.setAttribute("y2", "100")
+					IntervalLine.setAttribute("stroke", "#ffffff")
+					OutputGraph.appendChild(IntervalLine)
+				//Add text
+					let TextTimestamp = createSVGElement("text")
+					TextTimestamp.appendChild(document.createTextNode(ISOString_to_YYYY_MM_DD_HH_MM_SS(DateInterval.toISOString())))
+					TextTimestamp.setAttribute("text-anchor", "start")
+					TextTimestamp.setAttribute("alignment-baseline", "middle")
+					TextTimestamp.setAttribute("stroke", "#ffffff")
+					TextTimestamp.setAttribute("font-weight", "lighter")
+					TextTimestamp.setAttribute("transform", "translate(" + (IntervalLineXPos).toString(10) + ", 100)" + "rotate(90)")
+					OutputGraph.appendChild(TextTimestamp)
+				//Next interval
+					if (ZoomLevel < 3) { //Month increment
+						DateInterval.setUTCMonth(DateInterval.getUTCMonth()+1);
+					} else if (ZoomLevel < 50) { //Day increment
+						DateInterval.setUTCDate(DateInterval.getUTCDate()+1);
+					} else if (ZoomLevel < 1000) {
+						DateInterval.setUTCHours(DateInterval.getUTCHours()+1);
+					} else if (ZoomLevel < 10000) {
+						DateInterval.setUTCMinutes(DateInterval.getUTCMinutes()+1);
+					}
+
+			}
+		//Place bars indicating duration based on the items provided
+			document.getElementById("InvalidJsonMessage").hidden = true
+			ListOfDatedThings.forEach((ArrEle) => {
+				let Rectangle = createSVGElement("rect")
+				Rectangle.setAttribute("x", CalculateXPos(ArrEle.TimeMS.StartingTimeMS).toString(10))
+				Rectangle.setAttribute("y", "10")
+				Rectangle.setAttribute("width", (CalculateXPos(ArrEle.TimeMS.EndingTimeMS).toString(10) - CalculateXPos(ArrEle.TimeMS.StartingTimeMS)).toString(10))
+				Rectangle.setAttribute("height", "10")
+				Rectangle.setAttribute("fill", "#808080")
+				Rectangle.setAttribute("rx", "5")
+				Rectangle.setAttribute("ry", "5")
+				let Title = createSVGElement("title")
+				Title.appendChild(document.createTextNode(JSON.stringify(ArrEle.Original, null, " ")))
+				Rectangle.appendChild(Title)
+				OutputGraph.appendChild(Rectangle)
+			})
+	}
+	function isJsonString(str) {
+		//https://stackoverflow.com/questions/3710204/how-to-check-if-a-string-is-a-valid-json-string
+		try {
+			JSON.parse(str);
+		} catch (e) {
+			return false;
+		}
+		return true;
+	}
+//	let DrawingArea = document.getElementById("DrawingSpace")
+//	let Rectangle = createSVGElement("rect")
+//	Rectangle.setAttribute("width", "100")
+//	Rectangle.setAttribute("height", "100")
+//	Rectangle.setAttribute("fill", "#808080")
+//	Rectangle.setAttribute("x", "300")
+//	Rectangle.setAttribute("y", "100")
+//	let TitleThing = createSVGElement("title")
+//	TitleThing.appendChild(document.createTextNode("Hover text!"))
+//	Rectangle.appendChild(TitleThing)
+//	DrawingArea.appendChild(Rectangle)
+	
+	function createSVGElement(tag) { //https://stackoverflow.com/questions/57894500/why-is-it-necessary-to-use-document-createelementns-when-adding-svg-tags-to
+		return document.createElementNS('http://www.w3.org/2000/svg', tag)
+	}
+	function CalculateXPos(TimeMS) {
+		return (TimeMS - DisplayedGraphTimeMS) * parseInt(document.getElementById("GraphZoomLevel").value) / Setting_ZoomDenominator
+	}
+	function ISOString_to_YYYY_MM_DD_HH_MM_SS(ISOString) {
+		//YYYY-MM-DDTHH:mm:ss.sssZ or ±YYYYYY-MM-DDTHH:mm:ss.sssZ
+		return ISOString.replace("T", " ").replace(/\.\d{3}Z$/, "") + " UTC"
+	}
+</script>
