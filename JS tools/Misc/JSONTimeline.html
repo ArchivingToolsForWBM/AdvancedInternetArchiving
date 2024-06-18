@@ -54,6 +54,8 @@
 <script>
 //Settings
 	const Setting_ZoomDenominator = 10000000
+	const Setting_MaxZoom = 200000
+	const Setting_IntervalDrawLimit = 100
 
 //Don't touch
 	let isTextareaChanged = false
@@ -64,7 +66,7 @@
 	let Saved_LatestRecordedMS = -Infinity
 	let DisplayedGraphTimeMS = 0
 	
-	document.getElementById("GraphZoomLevel").max = Setting_ZoomDenominator.toString(10)
+	document.getElementById("GraphZoomLevel").max = Setting_MaxZoom.toString(10)
 	
 //Code below
 	document.getElementById("DrawingSpace").addEventListener("wheel", (e) => { //Scroll wheel to scroll the graph
@@ -193,10 +195,12 @@
 			} else if (ZoomLevel < 10000) { //Minutes
 				DateInterval.setUTCSeconds(0)
 				DateInterval.setUTCMilliseconds(0)
+			} else {
+				DateInterval.setUTCMilliseconds(0)
 			}
 			
 			
-			for (let i = 0; i < 1000; i++) {
+			for (let i = 0; i < Setting_IntervalDrawLimit; i++) {
 				//Get position, terminate if we got to the right side of graph
 					let IntervalLineXPos = CalculateXPos(new Date(DateInterval).valueOf())
 					if (IntervalLineXPos > 1500) { //If last line outside the chart, end the loop
@@ -228,6 +232,8 @@
 						DateInterval.setUTCHours(DateInterval.getUTCHours()+1);
 					} else if (ZoomLevel < 10000) {
 						DateInterval.setUTCMinutes(DateInterval.getUTCMinutes()+1);
+					} else {
+						DateInterval.setUTCSeconds(DateInterval.getUTCSeconds()+1);
 					}
 
 			}
