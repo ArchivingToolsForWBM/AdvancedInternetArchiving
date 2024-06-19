@@ -50,13 +50,15 @@
 	Date and time (UTC): <input type="text" id="DateAndTime" size="25" onchange="CheckDateValid(); AutoUpdate()"><button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button>
 	
 	<span hidden id="InvalidDateMessage" style="color: #ff0000"> Invalid date! Please enter in <kbd>YYYY-MM-DDTHH:mm:ss.sssZ</kbd> or any readable format.</span><br>
-	<svg style="width: 1500px;height:400px; outline: 1px solid; overflow: hidden" id="DrawingSpace"></svg>
+	<svg style="outline: 1px solid; overflow: hidden" id="DrawingSpace"></svg>
 
 <script>
 //Settings
 	const Setting_ZoomDenominator = 1000000000
 	const Setting_MaxZoom = 20000000
 	const Setting_IntervalDrawLimit = 200
+	const Setting_SVGSpace_Width = 1500
+	const Setting_SVGSpace_Height = 400
 
 //Don't touch
 	let isTextareaChanged = false
@@ -66,8 +68,11 @@
 	let Saved_EarliestRecordedMS = Infinity
 	let Saved_LatestRecordedMS = -Infinity
 	let DisplayedGraphTimeMS = 0
+	let GraphCurrentTimeDisplay = null
 	
 	document.getElementById("GraphZoomLevel").max = Setting_MaxZoom.toString(10)
+	document.getElementById("DrawingSpace").style.width = Setting_SVGSpace_Width.toString(10) + "px"
+	document.getElementById("DrawingSpace").style.height = Setting_SVGSpace_Height.toString(10) + "px"
 	
 //Code below
 	document.getElementById("DrawingSpace").addEventListener("wheel", (e) => { //Scroll wheel to scroll the graph
@@ -84,7 +89,23 @@
 	})
 	
 	InitalizeDate()
+	MainCode()
+	let Interval_CurrentTimeDisplay = setInterval(GraphCurrentTime, 100)
 	
+	
+	function GraphCurrentTime() {
+		if (GraphCurrentTimeDisplay == null) {
+			GraphCurrentTimeDisplay = createSVGElement("line")
+		}
+		let IntervalLineXPos = CalculateXPos(new Date(Date.now()).valueOf())
+		GraphCurrentTimeDisplay.setAttribute("x1", IntervalLineXPos.toString(10))
+		GraphCurrentTimeDisplay.setAttribute("x2", IntervalLineXPos.toString(10))
+		GraphCurrentTimeDisplay.setAttribute("y1", "0")
+		GraphCurrentTimeDisplay.setAttribute("y2", "100")
+		GraphCurrentTimeDisplay.setAttribute("stroke", "#FFFF00")
+		document.getElementById("DrawingSpace").appendChild(GraphCurrentTimeDisplay)
+		
+	}
 	function InitalizeDate() {
 		let HourAgo = Date.now() -  3600000
 		let ISOString = new Date(HourAgo).toISOString()
