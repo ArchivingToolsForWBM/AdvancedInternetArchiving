@@ -75,17 +75,25 @@
 	document.getElementById("DrawingSpace").style.height = Setting_SVGSpace_Height.toString(10) + "px"
 	
 //Code below
-	document.getElementById("DrawingSpace").addEventListener("wheel", (e) => { //Scroll wheel to scroll the graph
+	document.getElementById("DrawingSpace").addEventListener("wheel", (e) => { //Scroll wheel to scroll/zoom the graph
 		e.preventDefault()
 		if (invalidDateState) {
 			return
 		}
-		DisplayedGraphTimeMS = DisplayedGraphTimeMS + Math.round(e.deltaY * Setting_ZoomDenominator / document.getElementById("GraphZoomLevel").value.toString(10))
-			//^Normally, the position of the bars representing a period of time is multiplied by Scale then divided by Setting_ZoomDenominator to scale the
-			// graph size, however, we want to make sure that the more we are zoomed in, the shorter the scroll distance on the time have been moved, so we
-			// multiply by the reciprocal of that fraction.
-		document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
-		MainCode()
+		if (!e.ctrlKey) {
+			DisplayedGraphTimeMS = DisplayedGraphTimeMS + Math.round(e.deltaY * Setting_ZoomDenominator / document.getElementById("GraphZoomLevel").value.toString(10))
+				//^Normally, the position of the bars representing a period of time is multiplied by Scale then divided by Setting_ZoomDenominator to scale the
+				// graph size, however, we want to make sure that the more we are zoomed in, the shorter the scroll distance on the time have been moved, so we
+				// multiply by the reciprocal of that fraction.
+			document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
+			MainCode()
+		} else {
+			let ZoomLevel = parseInt(document.getElementById("GraphZoomLevel").value)
+			ZoomLevel = ((Math.round(e.deltaY*-1)*1000) + ZoomLevel)
+			document.getElementById("GraphZoomLevel").value = ZoomLevel.toString(10)
+			document.getElementById("GraphZoomLevel").oninput()
+		}
+
 	})
 	
 	InitalizeDate()
@@ -103,11 +111,12 @@
 		GraphCurrentTimeDisplay.setAttribute("y1", "0")
 		GraphCurrentTimeDisplay.setAttribute("y2", "100")
 		GraphCurrentTimeDisplay.setAttribute("stroke", "#FFFF00")
+		GraphCurrentTimeDisplay.setAttribute("id", "DontErase")
 		document.getElementById("DrawingSpace").appendChild(GraphCurrentTimeDisplay)
 		
 	}
 	function InitalizeDate() {
-		let HourAgo = Date.now() -  3600000
+		let HourAgo = Date.now()
 		let ISOString = new Date(HourAgo).toISOString()
 		document.getElementById("DateAndTime").value = ISOString
 		DisplayedGraphTimeMS = HourAgo.valueOf()
@@ -148,10 +157,12 @@
 		DisplayedGraphTimeMS = Saved_LatestRecordedMS
 	}
 	function MainCode() {
+		GraphCurrentTime()
 		let OutputGraph = document.getElementById("DrawingSpace")
-		while (OutputGraph.lastElementChild) {
-			OutputGraph.removeChild(OutputGraph.lastElementChild);
-		}
+		let ClearableSVGElements = [...OutputGraph.querySelectorAll("*.Clearable")]
+		ClearableSVGElements.forEach((SVGEle) => {
+			OutputGraph.removeChild(SVGEle)
+		})
 		let InputJSONTimelineString = document.getElementById("JSONInput").value
 		let EarliestRecordedMS = Infinity
 		let LatestRecordedMS = -Infinity
@@ -277,6 +288,7 @@
 					IntervalLine.setAttribute("y1", "0")
 					IntervalLine.setAttribute("y2", "100")
 					IntervalLine.setAttribute("stroke", "#ffffff")
+					IntervalLine.classList.add("Clearable")
 					OutputGraph.appendChild(IntervalLine)
 				//Add text
 					let TextTimestamp = createSVGElement("text")
@@ -330,6 +342,7 @@
 					TextTimestamp.setAttribute("font-weight", "lighter")
 					TextTimestamp.setAttribute("transform", "translate(" + (IntervalLineXPos).toString(10) + ", 100)" + "rotate(90)")
 					TextTimestamp.setAttribute("font-family", "monospace")
+					TextTimestamp.classList.add("Clearable")
 					OutputGraph.appendChild(TextTimestamp)
 				//Next interval
 					DateIntervalObject.NextInterval()
@@ -346,6 +359,7 @@
 				Rectangle.setAttribute("fill", "#808080")
 				Rectangle.setAttribute("rx", "5")
 				Rectangle.setAttribute("ry", "5")
+				Rectangle.classList.add("Clearable")
 				let Title = createSVGElement("title")
 				Title.appendChild(document.createTextNode(JSON.stringify(ArrEle.Original, null, " ")))
 				Rectangle.appendChild(Title)
