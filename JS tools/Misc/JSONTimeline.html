@@ -83,25 +83,27 @@
 		if (invalidDateState) {
 			return
 		}
-		if (!e.ctrlKey) {
-			DisplayedGraphTimeMS = DisplayedGraphTimeMS + Math.round(e.deltaY * Setting_ZoomDenominator / document.getElementById("GraphZoomLevel").value.toString(10))
-				//^Normally, the position of the bars representing a period of time is multiplied by Scale then divided by Setting_ZoomDenominator to scale the
-				// graph size, however, we want to make sure that the more we are zoomed in, the shorter the scroll distance on the time have been moved, so we
-				// multiply by the reciprocal of that fraction.
-			document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
-			MainCode()
-		} else {
-			let ZoomLevel = parseInt(document.getElementById("GraphZoomLevel").value)
-			let ZoomRatio = ZoomLevel/Setting_ZoomDenominator
-			let ZoomUnits = GetInterval(ZoomRatio).ZoomScrollIndex
-
-			let ZoomIndexTowards = ZoomUnits + Math.sign(e.deltaY*-1)
-			let ZoomLevelIndexValues = [1,22,263,11224,668448,20000000]
-
-			ZoomLevel = ZoomLevelIndexValues[ZoomIndexTowards]
-			document.getElementById("GraphZoomLevel").value = ZoomLevel.toString(10)
-			document.getElementById("GraphZoomLevel").oninput()
-		}
+		try {
+			if (!e.ctrlKey) {
+				DisplayedGraphTimeMS = DisplayedGraphTimeMS + Math.round(e.deltaY * Setting_ZoomDenominator / document.getElementById("GraphZoomLevel").value.toString(10))
+					//^Normally, the position of the bars representing a period of time is multiplied by Scale then divided by Setting_ZoomDenominator to scale the
+					// graph size, however, we want to make sure that the more we are zoomed in, the shorter the scroll distance on the time have been moved, so we
+					// multiply by the reciprocal of that fraction.
+				document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
+				MainCode()
+			} else {
+				let ZoomLevel = parseInt(document.getElementById("GraphZoomLevel").value)
+				let ZoomRatio = ZoomLevel/Setting_ZoomDenominator
+				let ZoomUnits = GetInterval(ZoomRatio).ZoomScrollIndex
+	
+				let ZoomIndexTowards = ZoomUnits + Math.sign(e.deltaY*-1)
+				let ZoomLevelIndexValues = [1,22,263,11224,668448,20000000]
+	
+				ZoomLevel = ZoomLevelIndexValues[ZoomIndexTowards]
+				document.getElementById("GraphZoomLevel").value = ZoomLevel.toString(10)
+				document.getElementById("GraphZoomLevel").oninput()
+			}
+		} catch (err) {}
 	})
 	document.getElementById("DrawingSpace").addEventListener("mousemove", (e) => {
 		//based off of https://phuoc.ng/collection/html-dom/calculate-the-mouse-position-relative-to-an-element/
@@ -166,6 +168,7 @@
 		if (Saved_EarliestRecordedMS === Infinity) {
 			return
 		}
+		invalidDateState = false
 		document.getElementById("DateAndTime").value = new Date(Saved_EarliestRecordedMS).toISOString()
 		DisplayedGraphTimeMS = Saved_EarliestRecordedMS
 		
@@ -174,6 +177,7 @@
 		if (Saved_LatestRecordedMS === -Infinity) {
 			return
 		}
+		invalidDateState = false
 		document.getElementById("DateAndTime").value = new Date(Saved_LatestRecordedMS).toISOString()
 		DisplayedGraphTimeMS = Saved_LatestRecordedMS
 	}
@@ -191,6 +195,8 @@
 		let ZoomLevel = parseInt(document.getElementById("GraphZoomLevel").value)
 		if (invalidDateState) {
 			return
+		} else {
+			document.getElementById("InvalidDateMessage").hidden = true
 		}
 		if (isTextareaChanged) { //Process any new changes in the input textarea
 			if (!isJsonString(InputJSONTimelineString)) {
