@@ -46,7 +46,7 @@
 	
 	<br>
 	
-	Zoom: <input type="range" min="1" max="100000000000000" step="1" value="101900" id="GraphZoomLevel" oninput="AutoUpdate()" style="width: 800px "><kbd id="ZoomLevelDisplay"></kbd><br>
+	<span id="ZoomUI">Zoom: <input type="range" min="1" max="100000000000000" step="1" value="101900" id="GraphZoomLevel" oninput="AutoUpdate()" style="width: 800px "><kbd id="ZoomLevelDisplay"></kbd><br></span>
 	Date and time (UTC): <input type="text" id="DateAndTime" size="25" onchange="CheckDateValid(); AutoUpdate()"><button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button>
 	
 	<span hidden id="InvalidDateMessage" style="color: #ff0000"> Invalid date! Please enter in <kbd>YYYY-MM-DDTHH:mm:ss.sssZ</kbd> or any readable format.</span><br>
@@ -59,6 +59,7 @@
 	const Setting_IntervalDrawLimit = 200
 	const Setting_SVGSpace_Width = 1500
 	const Setting_SVGSpace_Height = 400
+	const Setting_ZoomUI = false
 
 //Don't touch
 	let isTextareaChanged = false
@@ -73,6 +74,7 @@
 	document.getElementById("GraphZoomLevel").max = Setting_MaxZoom.toString(10)
 	document.getElementById("DrawingSpace").style.width = Setting_SVGSpace_Width.toString(10) + "px"
 	document.getElementById("DrawingSpace").style.height = Setting_SVGSpace_Height.toString(10) + "px"
+	document.getElementById("ZoomUI").hidden = !Setting_ZoomUI
 	
 //Code below
 	document.getElementById("DrawingSpace").addEventListener("wheel", (e) => { //Scroll wheel to scroll/zoom the graph
@@ -89,7 +91,13 @@
 			MainCode()
 		} else {
 			let ZoomLevel = parseInt(document.getElementById("GraphZoomLevel").value)
-			ZoomLevel = ((Math.round(e.deltaY*-1)*1000) + ZoomLevel)
+			let ZoomRatio = ZoomLevel/Setting_ZoomDenominator
+			let ZoomUnits = GetInterval(ZoomRatio).ZoomScrollIndex
+
+			let ZoomIndexTowards = ZoomUnits + Math.sign(e.deltaY*-1)
+			let ZoomLevelIndexValues = [1,22,263,11224,668448,20000000]
+
+			ZoomLevel = ZoomLevelIndexValues[ZoomIndexTowards]
 			document.getElementById("GraphZoomLevel").value = ZoomLevel.toString(10)
 			document.getElementById("GraphZoomLevel").oninput()
 		}
@@ -112,6 +120,7 @@
 		GraphCurrentTimeDisplay.setAttribute("y2", "100")
 		GraphCurrentTimeDisplay.setAttribute("stroke", "#FFFF00")
 		GraphCurrentTimeDisplay.setAttribute("id", "DontErase")
+		GraphCurrentTimeDisplay.setAttribute("stroke-width", "3")
 		document.getElementById("DrawingSpace").appendChild(GraphCurrentTimeDisplay)
 		
 	}
@@ -208,70 +217,7 @@
 		}
 		//Display intervals of time (month, day, hours, minutes...)
 		//The for loop's "i" value acts as a failsafe to prevent huge loops
-			let DateIntervalObject = ((ZoomRatio) => {
-				let DateInterval = new Date(DisplayedGraphTimeMS)
-				let ReturnObject = {
-					DateInterval: DateInterval
-				}
-				if (ZoomRatio < 0.0000000150) { //Year increment
-					DateInterval.setUTCMonth(0)
-					DateInterval.setUTCDate(1)
-					DateInterval.setUTCHours(0)
-					DateInterval.setUTCMinutes(0)
-					DateInterval.setUTCSeconds(0)
-					DateInterval.setUTCMilliseconds(0)
-					ReturnObject.NextInterval = function() {
-						DateInterval.setUTCFullYear(DateInterval.getUTCFullYear()+1)
-					}
-					ReturnObject.IncrementName = "Year"
-					
-				} else if (ZoomRatio < 0.0000002000) { //Month increment
-					DateInterval.setUTCDate(1)
-					DateInterval.setUTCHours(0)
-					DateInterval.setUTCMinutes(0)
-					DateInterval.setUTCSeconds(0)
-					DateInterval.setUTCMilliseconds(0)
-					ReturnObject.NextInterval = function() {
-						DateInterval.setUTCMonth(DateInterval.getUTCMonth()+1)
-					}
-					ReturnObject.IncrementName = "Month"
-					
-				} else if (ZoomRatio < 0.0000064000) { //Day
-					DateInterval.setUTCHours(0)
-					DateInterval.setUTCMinutes(0)
-					DateInterval.setUTCSeconds(0)
-					DateInterval.setUTCMilliseconds(0)
-					ReturnObject.NextInterval = function() {
-						DateInterval.setUTCDate(DateInterval.getUTCDate()+1)
-					}
-					ReturnObject.IncrementName = "Day"
-					
-				} else if (ZoomRatio < 0.0002000000) { //Hours
-					DateInterval.setUTCMinutes(0)
-					DateInterval.setUTCSeconds(0)
-					DateInterval.setUTCMilliseconds(0)
-					ReturnObject.NextInterval = function() {
-						DateInterval.setUTCHours(DateInterval.getUTCHours()+1)
-					}
-					ReturnObject.IncrementName = "Hours"
-					
-				} else if (ZoomRatio < 0.0084000010) {//Minutes
-					DateInterval.setUTCSeconds(0)
-					DateInterval.setUTCMilliseconds(0)
-					ReturnObject.NextInterval = function() {
-						DateInterval.setUTCMinutes(DateInterval.getUTCMinutes()+1)
-					}
-					ReturnObject.IncrementName = "Minutes"
-					
-				} else {
-					DateInterval.setUTCMilliseconds(0)
-					ReturnObject.NextInterval = function() {
-						DateInterval.setUTCSeconds(DateInterval.getUTCSeconds()+1)
-					}
-					ReturnObject.IncrementName = "Seconds"
-				}
-				return ReturnObject
-			})(ZoomLevel/Setting_ZoomDenominator);
+			let DateIntervalObject = GetInterval(ZoomLevel/Setting_ZoomDenominator)
 			
 			document.getElementById("ZoomLevelDisplay").textContent = ZoomLevel.toString(10) + "/" + Setting_ZoomDenominator.toString(10) + "x (" + (ZoomLevel/Setting_ZoomDenominator).toFixed(10) + "x), Interval type: " + DateIntervalObject.IncrementName
 			
@@ -397,5 +343,71 @@
 	function ISOString_to_YYYY_MM_DD_HH_MM_SS(ISOString) {
 		//YYYY-MM-DDTHH:mm:ss.sssZ or ±YYYYYY-MM-DDTHH:mm:ss.sssZ
 		return ISOString.replace("T", " ").replace(/\.\d{3}Z$/, "") + " UTC"
+	}
+	function GetInterval(ZoomRatio) {
+		let DateInterval = new Date(DisplayedGraphTimeMS)
+		let ReturnObject = {
+			DateInterval: DateInterval
+		}
+		if (ZoomRatio < 0.0000000150) { //Year increment
+			DateInterval.setUTCMonth(0)
+			DateInterval.setUTCDate(1)
+			DateInterval.setUTCHours(0)
+			DateInterval.setUTCMinutes(0)
+			DateInterval.setUTCSeconds(0)
+			DateInterval.setUTCMilliseconds(0)
+			ReturnObject.NextInterval = function() {
+				DateInterval.setUTCFullYear(DateInterval.getUTCFullYear()+1)
+			}
+			ReturnObject.IncrementName = "Year"
+			ReturnObject.ZoomScrollIndex = 0
+			
+		} else if (ZoomRatio < 0.0000002000) { //Month increment
+			DateInterval.setUTCDate(1)
+			DateInterval.setUTCHours(0)
+			DateInterval.setUTCMinutes(0)
+			DateInterval.setUTCSeconds(0)
+			DateInterval.setUTCMilliseconds(0)
+			ReturnObject.NextInterval = function() {
+				DateInterval.setUTCMonth(DateInterval.getUTCMonth()+1)
+			}
+			ReturnObject.IncrementName = "Month"
+			ReturnObject.ZoomScrollIndex = 1
+		} else if (ZoomRatio < 0.0000064000) { //Day
+			DateInterval.setUTCHours(0)
+			DateInterval.setUTCMinutes(0)
+			DateInterval.setUTCSeconds(0)
+			DateInterval.setUTCMilliseconds(0)
+			ReturnObject.NextInterval = function() {
+				DateInterval.setUTCDate(DateInterval.getUTCDate()+1)
+			}
+			ReturnObject.IncrementName = "Day"
+			ReturnObject.ZoomScrollIndex = 2
+		} else if (ZoomRatio < 0.0002000000) { //Hours
+			DateInterval.setUTCMinutes(0)
+			DateInterval.setUTCSeconds(0)
+			DateInterval.setUTCMilliseconds(0)
+			ReturnObject.NextInterval = function() {
+				DateInterval.setUTCHours(DateInterval.getUTCHours()+1)
+			}
+			ReturnObject.IncrementName = "Hours"
+			ReturnObject.ZoomScrollIndex = 3
+		} else if (ZoomRatio < 0.0084000010) {//Minutes
+			DateInterval.setUTCSeconds(0)
+			DateInterval.setUTCMilliseconds(0)
+			ReturnObject.NextInterval = function() {
+				DateInterval.setUTCMinutes(DateInterval.getUTCMinutes()+1)
+			}
+			ReturnObject.IncrementName = "Minutes"
+			ReturnObject.ZoomScrollIndex = 4
+		} else {
+			DateInterval.setUTCMilliseconds(0)
+			ReturnObject.NextInterval = function() {
+				DateInterval.setUTCSeconds(DateInterval.getUTCSeconds()+1)
+			}
+			ReturnObject.IncrementName = "Seconds"
+			ReturnObject.ZoomScrollIndex = 5
+		}
+		return ReturnObject
 	}
 </script>
