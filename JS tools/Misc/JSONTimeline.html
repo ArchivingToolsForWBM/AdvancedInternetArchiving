@@ -50,7 +50,8 @@
 	Date and time (UTC): <input type="text" id="DateAndTime" size="25" onchange="CheckDateValid(); AutoUpdate()"><button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button>
 	
 	<span hidden id="InvalidDateMessage" style="color: #ff0000"> Invalid date! Please enter in <kbd>YYYY-MM-DDTHH:mm:ss.sssZ</kbd> or any readable format.</span><br>
-	<svg style="outline: 1px solid; overflow: hidden" id="DrawingSpace"></svg>
+	<svg style="outline: 1px solid; overflow: hidden" id="DrawingSpace"></svg><br>
+	<kbd>Date of mouse position: <span id="MousePosToTime"></kbd>
 
 <script>
 //Settings
@@ -101,8 +102,19 @@
 			document.getElementById("GraphZoomLevel").value = ZoomLevel.toString(10)
 			document.getElementById("GraphZoomLevel").oninput()
 		}
-
 	})
+	document.getElementById("DrawingSpace").addEventListener("mousemove", (e) => {
+		//based off of https://phuoc.ng/collection/html-dom/calculate-the-mouse-position-relative-to-an-element/
+		if (invalidDateState) {
+			document.getElementById("MousePosToTime").textContent = "Error"
+			return
+		}
+		let Target = e.currentTarget
+		let Rect = Target.getBoundingClientRect();
+		let XPos = e.clientX - Rect.left;
+		let ToTimeMS = CalculateXPixelToTimeMS(XPos)
+		document.getElementById("MousePosToTime").textContent = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(ToTimeMS).toISOString())
+	}, false)
 	
 	InitalizeDate()
 	MainCode()
@@ -340,6 +352,11 @@
 		//(TimeMS - TimeScroll) * Zoom/Setting_ZoomDenominator
 		return (TimeMS - DisplayedGraphTimeMS) * parseInt(document.getElementById("GraphZoomLevel").value) / Setting_ZoomDenominator
 	}
+	function CalculateXPixelToTimeMS(XPositionOnGraph) {
+		//Inverse of above function
+		return DisplayedGraphTimeMS+((XPositionOnGraph * Setting_ZoomDenominator))/parseInt(document.getElementById("GraphZoomLevel").value)
+		
+	}
 	function ISOString_to_YYYY_MM_DD_HH_MM_SS(ISOString) {
 		//YYYY-MM-DDTHH:mm:ss.sssZ or ±YYYYYY-MM-DDTHH:mm:ss.sssZ
 		return ISOString.replace("T", " ").replace(/\.\d{3}Z$/, "") + " UTC"
@@ -410,4 +427,5 @@
 		}
 		return ReturnObject
 	}
+
 </script>
