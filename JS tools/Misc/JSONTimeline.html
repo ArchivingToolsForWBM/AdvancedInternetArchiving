@@ -49,7 +49,11 @@
 	<span id="ZoomUI">Zoom: <input type="range" min="1" max="100000000000000" step="1" value="101900" id="GraphZoomLevel" oninput="AutoUpdate()" style="width: 800px "><kbd id="ZoomLevelDisplay"></kbd><br></span>
 	Date and time (UTC): <input type="text" id="DateAndTime" size="25" onchange="CheckDateValid(); AutoUpdate()"><button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button>
 	
-	<span hidden id="InvalidDateMessage" style="color: #ff0000"> Invalid date! Please enter in <kbd>YYYY-MM-DDTHH:mm:ss.sssZ</kbd> or any readable format.</span><br>
+	<span hidden id="InvalidDateMessage" style="color: #ff0000"> Invalid date! Please enter in <kbd>YYYY-MM-DDTHH:mm:ss.sssZ</kbd> or any readable format.</span><br><br>
+	<ul>
+		<li><b>Left/Right</b> or <b>a/d</b> keys: Scroll backward/forward through time. Holding down the left mouse button and moving the mouse also works, as well as rolling the scroll wheel.</li>
+		<li><b>Up/Down</b> or <b>w/s</b> keys: Zoom. Alternatively hold down CTRL and roll the scroll wheel also affects the rolling (will zoom to where the mouse is at though). </li>
+	</ul>
 	<svg style="outline: 1px solid; overflow: hidden" id="DrawingSpace" class="Dragable" tabindex="0" onclick="this.focus()"></svg><br>
 	<kbd>Date of mouse position: <span id="MousePosToTime"></kbd>
 
@@ -203,7 +207,9 @@
 	SVGGraph.addEventListener("keydown", (e) => {
 		//Keyboard input to move and zoom
 		let KeyName = e.key
+		let IsKeyControllingGraph = false
 		if (KeyName == "ArrowLeft"||KeyName == "a"||KeyName == "ArrowRight"||KeyName == "d") {
+			IsKeyControllingGraph = true
 			e.preventDefault()
 			let ScrollDirection = 100
 			if (KeyName == "ArrowLeft"||KeyName == "a") {
@@ -213,6 +219,7 @@
 			document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
 		}
 		if (KeyName == "ArrowUp"||KeyName == "w"||KeyName == "ArrowDown"||KeyName == "s") {
+			IsKeyControllingGraph = true
 			e.preventDefault()
 			let ZoomIndexDirection = 1
 			if (KeyName == "ArrowDown"||KeyName == "s") {
@@ -234,7 +241,9 @@
 			ZoomLevel = Setting_ZoomLevelIndexValues[ZoomIndexTowards]	//Adjust zoom
 			document.getElementById("GraphZoomLevel").value = ZoomLevel.toString(10)
 		}
-		MainCode()
+		if (IsKeyControllingGraph) { //Prevent unnecessary execution when no effect occurs, originally prevents flicker with the yellow current time mark when user holds down CTRL
+			MainCode()
+		}
 	})
 	
 	InitalizeDate()
@@ -251,6 +260,7 @@
 		GraphCurrentTimeDisplay.setAttribute("x2", IntervalLineXPos.toString(10))
 		GraphCurrentTimeDisplay.setAttribute("y1", "0")
 		GraphCurrentTimeDisplay.setAttribute("y2", "100")
+		GraphCurrentTimeDisplay.setAttribute("z", "2")
 		GraphCurrentTimeDisplay.setAttribute("stroke", "#FFFF00")
 		GraphCurrentTimeDisplay.setAttribute("id", "DontErase")
 		GraphCurrentTimeDisplay.setAttribute("stroke-width", "3")
@@ -374,6 +384,12 @@
 					IntervalLine.setAttribute("stroke", "#ffffff")
 					IntervalLine.classList.add("Clearable")
 					OutputGraph.appendChild(IntervalLine)
+					if (GraphCurrentTimeDisplay == null) { //Insert before the yellow line so it doesn't alternate draw priority
+						OutputGraph.appendChild(IntervalLine)
+					} else {
+						OutputGraph.insertBefore(IntervalLine, GraphCurrentTimeDisplay)
+					}
+					
 				//Add text
 					let TextTimestamp = createSVGElement("text")
 					switch (DateIntervalObject.IncrementName) {
@@ -428,7 +444,11 @@
 					TextTimestamp.setAttribute("transform", "translate(" + (IntervalLineXPos).toString(10) + ", 100)" + "rotate(90)")
 					TextTimestamp.setAttribute("font-family", "monospace")
 					TextTimestamp.classList.add("Clearable")
-					OutputGraph.appendChild(TextTimestamp)
+					if (GraphCurrentTimeDisplay == null) { //Insert before the yellow line so it doesn't alternate draw priority
+						OutputGraph.appendChild(TextTimestamp)
+					} else {
+						OutputGraph.insertBefore(TextTimestamp, GraphCurrentTimeDisplay)
+					}
 				//Next interval
 					DateIntervalObject.NextInterval()
 
@@ -451,7 +471,11 @@
 				let Title = createSVGElement("title")
 				Title.appendChild(document.createTextNode(JSON.stringify(ArrEle.Original, null, " ") + "\nDuration: " + ArrEle.TimeMS.Duration))
 				Rectangle.appendChild(Title)
-				OutputGraph.appendChild(Rectangle)
+				if (GraphCurrentTimeDisplay == null) { //Insert before the yellow line so it doesn't alternate draw priority
+					OutputGraph.appendChild(Rectangle)
+				} else {
+					OutputGraph.insertBefore(Rectangle, GraphCurrentTimeDisplay)
+				}
 			})
 	}
 	function isJsonString(str) {
