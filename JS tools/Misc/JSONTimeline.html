@@ -398,12 +398,13 @@
 							break
 						case "Minutes":
 							{
+								let Hours = DateIntervalObject.DateInterval.getUTCHours()
 								let Minutes = DateIntervalObject.DateInterval.getUTCMinutes()
 								let Text = ""
 								if (Minutes == 0) {
 									Text += (DateIntervalObject.DateInterval.getUTCFullYear()).toString(10) + "-" + (DateIntervalObject.DateInterval.getUTCMonth()+1).toString(10).padStart(2, "0") + "-" + (DateIntervalObject.DateInterval.getUTCDate()).toString(10).padStart(2, "0") + " " + (DateIntervalObject.DateInterval.getUTCHours()).toString(10).padStart(2, "0") + ":"
 								}
-								Text += Minutes.toString(10).padStart(2, "0") + ":00"
+								Text += Hours.toString(10).padStart(2, "0") + ":" + Minutes.toString(10).padStart(2, "0")
 								TextTimestamp.appendChild(document.createTextNode(Text))
 							}
 							break
