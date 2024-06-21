@@ -91,6 +91,9 @@
 		DragableMouseMovementElements.forEach((HTMLEle) => {
 			HTMLEle.addEventListener("mousedown", (e) => {
 				e.preventDefault()
+				if (invalidDateState) {
+					return
+				}
 				if (e.button != 0) {
 					return
 				}
