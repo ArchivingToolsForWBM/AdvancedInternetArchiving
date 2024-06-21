@@ -96,14 +96,35 @@
 				let ZoomRatio = ZoomLevel/Setting_ZoomDenominator
 				let ZoomUnits = GetInterval(ZoomRatio).ZoomScrollIndex
 	
-				let ZoomIndexTowards = ZoomUnits + Math.sign(e.deltaY*-1)
 				let ZoomLevelIndexValues = [1,22,263,11224,668448,20000000]
-	
-				ZoomLevel = ZoomLevelIndexValues[ZoomIndexTowards]
+				let ZoomIndexTowards = ZoomUnits + Math.sign(e.deltaY*-1)
+				if (ZoomIndexTowards < 0) {
+					ZoomIndexTowards = 0
+					return
+				}
+				if (ZoomIndexTowards > ZoomLevelIndexValues.length-1) {
+					ZoomIndexTowards = ZoomLevelIndexValues.length-1
+					return
+				}
+				
+				let Target = e.currentTarget
+				let Rect = Target.getBoundingClientRect();
+				let MouseXPos = e.clientX - Rect.left;		//Mouse position relative to SVG
+				let ToTimeMS = Math.round(CalculateXPixelToTimeMS(MouseXPos)) //Time the mouse is on (relative to epoch). Need to do this before zoom change to preserve the time position
+				let MSBetweenDisplayedGraphTimeMSAndMouseXMS = ToTimeMS - DisplayedGraphTimeMS
+				
+				let Debug_ToTimeMS_ISOString = new Date(ToTimeMS).toISOString()
+
+				ZoomLevel = ZoomLevelIndexValues[ZoomIndexTowards]	//Adjust zoom
 				document.getElementById("GraphZoomLevel").value = ZoomLevel.toString(10)
-				document.getElementById("GraphZoomLevel").oninput()
+				
+				let ToTimeMSPostZoom = Math.round(CalculateXPixelToTimeMS(MouseXPos))
+				DisplayedGraphTimeMS = ToTimeMS - Math.round((MSBetweenDisplayedGraphTimeMSAndMouseXMS * parseInt(document.getElementById("GraphZoomLevel").value)/Setting_ZoomDenominator)) - (ToTimeMSPostZoom - DisplayedGraphTimeMS)
+				document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
+				
+				MainCode()
 			}
-		} catch (err) {}
+		} catch (err) {document.getElementById("MousePosToTime").textContent = err}
 	})
 	document.getElementById("DrawingSpace").addEventListener("mousemove", (e) => {
 		//based off of https://phuoc.ng/collection/html-dom/calculate-the-mouse-position-relative-to-an-element/
@@ -111,11 +132,13 @@
 			document.getElementById("MousePosToTime").textContent = "Error"
 			return
 		}
-		let Target = e.currentTarget
-		let Rect = Target.getBoundingClientRect();
-		let XPos = e.clientX - Rect.left;
-		let ToTimeMS = CalculateXPixelToTimeMS(XPos)
-		document.getElementById("MousePosToTime").textContent = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(ToTimeMS).toISOString())
+		try {
+			let Target = e.currentTarget
+			let Rect = Target.getBoundingClientRect();
+			let XPos = e.clientX - Rect.left;
+			let ToTimeMS = Math.round(CalculateXPixelToTimeMS(XPos))
+			//document.getElementById("MousePosToTime").textContent = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(ToTimeMS).toISOString()) + " MousePos: " + XPos.toString(10) + ", MS relative: " + new Date(ToTimeMS-DisplayedGraphTimeMS).valueOf().toString(10)
+		} catch (e) {}
 	}, false)
 	
 	InitalizeDate()
@@ -339,17 +362,9 @@
 		}
 		return true;
 	}
-//	let DrawingArea = document.getElementById("DrawingSpace")
-//	let Rectangle = createSVGElement("rect")
-//	Rectangle.setAttribute("width", "100")
-//	Rectangle.setAttribute("height", "100")
-//	Rectangle.setAttribute("fill", "#808080")
-//	Rectangle.setAttribute("x", "300")
-//	Rectangle.setAttribute("y", "100")
-//	let TitleThing = createSVGElement("title")
-//	TitleThing.appendChild(document.createTextNode("Hover text!"))
-//	Rectangle.appendChild(TitleThing)
-//	DrawingArea.appendChild(Rectangle)
+	function clamp(number, min, max) {
+		return Math.max(min, Math.min(number, max));
+	}
 	
 	function createSVGElement(tag) { //https://stackoverflow.com/questions/57894500/why-is-it-necessary-to-use-document-createelementns-when-adding-svg-tags-to
 		return document.createElementNS('http://www.w3.org/2000/svg', tag)
