@@ -99,6 +99,8 @@
 				}
 				MouseDownClickPos.x = e.pageX
 				MouseDownClickPos.y = e.pageY
+				MouseDownClickPos.moveByX = e.pageX - MouseDownClickPos.x
+				MouseDownClickPos.moveByY = e.pageY - MouseDownClickPos.y
 				MouseDownClickPos.PlacedState = true
 			})
 		})
