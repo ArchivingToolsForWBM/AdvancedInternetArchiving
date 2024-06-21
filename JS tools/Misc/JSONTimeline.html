@@ -50,7 +50,7 @@
 	Date and time (UTC): <input type="text" id="DateAndTime" size="25" onchange="CheckDateValid(); AutoUpdate()"><button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button>
 	
 	<span hidden id="InvalidDateMessage" style="color: #ff0000"> Invalid date! Please enter in <kbd>YYYY-MM-DDTHH:mm:ss.sssZ</kbd> or any readable format.</span><br>
-	<svg style="outline: 1px solid; overflow: hidden" id="DrawingSpace"></svg><br>
+	<svg style="outline: 1px solid; overflow: hidden" id="DrawingSpace" class="Dragable"></svg><br>
 	<kbd>Date of mouse position: <span id="MousePosToTime"></kbd>
 
 <script>
@@ -70,15 +70,48 @@
 	let Saved_EarliestRecordedMS = Infinity
 	let Saved_LatestRecordedMS = -Infinity
 	let DisplayedGraphTimeMS = 0
+	let DisplayedGraphTimeMSOriginal = 0 //Only used when click-drag so it doesn't add by itself and accumulate.
 	let GraphCurrentTimeDisplay = null
+	
 	
 	document.getElementById("GraphZoomLevel").max = Setting_MaxZoom.toString(10)
 	document.getElementById("DrawingSpace").style.width = Setting_SVGSpace_Width.toString(10) + "px"
 	document.getElementById("DrawingSpace").style.height = Setting_SVGSpace_Height.toString(10) + "px"
 	document.getElementById("ZoomUI").hidden = !Setting_ZoomUI
-	
+	//Click and hold, and move the mouse to obtain displacement from where it was clicked
+		let DocBody = document.querySelector("body")
+		let MouseDownClickPos = {
+			x: 0,
+			y: 0,
+			moveByX: 0,
+			moveByY: 0,
+			PlacedState: false
+		}
+		let DragableMouseMovementElements = [...document.querySelectorAll("*.Dragable")]
+		DragableMouseMovementElements.forEach((HTMLEle) => {
+			HTMLEle.addEventListener("mousedown", (e) => {
+				e.preventDefault()
+				if (e.button != 0) {
+					return
+				}
+				MouseDownClickPos.x = e.pageX
+				MouseDownClickPos.y = e.pageY
+				MouseDownClickPos.PlacedState = true
+			})
+		})
+
+		document.addEventListener("mouseup", (e) => {
+			MouseDownClickPos.PlacedState = false
+		})
+		DocBody.addEventListener("mousemove", (e) => {
+			if (MouseDownClickPos.PlacedState) {
+				MouseDownClickPos.moveByX = e.pageX - MouseDownClickPos.x
+				MouseDownClickPos.moveByY = e.pageY - MouseDownClickPos.y
+			}
+		})
 //Code below
-	document.getElementById("DrawingSpace").addEventListener("wheel", (e) => { //Scroll wheel to scroll/zoom the graph
+	let SVGGraph = document.getElementById("DrawingSpace")
+	SVGGraph.addEventListener("wheel", (e) => { //Scroll wheel to scroll/zoom the graph
 		e.preventDefault()
 		if (invalidDateState) {
 			return
@@ -125,6 +158,24 @@
 				MainCode()
 			}
 		} catch (err) {document.getElementById("MousePosToTime").textContent = err}
+	})
+	SVGGraph.addEventListener("mousedown", (e) => {
+		if (e.button != 0) {
+			return
+		}
+		if (!MouseDownClickPos.PlacedState) {
+			return
+		}
+		DisplayedGraphTimeMSOriginal = DisplayedGraphTimeMS //Keep original (don't add by itself on every mouse move)
+		MainCode()
+	})
+	SVGGraph.addEventListener("mousemove", (e) => {
+		if (!MouseDownClickPos.PlacedState) {
+			return
+		}
+		DisplayedGraphTimeMS = DisplayedGraphTimeMSOriginal + Math.round(MouseDownClickPos.moveByX*-1 * Setting_ZoomDenominator / document.getElementById("GraphZoomLevel").value.toString(10))
+		document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
+		MainCode()
 	})
 	document.getElementById("DrawingSpace").addEventListener("mousemove", (e) => {
 		//based off of https://phuoc.ng/collection/html-dom/calculate-the-mouse-position-relative-to-an-element/
