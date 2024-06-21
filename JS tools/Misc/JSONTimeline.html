@@ -50,7 +50,7 @@
 	Date and time (UTC): <input type="text" id="DateAndTime" size="25" onchange="CheckDateValid(); AutoUpdate()"><button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button>
 	
 	<span hidden id="InvalidDateMessage" style="color: #ff0000"> Invalid date! Please enter in <kbd>YYYY-MM-DDTHH:mm:ss.sssZ</kbd> or any readable format.</span><br>
-	<svg style="outline: 1px solid; overflow: hidden" id="DrawingSpace" class="Dragable"></svg><br>
+	<svg style="outline: 1px solid; overflow: hidden" id="DrawingSpace" class="Dragable" tabindex="0" onclick="this.focus()"></svg><br>
 	<kbd>Date of mouse position: <span id="MousePosToTime"></kbd>
 
 <script>
@@ -61,6 +61,7 @@
 	const Setting_SVGSpace_Width = 1500
 	const Setting_SVGSpace_Height = 400
 	const Setting_ZoomUI = false
+	const Setting_ZoomLevelIndexValues = [1,22,263,11224,668448,20000000]
 
 //Don't touch
 	let isTextareaChanged = false
@@ -123,6 +124,7 @@
 		}
 		try {
 			if (!e.ctrlKey) {
+				//Scroll wheel to scroll the graph left and right, moving where the time is at.
 				DisplayedGraphTimeMS = DisplayedGraphTimeMS + Math.round(e.deltaY * Setting_ZoomDenominator / document.getElementById("GraphZoomLevel").value.toString(10))
 					//^Normally, the position of the bars representing a period of time is multiplied by Scale then divided by Setting_ZoomDenominator to scale the
 					// graph size, however, we want to make sure that the more we are zoomed in, the shorter the scroll distance on the time have been moved, so we
@@ -130,18 +132,18 @@
 				document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
 				MainCode()
 			} else {
+				//Zoom to mouse location
 				let ZoomLevel = parseInt(document.getElementById("GraphZoomLevel").value)
 				let ZoomRatio = ZoomLevel/Setting_ZoomDenominator
 				let ZoomUnits = GetInterval(ZoomRatio).ZoomScrollIndex
 	
-				let ZoomLevelIndexValues = [1,22,263,11224,668448,20000000]
 				let ZoomIndexTowards = ZoomUnits + Math.sign(e.deltaY*-1)
 				if (ZoomIndexTowards < 0) {
 					ZoomIndexTowards = 0
 					return
 				}
-				if (ZoomIndexTowards > ZoomLevelIndexValues.length-1) {
-					ZoomIndexTowards = ZoomLevelIndexValues.length-1
+				if (ZoomIndexTowards > Setting_ZoomLevelIndexValues.length-1) {
+					ZoomIndexTowards = Setting_ZoomLevelIndexValues.length-1
 					return
 				}
 				
@@ -153,7 +155,7 @@
 				
 				//let Debug_ToTimeMS_ISOString = new Date(ToTimeMS).toISOString()
 
-				ZoomLevel = ZoomLevelIndexValues[ZoomIndexTowards]	//Adjust zoom
+				ZoomLevel = Setting_ZoomLevelIndexValues[ZoomIndexTowards]	//Adjust zoom
 				document.getElementById("GraphZoomLevel").value = ZoomLevel.toString(10)
 				
 				let ToTimeMSPostZoom = Math.round(CalculateXPixelToTimeMS(MouseXPos))
@@ -175,6 +177,7 @@
 		MainCode()
 	})
 	SVGGraph.addEventListener("mousemove", (e) => {
+		//Mouse drags graph to scroll through time
 		if (!MouseDownClickPos.PlacedState) {
 			return
 		}
@@ -182,8 +185,9 @@
 		document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
 		MainCode()
 	})
-	document.getElementById("DrawingSpace").addEventListener("mousemove", (e) => {
+	SVGGraph.addEventListener("mousemove", (e) => {
 		//based off of https://phuoc.ng/collection/html-dom/calculate-the-mouse-position-relative-to-an-element/
+		//Displays the timestamp on where the mouse is on
 		if (invalidDateState) {
 			document.getElementById("MousePosToTime").textContent = "Error"
 			return
@@ -196,6 +200,42 @@
 			document.getElementById("MousePosToTime").textContent = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(ToTimeMS).toISOString())
 		} catch (e) {}
 	}, false)
+	SVGGraph.addEventListener("keydown", (e) => {
+		//Keyboard input to move and zoom
+		let KeyName = e.key
+		if (KeyName == "ArrowLeft"||KeyName == "a"||KeyName == "ArrowRight"||KeyName == "d") {
+			e.preventDefault()
+			let ScrollDirection = 100
+			if (KeyName == "ArrowLeft"||KeyName == "a") {
+				ScrollDirection = ScrollDirection*-1
+			}
+			DisplayedGraphTimeMS = DisplayedGraphTimeMS + Math.round(ScrollDirection * Setting_ZoomDenominator / document.getElementById("GraphZoomLevel").value.toString(10))
+			document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
+		}
+		if (KeyName == "ArrowUp"||KeyName == "w"||KeyName == "ArrowDown"||KeyName == "s") {
+			e.preventDefault()
+			let ZoomIndexDirection = 1
+			if (KeyName == "ArrowDown"||KeyName == "s") {
+				ZoomIndexDirection = -1
+			}
+			let ZoomLevel = parseInt(document.getElementById("GraphZoomLevel").value)
+			let ZoomRatio = ZoomLevel/Setting_ZoomDenominator
+			let ZoomUnits = GetInterval(ZoomRatio).ZoomScrollIndex
+			
+			let ZoomIndexTowards = ZoomUnits + Math.sign(ZoomIndexDirection)
+			if (ZoomIndexTowards < 0) {
+				ZoomIndexTowards = 0
+				return
+			}
+			if (ZoomIndexTowards > Setting_ZoomLevelIndexValues.length-1) {
+				ZoomIndexTowards = Setting_ZoomLevelIndexValues.length-1
+				return
+			}
+			ZoomLevel = Setting_ZoomLevelIndexValues[ZoomIndexTowards]	//Adjust zoom
+			document.getElementById("GraphZoomLevel").value = ZoomLevel.toString(10)
+		}
+		MainCode()
+	})
 	
 	InitalizeDate()
 	MainCode()
