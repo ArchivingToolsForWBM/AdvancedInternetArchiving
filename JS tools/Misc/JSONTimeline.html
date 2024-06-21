@@ -151,7 +151,7 @@
 				let ToTimeMS = Math.round(CalculateXPixelToTimeMS(MouseXPos)) //Time the mouse is on (relative to epoch). Need to do this before zoom change to preserve the time position
 				let MSBetweenDisplayedGraphTimeMSAndMouseXMS = ToTimeMS - DisplayedGraphTimeMS
 				
-				let Debug_ToTimeMS_ISOString = new Date(ToTimeMS).toISOString()
+				//let Debug_ToTimeMS_ISOString = new Date(ToTimeMS).toISOString()
 
 				ZoomLevel = ZoomLevelIndexValues[ZoomIndexTowards]	//Adjust zoom
 				document.getElementById("GraphZoomLevel").value = ZoomLevel.toString(10)
@@ -193,7 +193,7 @@
 			let Rect = Target.getBoundingClientRect();
 			let XPos = e.clientX - Rect.left;
 			let ToTimeMS = Math.round(CalculateXPixelToTimeMS(XPos))
-			//document.getElementById("MousePosToTime").textContent = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(ToTimeMS).toISOString()) + " MousePos: " + XPos.toString(10) + ", MS relative: " + new Date(ToTimeMS-DisplayedGraphTimeMS).valueOf().toString(10)
+			document.getElementById("MousePosToTime").textContent = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(ToTimeMS).toISOString())
 		} catch (e) {}
 	}, false)
 	
