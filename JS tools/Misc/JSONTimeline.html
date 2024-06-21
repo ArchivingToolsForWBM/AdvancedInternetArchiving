@@ -395,9 +395,12 @@
 			document.getElementById("InvalidJsonMessage").hidden = true
 			ListOfDatedThings.forEach((ArrEle) => {
 				let Rectangle = createSVGElement("rect")
-				Rectangle.setAttribute("x", CalculateXPos(ArrEle.TimeMS.StartingTimeMS).toString(10))
+				let Rectangle_LeftPos = clamp(CalculateXPos(ArrEle.TimeMS.StartingTimeMS), -10, Setting_SVGSpace_Width+10) //This prevents I would think a floating point precision error with the width of the bar when zoomed in with long
+				let Rectangle_RightPos = clamp(CalculateXPos(ArrEle.TimeMS.EndingTimeMS), -10, Setting_SVGSpace_Width+10)  //duration (e.g. 10 years long with a zoom level of seconds). Clamped to 10px off the graph so rounded corners are not shown when extended off
+				
+				Rectangle.setAttribute("x", Rectangle_LeftPos.toString(10))
 				Rectangle.setAttribute("y", "10")
-				Rectangle.setAttribute("width", (CalculateXPos(ArrEle.TimeMS.EndingTimeMS).toString(10) - CalculateXPos(ArrEle.TimeMS.StartingTimeMS)).toString(10))
+				Rectangle.setAttribute("width", (Rectangle_RightPos-Rectangle_LeftPos).toString(10))
 				Rectangle.setAttribute("height", "10")
 				Rectangle.setAttribute("fill", "#808080")
 				Rectangle.setAttribute("rx", "5")
