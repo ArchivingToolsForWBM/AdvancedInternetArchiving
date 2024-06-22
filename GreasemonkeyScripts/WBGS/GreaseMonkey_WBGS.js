@@ -292,6 +292,7 @@
 				// RecentLine should now contain only the status and not the local time.
 					if (RecentLine != "") {
 						let LastLogged = ProcessTrackingLog.at(-1)
+						let ProcessLogObject = null
 						if (typeof LastLogged != "undefined") { //If there is a last item in the array (not when the array is empty)
 							if (LastLogged.Text == RecentLine) { //If the text is the same as the one before, merge with the last object
 								LastLogged.End = CurrentUTC
@@ -301,22 +302,32 @@
 									DurationString = DisplayTimeDuration(DurationMS)
 								}
 								LastLogged.Duration = DurationString
-							} else { //Otherwise create a seperate object
-								let ProcessLogObject = {
+							} else { //Otherwise create a separate object
+								ProcessLogObject = {
 									Start: CurrentUTC,
 									End: CurrentUTC,
 									Duration: "Just started",
 									Text: RecentLine
 								}
-								ProcessTrackingLog.push(ProcessLogObject)
+								
 							}
 						} else { //If array is empty, this is the first item
-							let ProcessLogObject = {
+							ProcessLogObject = {
 								Start: CurrentUTC,
 								End: CurrentUTC,
 								Duration: "Just started",
 								Text: RecentLine
 							}
+						}
+						if (ProcessLogObject != null) {
+							if (/queued/.test(ProcessLogObject.Text)) {
+								ProcessLogObject.Color = "#FFFF00"
+							} else if (/^Processed \d+/.test(ProcessLogObject.Text)) {
+								ProcessLogObject.Color = "#0000FF"
+							} else if (/^Finished processing/.test(ProcessLogObject.Text)) {
+								ProcessLogObject.Color = "#00FF00"
+							}
+							
 							ProcessTrackingLog.push(ProcessLogObject)
 						}
 						TrackingTextarea.textContent = JSON.stringify(ProcessTrackingLog, "", " ")

@@ -465,7 +465,12 @@
 				Rectangle.setAttribute("y", "10")
 				Rectangle.setAttribute("width", (Rectangle_RightPos-Rectangle_LeftPos).toString(10))
 				Rectangle.setAttribute("height", "10")
-				Rectangle.setAttribute("fill", "#808080")
+				let ColorToUse = "#808080"
+				if (ArrEle.Original.hasOwnProperty("Color")) {
+					ColorToUse = ArrEle.Original.Color
+				}
+				Rectangle.setAttribute("fill", ColorToUse)
+				
 				Rectangle.setAttribute("rx", "5")
 				Rectangle.setAttribute("ry", "5")
 				Rectangle.classList.add("Clearable")
