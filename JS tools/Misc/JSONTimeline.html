@@ -48,15 +48,14 @@
 	
 	<span id="ZoomUI">Zoom: <input type="range" min="1" max="100000000000000" step="1" value="101900" id="GraphZoomLevel" oninput="AutoUpdate()" style="width: 800px "><kbd id="ZoomLevelDisplay"></kbd><br></span>
 	Date and time (UTC): <input type="text" id="DateAndTime" size="25" onchange="CheckDateValid(); AutoUpdate()"><br>
-	<button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button><br>
-	
-	<button onclick="ResetYScroll()">Reset Y scroll</button>
 	
 	<span hidden id="InvalidDateMessage" style="color: #ff0000"> Invalid date! Please enter in <kbd>YYYY-MM-DDTHH:mm:ss.sssZ</kbd> or any readable format.</span><br><br>
 	<ul>
 		<li><b>Left/Right</b> or <b>a/d</b> keys: Scroll backward/forward through time. Holding down the left mouse button and moving the mouse also works, as well as rolling the scroll wheel.</li>
 		<li>CTRL + <b>Up/Down</b> or <b>w/s</b> keys: Zoom. Alternatively hold down CTRL and roll the scroll wheel also affects the rolling (will zoom to where the mouse is at though). </li>
 	</ul>
+	<button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button><br>
+	<button onclick="ResetYScroll()">Reset Y scroll</button><br>
 	<svg style="outline: 1px solid; overflow: hidden" id="DrawingSpace" class="Dragable" tabindex="0" onclick="this.focus()"></svg><br>
 	<kbd>Date of mouse position: <span id="MousePosToTime"></kbd>
 
@@ -83,7 +82,7 @@
 	let Saved_LatestRecordedMS = -Infinity
 	let DisplayedGraphTimeMS = 0
 	let DisplayedGraphTimeMSOriginal = 0 //Only used when click-drag so it doesn't add by itself and accumulate.
-	let DisplayedGraphYScroll = 0
+	let DisplayedGraphYScroll = Setting_SVGSpace_Height - Setting_SVGTime_PositionFromBottom
 	let DisplayedGraphYScrollOriginal = 0 // Same as above
 	let GraphCurrentTimeDisplay = null
 	
@@ -329,7 +328,7 @@
 		DisplayedGraphTimeMS = Saved_LatestRecordedMS
 	}
 	function ResetYScroll() {
-		DisplayedGraphYScroll = 0
+		DisplayedGraphYScroll = Setting_SVGSpace_Height - Setting_SVGTime_PositionFromBottom
 		MainCode()
 	}
 	function MainCode() {
@@ -385,6 +384,12 @@
 		} else {
 			ListOfDatedThings = Saved_ListOfDated //Load list
 		}
+		//Correct graph position
+			if (DisplayedGraphYScroll < Setting_SVGSpace_Height - Setting_SVGTime_PositionFromBottom) {
+				DisplayedGraphYScroll = Setting_SVGSpace_Height - Setting_SVGTime_PositionFromBottom
+			}
+			
+			
 		//Display intervals of time (month, day, hours, minutes...)
 		//The for loop's "i" value acts as a failsafe to prevent huge loops
 			let DateIntervalObject = GetInterval(ZoomLevel/Setting_ZoomDenominator)
@@ -468,9 +473,20 @@
 				let Rectangle_RightPos = clamp(CalculateXPos(ArrEle.TimeMS.EndingTimeMS), -10, Setting_SVGSpace_Width+10)  //duration (e.g. 10 years long with a zoom level of seconds). Clamped to 10px off the graph so rounded corners are not shown when extended off
 				
 				Rectangle.setAttribute("x", Rectangle_LeftPos.toString(10))
-				Rectangle.setAttribute("y", DisplayedGraphYScroll.toString(10))
 				Rectangle.setAttribute("width", (Rectangle_RightPos-Rectangle_LeftPos).toString(10))
-				Rectangle.setAttribute("height", "10")
+				
+				let HeightToUse = 10
+				if (ArrEle.Original.hasOwnProperty("BarHeight")) {
+					HeightToUse = ArrEle.Original.BarHeight
+				}
+				let Rectangle_TopPos = clamp(DisplayedGraphYScroll - HeightToUse, -10, Setting_SVGSpace_Height + 10)
+				let Rectangle_BottomPos = clamp(DisplayedGraphYScroll, -10, Setting_SVGSpace_Height + 10)
+				
+				Rectangle.setAttribute("height", (Rectangle_BottomPos - Rectangle_TopPos).toString(10))
+				
+				let Rectangle_BottomYPos = 
+				Rectangle.setAttribute("y", (Rectangle_TopPos).toString(10))
+				
 				let ColorToUse = "#808080"
 				if (ArrEle.Original.hasOwnProperty("Color")) {
 					ColorToUse = ArrEle.Original.Color

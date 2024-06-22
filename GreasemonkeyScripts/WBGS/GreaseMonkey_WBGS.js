@@ -322,8 +322,10 @@
 						if (ProcessLogObject != null) {
 							if (/queued/.test(ProcessLogObject.Text)) {
 								ProcessLogObject.Color = "#FFFF00"
-							} else if (/^Processed \d+/.test(ProcessLogObject.Text)) {
+							} else if (/^Processed [\d,\.]+/.test(ProcessLogObject.Text)) {
 								ProcessLogObject.Color = "#0000FF"
+								let ProcessNumber = parseInt(ProcessLogObject.Text.match(/(?<=^Processed )[\d,\.]+/)[0].replaceAll(/[,\.]/g, ""))
+								ProcessLogObject.BarHeight = 10 + (ProcessNumber*10)
 							} else if (/^Finished processing/.test(ProcessLogObject.Text)) {
 								ProcessLogObject.Color = "#00FF00"
 							}
