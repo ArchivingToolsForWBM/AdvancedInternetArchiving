@@ -66,6 +66,9 @@
 	const Setting_SVGSpace_Height = 400
 	const Setting_ZoomUI = false
 	const Setting_ZoomLevelIndexValues = [1,22,263,11224,668448,20000000]
+	
+	const Setting_MaxDateMS = 8640000000000000
+	const Setting_MinDateMS = -8640000000000000
 
 //Don't touch
 	let isTextareaChanged = false
@@ -129,7 +132,7 @@
 		try {
 			if (!e.ctrlKey) {
 				//Scroll wheel to scroll the graph left and right, moving where the time is at.
-				DisplayedGraphTimeMS = DisplayedGraphTimeMS + Math.round(e.deltaY * Setting_ZoomDenominator / document.getElementById("GraphZoomLevel").value.toString(10))
+				DisplayedGraphTimeMS = clamp(DisplayedGraphTimeMS + Math.round(e.deltaY * Setting_ZoomDenominator / document.getElementById("GraphZoomLevel").value.toString(10)), Setting_MinDateMS, Setting_MaxDateMS)
 					//^Normally, the position of the bars representing a period of time is multiplied by Scale then divided by Setting_ZoomDenominator to scale the
 					// graph size, however, we want to make sure that the more we are zoomed in, the shorter the scroll distance on the time have been moved, so we
 					// multiply by the reciprocal of that fraction.
@@ -156,14 +159,12 @@
 				let MouseXPos = e.clientX - Rect.left;		//Mouse position relative to SVG
 				let ToTimeMS = Math.round(CalculateXPixelToTimeMS(MouseXPos)) //Time the mouse is on (relative to epoch). Need to do this before zoom change to preserve the time position
 				let MSBetweenDisplayedGraphTimeMSAndMouseXMS = ToTimeMS - DisplayedGraphTimeMS
-				
-				//let Debug_ToTimeMS_ISOString = new Date(ToTimeMS).toISOString()
 
 				ZoomLevel = Setting_ZoomLevelIndexValues[ZoomIndexTowards]	//Adjust zoom
 				document.getElementById("GraphZoomLevel").value = ZoomLevel.toString(10)
 				
 				let ToTimeMSPostZoom = Math.round(CalculateXPixelToTimeMS(MouseXPos))
-				DisplayedGraphTimeMS = ToTimeMS - Math.round((MSBetweenDisplayedGraphTimeMSAndMouseXMS * parseInt(document.getElementById("GraphZoomLevel").value)/Setting_ZoomDenominator)) - (ToTimeMSPostZoom - DisplayedGraphTimeMS)
+				DisplayedGraphTimeMS = clamp(ToTimeMS - Math.round((MSBetweenDisplayedGraphTimeMSAndMouseXMS * parseInt(document.getElementById("GraphZoomLevel").value)/Setting_ZoomDenominator)) - (ToTimeMSPostZoom - DisplayedGraphTimeMS), Setting_MinDateMS, Setting_MaxDateMS)
 				document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
 				
 				MainCode()
@@ -185,7 +186,7 @@
 		if (!MouseDownClickPos.PlacedState) {
 			return
 		}
-		DisplayedGraphTimeMS = DisplayedGraphTimeMSOriginal + Math.round(MouseDownClickPos.moveByX*-1 * Setting_ZoomDenominator / document.getElementById("GraphZoomLevel").value.toString(10))
+		DisplayedGraphTimeMS = clamp(DisplayedGraphTimeMSOriginal + Math.round(MouseDownClickPos.moveByX*-1 * Setting_ZoomDenominator / document.getElementById("GraphZoomLevel").value.toString(10)), Setting_MinDateMS, Setting_MaxDateMS)
 		document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
 		MainCode()
 	})
@@ -215,7 +216,7 @@
 			if (KeyName == "ArrowLeft"||KeyName == "a") {
 				ScrollDirection = ScrollDirection*-1
 			}
-			DisplayedGraphTimeMS = DisplayedGraphTimeMS + Math.round(ScrollDirection * Setting_ZoomDenominator / document.getElementById("GraphZoomLevel").value.toString(10))
+			DisplayedGraphTimeMS = clamp(DisplayedGraphTimeMS + Math.round(ScrollDirection * Setting_ZoomDenominator / document.getElementById("GraphZoomLevel").value.toString(10)), Setting_MinDateMS, Setting_MaxDateMS)
 			document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
 		}
 		if (KeyName == "ArrowUp"||KeyName == "w"||KeyName == "ArrowDown"||KeyName == "s") {
@@ -268,10 +269,10 @@
 		
 	}
 	function InitalizeDate() {
-		let HourAgo = Date.now()
-		let ISOString = new Date(HourAgo).toISOString()
+		let CurrentTimeMS = Date.now()
+		let ISOString = new Date(CurrentTimeMS).toISOString()
 		document.getElementById("DateAndTime").value = ISOString
-		DisplayedGraphTimeMS = HourAgo.valueOf()
+		DisplayedGraphTimeMS = CurrentTimeMS.valueOf()
 		invalidDateState = false
 		document.getElementById("InvalidDateMessage").hidden = true
 	}
@@ -372,7 +373,7 @@
 			for (let i = 0; i < Setting_IntervalDrawLimit; i++) {
 				//Get position, terminate if we got to the right side of graph
 					let IntervalLineXPos = CalculateXPos(DateIntervalObject.DateInterval.valueOf())
-					if (IntervalLineXPos > Setting_SVGSpace_Width+10) { //If last line outside the chart, end the loop
+					if ((IntervalLineXPos > Setting_SVGSpace_Width+10)||Number.isNaN(IntervalLineXPos)) { //If last line outside the chart, end the loop
 						break
 					}
 				//Place a vertical line
@@ -570,6 +571,9 @@
 			}
 			ReturnObject.IncrementName = "Seconds"
 			ReturnObject.ZoomScrollIndex = 5
+		}
+		if (ReturnObject.DateInterval < Setting_MinDateMS) {
+			ReturnObject.DateInterval = Setting_MinDateMS
 		}
 		return ReturnObject
 	}
