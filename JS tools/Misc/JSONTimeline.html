@@ -55,7 +55,8 @@
 		<li>CTRL + <b>Up/Down</b> or <b>w/s</b> keys: Zoom. Alternatively hold down CTRL and roll the scroll wheel also affects the rolling (will zoom to where the mouse is at though). </li>
 	</ul>
 	<button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button><br>
-	<button onclick="ResetYScroll()">Reset Y scroll</button><br>
+	<button onclick="ResetYScroll();">Reset Y scroll</button><br>
+	<label><input type="checkbox" id="YScaleFit" onchange="MainCode()" checked>Scale vertical length to fit to graph</label><br>
 	<svg style="outline: 1px solid; overflow: hidden" id="DrawingSpace" class="Dragable" tabindex="0" onclick="this.focus()"></svg><br>
 	<kbd>Date of mouse position: <span id="MousePosToTime"></kbd>
 
@@ -333,6 +334,9 @@
 	}
 	function MainCode() {
 		GraphCurrentTime()
+		if (document.getElementById("YScaleFit").checked) {
+			DisplayedGraphYScroll = Setting_SVGSpace_Height - Setting_SVGTime_PositionFromBottom
+		}
 		let OutputGraph = document.getElementById("DrawingSpace")
 		let ClearableSVGElements = [...OutputGraph.querySelectorAll("*.Clearable")]
 		ClearableSVGElements.forEach((SVGEle) => {
@@ -465,6 +469,21 @@
 					DateIntervalObject.NextInterval()
 
 			}
+		//Determine what bar is the tallest, only used when YScaleFit is being used
+			let TallestBarHeight = 0
+			try {
+				if (document.getElementById("YScaleFit").checked) {
+					ListOfDatedThings.forEach((ArrEle) => {
+						let Height = 0
+						if (ArrEle.Original.hasOwnProperty("BarHeight")) {
+							Height = ArrEle.Original.BarHeight
+						}
+						if (TallestBarHeight < Height) {
+							TallestBarHeight = Height
+						}
+					})
+				}
+			} catch (e) {}
 		//Place bars indicating duration based on the items provided
 			document.getElementById("InvalidJsonMessage").hidden = true
 			ListOfDatedThings.forEach((ArrEle) => {
@@ -475,16 +494,21 @@
 				Rectangle.setAttribute("x", Rectangle_LeftPos.toString(10))
 				Rectangle.setAttribute("width", (Rectangle_RightPos-Rectangle_LeftPos).toString(10))
 				
+				//DisplayedGraphYScroll is the position at the bottom just above the time labels (by default before any Y scroll by the user).
 				let HeightToUse = 10
 				if (ArrEle.Original.hasOwnProperty("BarHeight")) {
 					HeightToUse = ArrEle.Original.BarHeight
 				}
+				if (document.getElementById("YScaleFit").checked) {
+					HeightToUse = (HeightToUse * (Setting_SVGSpace_Height - Setting_SVGTime_PositionFromBottom))/TallestBarHeight
+				}
+				
+				
 				let Rectangle_TopPos = clamp(DisplayedGraphYScroll - HeightToUse, -10, Setting_SVGSpace_Height + 10)
 				let Rectangle_BottomPos = clamp(DisplayedGraphYScroll, -10, Setting_SVGSpace_Height + 10)
 				
 				Rectangle.setAttribute("height", (Rectangle_BottomPos - Rectangle_TopPos).toString(10))
 				
-				let Rectangle_BottomYPos = 
 				Rectangle.setAttribute("y", (Rectangle_TopPos).toString(10))
 				
 				let ColorToUse = "#808080"
