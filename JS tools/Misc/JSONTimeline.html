@@ -47,12 +47,15 @@
 	<br>
 	
 	<span id="ZoomUI">Zoom: <input type="range" min="1" max="100000000000000" step="1" value="101900" id="GraphZoomLevel" oninput="AutoUpdate()" style="width: 800px "><kbd id="ZoomLevelDisplay"></kbd><br></span>
-	Date and time (UTC): <input type="text" id="DateAndTime" size="25" onchange="CheckDateValid(); AutoUpdate()"><button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button>
+	Date and time (UTC): <input type="text" id="DateAndTime" size="25" onchange="CheckDateValid(); AutoUpdate()"><br>
+	<button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button><br>
+	
+	<button onclick="ResetYScroll()">Reset Y scroll</button>
 	
 	<span hidden id="InvalidDateMessage" style="color: #ff0000"> Invalid date! Please enter in <kbd>YYYY-MM-DDTHH:mm:ss.sssZ</kbd> or any readable format.</span><br><br>
 	<ul>
 		<li><b>Left/Right</b> or <b>a/d</b> keys: Scroll backward/forward through time. Holding down the left mouse button and moving the mouse also works, as well as rolling the scroll wheel.</li>
-		<li><b>Up/Down</b> or <b>w/s</b> keys: Zoom. Alternatively hold down CTRL and roll the scroll wheel also affects the rolling (will zoom to where the mouse is at though). </li>
+		<li>CTRL + <b>Up/Down</b> or <b>w/s</b> keys: Zoom. Alternatively hold down CTRL and roll the scroll wheel also affects the rolling (will zoom to where the mouse is at though). </li>
 	</ul>
 	<svg style="outline: 1px solid; overflow: hidden" id="DrawingSpace" class="Dragable" tabindex="0" onclick="this.focus()"></svg><br>
 	<kbd>Date of mouse position: <span id="MousePosToTime"></kbd>
@@ -63,7 +66,8 @@
 	const Setting_MaxZoom = 20000000
 	const Setting_IntervalDrawLimit = 200
 	const Setting_SVGSpace_Width = 1500
-	const Setting_SVGSpace_Height = 400
+	const Setting_SVGSpace_Height = 800
+	const Setting_SVGTime_PositionFromBottom = 150
 	const Setting_ZoomUI = false
 	const Setting_ZoomLevelIndexValues = [1,22,263,11224,668448,20000000]
 	
@@ -79,6 +83,8 @@
 	let Saved_LatestRecordedMS = -Infinity
 	let DisplayedGraphTimeMS = 0
 	let DisplayedGraphTimeMSOriginal = 0 //Only used when click-drag so it doesn't add by itself and accumulate.
+	let DisplayedGraphYScroll = 0
+	let DisplayedGraphYScrollOriginal = 0 // Same as above
 	let GraphCurrentTimeDisplay = null
 	
 	
@@ -179,15 +185,18 @@
 			return
 		}
 		DisplayedGraphTimeMSOriginal = DisplayedGraphTimeMS //Keep original (don't add by itself on every mouse move)
+		DisplayedGraphYScrollOriginal = DisplayedGraphYScroll
 		MainCode()
 	})
 	SVGGraph.addEventListener("mousemove", (e) => {
-		//Mouse drags graph to scroll through time
+		//Mouse drags graph to scroll the graph
 		if (!MouseDownClickPos.PlacedState) {
 			return
 		}
 		DisplayedGraphTimeMS = clamp(DisplayedGraphTimeMSOriginal + Math.round(MouseDownClickPos.moveByX*-1 * Setting_ZoomDenominator / document.getElementById("GraphZoomLevel").value.toString(10)), Setting_MinDateMS, Setting_MaxDateMS)
 		document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
+		
+		DisplayedGraphYScroll = DisplayedGraphYScrollOriginal + (MouseDownClickPos.moveByY)
 		MainCode()
 	})
 	SVGGraph.addEventListener("mousemove", (e) => {
@@ -222,25 +231,33 @@
 		if (KeyName == "ArrowUp"||KeyName == "w"||KeyName == "ArrowDown"||KeyName == "s") {
 			IsKeyControllingGraph = true
 			e.preventDefault()
-			let ZoomIndexDirection = 1
-			if (KeyName == "ArrowDown"||KeyName == "s") {
-				ZoomIndexDirection = -1
+			if (e.ctrlKey) {
+				let ZoomIndexDirection = 1
+				if (KeyName == "ArrowDown"||KeyName == "s") {
+					ZoomIndexDirection = -1
+				}
+				let ZoomLevel = parseInt(document.getElementById("GraphZoomLevel").value)
+				let ZoomRatio = ZoomLevel/Setting_ZoomDenominator
+				let ZoomUnits = GetInterval(ZoomRatio).ZoomScrollIndex
+				
+				let ZoomIndexTowards = ZoomUnits + Math.sign(ZoomIndexDirection)
+				if (ZoomIndexTowards < 0) {
+					ZoomIndexTowards = 0
+					return
+				}
+				if (ZoomIndexTowards > Setting_ZoomLevelIndexValues.length-1) {
+					ZoomIndexTowards = Setting_ZoomLevelIndexValues.length-1
+					return
+				}
+				ZoomLevel = Setting_ZoomLevelIndexValues[ZoomIndexTowards]	//Adjust zoom
+				document.getElementById("GraphZoomLevel").value = ZoomLevel.toString(10)
+			} else {
+				let ScrollDirection = 100
+				if (KeyName == "ArrowDown"||KeyName == "s") {
+					ScrollDirection = ScrollDirection*-1
+				}
+				DisplayedGraphYScroll = DisplayedGraphYScroll + ScrollDirection
 			}
-			let ZoomLevel = parseInt(document.getElementById("GraphZoomLevel").value)
-			let ZoomRatio = ZoomLevel/Setting_ZoomDenominator
-			let ZoomUnits = GetInterval(ZoomRatio).ZoomScrollIndex
-			
-			let ZoomIndexTowards = ZoomUnits + Math.sign(ZoomIndexDirection)
-			if (ZoomIndexTowards < 0) {
-				ZoomIndexTowards = 0
-				return
-			}
-			if (ZoomIndexTowards > Setting_ZoomLevelIndexValues.length-1) {
-				ZoomIndexTowards = Setting_ZoomLevelIndexValues.length-1
-				return
-			}
-			ZoomLevel = Setting_ZoomLevelIndexValues[ZoomIndexTowards]	//Adjust zoom
-			document.getElementById("GraphZoomLevel").value = ZoomLevel.toString(10)
 		}
 		if (IsKeyControllingGraph) { //Prevent unnecessary execution when no effect occurs, originally prevents flicker with the yellow current time mark when user holds down CTRL
 			MainCode()
@@ -260,7 +277,7 @@
 		GraphCurrentTimeDisplay.setAttribute("x1", IntervalLineXPos.toString(10))
 		GraphCurrentTimeDisplay.setAttribute("x2", IntervalLineXPos.toString(10))
 		GraphCurrentTimeDisplay.setAttribute("y1", "0")
-		GraphCurrentTimeDisplay.setAttribute("y2", "100")
+		GraphCurrentTimeDisplay.setAttribute("y2", (Setting_SVGSpace_Height - Setting_SVGTime_PositionFromBottom).toString(10))
 		GraphCurrentTimeDisplay.setAttribute("z", "2")
 		GraphCurrentTimeDisplay.setAttribute("stroke", "#FFFF00")
 		GraphCurrentTimeDisplay.setAttribute("id", "DontErase")
@@ -310,6 +327,10 @@
 		invalidDateState = false
 		document.getElementById("DateAndTime").value = new Date(Saved_LatestRecordedMS).toISOString()
 		DisplayedGraphTimeMS = Saved_LatestRecordedMS
+	}
+	function ResetYScroll() {
+		DisplayedGraphYScroll = 0
+		MainCode()
 	}
 	function MainCode() {
 		GraphCurrentTime()
@@ -370,6 +391,7 @@
 			
 			document.getElementById("ZoomLevelDisplay").textContent = ZoomLevel.toString(10) + "/" + Setting_ZoomDenominator.toString(10) + "x (" + (ZoomLevel/Setting_ZoomDenominator).toFixed(10) + "x), Interval type: " + DateIntervalObject.IncrementName
 			
+			let ListOfTimeLabels = []
 			for (let i = 0; i < Setting_IntervalDrawLimit; i++) {
 				//Get position, terminate if we got to the right side of graph
 					let IntervalLineXPos = CalculateXPos(DateIntervalObject.DateInterval.valueOf())
@@ -381,7 +403,7 @@
 					IntervalLine.setAttribute("x1", IntervalLineXPos.toString(10))
 					IntervalLine.setAttribute("x2", IntervalLineXPos.toString(10))
 					IntervalLine.setAttribute("y1", "0")
-					IntervalLine.setAttribute("y2", "100")
+					IntervalLine.setAttribute("y2", (Setting_SVGSpace_Height - Setting_SVGTime_PositionFromBottom).toString(10))
 					IntervalLine.setAttribute("stroke", "#ffffff")
 					IntervalLine.classList.add("Clearable")
 					OutputGraph.appendChild(IntervalLine)
@@ -391,65 +413,49 @@
 						OutputGraph.insertBefore(IntervalLine, GraphCurrentTimeDisplay)
 					}
 					
-				//Add text
-					let TextTimestamp = createSVGElement("text")
+				//generate text (but don't place them yet, do it after the time duration the user have entered)
+				//List the time labels that are in the graph (we are doing this so that the lines are placed behind the bars, but the text is in the foreground-most)
+					let TimeText = ""
 					switch (DateIntervalObject.IncrementName) {
 						case "Year":
-							TextTimestamp.appendChild(document.createTextNode((DateIntervalObject.DateInterval.getUTCFullYear()).toString(10)))
+							TimeText = DateIntervalObject.DateInterval.getUTCFullYear().toString(10)
 							break
 						case "Month":
-							TextTimestamp.appendChild(document.createTextNode((DateIntervalObject.DateInterval.getUTCFullYear()).toString(10) + "-" + (DateIntervalObject.DateInterval.getUTCMonth()+1).toString(10).padStart(2, "0")))
+							TimeText = (DateIntervalObject.DateInterval.getUTCFullYear()).toString(10) + "-" + (DateIntervalObject.DateInterval.getUTCMonth()+1).toString(10).padStart(2, "0")
 							break
 						case "Day":
-							TextTimestamp.appendChild(document.createTextNode((DateIntervalObject.DateInterval.getUTCFullYear()).toString(10) + "-" + (DateIntervalObject.DateInterval.getUTCMonth()+1).toString(10).padStart(2, "0") + "-" + (DateIntervalObject.DateInterval.getUTCDate()).toString(10).padStart(2, "0")))
+							TimeText = DateIntervalObject.DateInterval.getUTCFullYear().toString(10) + "-" + (DateIntervalObject.DateInterval.getUTCMonth()+1).toString(10).padStart(2, "0") + "-" + DateIntervalObject.DateInterval.getUTCDate().toString(10).padStart(2, "0")
 							break
 						case "Hours":
 							{
 								let Hours = DateIntervalObject.DateInterval.getUTCHours()
-								let Text = ""
 								if (Hours == 0) {
-									Text += (DateIntervalObject.DateInterval.getUTCFullYear()).toString(10) + "-" + (DateIntervalObject.DateInterval.getUTCMonth()+1).toString(10).padStart(2, "0") + "-" + (DateIntervalObject.DateInterval.getUTCDate()).toString(10).padStart(2, "0") + " "
+									TimeText += (DateIntervalObject.DateInterval.getUTCFullYear()).toString(10) + "-" + (DateIntervalObject.DateInterval.getUTCMonth()+1).toString(10).padStart(2, "0") + "-" + (DateIntervalObject.DateInterval.getUTCDate()).toString(10).padStart(2, "0") + " "
 								}
-								Text += Hours.toString(10).padStart(2, "0") + ":00"
-								TextTimestamp.appendChild(document.createTextNode(Text))
+								TimeText += Hours.toString(10).padStart(2, "0") + ":00"
 							}
 							break
 						case "Minutes":
 							{
 								let Hours = DateIntervalObject.DateInterval.getUTCHours()
 								let Minutes = DateIntervalObject.DateInterval.getUTCMinutes()
-								let Text = ""
 								if (Minutes == 0) {
-									Text += (DateIntervalObject.DateInterval.getUTCFullYear()).toString(10) + "-" + (DateIntervalObject.DateInterval.getUTCMonth()+1).toString(10).padStart(2, "0") + "-" + (DateIntervalObject.DateInterval.getUTCDate()).toString(10).padStart(2, "0") + " " + (DateIntervalObject.DateInterval.getUTCHours()).toString(10).padStart(2, "0") + ":"
+									TimeText += (DateIntervalObject.DateInterval.getUTCFullYear()).toString(10) + "-" + (DateIntervalObject.DateInterval.getUTCMonth()+1).toString(10).padStart(2, "0") + "-" + (DateIntervalObject.DateInterval.getUTCDate()).toString(10).padStart(2, "0") + " " + (DateIntervalObject.DateInterval.getUTCHours()).toString(10).padStart(2, "0") + ":"
 								}
-								Text += Hours.toString(10).padStart(2, "0") + ":" + Minutes.toString(10).padStart(2, "0")
-								TextTimestamp.appendChild(document.createTextNode(Text))
+								TimeText += Hours.toString(10).padStart(2, "0") + ":" + Minutes.toString(10).padStart(2, "0")
 							}
 							break
 						case "Seconds":
 							{
 								let Seconds = DateIntervalObject.DateInterval.getUTCSeconds()
-								let Text = ""
 								if (Seconds == 0) {
-									Text += (DateIntervalObject.DateInterval.getUTCFullYear()).toString(10) + "-" + (DateIntervalObject.DateInterval.getUTCMonth()+1).toString(10).padStart(2, "0") + "-" + (DateIntervalObject.DateInterval.getUTCDate()).toString(10).padStart(2, "0") + " " + (DateIntervalObject.DateInterval.getUTCHours()).toString(10).padStart(2, "0") + ":" + (DateIntervalObject.DateInterval.getUTCMinutes()).toString(10).padStart(2, "0") + ":"
+									TimeText += (DateIntervalObject.DateInterval.getUTCFullYear()).toString(10) + "-" + (DateIntervalObject.DateInterval.getUTCMonth()+1).toString(10).padStart(2, "0") + "-" + (DateIntervalObject.DateInterval.getUTCDate()).toString(10).padStart(2, "0") + " " + (DateIntervalObject.DateInterval.getUTCHours()).toString(10).padStart(2, "0") + ":" + (DateIntervalObject.DateInterval.getUTCMinutes()).toString(10).padStart(2, "0") + ":"
 								}
-								Text += Seconds.toString(10).padStart(2, "0")
-								TextTimestamp.appendChild(document.createTextNode(Text))
+								TimeText += Seconds.toString(10).padStart(2, "0")
 							}
 					}
-					//TextTimestamp.appendChild(document.createTextNode(ISOString_to_YYYY_MM_DD_HH_MM_SS(DateIntervalObject.DateInterval.toISOString())))
-					TextTimestamp.setAttribute("text-anchor", "start")
-					TextTimestamp.setAttribute("alignment-baseline", "middle")
-					TextTimestamp.setAttribute("stroke", "#ffffff")
-					TextTimestamp.setAttribute("font-weight", "lighter")
-					TextTimestamp.setAttribute("transform", "translate(" + (IntervalLineXPos).toString(10) + ", 100)" + "rotate(90)")
-					TextTimestamp.setAttribute("font-family", "monospace")
-					TextTimestamp.classList.add("Clearable")
-					if (GraphCurrentTimeDisplay == null) { //Insert before the yellow line so it doesn't alternate draw priority
-						OutputGraph.appendChild(TextTimestamp)
-					} else {
-						OutputGraph.insertBefore(TextTimestamp, GraphCurrentTimeDisplay)
-					}
+					
+					ListOfTimeLabels.push({DateObject: DateIntervalObject.DateInterval, TimeLabel: TimeText, XPos: IntervalLineXPos})
 				//Next interval
 					DateIntervalObject.NextInterval()
 
@@ -462,7 +468,7 @@
 				let Rectangle_RightPos = clamp(CalculateXPos(ArrEle.TimeMS.EndingTimeMS), -10, Setting_SVGSpace_Width+10)  //duration (e.g. 10 years long with a zoom level of seconds). Clamped to 10px off the graph so rounded corners are not shown when extended off
 				
 				Rectangle.setAttribute("x", Rectangle_LeftPos.toString(10))
-				Rectangle.setAttribute("y", "10")
+				Rectangle.setAttribute("y", DisplayedGraphYScroll.toString(10))
 				Rectangle.setAttribute("width", (Rectangle_RightPos-Rectangle_LeftPos).toString(10))
 				Rectangle.setAttribute("height", "10")
 				let ColorToUse = "#808080"
@@ -481,6 +487,25 @@
 					OutputGraph.appendChild(Rectangle)
 				} else {
 					OutputGraph.insertBefore(Rectangle, GraphCurrentTimeDisplay)
+				}
+			})
+		//Place time labels, on the forgroundmost
+			ListOfTimeLabels.forEach((TimeInterval) => {
+				let TextTimestamp = createSVGElement("text")
+				TextTimestamp.appendChild(document.createTextNode(TimeInterval.TimeLabel))
+				
+				TextTimestamp.setAttribute("text-anchor", "start")
+				TextTimestamp.setAttribute("alignment-baseline", "middle")
+				TextTimestamp.setAttribute("stroke", "#ffffff")
+				TextTimestamp.setAttribute("font-weight", "lighter")
+				TextTimestamp.setAttribute("transform", "translate(" + (TimeInterval.XPos).toString(10) + ", " + (Setting_SVGSpace_Height - Setting_SVGTime_PositionFromBottom) +")" + "rotate(90)")
+				TextTimestamp.setAttribute("font-family", "monospace")
+				TextTimestamp.classList.add("Clearable")
+				
+				if (GraphCurrentTimeDisplay == null) { //Insert before the yellow line so it doesn't alternate draw priority
+					OutputGraph.appendChild(TextTimestamp)
+				} else {
+					OutputGraph.insertBefore(TextTimestamp, GraphCurrentTimeDisplay)
 				}
 			})
 	}
