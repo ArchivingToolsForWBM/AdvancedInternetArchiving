@@ -372,7 +372,7 @@
 			for (let i = 0; i < Setting_IntervalDrawLimit; i++) {
 				//Get position, terminate if we got to the right side of graph
 					let IntervalLineXPos = CalculateXPos(DateIntervalObject.DateInterval.valueOf())
-					if (IntervalLineXPos > 1500) { //If last line outside the chart, end the loop
+					if (IntervalLineXPos > Setting_SVGSpace_Width+10) { //If last line outside the chart, end the loop
 						break
 					}
 				//Place a vertical line
