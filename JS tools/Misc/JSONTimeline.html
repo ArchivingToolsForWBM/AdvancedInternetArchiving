@@ -46,8 +46,6 @@
 	
 	<br>
 	
-	<span id="ZoomUI">Zoom: <input type="range" min="1" max="100000000000000" step="1" value="101900" id="GraphZoomLevel" oninput="AutoUpdate()" style="width: 800px "><kbd id="ZoomLevelDisplay"></kbd><br></span>
-	Date and time (UTC): <input type="text" id="DateAndTime" size="25" onchange="CheckDateValid(); AutoUpdate()"><br>
 	
 	<span hidden id="InvalidDateMessage" style="color: #ff0000"> Invalid date! Please enter in <kbd>YYYY-MM-DDTHH:mm:ss.sssZ</kbd> or any readable format.</span><br><br>
 	<ul>
@@ -57,6 +55,8 @@
 	<button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button><br>
 	<button onclick="ResetYScroll();">Reset Y scroll</button><br>
 	<label><input type="checkbox" id="YScaleFit" onchange="MainCode()" checked>Scale vertical length to fit to graph</label><br>
+	<span id="ZoomUI">Zoom: <input type="range" min="1" max="100000000000000" step="1" value="101900" id="GraphZoomLevel" oninput="AutoUpdate()" style="width: 800px "><kbd id="ZoomLevelDisplay"></kbd><br></span>
+	Date and time (UTC): <input type="text" id="DateAndTime" size="25" onchange="CheckDateValid(); AutoUpdate()"><br>
 	<svg style="outline: 1px solid; overflow: hidden" id="DrawingSpace" class="Dragable" tabindex="0" onclick="this.focus()"></svg><br>
 	<kbd>Date of mouse position: <span id="MousePosToTime"></kbd>
 
