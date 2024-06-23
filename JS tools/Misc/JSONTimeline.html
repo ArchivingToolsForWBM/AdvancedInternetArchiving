@@ -86,6 +86,7 @@
 	let DisplayedGraphYScroll = Setting_SVGSpace_Height - Setting_SVGTime_PositionFromBottom
 	let DisplayedGraphYScrollOriginal = 0 // Same as above
 	let GraphCurrentTimeDisplay = null
+	let TallestBarHeight = 1
 	
 	
 	document.getElementById("GraphZoomLevel").max = Setting_MaxZoom.toString(10)
@@ -353,11 +354,13 @@
 			document.getElementById("InvalidDateMessage").hidden = true
 		}
 		if (isTextareaChanged) { //Process any new changes in the input textarea
+			//Also determine what bar is the tallest, only used when YScaleFit is being used
 			if (!isJsonString(InputJSONTimelineString)) {
 				document.getElementById("InvalidJsonMessage").hidden = false
 				return
 			}
 			try {
+				
 				ListOfDatedThings = [...JSON.parse(InputJSONTimelineString)] //Test if the outermost object is array
 				ListOfDatedThings = ListOfDatedThings.map((ArrEle) => {
 					let StartingTimeMS = new Date(ArrEle.Start).valueOf()
@@ -367,6 +370,15 @@
 					let EndingTimeMS =  new Date(ArrEle.End).valueOf()
 					if (LatestRecordedMS < EndingTimeMS) {
 						LatestRecordedMS = EndingTimeMS
+					}
+					if (document.getElementById("YScaleFit").checked) {
+						let Height = 0
+						if (ArrEle.hasOwnProperty("BarHeight")) {
+							Height = ArrEle.BarHeight
+						}
+						if (TallestBarHeight < Height) {
+							TallestBarHeight = Height
+						}
 					}
 					return {
 						Original: ArrEle,
@@ -469,21 +481,6 @@
 					DateIntervalObject.NextInterval()
 
 			}
-		//Determine what bar is the tallest, only used when YScaleFit is being used
-			let TallestBarHeight = 0
-			try {
-				if (document.getElementById("YScaleFit").checked) {
-					ListOfDatedThings.forEach((ArrEle) => {
-						let Height = 0
-						if (ArrEle.Original.hasOwnProperty("BarHeight")) {
-							Height = ArrEle.Original.BarHeight
-						}
-						if (TallestBarHeight < Height) {
-							TallestBarHeight = Height
-						}
-					})
-				}
-			} catch (e) {}
 		//Place bars indicating duration based on the items provided
 			document.getElementById("InvalidJsonMessage").hidden = true
 			ListOfDatedThings.forEach((ArrEle) => {
@@ -497,7 +494,7 @@
 				//DisplayedGraphYScroll is the position at the bottom just above the time labels (by default before any Y scroll by the user).
 				let HeightToUse = 10
 				if (ArrEle.Original.hasOwnProperty("BarHeight")) {
-					HeightToUse = ArrEle.Original.BarHeight
+					HeightToUse = ArrEle.Original.BarHeight //If no barheight provided, use the default 10
 				}
 				if (document.getElementById("YScaleFit").checked) {
 					HeightToUse = (HeightToUse * (Setting_SVGSpace_Height - Setting_SVGTime_PositionFromBottom))/TallestBarHeight
