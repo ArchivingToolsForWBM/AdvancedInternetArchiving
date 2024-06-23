@@ -485,11 +485,16 @@
 			document.getElementById("InvalidJsonMessage").hidden = true
 			ListOfDatedThings.forEach((ArrEle) => {
 				let Rectangle = createSVGElement("rect")
+				//We need to clamp to prevent extreme widths and heights that would cause glitches (such as a rectangle whose XY pos is extremely far to the left or beyond the top)
 				let Rectangle_LeftPos = clamp(CalculateXPos(ArrEle.TimeMS.StartingTimeMS), -10, Setting_SVGSpace_Width+10) //This prevents I would think a floating point precision error with the width of the bar when zoomed in with long
 				let Rectangle_RightPos = clamp(CalculateXPos(ArrEle.TimeMS.EndingTimeMS), -10, Setting_SVGSpace_Width+10)  //duration (e.g. 10 years long with a zoom level of seconds). Clamped to 10px off the graph so rounded corners are not shown when extended off
 				
 				Rectangle.setAttribute("x", Rectangle_LeftPos.toString(10))
-				Rectangle.setAttribute("width", (Rectangle_RightPos-Rectangle_LeftPos).toString(10))
+				let Rectangle_Width = Rectangle_RightPos-Rectangle_LeftPos
+				if (Rectangle_Width < 10) { //If bar too thin, set the minimum width to 10px.
+					Rectangle_Width = 10
+				}
+				Rectangle.setAttribute("width", Rectangle_Width.toString(10))
 				
 				//DisplayedGraphYScroll is the position at the bottom just above the time labels (by default before any Y scroll by the user).
 				let HeightToUse = 10
@@ -499,7 +504,9 @@
 				if (document.getElementById("YScaleFit").checked) {
 					HeightToUse = (HeightToUse * (Setting_SVGSpace_Height - Setting_SVGTime_PositionFromBottom))/TallestBarHeight
 				}
-				
+				if (HeightToUse < 10) { //Same as with the width, a bar of either the width or height being so thin that the element cannot be hover-over to show the tooltip
+					HeightToUse = 10
+				}
 				
 				let Rectangle_TopPos = clamp(DisplayedGraphYScroll - HeightToUse, -10, Setting_SVGSpace_Height + 10)
 				let Rectangle_BottomPos = clamp(DisplayedGraphYScroll, -10, Setting_SVGSpace_Height + 10)
