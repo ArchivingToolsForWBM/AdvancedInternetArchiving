@@ -465,7 +465,7 @@
 								let Hours = DateIntervalObject.DateInterval.getUTCHours()
 								let Minutes = DateIntervalObject.DateInterval.getUTCMinutes()
 								if (Minutes == 0) {
-									TimeText += (DateIntervalObject.DateInterval.getUTCFullYear()).toString(10) + "-" + (DateIntervalObject.DateInterval.getUTCMonth()+1).toString(10).padStart(2, "0") + "-" + (DateIntervalObject.DateInterval.getUTCDate()).toString(10).padStart(2, "0") + " " + (DateIntervalObject.DateInterval.getUTCHours()).toString(10).padStart(2, "0") + ":"
+									TimeText += (DateIntervalObject.DateInterval.getUTCFullYear()).toString(10) + "-" + (DateIntervalObject.DateInterval.getUTCMonth()+1).toString(10).padStart(2, "0") + "-" + (DateIntervalObject.DateInterval.getUTCDate()).toString(10).padStart(2, "0") + " "
 								}
 								TimeText += Hours.toString(10).padStart(2, "0") + ":" + Minutes.toString(10).padStart(2, "0")
 							}
