@@ -445,7 +445,11 @@
 							TimeText = (DateIntervalObject.DateInterval.getUTCFullYear()).toString(10) + "-" + (DateIntervalObject.DateInterval.getUTCMonth()+1).toString(10).padStart(2, "0")
 							break
 						case "Day":
-							TimeText = DateIntervalObject.DateInterval.getUTCFullYear().toString(10) + "-" + (DateIntervalObject.DateInterval.getUTCMonth()+1).toString(10).padStart(2, "0") + "-" + DateIntervalObject.DateInterval.getUTCDate().toString(10).padStart(2, "0")
+							let DayNumber = DateIntervalObject.DateInterval.getUTCDate()
+							if (DayNumber == 1) {
+								TimeText += DateIntervalObject.DateInterval.getUTCFullYear().toString(10) + "-"
+							}
+							TimeText += (DateIntervalObject.DateInterval.getUTCMonth()+1).toString(10).padStart(2, "0") + "-" + DateIntervalObject.DateInterval.getUTCDate().toString(10).padStart(2, "0")
 							break
 						case "Hours":
 							{
