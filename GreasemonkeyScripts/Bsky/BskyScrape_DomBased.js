@@ -854,7 +854,7 @@
 						}
 						ListOfPosts.push(...PostGroup)
 					} else if (/https:\/\/bsky\.app\/search/.test(window.location.href)) { //Search page
-						UserPostArea = GetPostBoxesByLink(8)
+						UserPostArea = GetPostBoxesByLink(9)
 						
 						UserPostArea.forEach((Post) => {
 							if (Post.textContent != "") {
@@ -876,14 +876,14 @@
 								PostURL = HttpToTtp(DescendNode(Post, [0,0,1,0,2]).OutputNode.href)
 								
 								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
-								UserTitle = DescendNode(Post, [0,0,1,0,0,0,0]).OutputNode.textContent
+								UserTitle = DescendNode(Post, [0,0,1,0,0,0,0,0]).OutputNode.textContent
 								
 								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/^\s/, "")
-								UserHandle = DescendNode(Post, [0,0,1,0,0,0,1]).OutputNode.textContent.replace(/^\s/, "")
+								UserHandle = DescendNode(Post, [0,0,1,0,0,0,0,1]).OutputNode.textContent.replace(/^\s/, "")
 								
 								//Post.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
 								//Post.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-								let NodeOfAvatar = DescendNode(Post, [0,0,0,0,0,0,0,1])
+								let NodeOfAvatar = DescendNode(Post, [0,0,0,0,0,0,0,0,1])
 								if (NodeOfAvatar.IsSuccessful) {
 									UserAvatar = HttpToTtp(NodeOfAvatar.OutputNode.src)
 								}
