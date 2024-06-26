@@ -289,7 +289,7 @@
 					let ListOfPosts = [] //List of each individual posts
 					if (/https:\/\/bsky\.app\/(?:profile\/(?:[a-zA-Z\d\-]+\.)+(?:[a-zA-Z\d\-]+)\/?)?$/.test(window.location.href)) { //profile/front page
 						//First, find an a href link to a profile as a reference. We get the lowest node that at least has all the posts on the page
-						UserPostArea = GetPostBoxesByLink(10)
+						UserPostArea = GetPostBoxesByLink(11)
 						
 						//"UserPostArea" will now contain "boxes" that may either be a horizontal line, containing 1 or 2 posts (2 if it has replies, with a vertical line between 2 avatars)
 						UserPostArea.forEach((Box, BoxIndex) => { // Loop each box
@@ -366,7 +366,7 @@
 										}
 										//User title
 										{
-											let UserTitleElement = DescendNode(Post, [0, 0, 1, 1, 0, 0, 0, 0])
+											let UserTitleElement = DescendNode(Post, [0, 0, 1, 1, 0, 0, 0, 0, 0])
 											if (UserTitleElement.IsSuccessful) {
 												UserTitle = UserTitleElement.OutputNode.textContent
 											}
@@ -374,7 +374,7 @@
 										//User handle
 										{
 											//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/\s/, "")
-											let UserHandleElement = DescendNode(Post, [0,0,1,1,0,0,0,1])
+											let UserHandleElement = DescendNode(Post, [0,0,1,1,0,0,0,0,1])
 											if (UserHandleElement.IsSuccessful) {
 												UserHandle = UserHandleElement.OutputNode.textContent.replace(/^\s/, "")
 											}
@@ -382,7 +382,7 @@
 										//User Avatar
 										{
 											//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-											let AvatarImgElement = DescendNode(Post, [0,0,1,0,0,0,0,0,1])
+											let AvatarImgElement = DescendNode(Post, [0,0,1,0,0,0,0,0,0,1])
 											if (AvatarImgElement.IsSuccessful) {
 												if (typeof AvatarImgElement.OutputNode.src != "undefined") {
 													UserAvatar = HttpToTtp(AvatarImgElement.OutputNode.src)
