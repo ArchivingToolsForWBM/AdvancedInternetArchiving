@@ -22,41 +22,53 @@
 			}
 		</style>
 	</head>
+	<p>This HTML tool take a given JSON text representing a UTC date of when something starts and ends (and optionally a <kbd>BarHeight</kbd> and <kbd>Color</kbd> parameter), and displays it as a time graph.</p>
+	
+	<p>This tool is useful for visualizing the events and/or performance of something.</p>
+	
+	<p>The JSON must be formatted like this: An array (wrapped in square brackets) whose elements are objects (wrapped in curly braces), which that containing property names <kbd>Start</kbd> and <kbd>End</kbd>, that their values must be a string
+	representing a date (preferably a UTC date, else it assumes local date). See examples below.</p>
 	
 	Example:<br>
-	<textarea readonly style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color: #000000; color: #ffffff">
+	<textarea readonly style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color: #000000; color: #ffffff" rows="20" cols="50">
 [
 	{
 		"Start": "2020-01-01 00:00:00 UTC",
 		"End": "2020-01-01 00:00:10 UTC",
-		"Text": "Test 1"
+		"Text": "Test 1",
+		"BarHeight": 20,
+		"Color": "#00ff00"
 	},
 	{
 		"Start": "2020-01-01 00:00:20 UTC",
 		"End": "2020-01-01 00:00:30 UTC",
-		"Text": "Test 2"
+		"Text": "Test 2",
+		"BarHeight": 20,
+		"Color": "#ff0000"
 	}
 ]
 	</textarea><br>
-	
+	Notes:
+	<ul>
+		<li>This script uses JavaScript's <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date">date object</a>, which is based on <a href="https://en.wikipedia.org/wiki/Unix_time">UNIX time</a> and
+		it ignores <a href="https://en.wikipedia.org/wiki/Unix_time#Leap_seconds">leap seconds</a>. If you're recording some event into a JSON, and the start and end happens on the leap second and the second after (assuming a positive leap
+		second), it's possible you have an end date a second before the start date, which causes a slight display issue on the graph.</li>
+	</ul>
 	<label><input type="checkbox" id="AutoUpdate" checked>Auto Update</label><br>
 	
 	<textarea id="JSONInput" cols="100" rows="30" oninput="TextareaChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
 	<span hidden id="InvalidJsonMessage" style="color: #ff0000"> Invalid JSON or JSON format!</span>
 	
-	<br>
-	
-	
-	<span hidden id="InvalidDateMessage" style="color: #ff0000"> Invalid date! Please enter in <kbd>YYYY-MM-DDTHH:mm:ss.sssZ</kbd> or any readable format.</span><br><br>
+	<span hidden id="InvalidDateMessage" style="color: #ff0000"> Invalid date! Please enter in <kbd>YYYY-MM-DDTHH:mm:ss.sssZ</kbd> or any readable format.</span><br>
 	<ul>
 		<li><b>Left/Right</b> or <b>a/d</b> keys: Scroll backward/forward through time. Holding down the left mouse button and moving the mouse also works, as well as rolling the scroll wheel.</li>
 		<li>CTRL + <b>Up/Down</b> or <b>w/s</b> keys: Zoom. Alternatively hold down CTRL and roll the scroll wheel also affects the rolling (will zoom to where the mouse is at though). </li>
 	</ul>
-	<button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button><br>
-	<button onclick="ResetYScroll();">Reset Y scroll</button><br>
 	<label><input type="checkbox" id="YScaleFit" onchange="MainCode()" checked>Scale vertical length to fit to graph</label><br>
 	<span id="ZoomUI">Zoom: <input type="range" min="1" max="100000000000000" step="1" value="101900" id="GraphZoomLevel" oninput="AutoUpdate()" style="width: 800px "><kbd id="ZoomLevelDisplay"></kbd><br></span>
 	Date and time (UTC): <input type="text" id="DateAndTime" size="25" onchange="CheckDateValid(); AutoUpdate()"><br>
+	<button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button><br>
+	<button onclick="ResetYScroll();">Reset Y scroll</button><br>
 	<svg style="outline: 1px solid; overflow: hidden" id="DrawingSpace" class="Dragable" tabindex="0" onclick="this.focus()"></svg><br>
 	<kbd>Date of mouse position: <span id="MousePosToTime"></kbd>
 
