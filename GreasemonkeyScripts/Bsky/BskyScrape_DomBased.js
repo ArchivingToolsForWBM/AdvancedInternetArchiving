@@ -653,8 +653,8 @@
 									PostURL = PostURL.replace(/(https:\/\/bsky\.app\/profile\/)[a-zA-Z\d\-\.:]+(\/post\/[a-zA-Z\d\-]+\/?)/, "$1" + UserHandleNoAt + "$2")
 								}
 								
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-								let NodeOfAvatarImg = DescendNode(Box, [0,0,0,0,0,0,0,0,1])
+								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1]
+								let NodeOfAvatarImg = DescendNode(Box, [0,0,0,0,0,0,0,0,0,1])
 								if (NodeOfAvatarImg.IsSuccessful) {
 									UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
 								}
@@ -713,7 +713,7 @@
 								
 								//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
 								//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-								let NodeOfAvatarImg = DescendNode(Box, [0,1,0,0,0,0,0,0,1])
+								let NodeOfAvatarImg = DescendNode(Box, [0,1,0,0,0,0,0,0,0,1])
 								if (NodeOfAvatarImg.IsSuccessful) {
 									UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
 								}
@@ -761,13 +761,13 @@
 									}
 								}
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
-								UserTitle = DescendNode(Box, [0,0,0,1,1,0,0,0,0]).OutputNode.textContent
+								UserTitle = DescendNode(Box, [0,0,0,1,1,0,0,0,0,0]).OutputNode.textContent
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/^\s/, "")
-								UserHandle = DescendNode(Box, [0,0,0,1,1,0,0,1]).OutputNode.textContent.replace(/^\s/, "")
+								UserHandle = DescendNode(Box, [0,0,0,1,1,0,0,0,0,1]).OutputNode.textContent.replace(/^\s/, "")
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-								let NodeOfAvatarImg = DescendNode(Box, [0,0,0,1,0,0,0,0,0,1])
+								let NodeOfAvatarImg = DescendNode(Box, [0,0,0,1,0,0,0,0,0,0,1])
 								if (NodeOfAvatarImg.IsSuccessful) {
 									UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
 								}
@@ -1344,12 +1344,6 @@
 			let PostSegments = Array.from(Node.childNodes).filter((ArrayElement) => {
 				return (ArrayElement.tagName == "DIV")
 			})
-			//If post has text and images:
-			// PostSegments[0] - text
-			// PostSegments[1] - image gallery
-			//If it is a quote:
-			// PostSegments[0] - text
-			// PostSegments[1] - collection of quotes
 			
 			if (Type == "Post_NotCurrentlyViewed") {
 				PostSegments = PostSegments.slice(1, PostSegments.length-1)
@@ -1496,6 +1490,11 @@
 					} catch (error) {
 						window.alert(error + " Failure at getting link preview")
 					}
+				} else if (PostSegmentType == "FlaggedNotification") {
+					PostContent.Segments.push({
+						Type: "FlaggedNotification",
+						FlagType: PostSegment.textContent
+					})
 				}
 			})
 			return PostContent
@@ -1514,9 +1513,17 @@
 			let IsLinkToAnotherPost = false
 			let IsLinkPreview = false
 			let HasSVG = false
+			let ListOfButtons = [...ElementContainingPostSegments.querySelectorAll("button")]
 			if (ElementContainingPostSegments.textContent == "Deleted") {
 				return "Deleted"
 			}
+			if (ListOfButtons.length == 1) {
+				let ListOfSVG = [...ElementContainingPostSegments.querySelectorAll("svg")]
+				if (ListOfSVG.length == 1) {
+					return "FlaggedNotification"
+				}
+			}
+			
 			if (ElementContainingPostSegments.tagName != "A" && (!/https:\/\/bsky\.app\/profile\//.test(ElementContainingPostSegments.href))) {
 				Array.from(ElementContainingPostSegments.getElementsByTagName("*")).forEach((HTMLElementThing) => { //Loop through all children elements to determine type
 					if (HTMLElementThing.tagName == "IMG") {
