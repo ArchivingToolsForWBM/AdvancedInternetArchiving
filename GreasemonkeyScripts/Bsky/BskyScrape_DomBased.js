@@ -1517,9 +1517,9 @@
 			if (ElementContainingPostSegments.textContent == "Deleted") {
 				return "Deleted"
 			}
-			if (ListOfButtons.length == 1) {
+			if (ListOfButtons.length != 0) {
 				let ListOfSVG = [...ElementContainingPostSegments.querySelectorAll("svg")]
-				if (ListOfSVG.length == 1) {
+				if (ListOfSVG.length != 0) {
 					return "FlaggedNotification"
 				}
 			}
