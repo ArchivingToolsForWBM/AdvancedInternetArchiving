@@ -1632,18 +1632,19 @@
 			}
 			
 			//Node.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].textContent
-			let NodeOfUserTitle = DescendNode(Node, [0,0,1,0,0])
+			let NodeOfUserTitle = DescendNode(Node, [0,0,1,0,0,0])
 			if (NodeOfUserTitle.IsSuccessful) {
 				QuotedContent.Contents.UserTitle = NodeOfUserTitle.OutputNode.textContent
 			}
-			//Node.childNodes[0].childNodes[0].childNodes[1].childNodes[1].textContent.replace(/^\s/, "")
 			//Node.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[1].textContent.replace(/\s/, "")
-			let NodeOfUserHandle = DescendNode(Node, [0,0,1,0,1])
+			//Node.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0]
+			let NodeOfUserHandle = DescendNode(Node, [0,0,1,0,0,1])
 			if (NodeOfUserHandle.IsSuccessful) {
 				QuotedContent.Contents.UserHandle = NodeOfUserHandle.OutputNode.textContent.replace(/^\s/, "")
 			}
 			//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-			let NodeOfUserAvatar = DescendNode(Node, [0,0,0,0,0,0,0,1])
+			//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1]
+			let NodeOfUserAvatar = DescendNode(Node, [0,0,0,0,0,0,0,0,1])
 			if (NodeOfUserAvatar.IsSuccessful) {
 				QuotedContent.Contents.UserAvatar = NodeOfUserAvatar.OutputNode.src
 			}
