@@ -228,30 +228,38 @@ Misc:
 
 </body>
 <script>
-	var IsListOrModeChanged = false
-	var SavedList = []
+	let IsListOrModeChanged = false
+	let SavedList = []
 	
-	var Count_Success_SavedBefore = 0
-	var Count_Success_FirstArchive = 0
-	var Count_Unsure_NoIAResult = 0
-	var Count_Unsure_BlankColumnD = 0
-	var Count_Unsure_Redirected = 0
-	var Count_Unsure_Error = 0
-	var Count_Unsure_SavedANon2XX = 0
-	var Count_CantSave_BlockListed = 0
-	var Count_CantSave_Error401 = 0
-	var Count_CantSave_Error404 = 0
-	var Count_CantSave_Error403 = 0
-	var Count_CantSave_CantResolve = 0
+	let Count_Success_SavedBefore = 0
+	let Count_Success_FirstArchive = 0
+	let Count_Unsure_NoIAResult = 0
+	let Count_Unsure_BlankColumnD = 0
+	let Count_Unsure_Redirected = 0
+	let Count_Unsure_Error = 0
+	let Count_Unsure_SavedANon2XX = 0
+	let Count_CantSave_BlockListed = 0
+	let Count_CantSave_Error401 = 0
+	let Count_CantSave_Error404 = 0
+	let Count_CantSave_Error403 = 0
+	let Count_CantSave_CantResolve = 0
 	
-	var Date_Earliest = "?"
-	var Date_Latest = "?"
+	let Date_Earliest = "?"
+	let Date_Latest = "?"
+	//Settings
+		const Setting_PercentagePrecision = 2 //Number of digits after the decimal place, for percentages.
 	
-	BigInt.prototype.toJSON = function() { return this.toString() }
-	//^This fixes an issue where you stringify an object that contains a bigint causes a typeerror ("Do not know how to serialize a BigInt"),
-	// by converting it into a string
-	// Thanks Mozilla! https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt#use_within_json
-	
+	//Don't touch anything below here
+		BigInt.prototype.toJSON = function() { return this.toString() }
+		//^This fixes an issue where you stringify an object that contains a bigint causes a typeerror ("Do not know how to serialize a BigInt"),
+		// by converting it into a string
+		// Thanks Mozilla! https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt#use_within_json
+		
+		let PercentageMinLength = Setting_PercentagePrecision + 3
+		if (Setting_PercentagePrecision != 0) {
+			PercentageMinLength++
+		}
+		
 	function AutoUpdate() {
 		if (document.getElementById("AutoUpdate").checked) {
 			CheckURLs()
@@ -539,56 +547,56 @@ Misc:
 						//Total
 							document.getElementById("Statistic_NumberOfItems_TotalURLs").textContent = BigInt(InputList.length).toString(10)
 						//Displayed
-							document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").textContent = BigInt(FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(FilteredListForDisplay.length, InputList.length, 2, true) +")"
-							document.getElementById("StatisticPercentage_NumberOfItems_RemainingAfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(FilteredListForDisplay.length, InputList.length, "to right", "#0000ff", "#000000")
+							document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").textContent = BigInt(FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(FilteredListForDisplay.length, InputList.length, Setting_PercentagePrecision, true) +")"
+							document.getElementById("StatisticPercentage_NumberOfItems_RemainingAfterFilter").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(FilteredListForDisplay.length, InputList.length, "to right", "#0000ff", "#000000")
 						//How many removed
-							document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").textContent = BigInt(InputList.length - FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length - FilteredListForDisplay.length, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_RemovedAfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(InputList.length - FilteredListForDisplay.length, InputList.length, "to right", "#0000ff", "#000000")
+							document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").textContent = BigInt(InputList.length - FilteredListForDisplay.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length - FilteredListForDisplay.length, InputList.length, Setting_PercentagePrecision, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_RemovedAfterFilter").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(InputList.length - FilteredListForDisplay.length, InputList.length, "to right", "#0000ff", "#000000")
 						//Saved before
-							document.getElementById("Statistic_NumberOfItems_Success_SavedBefore").textContent = BigInt(Count_Success_SavedBefore).toString(10) + " (" + BetterPercentageUsingInts(Count_Success_SavedBefore, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Success_SavedBefore").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_SavedBefore, InputList.length, "to right", "#008000", "#000000")
+							document.getElementById("Statistic_NumberOfItems_Success_SavedBefore").textContent = BigInt(Count_Success_SavedBefore).toString(10) + " (" + BetterPercentageUsingInts(Count_Success_SavedBefore, InputList.length, Setting_PercentagePrecision, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Success_SavedBefore").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_SavedBefore, InputList.length, "to right", "#008000", "#000000")
 						//First archives
-							document.getElementById("Statistic_NumberOfItems_Success_FirstArchive").textContent = BigInt(Count_Success_FirstArchive).toString(10) + " (" + BetterPercentageUsingInts(Count_Success_FirstArchive, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Success_FirstArchive").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_FirstArchive, InputList.length, "to right", "#00C000", "#000000")
+							document.getElementById("Statistic_NumberOfItems_Success_FirstArchive").textContent = BigInt(Count_Success_FirstArchive).toString(10) + " (" + BetterPercentageUsingInts(Count_Success_FirstArchive, InputList.length, Setting_PercentagePrecision, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Success_FirstArchive").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_FirstArchive, InputList.length, "to right", "#00C000", "#000000")
 						//No IA results
-							document.getElementById("Statistic_NumberOfItems_Unsure_NoIAResult").textContent = BigInt(Count_Unsure_NoIAResult).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_NoIAResult, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_NoIAResult").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_NoIAResult, InputList.length, "to right", "#808080", "#000000")
+							document.getElementById("Statistic_NumberOfItems_Unsure_NoIAResult").textContent = BigInt(Count_Unsure_NoIAResult).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_NoIAResult, InputList.length, Setting_PercentagePrecision, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_NoIAResult").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_NoIAResult, InputList.length, "to right", "#808080", "#000000")
 						//Blank column D
-							document.getElementById("Statistic_NumberOfItems_Unsure_BlankColumnD").textContent = BigInt(Count_Unsure_BlankColumnD).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_BlankColumnD, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_BlankColumnD").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_BlankColumnD, InputList.length, "to right", "#A08080", "#000000")
+							document.getElementById("Statistic_NumberOfItems_Unsure_BlankColumnD").textContent = BigInt(Count_Unsure_BlankColumnD).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_BlankColumnD, InputList.length, Setting_PercentagePrecision, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_BlankColumnD").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_BlankColumnD, InputList.length, "to right", "#A08080", "#000000")
 						//Redirected
-							document.getElementById("Statistic_NumberOfItems_Unsure_Redirected").textContent = BigInt(Count_Unsure_Redirected).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Redirected, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Redirected").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Redirected, InputList.length, "to right", "#808000", "#000000")
+							document.getElementById("Statistic_NumberOfItems_Unsure_Redirected").textContent = BigInt(Count_Unsure_Redirected).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Redirected, InputList.length, Setting_PercentagePrecision, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Redirected").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Redirected, InputList.length, "to right", "#808000", "#000000")
 						//Error
-							document.getElementById("Statistic_NumberOfItems_Unsure_Error").textContent = BigInt(Count_Unsure_Error).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Error, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Error").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Error, InputList.length, "to right", "#800000", "#000000")
+							document.getElementById("Statistic_NumberOfItems_Unsure_Error").textContent = BigInt(Count_Unsure_Error).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Error, InputList.length, Setting_PercentagePrecision, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Error").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Error, InputList.length, "to right", "#800000", "#000000")
 						//Non 2XX
-							document.getElementById("Statistic_NumberOfItems_Unsure_SavedANon2XX").textContent = BigInt(Count_Unsure_SavedANon2XX).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_SavedANon2XX, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_SavedANon2XX").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_SavedANon2XX, InputList.length, "to right", "#FFA500", "#000000")
+							document.getElementById("Statistic_NumberOfItems_Unsure_SavedANon2XX").textContent = BigInt(Count_Unsure_SavedANon2XX).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_SavedANon2XX, InputList.length, Setting_PercentagePrecision, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_SavedANon2XX").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_SavedANon2XX, InputList.length, "to right", "#FFA500", "#000000")
 						//Blocklist
-							document.getElementById("Statistic_NumberOfItems_CantSave_BlockListed").textContent = BigInt(Count_CantSave_BlockListed).toString(10) + " (" + BetterPercentageUsingInts(Count_CantSave_BlockListed, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_BlockListed").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_CantSave_BlockListed, InputList.length, "to right", "#400000", "#000000")
+							document.getElementById("Statistic_NumberOfItems_CantSave_BlockListed").textContent = BigInt(Count_CantSave_BlockListed).toString(10) + " (" + BetterPercentageUsingInts(Count_CantSave_BlockListed, InputList.length, Setting_PercentagePrecision, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_BlockListed").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_CantSave_BlockListed, InputList.length, "to right", "#400000", "#000000")
 						//Error401
-							document.getElementById("Statistic_NumberOfItems_CantSave_Error401").textContent = BigInt(Count_CantSave_Error401).toString(10) + " (" + BetterPercentageUsingInts(Count_CantSave_Error401, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_Error401").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_CantSave_Error401, InputList.length, "to right", "#400000", "#000000")
+							document.getElementById("Statistic_NumberOfItems_CantSave_Error401").textContent = BigInt(Count_CantSave_Error401).toString(10) + " (" + BetterPercentageUsingInts(Count_CantSave_Error401, InputList.length, Setting_PercentagePrecision, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_Error401").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_CantSave_Error401, InputList.length, "to right", "#400000", "#000000")
 						//Error403
-							document.getElementById("Statistic_NumberOfItems_CantSave_Error403").textContent = BigInt(Count_CantSave_Error403).toString(10) + " (" + BetterPercentageUsingInts(Count_CantSave_Error403, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_Error403").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_CantSave_Error403, InputList.length, "to right", "#400000", "#000000")
+							document.getElementById("Statistic_NumberOfItems_CantSave_Error403").textContent = BigInt(Count_CantSave_Error403).toString(10) + " (" + BetterPercentageUsingInts(Count_CantSave_Error403, InputList.length, Setting_PercentagePrecision, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_Error403").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_CantSave_Error403, InputList.length, "to right", "#400000", "#000000")
 						//Error404
-							document.getElementById("Statistic_NumberOfItems_CantSave_Error404").textContent = BigInt(Count_CantSave_Error404).toString(10) + " (" + BetterPercentageUsingInts(Count_CantSave_Error404, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_Error404").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_CantSave_Error404, InputList.length, "to right", "#400000", "#000000")
+							document.getElementById("Statistic_NumberOfItems_CantSave_Error404").textContent = BigInt(Count_CantSave_Error404).toString(10) + " (" + BetterPercentageUsingInts(Count_CantSave_Error404, InputList.length, Setting_PercentagePrecision, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_Error404").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_CantSave_Error404, InputList.length, "to right", "#400000", "#000000")
 						//Can't resolve
-							document.getElementById("Statistic_NumberOfItems_CantSave_CantResolve").textContent = BigInt(Count_CantSave_CantResolve).toString(10) + " (" + BetterPercentageUsingInts(Count_CantSave_CantResolve, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_CantResolve").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_CantSave_CantResolve, InputList.length, "to right", "#400000", "#000000")
+							document.getElementById("Statistic_NumberOfItems_CantSave_CantResolve").textContent = BigInt(Count_CantSave_CantResolve).toString(10) + " (" + BetterPercentageUsingInts(Count_CantSave_CantResolve, InputList.length, Setting_PercentagePrecision, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_CantResolve").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_CantSave_CantResolve, InputList.length, "to right", "#400000", "#000000")
 						//Total success and unsures
-							document.getElementById("Statistic_NumberOfItems_Success_Total").textContent = BigInt(Count_Success).toString(10) + " (" + BetterPercentageUsingInts(Count_Success, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success, InputList.length, "to right", "#0000ff", "#000000")
+							document.getElementById("Statistic_NumberOfItems_Success_Total").textContent = BigInt(Count_Success).toString(10) + " (" + BetterPercentageUsingInts(Count_Success, InputList.length, Setting_PercentagePrecision, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success, InputList.length, "to right", "#0000ff", "#000000")
 
-							document.getElementById("Statistic_NumberOfItems_Unsure_Total").textContent = BigInt(Count_Unsures).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsures, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsures, InputList.length, "to right", "#0000ff", "#000000")
+							document.getElementById("Statistic_NumberOfItems_Unsure_Total").textContent = BigInt(Count_Unsures).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsures, InputList.length, Setting_PercentagePrecision, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsures, InputList.length, "to right", "#0000ff", "#000000")
 							
-							document.getElementById("Statistic_NumberOfItems_CantSave_Total").textContent = BigInt(Count_CantSaves).toString(10) + " (" + BetterPercentageUsingInts(Count_CantSaves, InputList.length, 2, true) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_CantSaves, InputList.length, "to right", "#0000ff", "#000000")
+							document.getElementById("Statistic_NumberOfItems_CantSave_Total").textContent = BigInt(Count_CantSaves).toString(10) + " (" + BetterPercentageUsingInts(Count_CantSaves, InputList.length, Setting_PercentagePrecision, true) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_Total").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_CantSaves, InputList.length, "to right", "#0000ff", "#000000")
 						//Earliest and latest date
 							document.getElementById("StatisticDate_Earliest").textContent = Date_Earliest
 							document.getElementById("StatisticDate_Latest").textContent = Date_Latest
@@ -871,13 +879,13 @@ Misc:
 		}
 	}
 	function CSSBackgroundImageLinearGradiantPercentageBarGraph(Quantity, MaxQuantity, Direction, Color_Full, Color_Empty) {
-		//Returns a percentage displayed as a background image representing a bar graph as CSS.
+		//Returns a percentage displayed as a gradient representing a bar graph as CSS. Preferbly as a background image.
 		let Percentage = 0
 		if (MaxQuantity != 0) {
 			Percentage = Quantity * 100/MaxQuantity //Multiply first so that it only rounds at the last step, minimizing rounding errors.
 		}
 		Percentage = clamp(Percentage, 0, 100)
-		return "background-image: linear-gradient("+Direction+", "+Color_Full+" "+Percentage+"%, "+Color_Empty+" "+Percentage+"% 100%);"
+		return "linear-gradient("+Direction+", "+Color_Full+" "+Percentage+"%, "+Color_Empty+" "+Percentage+"% 100%)"
 	}
 	function clamp(num, min, max) {
 		//Restrict a number within a specified range.

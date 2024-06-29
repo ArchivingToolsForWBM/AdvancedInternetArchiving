@@ -97,29 +97,29 @@
 	</tr>
 	<tr>
 		<th rowspan="3">Profiles</th>
-		<td><kbd>Originally have</kbd></td><td><kbd id="Output_Statistic_ProfileCount_BeforeFilter">0</kbd></td>
+		<td><kbd>Originally have</kbd></td><td style="text-align: end;"><kbd id="Output_Statistic_ProfileCount_BeforeFilter">0</kbd></td>
 	</tr>
 	<tr>
-		<td><kbd>After filtered</kbd></td><td id="Output_Statistic_ProfileCountBarGraph_AfterFilter"><kbd id="Output_Statistic_ProfileCount_AfterFilter">0</kbd></td>
+		<td><kbd>After filtered</kbd></td><td style="text-align: end;" id="Output_Statistic_ProfileCountBarGraph_AfterFilter"><kbd id="Output_Statistic_ProfileCount_AfterFilter">0</kbd></td>
 	</tr>
 	<tr>
-		<td><kbd>Removed</kbd></td><td id="Output_Statistic_ProfileCountBarGraph_Removed"><kbd id="Output_Statistic_ProfileCount_Removed">0</kbd></td>
+		<td><kbd>Removed</kbd></td><td style="text-align: end;" id="Output_Statistic_ProfileCountBarGraph_Removed"><kbd id="Output_Statistic_ProfileCount_Removed">0</kbd></td>
 	</tr>
 	<tr>
 		<th rowspan="5">Posts</th>
-		<td><kbd>Originally have</kbd></td><td><kbd id="Output_Statistic_PostCount_BeforeFilter">0</kbd></td>
+		<td><kbd>Originally have</kbd></td><td style="text-align: end;"><kbd id="Output_Statistic_PostCount_BeforeFilter">0</kbd></td>
 	</tr>
 	<tr>
-		<td><kbd>After filtered</kbd></td><td id="Output_Statistic_PostCountBarGraph_AfterFilter"><kbd id="Output_Statistic_PostCount_AfterFilter">0</kbd></td>
+		<td><kbd>After filtered</kbd></td><td style="text-align: end;" id="Output_Statistic_PostCountBarGraph_AfterFilter"><kbd id="Output_Statistic_PostCount_AfterFilter">0</kbd></td>
 	</tr>
 	<tr>
-		<td><kbd>Removed</kbd></td><td id="Output_Statistic_PostCountBarGraph_Removed"><kbd id="Output_Statistic_PostCount_Removed">0</kbd></td>
+		<td><kbd>Removed</kbd></td><td style="text-align: end;" id="Output_Statistic_PostCountBarGraph_Removed"><kbd id="Output_Statistic_PostCount_Removed">0</kbd></td>
 	</tr>
 	<tr>
-		<td><kbd>Earliest post (after-filtered)</kbd></td><td><kbd id="Output_Statistic_EarliestPostDate">?</kbd></td>
+		<td><kbd>Earliest post (after-filtered)</kbd></td><td style="text-align: end;"><kbd id="Output_Statistic_EarliestPostDate">?</kbd></td>
 	</tr>
 	<tr>
-		<td><kbd>Latest post (after-filtered)</kbd></td><td><kbd id="Output_Statistic_LatestPostDate">?</kbd></td>
+		<td><kbd>Latest post (after-filtered)</kbd></td><td style="text-align: end;"><kbd id="Output_Statistic_LatestPostDate">?</kbd></td>
 	</tr>
 </table>
 <br>
@@ -363,10 +363,10 @@
 				DisplayCalendar(document.getElementById("CalendarViewer_DateToView").value) //Reset it (so daily post count should not pick up where it left off)
 				
 				document.getElementById("Output_Statistic_PostCount_AfterFilter").textContent = BigInt(Count_PostAfterFilter).toString(10) + " (" + BetterPercentageUsingInts(Count_PostAfterFilter, Count_PostBeforeFilter, 2, true) + ")"
-				document.getElementById("Output_Statistic_PostCountBarGraph_AfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_PostAfterFilter, Count_PostBeforeFilter, "to right", "#0000FF", "#000000")
+				document.getElementById("Output_Statistic_PostCountBarGraph_AfterFilter").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_PostAfterFilter, Count_PostBeforeFilter, "to right", "#0000FF", "#000000")
 				
 				document.getElementById("Output_Statistic_PostCount_Removed").textContent = BigInt(Count_PostBeforeFilter-Count_PostAfterFilter).toString(10) + " (" + BetterPercentageUsingInts(Count_PostBeforeFilter-Count_PostAfterFilter, Count_PostBeforeFilter, 2, true) + ")"
-				document.getElementById("Output_Statistic_PostCountBarGraph_Removed").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_PostBeforeFilter-Count_PostAfterFilter, Count_PostBeforeFilter, "to right", "#0000FF", "#000000")
+				document.getElementById("Output_Statistic_PostCountBarGraph_Removed").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_PostBeforeFilter-Count_PostAfterFilter, Count_PostBeforeFilter, "to right", "#0000FF", "#000000")
 			//Do the same with profiles
 				if (document.getElementById("SortSetting_Profile_UserTitle").checked) {
 					SavedJson_ProfileList.sort((a,b) => {
@@ -444,10 +444,10 @@
 				
 				let Count_ProfileAfterFilter = FilteredProfileList.length
 				document.getElementById("Output_Statistic_ProfileCount_AfterFilter").textContent = BigInt(Count_ProfileAfterFilter).toString(10) + " (" + BetterPercentageUsingInts(Count_ProfileAfterFilter, Count_ProfileBeforeFilter, 2, true) + ")"
-				document.getElementById("Output_Statistic_ProfileCountBarGraph_AfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_ProfileAfterFilter, Count_ProfileBeforeFilter, "to right", "#0000FF", "#000000")
+				document.getElementById("Output_Statistic_ProfileCountBarGraph_AfterFilter").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_ProfileAfterFilter, Count_ProfileBeforeFilter, "to right", "#0000FF", "#000000")
 				
 				document.getElementById("Output_Statistic_ProfileCount_Removed").textContent = BigInt(Count_ProfileBeforeFilter-Count_ProfileAfterFilter).toString(10) + " (" + BetterPercentageUsingInts(Count_ProfileBeforeFilter-Count_ProfileAfterFilter, Count_ProfileBeforeFilter, 2, true) + ")"
-				document.getElementById("Output_Statistic_ProfileCountBarGraph_Removed").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_ProfileBeforeFilter-Count_ProfileAfterFilter, Count_ProfileBeforeFilter, "to right", "#0000FF", "#000000")
+				document.getElementById("Output_Statistic_ProfileCountBarGraph_Removed").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_ProfileBeforeFilter-Count_ProfileAfterFilter, Count_ProfileBeforeFilter, "to right", "#0000FF", "#000000")
 			//Output
 				SavedJson_PostListCalendar = FilteredPostList //Save it for calendar display
 				FillCalendarWithData() //Fill calendar with post info
@@ -897,13 +897,13 @@
 		}
 	}
 	function CSSBackgroundImageLinearGradiantPercentageBarGraph(Quantity, MaxQuantity, Direction, Color_Full, Color_Empty) {
-		//Returns a percentage displayed as a background image representing a bar graph as CSS.
+		//Returns a percentage displayed as a gradient representing a bar graph as CSS. Preferbly as a background image.
 		let Percentage = 0
 		if (MaxQuantity != 0) {
 			Percentage = Quantity * 100/MaxQuantity //Multiply first so that it only rounds at the last step, minimizing rounding errors.
 		}
 		Percentage = clamp(Percentage, 0, 100)
-		return "background-image: linear-gradient("+Direction+", "+Color_Full+" "+Percentage+"%, "+Color_Empty+" "+Percentage+"% 100%);"
+		return "linear-gradient("+Direction+", "+Color_Full+" "+Percentage+"%, "+Color_Empty+" "+Percentage+"% 100%)"
 	}
 	function BigintClamp(num, min, max) {
 		//Restrict a number within a specified range, bigInt edition (since NaN cannot be represented in bigint).
