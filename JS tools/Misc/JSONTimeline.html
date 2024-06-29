@@ -62,7 +62,7 @@
 	<span hidden id="InvalidDateMessage" style="color: #ff0000"> Invalid date! Please enter in <kbd>YYYY-MM-DDTHH:mm:ss.sssZ</kbd> or any readable format.</span><br>
 	<ul>
 		<li><b>Left/Right</b> or <b>a/d</b> keys: Scroll backward/forward through time. Holding down the left mouse button and moving the mouse also works, as well as rolling the scroll wheel.</li>
-		<li>CTRL + <b>Up/Down</b> or <b>w/s</b> keys: Zoom. Alternatively hold down CTRL and roll the scroll wheel also affects the rolling (will zoom to where the mouse is at though). </li>
+		<li>SHIFT + <b>Up/Down</b> or <b>w/s</b> keys: Zoom. Alternatively hold down CTRL and roll the scroll wheel also affects the rolling (will zoom to where the mouse is at though). </li>
 	</ul>
 	<label><input type="checkbox" id="YScaleFit" onchange="MainCode()" checked>Scale vertical length to fit to graph</label><br>
 	<span id="ZoomUI">Zoom: <input type="range" min="1" max="100000000000000" step="1" value="101900" id="GraphZoomLevel" oninput="AutoUpdate()" style="width: 800px "><kbd id="ZoomLevelDisplay"></kbd><br></span>
@@ -241,12 +241,12 @@
 			DisplayedGraphTimeMS = clamp(DisplayedGraphTimeMS + Math.round(ScrollDirection * Setting_ZoomDenominator / document.getElementById("GraphZoomLevel").value.toString(10)), Setting_MinDateMS, Setting_MaxDateMS)
 			document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
 		}
-		if (KeyName == "ArrowUp"||KeyName == "w"||KeyName == "ArrowDown"||KeyName == "s") {
+		if (KeyName == "ArrowUp"||KeyName.toLowerCase() == "w"||KeyName == "ArrowDown"||KeyName.toLowerCase() == "s") {
 			IsKeyControllingGraph = true
 			e.preventDefault()
-			if (e.ctrlKey) {
+			if (e.shiftKey) {
 				let ZoomIndexDirection = 1
-				if (KeyName == "ArrowDown"||KeyName == "s") {
+				if (KeyName == "ArrowDown"||KeyName == "S") {
 					ZoomIndexDirection = -1
 				}
 				let ZoomLevel = parseInt(document.getElementById("GraphZoomLevel").value)

@@ -302,28 +302,28 @@
 			document.getElementById("Statistic_NumberOfItems_TotalURLs").textContent = BigInt(ListOfURLs.length).toString(10)
 			
 			document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").textContent  = BigInt(Filtered_ListOfURLs.length).toString(10) + " (" + BetterPercentageUsingInts(Filtered_ListOfURLs.length, ListOfURLs.length, 2, true) +")"
-			document.getElementById("StatisticPercentage_NumberOfItems_RemainingAfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Filtered_ListOfURLs.length, ListOfURLs.length, "to right", "#0000ff", "#000000")
+			document.getElementById("StatisticPercentage_NumberOfItems_RemainingAfterFilter").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Filtered_ListOfURLs.length, ListOfURLs.length, "to right", "#0000ff", "#000000")
 			
 			document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").textContent  = BigInt(ListOfURLs.length - Filtered_ListOfURLs.length).toString(10) + " (" + BetterPercentageUsingInts(ListOfURLs.length - Filtered_ListOfURLs.length, ListOfURLs.length, 2, true) +")"
-			document.getElementById("StatisticPercentage_NumberOfItems_RemovedAfterFilter").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(ListOfURLs.length - Filtered_ListOfURLs.length, ListOfURLs.length, "to right", "#0000ff", "#000000")
+			document.getElementById("StatisticPercentage_NumberOfItems_RemovedAfterFilter").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(ListOfURLs.length - Filtered_ListOfURLs.length, ListOfURLs.length, "to right", "#0000ff", "#000000")
 
 			document.getElementById("Statistic_NumberOfItems_Success_SavedBefore").textContent  = BigInt(Count_Success_SavedBefore).toString(10) + " (" + BetterPercentageUsingInts(Count_Success_SavedBefore, ListOfURLs.length, 2, true) +")"
-			document.getElementById("StatisticPercentage_NumberOfItems_Success_SavedBefore").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_SavedBefore, ListOfURLs.length, "to right", "#008000", "#000000")
+			document.getElementById("StatisticPercentage_NumberOfItems_Success_SavedBefore").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_SavedBefore, ListOfURLs.length, "to right", "#008000", "#000000")
 
 			document.getElementById("Statistic_NumberOfItems_Success_FirstArchive").textContent  = BigInt(Count_Success_FirstArchive).toString(10) + " (" + BetterPercentageUsingInts(Count_Success_FirstArchive, ListOfURLs.length, 2, true) +")"
-			document.getElementById("StatisticPercentage_NumberOfItems_Success_FirstArchive").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_FirstArchive, ListOfURLs.length, "to right", "#00C000", "#000000")
+			document.getElementById("StatisticPercentage_NumberOfItems_Success_FirstArchive").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_FirstArchive, ListOfURLs.length, "to right", "#00C000", "#000000")
 
 			document.getElementById("Statistic_NumberOfItems_Unsure_Error").textContent  = BigInt(Count_Unsure_Error).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Error, ListOfURLs.length, 2, true) +")"
-			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Error").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Error, ListOfURLs.length, "to right", "#800000", "#000000")
+			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Error").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Error, ListOfURLs.length, "to right", "#800000", "#000000")
 
 			document.getElementById("Statistic_NumberOfItems_Unsure_NoMatch").textContent  = BigInt(Count_Unsure_NoMatch).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_NoMatch, ListOfURLs.length, 2, true) +")"
-			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_NoMatch").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_NoMatch, ListOfURLs.length, "to right", "#808000", "#000000")
+			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_NoMatch").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_NoMatch, ListOfURLs.length, "to right", "#808000", "#000000")
 
 			document.getElementById("Statistic_NumberOfItems_Success_Total").textContent  = BigInt(Count_Success_Total).toString(10) + " (" + BetterPercentageUsingInts(Count_Success_Total, ListOfURLs.length, 2, true) +")"
-			document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_Total, ListOfURLs.length, "to right", "#0000ff", "#000000")
+			document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_Total, ListOfURLs.length, "to right", "#0000ff", "#000000")
 
 			document.getElementById("Statistic_NumberOfItems_Unsure_Total").textContent  = BigInt(Count_Unsure_Error + Count_Unsure_NoMatch).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Error + Count_Unsure_NoMatch, ListOfURLs.length, 2, true) +")"
-			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Error + Count_Unsure_NoMatch, ListOfURLs.length, "to right", "#0000ff", "#000000")
+			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Error + Count_Unsure_NoMatch, ListOfURLs.length, "to right", "#0000ff", "#000000")
 			
 			document.getElementById("StatisticDate_Earliest").textContent  = Date_Earliest
 			document.getElementById("StatisticDate_Latest").textContent  = Date_Latest
@@ -572,13 +572,13 @@
 		}
 	}
 	function CSSBackgroundImageLinearGradiantPercentageBarGraph(Quantity, MaxQuantity, Direction, Color_Full, Color_Empty) {
-		//Returns a percentage displayed as a background image representing a bar graph as CSS.
+		//Returns a percentage displayed as a gradient representing a bar graph as CSS. Preferably as a background image.
 		let Percentage = 0
 		if (MaxQuantity != 0) {
 			Percentage = Quantity * 100/MaxQuantity //Multiply first so that it only rounds at the last step, minimizing rounding errors.
 		}
 		Percentage = clamp(Percentage, 0, 100)
-		return "background-image: linear-gradient("+Direction+", "+Color_Full+" "+Percentage+"%, "+Color_Empty+" "+Percentage+"% 100%);"
+		return "linear-gradient("+Direction+", "+Color_Full+" "+Percentage+"%, "+Color_Empty+" "+Percentage+"% 100%)"
 	}
 	function clamp(num, min, max) {
 		//Restrict a number within a specified range.
