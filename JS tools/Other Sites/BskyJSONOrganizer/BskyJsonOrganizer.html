@@ -81,7 +81,8 @@
 			</ul>
 			Sort:
 			<ul>
-				<li><label><input type="radio" id="SortSetting_Post_Date" name="SortSetting_Post" onchange="AutoUpdate()">Date</label> (<label><input type="radio" id="SortSetting_Post_Date_Reverse" name="SortSetting_Post" onchange="AutoUpdate()" checked>Reverse</label>)</li>
+				<li><label><input type="radio" id="SortSetting_Post_Date" name="SortSetting_Post" onchange="AutoUpdate()">Post date</label> (<label><input type="radio" id="SortSetting_Post_Date_Reverse" name="SortSetting_Post" onchange="AutoUpdate()" checked>Reverse</label>)</li>
+				<li><label><input type="radio" id="SortSetting_Post_ScrapeDate" name="SortSetting_Post" onchange="AutoUpdate()">Scrape date</label> (<label><input type="radio" id="SortSetting_Post_ScrapeDate_Reverse" name="SortSetting_Post" onchange="AutoUpdate()">Reverse</label>)</li>
 			</ul>
 		</td>
 	</tr>
@@ -245,6 +246,22 @@
 				} else if (document.getElementById("SortSetting_Post_Date_Reverse").checked) {
 					SavedJson_PostList.sort((a,b) => {
 						return b.PostTimeStamp.TimestampMillisecondsEpoch - a.PostTimeStamp.TimestampMillisecondsEpoch
+					})
+				} else if (document.getElementById("SortSetting_Post_ScrapeDate").checked) {
+					SavedJson_PostList.sort((a,b) => {
+						if (a.DateTimeOfScrape === b.DateTimeOfScrape) {
+							return 0;
+						} else {
+							return (a.DateTimeOfScrape < b.DateTimeOfScrape) ? -1 : 1;
+						}
+					})
+				} else if (document.getElementById("SortSetting_Post_ScrapeDate_Reverse").checked) {
+					SavedJson_PostList.sort((a,b) => {
+						if (a.DateTimeOfScrape === b.DateTimeOfScrape) {
+							return 0;
+						} else {
+							return (a.DateTimeOfScrape < b.DateTimeOfScrape) ? 1 : -1;
+						}
 					})
 				}
 				let Count_PostBeforeFilter = SavedJson_PostList.length
