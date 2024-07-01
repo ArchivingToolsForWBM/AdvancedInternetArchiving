@@ -439,7 +439,7 @@
 				if (UnitsOfTimeArray[i].Unit != 0) {
 					LeadingUnitIsNonZero = true //Once it's true, stays true. All remaining units are significant
 				}
-				if (LeadingUnitIsNonZero) {
+				if (LeadingUnitIsNonZero || i == UnitsOfTimeArray.length-1) {
 					OutputString += UnitsOfTimeArray[i].Unit + UnitsOfTimeArray[i].UnitName
 					if (i != UnitsOfTimeArray.length-1) {
 						OutputString += " "
