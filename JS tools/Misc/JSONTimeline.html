@@ -673,22 +673,22 @@
 	}
 	function DisplayTimeDuration(Duration) {
 		let OutputString = ""
-
+		
 		Duration = Math.abs(Duration)
-
+		
 		let UnitsOfTimeArray = []
 		let Seconds = Math.floor(Duration/1000)
 		UnitsOfTimeArray.unshift({Unit: Seconds % 60, UnitName: "s"})
-
+		
 		let Minute = Math.floor(Seconds/60)
 		UnitsOfTimeArray.unshift({Unit: Minute % 60, UnitName: "m"})
-
+		
 		let Hour = Math.floor(Minute/60)
 		UnitsOfTimeArray.unshift({Unit: Hour % 24, UnitName: "h"})
-
+		
 		let Day = Math.floor(Hour/24)
 		UnitsOfTimeArray.unshift({Unit: Day, UnitName: "d"})
-
+		
 		let LeadingUnitIsNonZero = false
 		for (let i = 0; i < UnitsOfTimeArray.length; i++) {
 			if (UnitsOfTimeArray[i].Unit != 0) {
