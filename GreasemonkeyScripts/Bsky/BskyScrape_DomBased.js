@@ -251,7 +251,7 @@
 			
 			
 			//Add the box to the HTML
-			let HTMLBody = Array.from(document.getElementsByTagName("BODY")).find((Element) => {return true})
+			let HTMLBody = [...document.getElementsByTagName("BODY")].find((Element) => {return true})
 			let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0])
 			if (InnerNodeOfHTMLBody.IsSuccessful) {
 				document.body.insertBefore(BoxOfUI, HTMLBody.childNodes[0]);
@@ -277,7 +277,7 @@
 					
 					let isLoggedIn = false
 					{
-						let SignUpButton = Array.from(document.getElementsByTagName("BUTTON")).find((Button) => {
+						let SignUpButton = [...document.getElementsByTagName("BUTTON")].find((Button) => {
 							return (Button.textContent == "Sign up")
 						})
 						if (typeof SignUpButton == "undefined") {//No signup button is found, indicating the user is logged in.
@@ -295,7 +295,7 @@
 						UserPostArea.forEach((Box, BoxIndex) => { // Loop each box
 							//[profile page]
 							if (typeof Box.childNodes != "undefined") {
-								let BoxListingPosts = Array.from(Box.childNodes)
+								let BoxListingPosts = [...Box.childNodes]
 								let BoxListingPostsLengthCache = BoxListingPosts.length
 								let PostGroup = []
 								for (let i = 0; i < BoxListingPostsLengthCache; i++) { //Loop each posts (BoxListingPosts[i] should return a post), within a box
@@ -424,10 +424,7 @@
 										let NodeOfReplyTo = DescendNode(Post, [0,0,1,1,1,1])
 										if (NodeOfReplyTo.IsSuccessful) {
 											if (/^Reply to/.test(NodeOfReplyTo.OutputNode.textContent)) {
-												//let ReplyToLink = Array.from(NodeOfReplyTo.OutputNode.getElementsByTagName("a"))
-												//if (ReplyToLink.length != 0) {
 													ReplyToOffset++
-												//}
 											}
 										}
 										
@@ -445,8 +442,8 @@
 											//where N is the last element because sometimes a post have duplicate counts between the date and timestamp at the bottom
 											let NodeOfFoooter = DescendNode(Post, [0,0,1,1])
 											if (NodeOfFoooter.IsSuccessful) {
-												let LastNode = Array.from(NodeOfFoooter.OutputNode.childNodes).at(-1)
-												NodeOfReplyRepostLikes_Array = Array.from(LastNode.childNodes)
+												let LastNode = [...NodeOfFoooter.OutputNode.childNodes].at(-1)
+												NodeOfReplyRepostLikes_Array = [...LastNode.childNodes]
 											}
 											if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
 												ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
@@ -514,7 +511,7 @@
 						//Obtain user profile
 							let ProfileNode = {}
 							
-							let UserProfileHandle = Array.from(document.getElementsByTagName("DIV")).find((DivElement) => {
+							let UserProfileHandle = [...document.getElementsByTagName("DIV")].find((DivElement) => {
 								if (isAncestorsStyleDisplayNone(DivElement)) {
 									return false
 								}
@@ -577,7 +574,7 @@
 								let Profile_PostCount = ""
 								let NodeOfFollowFollowingPost = DescendNode(ProfileNode, [1,2])
 								if (NodeOfFollowFollowingPost.IsSuccessful) {
-									let ArrayOf_FollowFollowingPost = Array.from(NodeOfFollowFollowingPost.OutputNode.childNodes)
+									let ArrayOf_FollowFollowingPost = [...NodeOfFollowFollowingPost.OutputNode.childNodes]
 									
 									Profile_FollowCount = ArrayOf_FollowFollowingPost[0].textContent.replace(/^([\d\.A-Za-z]+).*$/, "$1")
 									Profile_FollowingCount = ArrayOf_FollowFollowingPost[1].textContent.replace(/^([\d\.A-Za-z]+).*$/, "$1")
@@ -673,10 +670,10 @@
 								//where N is the last element because sometimes a post have duplicate counts between the date and timestamp at the bottom
 								let NodeOfFoooter = DescendNode(Box, [0,0,1])
 								if (NodeOfFoooter.IsSuccessful) {
-									let LastNode = Array.from(NodeOfFoooter.OutputNode.childNodes).at(-1)
+									let LastNode = [...NodeOfFoooter.OutputNode.childNodes].at(-1)
 									let NodeOfFooterDeepest = DescendNode(LastNode, [0])
 									if (NodeOfFooterDeepest.IsSuccessful) {
-										NodeOfReplyRepostLikes_Array = Array.from(NodeOfFooterDeepest.OutputNode.childNodes)
+										NodeOfReplyRepostLikes_Array = [...NodeOfFooterDeepest.OutputNode.childNodes]
 									}
 								}
 								if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
@@ -729,9 +726,9 @@
 								}
 								
 								//Box.childNodes[0].childNodes[1].childNodes[1] - get the footer (position varies)
-								let PostFooter = Array.from(DescendNode(Box, [0,1,1]).OutputNode.childNodes)
+								let PostFooter = [...DescendNode(Box, [0,1,1]).OutputNode.childNodes]
 								PostFooter = PostFooter.at(-1)
-								NodeOfReplyRepostLikes_Array = Array.from(DescendNode(PostFooter, [0]).OutputNode.childNodes)
+								NodeOfReplyRepostLikes_Array = [...DescendNode(PostFooter, [0]).OutputNode.childNodes]
 								
 								if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
 									ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
@@ -786,9 +783,9 @@
 								let NodeOfReplyRepostLikes_Array = []
 								let NodeOfFoooter = DescendNode(Box, [0,0,0,1,1])
 								if (NodeOfFoooter.IsSuccessful) {
-									let LastNode = Array.from(NodeOfFoooter.OutputNode.childNodes).at(-1)
+									let LastNode = [...NodeOfFoooter.OutputNode.childNodes].at(-1)
 									let NodeOfFooterDeepest = LastNode
-									NodeOfReplyRepostLikes_Array = Array.from(NodeOfFooterDeepest.childNodes)
+									NodeOfReplyRepostLikes_Array = [...NodeOfFooterDeepest.childNodes]
 									
 								}
 								if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
@@ -896,10 +893,7 @@
 								let NodeOfReplyTo = DescendNode(Post, [0,0,1,1,1])
 								if (NodeOfReplyTo.IsSuccessful) {
 									if (/^Reply to/.test(NodeOfReplyTo.OutputNode.textContent)) {
-										//let ReplyToLink = Array.from(NodeOfReplyTo.OutputNode.getElementsByTagName("a"))
-										//if (ReplyToLink.length != 0) {
-											ReplyToOffset++
-										//}
+										ReplyToOffset++
 									}
 								}
 								
@@ -910,9 +904,9 @@
 								let NodeOfReplyRepostLikes_Array = []
 								let NodeOfFoooter = DescendNode(Post, [0,0,1])
 								if (NodeOfFoooter.IsSuccessful) {
-									let LastNode = Array.from(NodeOfFoooter.OutputNode.childNodes).at(-1)
+									let LastNode = [...NodeOfFoooter.OutputNode.childNodes].at(-1)
 									let NodeOfFooterDeepest = LastNode
-									NodeOfReplyRepostLikes_Array = Array.from(NodeOfFooterDeepest.childNodes)
+									NodeOfReplyRepostLikes_Array = [...NodeOfFooterDeepest.childNodes]
 									
 								}
 								if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
@@ -991,7 +985,7 @@
 									//unless if it is already added
 									Set_ListOfURLsSaved.add(Extracted_Replies)
 								})
-								SavedList_WhatToReplace.RepliesURLs = Array.from(Set_ListOfURLsSaved)
+								SavedList_WhatToReplace.RepliesURLs = [...Set_ListOfURLsSaved]
 								
 								if ((SavedList_WhatToReplace.ReplyToURL == "") && (ExtractList_ReplaceWith.ReplyToURL != "")) { //If discovered that the post has a reply, add a URL to it.
 									SavedList_WhatToReplace.ReplyToURL = ExtractList_ReplaceWith.ReplyToURL
@@ -1069,7 +1063,7 @@
 			}
 		}
 		function GetPostBoxesByLink(Levels) {
-			let ListOfElements = Array.from(document.getElementsByTagName("A"))
+			let ListOfElements = [...document.getElementsByTagName("A")]
 			let BoxList = []
 			ListOfElements.find((ArrayElement) => { //Search all the a href
 				if (!/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+(?:\.[a-zA-Z\d\-]+)*\/?/.test(ArrayElement.href)) { //Is it a link to the profile page?
@@ -1085,13 +1079,13 @@
 				if (isAncestorsStyleDisplayNone(ReferenceNode.OutputNode)) { //Is not in a display-none or inside any element with display-none?
 					return false
 				}
-				BoxList = Array.from(ReferenceNode.OutputNode.childNodes)
+				BoxList = [...ReferenceNode.OutputNode.childNodes]
 				return true
 			});
 			return BoxList
 		}
 		function GetNodeByFooterTimestamp(Levels) {
-			let ListOfElements = Array.from(document.getElementsByTagName("DIV"))
+			let ListOfElements = [...document.getElementsByTagName("DIV")]
 			let BoxList = []
 			ListOfElements.find((ArrayElement) => { //Search all the div
 				if (!/^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d+, \d+ at \d+:\d+ (?:A|P)M$/.test(ArrayElement.innerHTML)) { //Is the text the timestamp? (must be the innermost div that contains *JUST* the date)
@@ -1104,7 +1098,7 @@
 				if (isAncestorsStyleDisplayNone(ReferenceNode.OutputNode)) { //Is not in a display-none or inside any element with display-none?
 					return false
 				}
-				BoxList = Array.from(ReferenceNode.OutputNode.childNodes)
+				BoxList = [...ReferenceNode.OutputNode.childNodes]
 				return true
 			});
 			return BoxList
@@ -1172,7 +1166,7 @@
 			//Returns an array whose items are objects representing its URL, type and caption.
 			let Output = []
 			if (Node.childNodes.length != 0) {
-				Output = Array.from(Node.querySelectorAll("img, video")).map((HTMLTag) => {
+				Output = [...Node.querySelectorAll("img, video")].map((HTMLTag) => {
 					//WIP, once bsky allows other media types besides images, this is to be updated to accept multiple tags (img, video, etc.)
 					
 					let MediaOutput = {
@@ -1197,7 +1191,7 @@
 			//Returns an array listing URLs of outlinks
 			let Output = []
 			if (Node.childNodes.length != 0) { //Quoted posts
-				Output = Array.from(Node.getElementsByTagName("a")).map((Links) => {
+				Output = [...Node.getElementsByTagName("a")].map((Links) => {
 					return HttpToTtp(Links.href)
 				});
 			}
@@ -1245,7 +1239,7 @@
 			return isHidden
 		}
 		function IdentifyPostLayoutType(PostBox) {
-			let BoxChildrenNodes = Array.from(PostBox.childNodes) //As far as my testing, these boxes either have no child nodes or one child nodes.
+			let BoxChildrenNodes = [...PostBox.childNodes] //As far as my testing, these boxes either have no child nodes or one child nodes.
 			if (BoxChildrenNodes.length == 0) {
 				return "NonPost_BlankZone"
 			} else if (BoxChildrenNodes.length == 1) {
@@ -1271,7 +1265,7 @@
 				}
 				if ((NodeToLookAt_TimeStampCurrentlyViewedPostTop.LevelsPassed == 6)&&(!NodeToLookAt_TimeStampOtherThanCurrentPost.IsSuccessful)) {
 					if (typeof NodeToLookAt_TimeStampCurrentlyViewedPostTop.OutputNode.dataset != "undefined") {
-						let IsPotentialAhref = Array.from(NodeToLookAt_TimeStampCurrentlyViewedPostTop.OutputNode.getElementsByTagName("a")).find((ArrayElement) => {
+						let IsPotentialAhref = [...NodeToLookAt_TimeStampCurrentlyViewedPostTop.OutputNode.getElementsByTagName("a")].find((ArrayElement) => {
 							return ArrayElement.hasAttribute("href")
 						})
 						if (typeof IsPotentialAhref == "undefined"){
@@ -1280,7 +1274,7 @@
 					}
 				}
 				if (NodeToLookAt_TimeStampCurrentlyViewedPostNotTop.LevelsPassed == 7) {
-					let IsPotentialAhref = Array.from(NodeToLookAt_TimeStampCurrentlyViewedPostNotTop.OutputNode.getElementsByTagName("a")).find((ArrayElement) => {
+					let IsPotentialAhref = [...NodeToLookAt_TimeStampCurrentlyViewedPostNotTop.OutputNode.getElementsByTagName("a")].find((ArrayElement) => {
 						return ArrayElement.hasAttribute("href")
 					})
 					if (typeof IsPotentialAhref == "undefined"){
@@ -1341,7 +1335,7 @@
 			//Node should be the outermost div tag that covers only the post and not the header/footer
 			let PostContent = {}
 			
-			let PostSegments = Array.from(Node.childNodes).filter((ArrayElement) => {
+			let PostSegments = [...Node.childNodes].filter((ArrayElement) => {
 				return (ArrayElement.tagName == "DIV")
 			})
 			
@@ -1385,10 +1379,10 @@
 						}
 						let AttachmentList = []
 						if (/https:\/\/bsky\.app\/profile\//.test(window.location.href)) {
-							AttachmentList = Array.from(AttachmentListNode.OutputNode.childNodes)
+							AttachmentList = [...AttachmentListNode.OutputNode.childNodes]
 						}
 						if (/https:\/\/bsky\.app\/search/.test(window.location.href)) {
-							AttachmentList = Array.from(PostSegment.childNodes)
+							AttachmentList = [...PostSegment.childNodes]
 						}
 						AttachmentList.forEach((Node) => {
 							AttachmentPostType = IdentifyPostSegmentType(Node)
@@ -1403,13 +1397,13 @@
 								}
 							} else if (AttachmentPostType == "Attachments") {
 								let SubAttachmentType = (function () {
-									let QuotedPost = Array.from(Node.querySelectorAll("a")).find((HTMLElement) => {
+									let QuotedPost = [...Node.querySelectorAll("a")].find((HTMLElement) => {
 										return /^https:\/\/bsky\.app\/profile\//.test(HTMLElement.href)
 									})
 									if (typeof QuotedPost != "undefined") {
 										return "QuotedPost"
 									}
-									let ExernalLinkPost = Array.from(Node.querySelectorAll("a")).find((ExternalLink) => {
+									let ExernalLinkPost = [...Node.querySelectorAll("a")].find((ExternalLink) => {
 										return !(/^https:\/\/bsky\.app\/profile\//.test(ExternalLink.href))
 										
 									})
@@ -1525,7 +1519,7 @@
 			}
 			
 			if (ElementContainingPostSegments.tagName != "A" && (!/https:\/\/bsky\.app\/profile\//.test(ElementContainingPostSegments.href))) {
-				Array.from(ElementContainingPostSegments.getElementsByTagName("*")).forEach((HTMLElementThing) => { //Loop through all children elements to determine type
+				[...ElementContainingPostSegments.getElementsByTagName("*")].forEach((HTMLElementThing) => { //Loop through all children elements to determine type
 					if (HTMLElementThing.tagName == "IMG") {
 						HasImages = true
 						if (/https:\/\/cdn\.bsky\.app\/img\/feed_thumbnail\//.test(HTMLElementThing.src)) {
@@ -1578,7 +1572,7 @@
 				return null
 			}
 			OutputLinkPreview.Link = Node.href
-			let ImageAndTextPreview = Array.from(Node.childNodes)
+			let ImageAndTextPreview = [...Node.childNodes]
 			ImageAndTextPreview.forEach((Part) => {
 				let NodeOfImage = DescendNode(Part, [0,0])
 				if (NodeOfImage.IsSuccessful) {
@@ -1593,7 +1587,7 @@
 					}
 				}
 				if (Part.textContent != "") {
-					let TextSegments = Array.from(Part.childNodes)
+					let TextSegments = [...Part.childNodes]
 					let OutputText = {ExternalLinkTexts: []}
 					TextSegments.forEach((TextSegment) => {
 						OutputText.ExternalLinkTexts.push(TextSegment.textContent)
@@ -1655,7 +1649,7 @@
 			}
 			//Node.childNodes[0].childNodes
 			//Get quoted post content
-			let ArrayOfPostSegments = Array.from(Node.childNodes)
+			let ArrayOfPostSegments = [...Node.childNodes]
 			
 			ArrayOfPostSegments.shift() //Remove the header showing the avatar, name, handle, etc. All stuff beyond that are content
 			ArrayOfPostSegments.forEach((QuotedPostSegment) => {

@@ -153,7 +153,7 @@
 				}
 				
 			//Add to document
-				let HTMLBody = Array.from(document.getElementsByTagName("BODY")).find((Element) => {return true})
+				let HTMLBody = [...document.getElementsByTagName("BODY")].find((Element) => {return true})
 				let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0])
 				if (InnerNodeOfHTMLBody.IsSuccessful) {
 					document.body.insertBefore(DivBox, HTMLBody.childNodes[0]);
@@ -171,7 +171,7 @@
 				
 				//Check the "save results in a new sheets" option
 					if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=archive") {
-						let Element_SaveInNewSheetOption = Array.from(document.querySelectorAll('input[type=checkbox]')).find((CheckBox) => {
+						let Element_SaveInNewSheetOption = [...document.querySelectorAll('input[type=checkbox]')].find((CheckBox) => {
 							return CheckBox.parentElement.textContent == "Save results in a new Sheet."
 						});
 						if (typeof Element_SaveInNewSheetOption != "undefined") {
@@ -185,7 +185,7 @@
 					}
 				//On any given start process page, get the process tracking URL and extract various info from it, and write it to the textarea
 					let ProcessTrackingURLString = ""
-					let TrackingURL = Array.from(document.querySelectorAll("small")).find((HTMLElement) => {
+					let TrackingURL = [...document.querySelectorAll("small")].find((HTMLElement) => {
 						return /Tracking URL: https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=/.test(HTMLElement.textContent)
 					})
 					if (typeof TrackingURL !== "undefined") {
@@ -227,8 +227,8 @@
 							SystemQueueMessage: ""
 						}
 						let TableListingProcess = document.querySelector("table") //Get entire table of running processes
-						if (TableListingProcess != null) {
-							let ListOfProcesses = Array.from(TableListingProcess.querySelectorAll("tr"))
+						if (TableListingProcess != null) { //If no process exists, don't list it
+							let ListOfProcesses = [...TableListingProcess.querySelectorAll("tr")]
 							let ListOfProcessesItems = ListOfProcesses.filter((WBGSProcess) => { //Get the running processes
 								let ColCountCorrect = WBGSProcess.childNodes.length == 6 //Get only items that have 6 columns (exclude row with "There are no running processes.")
 								let IsRowAProcess = /https:\/\/docs\.google\.com\/spreadsheets\//.test(WBGSProcess.childNodes[0].textContent) //Exclude the table headers row
@@ -248,8 +248,10 @@
 										}
 									})
 									JsonExtractedInfo.ListOfProcesses = OBJ_WBGS_ListOfProcesses
+							}
+							if (!HavePrintedListOfProcess) {
 								//Get queue quantity
-									let DivMsgQueueWarning = Array.from(document.querySelectorAll("div"))
+									let DivMsgQueueWarning = [...document.querySelectorAll("div")]
 									DivMsgQueueWarning = DivMsgQueueWarning.find((Element) => {
 										return /^There are \d+ processes waiting in the system queue!/.test(Element.textContent)
 									})
@@ -258,20 +260,22 @@
 									}
 								
 								//Output the json
-									JSONTextarea.textContent = JSON.stringify(JsonExtractedInfo, "", " ")
-									HavePrintedListOfProcess = true
+									if (JsonExtractedInfo.ListOfProcesses.length != 0 || JsonExtractedInfo.SystemQueueMessage != "") { //If there is something there, then print it.
+										JSONTextarea.textContent = JSON.stringify(JsonExtractedInfo, "", " ")
+										HavePrintedListOfProcess = true
+									}
 							}
-							
-							let ListOfFinishLockedProcesses = ListOfProcessesItems.filter((WBGSProcess) => {
-								return WBGSProcess.childNodes[4].textContent == "SUCCESS" //Find only processes that are labeled "SUCCESS"
-							})
-							if ((ClickAllAbortsCount < MaxClickAllAborts)&&(ListOfFinishLockedProcesses.length != 0)) {
-								ListOfFinishLockedProcesses.forEach((WBGSProcess) => {
-									let AbortButton = WBGSProcess.childNodes[5].childNodes[1]
-									AbortButton.click()
+							//Auto-abort any finish-locked processes
+								let ListOfFinishLockedProcesses = ListOfProcessesItems.filter((WBGSProcess) => {
+									return WBGSProcess.childNodes[4].textContent == "SUCCESS" //Find only processes that are labeled "SUCCESS"
 								})
-								ClickAllAbortsCount++
-							}
+								if ((ClickAllAbortsCount < MaxClickAllAborts)&&(ListOfFinishLockedProcesses.length != 0)) {
+									ListOfFinishLockedProcesses.forEach((WBGSProcess) => {
+										let AbortButton = WBGSProcess.childNodes[5].childNodes[1]
+										AbortButton.click()
+									})
+									ClickAllAbortsCount++
+								}
 						}
 					}
 				RaceConditionLock = false
