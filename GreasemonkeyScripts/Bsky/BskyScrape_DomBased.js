@@ -1513,7 +1513,8 @@
 			}
 			if (ListOfButtons.length != 0) {
 				let ListOfSVG = [...ElementContainingPostSegments.querySelectorAll("svg")]
-				if (ListOfSVG.length != 0) {
+				let AHrefLink = ElementContainingPostSegments.querySelector("a")
+				if (ListOfSVG.length != 0 && AHrefLink == null) {
 					return "FlaggedNotification"
 				}
 			}
