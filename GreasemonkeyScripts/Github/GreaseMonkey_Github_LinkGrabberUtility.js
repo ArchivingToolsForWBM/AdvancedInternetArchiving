@@ -57,7 +57,7 @@
 					let Github_NumberOfPagesOfRepositories = -1
 					let Github_UserIsOrganization = false
 					
-					let ElementOfRepositoryCount = Array.from(document.getElementsByTagName("a")).find((ArrayElement) => {
+					let ElementOfRepositoryCount = [...document.getElementsByTagName("a")].find((ArrayElement) => {
 						return /Repositories\n\d+/.test(ArrayElement.innerText)
 					});
 					
@@ -86,7 +86,7 @@
 						//Get number of paginated pages for releases e.g. https://github.com/adam-p/markdown-here
 						let Github_NumberOfReleases = -1
 						let Github_NumberOfReleasesPageCount = -1
-						let LookingForReleasesCount = Array.from(document.getElementsByTagName("a"))
+						let LookingForReleasesCount = [...document.getElementsByTagName("a")]
 						let ReleaseCountHTMLElement = LookingForReleasesCount.find((ArrayElement) => {
 							//Make sure it is an href link and in a way that it is by github rather than finding an a href by the user.
 							return RegExp("https:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z0-9_.\-]+\\/releases").test(ArrayElement.href) && /Releases \d+/.test(ArrayElement.innerText)
@@ -128,11 +128,22 @@
 				//
 				//Note that they also must be scrolled on-screen and fully load to appear in the html.
 				if (RegExp("https:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z0-9_.\-]+/releases").test(Github_Current_URL) && document.getElementsByTagName("details").length != 0) {
-					let DetailsToReveal = Array.from(document.getElementsByTagName("details"))
-					DetailsToReveal.forEach((HTMLToReveal) => {
-						if (/Assets? \d+/.test(HTMLToReveal.innerText)) {
-							HTMLToReveal.setAttribute("open", "")
+					let DetailsToReveal = [...document.querySelectorAll("details")]
+					DetailsToReveal = DetailsToReveal.filter((HTMLEle) => {
+						let AssetsHTMLTag = null
+						try {
+							AssetsHTMLTag = HTMLEle.childNodes[1].childNodes[1]
+						} catch (e) {
+							return false
 						}
+						if (AssetsHTMLTag.textContent == "Assets") {
+							return true
+						}
+					})
+					
+					
+					DetailsToReveal.forEach((HTMLToReveal) => {
+						HTMLToReveal.setAttribute("open", "")
 					});
 				}
 			}
