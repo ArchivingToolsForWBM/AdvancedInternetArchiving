@@ -368,7 +368,7 @@
 										{
 											let UserTitleElement = DescendNode(Post, [0, 0, 1, 1, 0, 0, 0, 0, 0])
 											if (UserTitleElement.IsSuccessful) {
-												UserTitle = UserTitleElement.OutputNode.textContent
+												UserTitle = CleanString(UserTitleElement.OutputNode.textContent)
 											}
 										}
 										//User handle
@@ -376,7 +376,7 @@
 											//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/\s/, "")
 											let UserHandleElement = DescendNode(Post, [0,0,1,1,0,0,0,0,1])
 											if (UserHandleElement.IsSuccessful) {
-												UserHandle = UserHandleElement.OutputNode.textContent.replace(/^\s/, "")
+												UserHandle = CleanString(UserHandleElement.OutputNode.textContent)
 											}
 										}
 										//User Avatar
@@ -535,13 +535,13 @@
 								let Profile_UserTitle = ""
 								let Node_Profile_UserTitle = DescendNode(ProfileNode, [1,1,0])
 								if (Node_Profile_UserTitle.IsSuccessful) {
-									Profile_UserTitle = Node_Profile_UserTitle.OutputNode.textContent
+									Profile_UserTitle = CleanString(Node_Profile_UserTitle.OutputNode.textContent)
 								}
 								
 								let Profile_UserHandle = ""
 								let Node_Profile_UserHandle = DescendNode(ProfileNode, [1,1,1])
 								if (Node_Profile_UserHandle.IsSuccessful) {
-									Profile_UserHandle = Node_Profile_UserHandle.OutputNode.textContent
+									Profile_UserHandle = CleanString(Node_Profile_UserHandle.OutputNode.textContent)
 								}
 								
 								let Profile_Avatar = ""
@@ -639,10 +639,10 @@
 								PostURL = HttpToTtp(window.location.href)
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0]
-								UserTitle = DescendNode(Box, [0,0,0,1,0,0,0]).OutputNode.textContent
+								UserTitle = CleanString(DescendNode(Box, [0,0,0,1,0,0,0]).OutputNode.textContent)
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0]
-								UserHandle = DescendNode(Box, [0,0,0,1,1,0,0]).OutputNode.textContent 
+								UserHandle = CleanString(DescendNode(Box, [0,0,0,1,1,0,0]).OutputNode.textContent)
 								
 								if (/https:\/\/bsky\.app\/profile\/did:plc/.test(PostURL)) { //"View full thread" button is clicked, goes to a handle-less version of a post URL
 									//Replace the "did:plc:<base64_string>" with the handle.
@@ -697,10 +697,10 @@
 								}
 								
 								//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].textContent
-								UserTitle = DescendNode(Box, [0,1,0,1,0,0,0]).OutputNode.textContent
+								UserTitle = CleanString(DescendNode(Box, [0,1,0,1,0,0,0]).OutputNode.textContent)
 								
 								//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].textContent
-								UserHandle = DescendNode(Box, [0,1,0,1,1,0,0]).OutputNode.textContent
+								UserHandle = CleanString(DescendNode(Box, [0,1,0,1,1,0,0]).OutputNode.textContent)
 								
 								if (/https:\/\/bsky\.app\/profile\/did:plc/.test(PostURL)) { //"View full thread" button is clicked, goes to a handle-less version of a post URL
 									//Replace the "did:plc:<base64_string>" with the handle.
@@ -758,10 +758,10 @@
 									}
 								}
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
-								UserTitle = DescendNode(Box, [0,0,0,1,1,0,0,0,0,0]).OutputNode.textContent
+								UserTitle = CleanString(DescendNode(Box, [0,0,0,1,1,0,0,0,0,0]).OutputNode.textContent)
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/^\s/, "")
-								UserHandle = DescendNode(Box, [0,0,0,1,1,0,0,0,0,1]).OutputNode.textContent.replace(/^\s/, "")
+								UserHandle = CleanString(DescendNode(Box, [0,0,0,1,1,0,0,0,0,1]).OutputNode.textContent)
 								
 								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
 								let NodeOfAvatarImg = DescendNode(Box, [0,0,0,1,0,0,0,0,0,0,1])
@@ -873,10 +873,10 @@
 								PostURL = HttpToTtp(DescendNode(Post, [0,0,1,0,2]).OutputNode.href)
 								
 								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
-								UserTitle = DescendNode(Post, [0,0,1,0,0,0,0,0]).OutputNode.textContent
+								UserTitle = CleanString(DescendNode(Post, [0,0,1,0,0,0,0,0]).OutputNode.textContent)
 								
 								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/^\s/, "")
-								UserHandle = DescendNode(Post, [0,0,1,0,0,0,0,1]).OutputNode.textContent.replace(/^\s/, "")
+								UserHandle = CleanString(DescendNode(Post, [0,0,1,0,0,0,0,1]).OutputNode.textContent)
 								
 								//Post.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
 								//Post.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
@@ -1069,7 +1069,7 @@
 				if (!/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+(?:\.[a-zA-Z\d\-]+)*\/?/.test(ArrayElement.href)) { //Is it a link to the profile page?
 					return false
 				}
-				if (!/ @[a-zA-Z\d\-]+\.[a-zA-Z\d\-]+(?:\.[a-zA-Z\d\-]+)*$/.test(ArrayElement.textContent)) { //Is the text the user handle? (note the non-breaking space, it's not a normal space character before the handle)
+				if (!/^@([a-zA-Z\d+]+\.)*[a-zA-Z\d+]+$/.test(CleanString(ArrayElement.textContent))) { //Is the text the user handle? (note the zero-width space, aka. POP DIRECTIONAL FORMATTING - code 202C, and the nbsp it's not a normal space character before the handle)
 					return false
 				}
 				let ReferenceNode = AscendNode(ArrayElement, Levels)
@@ -1635,7 +1635,7 @@
 			//Node.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0]
 			let NodeOfUserHandle = DescendNode(Node, [0,0,1,0,0,1])
 			if (NodeOfUserHandle.IsSuccessful) {
-				QuotedContent.Contents.UserHandle = NodeOfUserHandle.OutputNode.textContent.replace(/^\s/, "")
+				QuotedContent.Contents.UserHandle = CleanString(NodeOfUserHandle.OutputNode.textContent)
 			}
 			//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
 			//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1]
@@ -1697,5 +1697,8 @@
 		}
 		function GetValueError() {
 			console.log("Bsky-scrape: Error, cannot obtain save value")
+		}
+		function CleanString(str) { //Removes zero-width characters at the start and end of string. E.g "POP DIRECTIONAL FORMATTING" (code #202C)
+			return str.replace(/^(\u202c|\u202a|\s)+/, "").replace(/(\u202c|\u202a|\s)+$/, "")
 		}
 })();
