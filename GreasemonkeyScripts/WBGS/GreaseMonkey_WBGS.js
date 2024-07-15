@@ -280,7 +280,7 @@
 										return {
 											TrackingURL: HttpToTtp(TrackingURL),
 											JobID: TrackingURL.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
-											GSheetURL: HttpToTtp(WBGSProcess.childNodes[0].textContent),
+											GoogleSheetURL: HttpToTtp(WBGSProcess.childNodes[0].textContent),
 											StartedTime: WBGSProcess.childNodes[1].textContent + " (" + HowLongAgo + ")",
 											Status: WBGSProcess.childNodes[4].textContent
 										}
