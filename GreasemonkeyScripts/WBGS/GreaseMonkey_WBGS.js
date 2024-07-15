@@ -32,6 +32,10 @@
 			//starts when the page first loads (any subsequent loads besides a refresh does not count).
 		const Setting_ProcessLogLimit = 10
 			//^The maximum number of process logged into the list. Once reached, and a new item is added, the oldest in the array is removed.
+		const Setting_ProcessLogOrderByRecent = true
+			// when the user clicks on "Copy Process History button" the order of the JSON representing an array is:
+			// false = from oldest to newest
+			// true = from newest to oldest
 	//Don't touch unless you know what you're doing
 		setInterval(Code, IntervalDelay)
 		if (Setting_AlternativeProcessActivityLog) {
@@ -167,11 +171,16 @@
 				DivBox.appendChild(document.createElement("hr"))
 			//Button to get process history
 				let GetProcessHistoryButton = document.createElement("button")
-				GetProcessHistoryButton.appendChild(document.createTextNode("Copy process history"))
+				GetProcessHistoryButton.appendChild(document.createTextNode("Copy Process History"))
 				GetProcessHistoryButton.addEventListener(
 				"click",
 					function () {
-						GM.setClipboard(JSON.stringify(ProcessHistory, "", " "))
+						if (Setting_ProcessLogOrderByRecent) {
+							GM.setClipboard(JSON.stringify(ProcessHistory.toReversed(), "", " "))
+						} else {
+							GM.setClipboard(JSON.stringify(ProcessHistory, "", " "))
+						}
+						
 					}
 				)
 				DivBox.appendChild(GetProcessHistoryButton)
@@ -232,7 +241,7 @@
 							
 							let OBJ_WBGS_TrackingInfo = {
 								TrackingURL: HttpToTtp(ProcessTrackingURLString), //URLs in the console log gets truncated and the text may not be preserved depending on browser.
-								GoogleSheetURL: HttpToTtp(ProcessTrackingURLString.replace(/^.+?\&google_sheet_url=/g, "").replaceAll("%3A", ":").replaceAll("%2F", "/").replaceAll("%23", "#").replaceAll("%3D", "=")),
+								GoogleSheetURL: HttpToTtp(ProcessTrackingURLString.replace(/^.+?\&google_sheet_url=/g, "").replaceAll("%3A", ":").replaceAll("%2F", "/").replaceAll("%23", "#").replaceAll("%3D", "=").replaceAll("%3F", "?")),
 								JobID: ProcessTrackingURLString.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
 								TimestampOfInitalProcess: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(CurrentTimeMS).toISOString()),
 								ProcessType: ProcessType
