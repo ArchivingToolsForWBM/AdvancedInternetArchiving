@@ -5,9 +5,11 @@
 // @description  Utility for WBGS.
 // @include      https://archive.org/services/wayback-gsheets/*
 // @grant        GM.setClipboard
+// @grant        GM.setValue
+// @grant        GM.getValue
 // ==/UserScript==
 
-(function() {
+(async () => {
 	//Settings
 		const IntervalDelay = 100
 			//^How many milliseconds between each "scan" of the WBGS page.
@@ -28,6 +30,8 @@
 			//Display alternative process activity log. This is if you want to see the time in UTC conveniently.
 			//Note that this is not in sync since despite WBGS updates the display every 10 seconds, that timer starts the moment you start a process, while this script
 			//starts when the page first loads (any subsequent loads besides a refresh does not count).
+		const Setting_ProcessLogLimit = 10
+			//^The maximum number of process logged into the list. Once reached, and a new item is added, the oldest in the array is removed.
 	//Don't touch unless you know what you're doing
 		setInterval(Code, IntervalDelay)
 		if (Setting_AlternativeProcessActivityLog) {
@@ -51,6 +55,14 @@
 		let ProcessTrackingLog = []
 		
 		let CurrentWBGSURL = ""
+		
+		let ProcessHistory = []
+		
+		try {
+			ProcessHistory = JSON.parse(await GM.getValue("WBGS_ProcessHistory", "[]").catch(() => {
+				console.log("WBGS utility: Loading log failed!")
+			}))
+		} catch {}
 		
 		async function Spawn_UI_Panel() {
 			//Element of the main UI
@@ -151,7 +163,18 @@
 						)
 						DivBox.appendChild(ClearAlternativeProcessActivityLogButton)
 				}
-				
+			//line seperator
+				DivBox.appendChild(document.createElement("hr"))
+			//Button to get process history
+				let GetProcessHistoryButton = document.createElement("button")
+				GetProcessHistoryButton.appendChild(document.createTextNode("Copy process history"))
+				GetProcessHistoryButton.addEventListener(
+				"click",
+					function () {
+						GM.setClipboard(JSON.stringify(ProcessHistory, "", " "))
+					}
+				)
+				DivBox.appendChild(GetProcessHistoryButton)
 			//Add to document
 				let HTMLBody = [...document.getElementsByTagName("BODY")].find((Element) => {return true})
 				let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0])
@@ -160,7 +183,7 @@
 				}
 		}
 		
-		function Code() {
+		async function Code() {
 			if (!RaceConditionLock) {
 				RaceConditionLock = true
 				if (CurrentWBGSURL != window.location.href) {
@@ -207,7 +230,7 @@
 								return ListOfProcessTypes[TypeInURL] ?? "Unknown"
 							})(window.location.href);
 							
-							let OBJ_WBGS_TrackingURL = {
+							let OBJ_WBGS_TrackingInfo = {
 								TrackingURL: HttpToTtp(ProcessTrackingURLString), //URLs in the console log gets truncated and the text may not be preserved depending on browser.
 								GoogleSheetURL: HttpToTtp(ProcessTrackingURLString.replace(/^.+?\&google_sheet_url=/g, "").replaceAll("%3A", ":").replaceAll("%2F", "/").replaceAll("%23", "#").replaceAll("%3D", "=")),
 								JobID: ProcessTrackingURLString.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
@@ -215,8 +238,23 @@
 								ProcessType: ProcessType
 							}
 							
-							JSONTextarea.textContent = JSON.stringify(OBJ_WBGS_TrackingURL, "", " ")
+							JSONTextarea.textContent = JSON.stringify(OBJ_WBGS_TrackingInfo, "", " ")
 							HavePrintedListOfProcess = true
+							
+							//Save history to a log
+								
+								let IndexWithSameProcess = ProcessHistory.findIndex((ArrEle) => { //Find if we already have that process in the list (failsafe)
+									return ArrEle.TrackingURL == OBJ_WBGS_TrackingInfo.TrackingURL
+								})
+								if (IndexWithSameProcess == -1) { //This if statement is a failsafe to prevent duplicate entries
+									while (ProcessHistory.length >= Setting_ProcessLogLimit) { //If you somehow have multiple items past the limit, this will repeatedly remove oldest item until 1-below the limit
+										ProcessHistory.shift() //Delete oldest item (array will have MaxNumber-1, -1 so we have one empty slot to place)
+									}
+									ProcessHistory.push(OBJ_WBGS_TrackingInfo)
+									await GM.setValue("WBGS_ProcessHistory", JSON.stringify(ProcessHistory)).catch(() => {
+										console.log("WBGS utility: Saving log failed!")
+									})
+								}
 						}
 					}
 				//Extract info from the WBGS home page
