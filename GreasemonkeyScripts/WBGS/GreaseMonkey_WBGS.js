@@ -280,6 +280,13 @@
 								ProcessType: ProcessType
 							}
 							
+							let NodeContainingArchiveProcessSettings = [...document.querySelectorAll("button")].find((ele) => ele.textContent == "Archive")
+							if (typeof NodeContainingArchiveProcessSettings != "undefined") {
+								let SettingsObject = GetProcessSettings(NodeContainingArchiveProcessSettings.parentNode)
+								OBJ_WBGS_TrackingInfo.ProcessSettings = SettingsObject //Add a new property referencing to the settings
+							}
+							
+							
 							JSONTextarea.textContent = JSON.stringify(OBJ_WBGS_TrackingInfo, "", " ")
 							HavePrintedListOfProcess = true
 							
@@ -289,8 +296,8 @@
 									return ArrEle.TrackingURL == OBJ_WBGS_TrackingInfo.TrackingURL
 								})
 								if (IndexWithSameProcess == -1) { //This if statement is a failsafe to prevent duplicate entries
-									while (ProcessHistory.length >= Setting_ProcessLogLimit) { //If you somehow have multiple items past the limit, this will repeatedly remove oldest item until 1-below the limit
-										ProcessHistory.shift() //Delete oldest item (array will have MaxNumber-1, -1 so we have one empty slot to place)
+									if (ProcessHistory.length >= Setting_ProcessLogLimit) { //If you somehow have multiple items past the limit, this will repeatedly remove oldest item until 1-below the limit
+										ProcessHistory.splice(0, ProcessHistory.length - (Setting_ProcessLogLimit-1)) //Delete oldest item (array will have MaxNumber-1, -1 so we have one empty slot to place)
 									}
 									ProcessHistory.push(OBJ_WBGS_TrackingInfo)
 									await GM.setValue("WBGS_ProcessHistory", JSON.stringify(ProcessHistory)).catch(() => {
@@ -436,7 +443,30 @@
 			
 			
 		}
-		
+	//helper functions
+		function GetProcessSettings(NodeContainingControls) {
+			let ListOfUserControllableUI = [...NodeContainingControls.querySelectorAll("input, select")]
+			let SettingsObject = {}
+			ListOfUserControllableUI.forEach((ele) => {
+				try { //Failsafe
+					if (ele.tagName == "INPUT" && ele.type == "checkbox") {
+						SettingsObject[ele.parentNode.textContent] = ele.checked
+					} else if (ele.tagName == "SELECT") {
+						let SelectedOption = [...ele.selectedOptions][0]
+						let OptionText = ""
+						if (SelectedOption != null) {
+							OptionText = SelectedOption.textContent
+						}
+						let PartsOfSelectUI = [...ele.parentNode.childNodes]
+						if (PartsOfSelectUI.length == 3) {
+							let OptionLabel = PartsOfSelectUI[0].textContent //This assumes the text is to the left of the select element
+							SettingsObject[OptionLabel] = OptionText
+						}
+					}
+				} catch {}
+			})
+			return SettingsObject
+		}
 	//Reused functions
 		function DescendNode(Node, LevelsArray) {
 			//Opposite of AscendNode, descends a node without errors. LevelsArray is an array that contains
