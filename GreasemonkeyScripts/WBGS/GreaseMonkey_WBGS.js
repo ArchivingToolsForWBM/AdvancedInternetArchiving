@@ -32,10 +32,6 @@
 			//starts when the page first loads (any subsequent loads besides a refresh does not count).
 		const Setting_ProcessLogLimit = 10
 			//^The maximum number of process logged into the list. Once reached, and a new item is added, the oldest in the array is removed.
-		const Setting_ProcessLogOrderByRecent = true
-			// when the user clicks on "Copy Process History button" the order of the JSON representing an array is:
-			// false = from oldest to newest
-			// true = from newest to oldest
 	//Don't touch unless you know what you're doing
 		setInterval(Code, IntervalDelay)
 		if (Setting_AlternativeProcessActivityLog) {
@@ -61,12 +57,22 @@
 		let CurrentWBGSURL = ""
 		
 		let ProcessHistory = []
+		let WBGS_Utility_Settings = {}
 		
 		try {
 			ProcessHistory = JSON.parse(await GM.getValue("WBGS_ProcessHistory", "[]").catch(() => {
 				console.log("WBGS utility: Loading log failed!")
 			}))
+			WBGS_Utility_Settings = JSON.parse(await GM.getValue("WBGS_UtilitySettings", '{"ProcessLogOrderByRecent": true}').catch(() => {
+				console.log("WBGS utility: loading setting failed!")
+			}))
 		} catch {}
+		
+		async function SaveWBGSUtilitySettings() {
+			await GM.setValue("WBGS_UtilitySettings", JSON.stringify(WBGS_Utility_Settings)).catch(() => {
+				console.log("WBGS utility: saving setting failed!")
+			})
+		}
 		
 		async function Spawn_UI_Panel() {
 			//Element of the main UI
@@ -175,15 +181,42 @@
 				GetProcessHistoryButton.addEventListener(
 				"click",
 					function () {
-						if (Setting_ProcessLogOrderByRecent) {
-							GM.setClipboard(JSON.stringify(ProcessHistory.toReversed(), "", " "))
+						if (WBGS_Utility_Settings.ProcessLogOrderByRecent) {
+							let CopiedObject = {
+								Order: "Recent to oldest",
+								List: ProcessHistory.toReversed()
+							}
+							GM.setClipboard(JSON.stringify(CopiedObject, "", " "))
 						} else {
-							GM.setClipboard(JSON.stringify(ProcessHistory, "", " "))
+							let CopiedObject = {
+								Order: "Oldest to recent",
+								List: ProcessHistory
+							}
+							GM.setClipboard(JSON.stringify(CopiedObject, "", " "))
 						}
 						
 					}
 				)
 				DivBox.appendChild(GetProcessHistoryButton)
+			//Checkbox setting of recent process history on top or bottom
+				DivBox.appendChild(document.createElement("br"))
+				let ProcessHistoryOrderLabel = document.createElement("label")
+				ProcessHistoryOrderLabel.style.cursor = "pointer"
+				
+				let ProcessHistoryOrderCheckbox = document.createElement("input")
+				ProcessHistoryOrderCheckbox.type = "checkbox"
+				ProcessHistoryOrderCheckbox.addEventListener(
+				"change",
+					function () {
+						WBGS_Utility_Settings.ProcessLogOrderByRecent = this.checked
+						SaveWBGSUtilitySettings()
+					}
+				)
+				ProcessHistoryOrderCheckbox.checked = WBGS_Utility_Settings.ProcessLogOrderByRecent
+				ProcessHistoryOrderLabel.appendChild(ProcessHistoryOrderCheckbox)
+				ProcessHistoryOrderLabel.appendChild(document.createTextNode("Recent to oldest"))
+				DivBox.appendChild(ProcessHistoryOrderLabel)
+			
 			//Add to document
 				let HTMLBody = [...document.getElementsByTagName("BODY")].find((Element) => {return true})
 				let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0])
