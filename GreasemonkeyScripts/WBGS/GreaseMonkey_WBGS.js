@@ -21,7 +21,7 @@
 			// disappear on the WBGS home page. 0 = no, 1 = yes, 2+ = number of times to click each abort button (if it doesn't
 			// respond).
 		const DisplayEasyCopyableListOfProcess = true
-			//^false = no, true = yes (will print out a statement once per page refresh on the console log that you can copy in case of a
+			//^false = no, true = yes (will print out a statement once per page refresh on the textarea that you can copy in case of a
 			// bug of some sort on processes)
 		const Setting_http_ttp = false
 			//^true = All URLs in the output start with "ttp" instead of "http" (to avoid URL truncation like what firefox does; replacing the middle of string with ellipsis).
