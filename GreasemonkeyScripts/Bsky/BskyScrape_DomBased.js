@@ -287,6 +287,8 @@
 				ID_TimeoutScrapeContent = setTimeout(CheckForHiddenContent, 100) //Content being clicked on will not immediately show results, so delay is needed
 			} else {
 				ScrapeContent()
+				//Otherwise all is shown, scrape it immediately (not just because its unnecessary to delay it, its to avoid a situation that IsThereHiddenContent==false,
+				//then a change on the HTML (like you clicking "hide" after it is shown) is made that IS hidden, and then scrapes that) 
 				ID_TimeoutScrapeContent = setTimeout(CheckForHiddenContent, Saved_Setting_ScanFrequency)
 			}
 		}
