@@ -50,6 +50,10 @@
 		const Setting_MaxNumberOfProfiles = 100
 			//^-1 = no limit
 			// <any positive number> = The maximum number of profiles can be saved. Same as above.
+		const Setting_AllowFlaggedSexuallySuggestive = true
+			//^false = no, don't reveal and scrape content flagged as sexually suggestive
+			// true = yes.
+			// NOTE: If you manually click "show", the scraper will scrape anything that is visible on the page, even things on the page you clicked on that causes things on it to change.
 
 	//Stuff you don't touch unless you know what you're doing.
 		let RaceConditionLock = false
@@ -68,13 +72,13 @@
 			
 			UpdateSavedValues()
 			
-			let ID_TimeoutMainCode = 0
+			let ID_TimeoutScrapeContent = 0
 		//Run code
 			//Code that spawns the UI on the bottom right
 				setTimeout(LoadScrapeUI, 1500)
 			//Main code
 				if (Saved_Setting_StartStop) {
-					ID_TimeoutMainCode = setTimeout(MainCode, 2000)
+					ID_TimeoutScrapeContent = setTimeout(CheckForHiddenContent, 2000)
 				}
 			
 		//Copy to clipboard
@@ -118,12 +122,12 @@
 					
 					if (BskyScrape_StartStopFlag) {
 						this.textContent = "Stop"
-						MainCode()
-						ID_TimeoutMainCode = setTimeout(MainCode, Saved_Setting_ScanFrequency)
+						CheckForHiddenContent()
+						ID_TimeoutScrapeContent = setTimeout(ScrapeContent, Saved_Setting_ScanFrequency)
 					} else {
 						this.textContent = "Start"
-						if (typeof ID_TimeoutMainCode != "undefined") {
-							clearTimeout(ID_TimeoutMainCode);
+						if (typeof ID_TimeoutScrapeContent != "undefined") {
+							clearTimeout(ID_TimeoutScrapeContent);
 						}
 					}
 					
@@ -160,8 +164,8 @@
 					if (window.confirm("Bsky-scrape: Are you sure you want to reset?")) {
 						BskyScrape_StartStopFlag = false
 						Button_StopStart.textContent = "Start"
-						if (typeof ID_TimeoutMainCode != "undefined") {
-							clearTimeout(ID_TimeoutMainCode);
+						if (typeof ID_TimeoutScrapeContent != "undefined") {
+							clearTimeout(ID_TimeoutScrapeContent);
 						}
 						
 						Saved_Extracted_Posts = []
@@ -266,597 +270,79 @@
 			}
 			GM.setClipboard(JSON.stringify(ObjectOfProfilesAndPosts, null, string))
 		}
-	//MainCode, runs periodically and used to extract page content.
-		async function MainCode() {
-			if (!RaceConditionLock) {
-				UpdateSavedValues()
-				
-				RaceConditionLock = true
-				//Code here
-					let DateTimeOfScrape = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
-					
-					let isLoggedIn = false
-					{
-						let SignUpButton = [...document.getElementsByTagName("BUTTON")].find((Button) => {
-							return (Button.textContent == "Sign up")
-						})
-						if (typeof SignUpButton == "undefined") {//No signup button is found, indicating the user is logged in.
-							isLoggedIn = true
-						}
+	//Reveal hidden content (show/hide button)
+	//This is the main code that executes periodically, reflecting changes when more posts get loaded as well as when hidden posts (e.g. posts flagged as sexually suggestive that requires clicking on a button to show).
+	//If certain hidden posts you wished to be revealed and scraped are detected, it autoclicks them to show them, wait until all posts revealed, then scrapes afterwards.
+		function CheckForHiddenContent() {
+			let IsThereHiddenContent = false
+			let Buttons = [...document.querySelectorAll("BUTTON")].forEach((ele) => {
+				if (Setting_AllowFlaggedSexuallySuggestive && /^Sexually Suggestive/.test(ele.textContent)) {
+					if (/Show$/.test(ele.textContent)) {
+						ele.click()
+						IsThereHiddenContent = true
 					}
-					let UserPostArea = []
-					let Profile = {}
-					let ListOfPosts = [] //List of each individual posts
-					if (/https:\/\/bsky\.app\/(?:profile\/(?:[a-zA-Z\d\-]+\.)+(?:[a-zA-Z\d\-]+)\/?)?$/.test(window.location.href)) { //profile/front page
-						//First, find an a href link to a profile as a reference. We get the lowest node that at least has all the posts on the page
-						UserPostArea = GetPostBoxesByLink(11)
-						
-						//"UserPostArea" will now contain "boxes" that may either be a horizontal line, containing 1 or 2 posts (2 if it has replies, with a vertical line between 2 avatars)
-						UserPostArea.forEach((Box, BoxIndex) => { // Loop each box
-							//[profile page]
-							if (typeof Box.childNodes != "undefined") {
-								let BoxListingPosts = [...Box.childNodes]
-								let BoxListingPostsLengthCache = BoxListingPosts.length
-								let PostGroup = []
-								for (let i = 0; i < BoxListingPostsLengthCache; i++) { //Loop each posts (BoxListingPosts[i] should return a post), within a box
-									//
-									//Box - the whole box, if there are multiple posts as a reply, it encompasses all
-									//Box.childNodes[X] - each post within a box
-									//Box.childNodes[X].childNodes[0].childNodes[0] - The space above the posts, a spot for reply line to above
-									//Box.childNodes[X].childNodes[0].childNodes[0].childNodes[1] - Re-posted message (0x12 dimension if not a repost)
-									//Box.childNodes[X].childNodes[0].childNodes[1] - Post area
-									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[0] - Avatar image and reply line below
-									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1] - post content
-									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[0] - User title, handle and timestamp
-									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[1] - Post content (text, media, and quotes)
-									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[X] - each segment of above
-									//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[2] - Replies, reposts, and likes.
-									
-									let RepostedByUserTitle = ""
-									let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
-									
-									let PostHasRepliesLineBelow = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
-									let PostIsAReplyLineToAbove = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
-									let IsCurrentPostURL = false //Used to determine the post that doesn't have a href link to determine the post below it is a reply to it
-									
-									let ReplyToURL = "" //Reply to post above
-									let RepliesURLs = [] //Replies of the current post
-									let UserTitle = ""
-									let UserHandle = ""
-									let UserAvatar = ""
-									let PostTimeStamp = {}
-									let PostContent = {}
-									let ReplyCount = ""
-									let RepostCount = ""
-									let LikesCount = ""
-									
-									let Post = BoxListingPosts[i]
-									
-									if (Post.textContent != "View full thread") {
-										//RepostedByUser
-										{
-											let RepostElement = DescendNode(Post, [0, 0, 0, 1, 0, 1, 1])
-											if (RepostElement.IsSuccessful) {
-												RepostedByUserTitle = RepostElement.OutputNode.textContent
-											}
-										}
-										
-										//Link to post
-										{
-											let AHrefElement = DescendNode(Post, [0, 0, 1, 1, 0, 2])
-											if (AHrefElement.IsSuccessful) {
-												if (AHrefElement.OutputNode.href != "") {
-													PostURL = HttpToTtp(AHrefElement.OutputNode.href)
-												}
-											}
-										}
-										//Reply downwards line
-										{
-											let LineElement = DescendNode(Post, [0, 0, 1, 0, 1])
-											if (LineElement.IsSuccessful) {
-												PostHasRepliesLineBelow = true
-											}
-										}
-										//Reply upwards line
-										{
-											let LineElement = DescendNode(Post, [0, 0, 0, 0, 0])
-											if (LineElement.IsSuccessful) {
-												PostIsAReplyLineToAbove = true
-											}
-										}
-										//User title
-										{
-											let UserTitleElement = DescendNode(Post, [0, 0, 1, 1, 0, 0, 0, 0, 0])
-											if (UserTitleElement.IsSuccessful) {
-												UserTitle = CleanString(UserTitleElement.OutputNode.textContent)
-											}
-										}
-										//User handle
-										{
-											//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/\s/, "")
-											let UserHandleElement = DescendNode(Post, [0,0,1,1,0,0,0,0,1])
-											if (UserHandleElement.IsSuccessful) {
-												UserHandle = CleanString(UserHandleElement.OutputNode.textContent)
-											}
-										}
-										//User Avatar
-										{
-											//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-											let AvatarImgElement = DescendNode(Post, [0,0,1,0,0,0,0,0,0,1])
-											if (AvatarImgElement.IsSuccessful) {
-												if (typeof AvatarImgElement.OutputNode.src != "undefined") {
-													UserAvatar = HttpToTtp(AvatarImgElement.OutputNode.src)
-												}
-											}
-										}
-										//Post time stamp
-										{
-											let PostTimeStampElement = DescendNode(Post, [0, 0, 1, 1, 0, 2])
-											if (PostTimeStampElement.IsSuccessful) {
-												if (typeof PostTimeStampElement.OutputNode.dataset.tooltip != "undefined") {
-													PostTimeStamp = PostDateInfo(PostTimeStampElement.OutputNode.dataset.tooltip)
-												}
-											}
-										}
-										//Thankfully, unlike being at the post page, the text content and quotes are in a INNER node, meaning
-										//the header (user title, handle, timestamp) and footer (comments, repost, and likes) are not in the
-										//same hierarchy as in between, and it also doesn't matter how many stuff in between, since it won't
-										//affect the header and footer index locations.
-										
-										//Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1]
-										
-										//Post content format:
-										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[0] - User title, handle, timestamp
-										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1] - content
-										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[2] - Footer of post containing the counters
-										
-										//If it contains "Reply to <user title>"
-										//https://bsky.app/profile/dumjaveln.bsky.social
-										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[0] - User title, handle, timestamp
-										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1] - reply to <UserTitle>
-										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[2] - content
-										// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[3] - Footer of post containing the counters
-										
-										//Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[1]
-										
-										
-										let ReplyToOffset = 0
-										let NodeOfReplyTo = DescendNode(Post, [0,0,1,1,1,1])
-										if (NodeOfReplyTo.IsSuccessful) {
-											if (/^Reply to/.test(NodeOfReplyTo.OutputNode.textContent)) {
-													ReplyToOffset++
-											}
-										}
-										
-										
-										let NodeOfPostContent = DescendNode(Post, [0,0,1,1,1+ReplyToOffset])
-										if (NodeOfPostContent.IsSuccessful) {
-											PostContent = GetPostContent(NodeOfPostContent.OutputNode, "Post_UserFontPage")
-										}
-										
-										
-										//Reply, repost, and likes
-										{
-											let NodeOfReplyRepostLikes_Array = []
-											//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[N]
-											//where N is the last element because sometimes a post have duplicate counts between the date and timestamp at the bottom
-											let NodeOfFoooter = DescendNode(Post, [0,0,1,1])
-											if (NodeOfFoooter.IsSuccessful) {
-												let LastNode = [...NodeOfFoooter.OutputNode.childNodes].at(-1)
-												NodeOfReplyRepostLikes_Array = [...LastNode.childNodes]
-											}
-											if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
-												ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
-												RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
-												LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
-											}
-											
-										}
-										if ((PostURL != "")&&(UserTitle != "")&&(UserHandle != "")) {
-											PostGroup.push({
-												RepostedByUserTitle: RepostedByUserTitle,
-												PostURL: PostURL,
-												ReplyConnections: {
-													PostHasRepliesLineBelow: PostHasRepliesLineBelow,
-													PostIsAReplyLineToAbove: PostIsAReplyLineToAbove,
-													IsCurrentPostURL: IsCurrentPostURL,
-													IsViewFullThread: false
-												},
-												ReplyToURL: ReplyToURL,
-												RepliesURLs: RepliesURLs,
-												UserTitle: UserTitle,
-												UserHandle: UserHandle,
-												UserAvatar: UserAvatar,
-												PostTimeStamp: PostTimeStamp,
-												PostContent: PostContent,
-												ReplyCount: ReplyCount,
-												RepostCount: RepostCount,
-												LikesCount: LikesCount,
-												DateTimeOfScrape: DateTimeOfScrape
-											})
-										}
-									} else {
-										//Post ommitted in between (a non-post array element saying "View full thread")
-										//We need this object in the array, then reply-connect-detect,
-										//then filter out the non-posts
-										PostGroup.push({
-											ReplyConnections: {
-												IsViewFullThread: true
-											}
-										})
-									}
-								}
-								//Now fill out the reply to and from that are inside a box (connect them)
-								let PostGroupLengthCache = PostGroup.length
-								for (let i = 0; i < PostGroupLengthCache; i++) {
-									if (PostGroup[i].ReplyConnections.PostHasRepliesLineBelow && (!PostGroup[i].ReplyConnections.IsViewFullThread)) {
-										if (i+1 < PostGroupLengthCache) {
-											if (PostGroup[i+1].ReplyConnections.PostIsAReplyLineToAbove && (!PostGroup[i+1].ReplyConnections.IsViewFullThread)) {
-												if (!PostGroup[i].RepliesURLs.includes(PostGroup[i+1].PostURL)) {
-													PostGroup[i].RepliesURLs.push(PostGroup[i+1].PostURL) //Current post has reply
-												}
-												if (PostGroup[i+1].ReplyToURL == "") {
-													PostGroup[i+1].ReplyToURL = PostGroup[i].PostURL //In reply to a post above
-												}
-											}
-										}
-									}
-								}
-								PostGroup = PostGroup.filter((Post) => {
-									return (!Post.ReplyConnections.IsViewFullThread)
-								})
-								ListOfPosts.push(...PostGroup)
-							}
-						})
-						//Obtain user profile
-							let ProfileNode = {}
-							
-							let UserProfileHandle = [...document.getElementsByTagName("DIV")].find((DivElement) => {
-								if (isAncestorsStyleDisplayNone(DivElement)) {
-									return false
-								}
-								let OuterNodeNotAAhref = AscendNode(DivElement, 1)
-								if (!OuterNodeNotAAhref.IsSuccessful) {
-									return false
-								}
-								if (!(/^@(?:[a-zA-Z\d\-]+\.)+[a-zA-Z\d\-]+$/.test(DivElement.innerHTML))) {
-									return false
-								}
-								if (OuterNodeNotAAhref.OutputNode.tagName == "A") {
-									return false
-								}
-								ProfileNode = AscendNode(DivElement, 4).OutputNode
-								return true
-							})
-							if (typeof UserProfileHandle != "undefined") {
+				}
+			})
+			if (IsThereHiddenContent) { //If there is hidden content, schedule a re-run of this code to check again
+				ID_TimeoutScrapeContent = setTimeout(CheckForHiddenContent, 100) //Content being clicked on will not immediately show results, so delay is needed
+			} else {
+				ScrapeContent()
+				ID_TimeoutScrapeContent = setTimeout(CheckForHiddenContent, Saved_Setting_ScanFrequency)
+			}
+		}
+	//ScrapeContent, grabs profile and posts.
+		async function ScrapeContent() {
+			if (RaceConditionLock) {
+				return
+			}
+			UpdateSavedValues()
+			RaceConditionLock = true
+			//Code here
+				let DateTimeOfScrape = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
+				
+				let isLoggedIn = false
+				{
+					let SignUpButton = [...document.getElementsByTagName("BUTTON")].find((Button) => {
+						return (Button.textContent == "Sign up")
+					})
+					if (typeof SignUpButton == "undefined") {//No signup button is found, indicating the user is logged in.
+						isLoggedIn = true
+					}
+				}
+				let UserPostArea = []
+				let Profile = {}
+				let ListOfPosts = [] //List of each individual posts
+				if (/https:\/\/bsky\.app\/(?:profile\/(?:[a-zA-Z\d\-]+\.)+(?:[a-zA-Z\d\-]+)\/?)?$/.test(window.location.href)) { //profile/front page
+					//First, find an a href link to a profile as a reference. We get the lowest node that at least has all the posts on the page
+					UserPostArea = GetPostBoxesByLink(11)
+					
+					//"UserPostArea" will now contain "boxes" that may either be a horizontal line, containing 1 or 2 posts (2 if it has replies, with a vertical line between 2 avatars)
+					UserPostArea.forEach((Box, BoxIndex) => { // Loop each box
+						//[profile page]
+						if (typeof Box.childNodes != "undefined") {
+							let BoxListingPosts = [...Box.childNodes]
+							let BoxListingPostsLengthCache = BoxListingPosts.length
+							let PostGroup = []
+							for (let i = 0; i < BoxListingPostsLengthCache; i++) { //Loop each posts (BoxListingPosts[i] should return a post), within a box
+								//
+								//Box - the whole box, if there are multiple posts as a reply, it encompasses all
+								//Box.childNodes[X] - each post within a box
+								//Box.childNodes[X].childNodes[0].childNodes[0] - The space above the posts, a spot for reply line to above
+								//Box.childNodes[X].childNodes[0].childNodes[0].childNodes[1] - Re-posted message (0x12 dimension if not a repost)
+								//Box.childNodes[X].childNodes[0].childNodes[1] - Post area
+								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[0] - Avatar image and reply line below
+								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1] - post content
+								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[0] - User title, handle and timestamp
+								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[1] - Post content (text, media, and quotes)
+								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[X] - each segment of above
+								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[2] - Replies, reposts, and likes.
 								
-								let ProfileURL = HttpToTtp(window.location.href)
-								
-								let Profile_UserTitle = ""
-								let Node_Profile_UserTitle = DescendNode(ProfileNode, [1,1,0])
-								if (Node_Profile_UserTitle.IsSuccessful) {
-									Profile_UserTitle = CleanString(Node_Profile_UserTitle.OutputNode.textContent)
-								}
-								
-								let Profile_UserHandle = ""
-								let Node_Profile_UserHandle = DescendNode(ProfileNode, [1,1,1])
-								if (Node_Profile_UserHandle.IsSuccessful) {
-									Profile_UserHandle = CleanString(Node_Profile_UserHandle.OutputNode.textContent)
-								}
-								
-								let Profile_Avatar = ""
-								let Node_Profile_Avatar = DescendNode(ProfileNode, [3,0,0,1])
-								if (Node_Profile_Avatar.IsSuccessful) {
-									Profile_Avatar = HttpToTtp(Node_Profile_Avatar.OutputNode.src)
-								}
-								
-								let Profile_BackgroundImg = ""
-								let Node_Profile_BackgroundImg = DescendNode(ProfileNode, [0,0,0,0])
-								if (Node_Profile_BackgroundImg.IsSuccessful) {
-									Profile_BackgroundImg = HttpToTtp(Node_Profile_BackgroundImg.OutputNode.src)
-								}
-								
-								let Profile_TextContent = {
-									Text: ""
-								}
-								let Node_TextContent = DescendNode(ProfileNode, [1,3])
-								if (Node_TextContent.IsSuccessful) {
-									Profile_TextContent.Text = Node_TextContent.OutputNode.textContent
-									let ListOfLinks = GetLinksURLs(Node_TextContent.OutputNode)
-									if (ListOfLinks.length != 0) {
-										Profile_TextContent.Links = ListOfLinks
-									}
-								}
-								
-								//ProfileNode.childNodes[1].childNodes[3]
-								let Profile_FollowCount = ""
-								let Profile_FollowingCount = ""
-								let Profile_PostCount = ""
-								let NodeOfFollowFollowingPost = DescendNode(ProfileNode, [1,2])
-								if (NodeOfFollowFollowingPost.IsSuccessful) {
-									let ArrayOf_FollowFollowingPost = [...NodeOfFollowFollowingPost.OutputNode.childNodes]
-									
-									Profile_FollowCount = ArrayOf_FollowFollowingPost[0].textContent.replace(/^([\d\.A-Za-z]+).*$/, "$1")
-									Profile_FollowingCount = ArrayOf_FollowFollowingPost[1].textContent.replace(/^([\d\.A-Za-z]+).*$/, "$1")
-									Profile_PostCount = ArrayOf_FollowFollowingPost[2].textContent.replace(/^([\d\.A-Za-z]+).*$/, "$1")
-								}
-								
-								Profile = {
-									Type: "UserProfile",
-									ProfileURL: ProfileURL,
-									UserTitle: Profile_UserTitle,
-									UserHandle: Profile_UserHandle,
-									UserAvatar: Profile_Avatar,
-									BackgroundImg: Profile_BackgroundImg,
-									TextContent: Profile_TextContent,
-									ProfileFollowCount: Profile_FollowCount,
-									ProfileFollowingCount: Profile_FollowingCount,
-									ProfilePostCount: Profile_PostCount,
-									DateTimeOfScrape: DateTimeOfScrape
-								}
-							}
-					} else if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-\.:]+\/post\/[a-zA-Z\d\-]+\/?/.test(window.location.href)) { //Post page
-						//https://bsky.app/profile/<UserHandle>/post/<base64_string>
-						//https://bsky.app/profile/did:plc:<base64_string>/post/<base64_string> when "View full thread" is clicked.
-						//[post page]
-						//First, find an a div containing a timestamp as a reference. We then ascend the nodes to get the lowest node that at least has all the posts.
-						//Reason not to get a "a href" link to post is because if there is only 1 post on the page and it is the post you are directly viewing, then
-						//there is no a href link we can use as a reference to jump a fixed number of hierarchy levels without being in the wrong node.
-						UserPostArea = GetNodeByFooterTimestamp(6)
-						
-						
-						//"UserPostArea" will now contain "boxes" that contains 0 or 1 posts:
-						//0 posts if it is a placeholder area or a blank box at the bottom of the page, as well as "Write your Reply"
-						
-						
-						let PostsSeperator = ""
-						//^Now, in some time in the future, bsky may be updated to include recommended posts that aren't necessarily a reply to posts above,
-						// so this text here serves as a placeholder as the following forEach determine that the adjacent posts are something like "for you"
-						// (if such a separator exists, PostsSeperator will update and future boxes in this array will reflect on it (anthing after "for you"))
-						
-						let PostGroup = []
-						UserPostArea.forEach((Box, BoxIndex) => { //Loop each box
-							let RepostedByUserTitle = ""
-							let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
-							
-							let PostHasRepliesLineBelow = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
-							let PostIsAReplyLineToAbove = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
-							let IsCurrentPostURL = false //Used to determine the post that doesn't have a href link to determine the post below it is a reply to it
-							let Type = IdentifyPostLayoutType(Box) //Stuff in the column could be a post, a non-post like "Write your Reply"
-							
-							let ReplyToURL = "" //Reply to post above
-							let RepliesURLs = [] //Replies of the current post
-							let UserTitle = ""
-							let UserHandle = ""
-							let UserAvatar = ""
-							let PostTimeStamp = {}
-							let PostContent = {}
-							let ReplyCount = ""
-							let RepostCount = ""
-							let LikesCount = ""
-							
-							if (Type == "Post_CurrentlyViewed_AtTop") {
-								PostURL = HttpToTtp(window.location.href)
-								
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0]
-								UserTitle = CleanString(DescendNode(Box, [0,0,0,1,0,0,0]).OutputNode.textContent)
-								
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0]
-								UserHandle = CleanString(DescendNode(Box, [0,0,0,1,1,0,0]).OutputNode.textContent)
-								
-								if (/https:\/\/bsky\.app\/profile\/did:plc/.test(PostURL)) { //"View full thread" button is clicked, goes to a handle-less version of a post URL
-									//Replace the "did:plc:<base64_string>" with the handle.
-									let UserHandleNoAt = UserHandle.replace(/^@/, "")
-									PostURL = PostURL.replace(/(https:\/\/bsky\.app\/profile\/)[a-zA-Z\d\-\.:]+(\/post\/[a-zA-Z\d\-]+\/?)/, "$1" + UserHandleNoAt + "$2")
-								}
-								
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1]
-								let NodeOfAvatarImg = DescendNode(Box, [0,0,0,0,0,0,0,0,0,1])
-								if (NodeOfAvatarImg.IsSuccessful) {
-									UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
-								}
-								
-								//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0]
-								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,0,1,1,0]).OutputNode.textContent)
-								
-								let NodeOfPostContent = DescendNode(Box, [0,0,1,0])
-								if (NodeOfPostContent.IsSuccessful) {
-									PostContent = GetPostContent(NodeOfPostContent.OutputNode)
-								}
-								
-								
-								let NodeOfReplyRepostLikes_Array = []
-								//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[N]
-								//where N is the last element because sometimes a post have duplicate counts between the date and timestamp at the bottom
-								let NodeOfFoooter = DescendNode(Box, [0,0,1])
-								if (NodeOfFoooter.IsSuccessful) {
-									let LastNode = [...NodeOfFoooter.OutputNode.childNodes].at(-1)
-									let NodeOfFooterDeepest = DescendNode(LastNode, [0])
-									if (NodeOfFooterDeepest.IsSuccessful) {
-										NodeOfReplyRepostLikes_Array = [...NodeOfFooterDeepest.OutputNode.childNodes]
-									}
-								}
-								if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
-									ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
-									RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
-									LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
-								}
-								
-								
-							} else if (Type == "Post_CurrentlyViewed_NotAtTop") {
-								PostURL = HttpToTtp(window.location.href)
-								
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0]
-								let ReplyLineUpNode = DescendNode(Box, [0,0,0,0])
-								if (ReplyLineUpNode.IsSuccessful) {
-									if (typeof ReplyLineUpNode.OutputNode.style != "undefined") {
-										if (ReplyLineUpNode.OutputNode.style.length > 1) {
-											PostIsAReplyLineToAbove = true
-										}
-									}
-								}
-								
-								//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].textContent
-								UserTitle = CleanString(DescendNode(Box, [0,1,0,1,0,0,0]).OutputNode.textContent)
-								
-								//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].textContent
-								UserHandle = CleanString(DescendNode(Box, [0,1,0,1,1,0,0]).OutputNode.textContent)
-								
-								if (/https:\/\/bsky\.app\/profile\/did:plc/.test(PostURL)) { //"View full thread" button is clicked, goes to a handle-less version of a post URL
-									//Replace the "did:plc:<base64_string>" with the handle.
-									let UserHandleNoAt = UserHandle.replace(/^@/, "")
-									PostURL = PostURL.replace(/(https:\/\/bsky\.app\/profile\/)[a-zA-Z\d\-\.:]+(\/post\/[a-zA-Z\d\-]+\/?)/, "$1" + UserHandleNoAt + "$2")
-								}
-								
-								//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-								//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-								let NodeOfAvatarImg = DescendNode(Box, [0,1,0,0,0,0,0,0,0,1])
-								if (NodeOfAvatarImg.IsSuccessful) {
-									UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
-								}
-								
-								//Box.childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].textContent
-								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,1,1,1,0]).OutputNode.textContent)
-								
-
-								//Box.childNodes[0].childNodes[1].childNodes[1].childNodes[0]
-								let NodeOfPostContent = DescendNode(Box, [0,1,1,0])
-								if (NodeOfPostContent.IsSuccessful) {
-									PostContent = GetPostContent(NodeOfPostContent.OutputNode, Type)
-								}
-								
-								//Box.childNodes[0].childNodes[1].childNodes[1] - get the footer (position varies)
-								let PostFooter = [...DescendNode(Box, [0,1,1]).OutputNode.childNodes]
-								PostFooter = PostFooter.at(-1)
-								NodeOfReplyRepostLikes_Array = [...DescendNode(PostFooter, [0]).OutputNode.childNodes]
-								
-								if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
-									ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
-									RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
-									LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
-								}
-							} else if (Type == "Post_NotCurrentlyViewed") {
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].href
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2]
-								PostURL = HttpToTtp(DescendNode(Box, [0,0,0,1,1,0,2]).OutputNode.href)
-								
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[1].style
-								let ReplyLineDownNode = DescendNode(Box, [0,0,0,1,0,1])
-								if (ReplyLineDownNode.IsSuccessful) {
-									if (typeof ReplyLineDownNode.OutputNode.style != "undefined") {
-										PostHasRepliesLineBelow = true
-									}
-								}
-								
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].style
-								let ReplyLineUpNode = DescendNode(Box, [0,0,0,0,0,0])
-								if (ReplyLineUpNode.IsSuccessful) {
-									if (typeof ReplyLineUpNode.OutputNode.style != "undefined") {
-										if (ReplyLineUpNode.OutputNode.style.length > 1) {
-											PostIsAReplyLineToAbove = true
-										}
-									}
-								}
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
-								UserTitle = CleanString(DescendNode(Box, [0,0,0,1,1,0,0,0,0,0]).OutputNode.textContent)
-								
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/^\s/, "")
-								UserHandle = CleanString(DescendNode(Box, [0,0,0,1,1,0,0,0,0,1]).OutputNode.textContent)
-								
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-								let NodeOfAvatarImg = DescendNode(Box, [0,0,0,1,0,0,0,0,0,0,1])
-								if (NodeOfAvatarImg.IsSuccessful) {
-									UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
-								}
-								
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
-								PostTimeStamp = PostDateInfo(DescendNode(Box, [0,0,0,1,1,0,2]).OutputNode.dataset.tooltip)
-								
-								
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1] - This also contains the header and footer...
-								let NodeOfPostContent = DescendNode(Box, [0,0,0,1,1])
-								if (NodeOfPostContent.IsSuccessful) {
-									PostContent = GetPostContent(NodeOfPostContent.OutputNode, Type)
-								}
-								
-								//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[N]
-								let NodeOfReplyRepostLikes_Array = []
-								let NodeOfFoooter = DescendNode(Box, [0,0,0,1,1])
-								if (NodeOfFoooter.IsSuccessful) {
-									let LastNode = [...NodeOfFoooter.OutputNode.childNodes].at(-1)
-									let NodeOfFooterDeepest = LastNode
-									NodeOfReplyRepostLikes_Array = [...NodeOfFooterDeepest.childNodes]
-									
-								}
-								if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
-									ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
-									RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
-									LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
-								}
-								
-							}
-							if (/^Post_/.test(Type)&&(PostURL != "")&&(UserTitle != "")&&(UserHandle != "")) {
-								PostGroup.push({
-									RepostedByUserTitle: RepostedByUserTitle,
-									PostURL: PostURL,
-									ReplyConnections: {
-										PostHasRepliesLineBelow: PostHasRepliesLineBelow,
-										PostIsAReplyLineToAbove: PostIsAReplyLineToAbove,
-										IsCurrentPostURL: IsCurrentPostURL,
-										Type: Type
-									},
-									ReplyToURL: ReplyToURL,
-									RepliesURLs: RepliesURLs,
-									UserTitle: UserTitle,
-									UserHandle: UserHandle,
-									UserAvatar: UserAvatar,
-									PostTimeStamp: PostTimeStamp,
-									PostContent: PostContent,
-									ReplyCount: ReplyCount,
-									RepostCount: RepostCount,
-									LikesCount: LikesCount,
-									DateTimeOfScrape: DateTimeOfScrape
-								})
-							}
-						})
-						//Connect replies
-						let PostGroupLengthCache = PostGroup.length
-						let IndexOfPostCurrentlyViewed = -1
-						//^Will be an index value representing the currently viewd post (the one without the a href that you just clicked on)
-						// Any posts below it lacking a line pointing upwards are replies to that post
-						for (let i = 0; i < PostGroupLengthCache; i++) {
-							if (/^Post_CurrentlyViewed/.test(PostGroup[i].ReplyConnections.Type)) {
-								IndexOfPostCurrentlyViewed = i
-							}
-							if ((!PostGroup[i].ReplyConnections.PostIsAReplyLineToAbove) && (i > IndexOfPostCurrentlyViewed) && (IndexOfPostCurrentlyViewed >= 0)) {
-								if (!PostGroup[IndexOfPostCurrentlyViewed].RepliesURLs.includes(PostGroup[i].PostURL)) {
-									PostGroup[IndexOfPostCurrentlyViewed].RepliesURLs.push(PostGroup[i].PostURL) //Add a reply (without the line pointing upwards) to currently viewed post 
-								}
-								if (PostGroup[i].ReplyToURL == "") {
-									PostGroup[i].ReplyToURL = PostGroup[IndexOfPostCurrentlyViewed].PostURL //In reply to a post above
-								}
-							}
-							if (PostGroup[i].ReplyConnections.PostHasRepliesLineBelow) {
-								if (i+1 < PostGroupLengthCache) {
-									if (PostGroup[i+1].ReplyConnections.PostIsAReplyLineToAbove) {
-										if (!PostGroup[i].RepliesURLs.includes(PostGroup[i+1].PostURL)) {
-											PostGroup[i].RepliesURLs.push(PostGroup[i+1].PostURL) //Current post has reply
-										}
-										if (PostGroup[i+1].ReplyToURL == "") {
-											PostGroup[i+1].ReplyToURL = PostGroup[i].PostURL //In reply to a post above
-										}
-									}
-								}
-							}
-						}
-						ListOfPosts.push(...PostGroup)
-					} else if (/https:\/\/bsky\.app\/search/.test(window.location.href)) { //Search page
-						UserPostArea = GetPostBoxesByLink(9)
-						
-						UserPostArea.forEach((Post) => {
-							if (Post.textContent != "") {
 								let RepostedByUserTitle = ""
 								let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
+								
+								let PostHasRepliesLineBelow = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
+								let PostIsAReplyLineToAbove = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
+								let IsCurrentPostURL = false //Used to determine the post that doesn't have a href link to determine the post below it is a reply to it
 								
 								let ReplyToURL = "" //Reply to post above
 								let RepliesURLs = [] //Replies of the current post
@@ -869,190 +355,724 @@
 								let RepostCount = ""
 								let LikesCount = ""
 								
-								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].href
-								PostURL = HttpToTtp(DescendNode(Post, [0,0,1,0,2]).OutputNode.href)
+								let Post = BoxListingPosts[i]
 								
-								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
-								UserTitle = CleanString(DescendNode(Post, [0,0,1,0,0,0,0,0]).OutputNode.textContent)
-								
-								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/^\s/, "")
-								UserHandle = CleanString(DescendNode(Post, [0,0,1,0,0,0,0,1]).OutputNode.textContent)
-								
-								//Post.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-								//Post.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-								let NodeOfAvatar = DescendNode(Post, [0,0,0,0,0,0,0,0,1])
-								if (NodeOfAvatar.IsSuccessful) {
-									UserAvatar = HttpToTtp(NodeOfAvatar.OutputNode.src)
-								}
-								
-								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
-								PostTimeStamp = PostDateInfo(DescendNode(Post, [0,0,1,0,2]).OutputNode.dataset.tooltip)
-								
-								let ReplyToOffset = 0
-								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].textContent
-								let NodeOfReplyTo = DescendNode(Post, [0,0,1,1,1])
-								if (NodeOfReplyTo.IsSuccessful) {
-									if (/^Reply to/.test(NodeOfReplyTo.OutputNode.textContent)) {
-										ReplyToOffset++
+								if (Post.textContent != "View full thread") {
+									//RepostedByUser
+									{
+										let RepostElement = DescendNode(Post, [0, 0, 0, 1, 0, 1, 1])
+										if (RepostElement.IsSuccessful) {
+											RepostedByUserTitle = RepostElement.OutputNode.textContent
+										}
 									}
-								}
-								
-								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1]
-								PostContent = GetPostContent(DescendNode(Post, [0,0,1,1+ReplyToOffset]).OutputNode, "SearchPage")
-								
-								//Post.childNodes[0].childNodes[0].childNodes[1].childNodes
-								let NodeOfReplyRepostLikes_Array = []
-								let NodeOfFoooter = DescendNode(Post, [0,0,1])
-								if (NodeOfFoooter.IsSuccessful) {
-									let LastNode = [...NodeOfFoooter.OutputNode.childNodes].at(-1)
-									let NodeOfFooterDeepest = LastNode
-									NodeOfReplyRepostLikes_Array = [...NodeOfFooterDeepest.childNodes]
 									
-								}
-								if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
-									ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
-									RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
-									LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
-								}
-								if ((PostURL != "")&&(UserTitle != "")&&(UserHandle != "")&&(PostContent.Segments.length != 0)) {
-									ListOfPosts.push({
-										RepostedByUserTitle: RepostedByUserTitle,
-										PostURL: PostURL,
-										ReplyToURL: ReplyToURL,
-										RepliesURLs: RepliesURLs,
-										UserTitle: UserTitle,
-										UserHandle: UserHandle,
-										UserAvatar: UserAvatar,
-										PostTimeStamp: PostTimeStamp,
-										PostContent: PostContent,
-										ReplyCount: ReplyCount,
-										RepostCount: RepostCount,
-										LikesCount: LikesCount
+									//Link to post
+									{
+										let AHrefElement = DescendNode(Post, [0, 0, 1, 1, 0, 2])
+										if (AHrefElement.IsSuccessful) {
+											if (AHrefElement.OutputNode.href != "") {
+												PostURL = HttpToTtp(AHrefElement.OutputNode.href)
+											}
+										}
+									}
+									//Reply downwards line
+									{
+										let LineElement = DescendNode(Post, [0, 0, 1, 0, 1])
+										if (LineElement.IsSuccessful) {
+											PostHasRepliesLineBelow = true
+										}
+									}
+									//Reply upwards line
+									{
+										let LineElement = DescendNode(Post, [0, 0, 0, 0, 0])
+										if (LineElement.IsSuccessful) {
+											PostIsAReplyLineToAbove = true
+										}
+									}
+									//User title
+									{
+										let UserTitleElement = DescendNode(Post, [0, 0, 1, 1, 0, 0, 0, 0, 0])
+										if (UserTitleElement.IsSuccessful) {
+											UserTitle = CleanString(UserTitleElement.OutputNode.textContent)
+										}
+									}
+									//User handle
+									{
+										//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/\s/, "")
+										let UserHandleElement = DescendNode(Post, [0,0,1,1,0,0,0,0,1])
+										if (UserHandleElement.IsSuccessful) {
+											UserHandle = CleanString(UserHandleElement.OutputNode.textContent)
+										}
+									}
+									//User Avatar
+									{
+										//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+										let AvatarImgElement = DescendNode(Post, [0,0,1,0,0,0,0,0,0,1])
+										if (AvatarImgElement.IsSuccessful) {
+											if (typeof AvatarImgElement.OutputNode.src != "undefined") {
+												UserAvatar = HttpToTtp(AvatarImgElement.OutputNode.src)
+											}
+										}
+									}
+									//Post time stamp
+									{
+										let PostTimeStampElement = DescendNode(Post, [0, 0, 1, 1, 0, 2])
+										if (PostTimeStampElement.IsSuccessful) {
+											if (typeof PostTimeStampElement.OutputNode.dataset.tooltip != "undefined") {
+												PostTimeStamp = PostDateInfo(PostTimeStampElement.OutputNode.dataset.tooltip)
+											}
+										}
+									}
+									//Thankfully, unlike being at the post page, the text content and quotes are in a INNER node, meaning
+									//the header (user title, handle, timestamp) and footer (comments, repost, and likes) are not in the
+									//same hierarchy as in between, and it also doesn't matter how many stuff in between, since it won't
+									//affect the header and footer index locations.
+									
+									//Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1]
+									
+									//Post content format:
+									// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[0] - User title, handle, timestamp
+									// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1] - content
+									// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[2] - Footer of post containing the counters
+									
+									//If it contains "Reply to <user title>"
+									//https://bsky.app/profile/dumjaveln.bsky.social
+									// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[0] - User title, handle, timestamp
+									// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1] - reply to <UserTitle>
+									// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[2] - content
+									// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[3] - Footer of post containing the counters
+									
+									//Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[1]
+									
+									
+									let ReplyToOffset = 0
+									let NodeOfReplyTo = DescendNode(Post, [0,0,1,1,1,1])
+									if (NodeOfReplyTo.IsSuccessful) {
+										if (/^Reply to/.test(NodeOfReplyTo.OutputNode.textContent)) {
+												ReplyToOffset++
+										}
+									}
+									
+									
+									let NodeOfPostContent = DescendNode(Post, [0,0,1,1,1+ReplyToOffset])
+									if (NodeOfPostContent.IsSuccessful) {
+										PostContent = GetPostContent(NodeOfPostContent.OutputNode, "Post_UserFontPage")
+									}
+									
+									
+									//Reply, repost, and likes
+									{
+										let NodeOfReplyRepostLikes_Array = []
+										//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[N]
+										//where N is the last element because sometimes a post have duplicate counts between the date and timestamp at the bottom
+										let NodeOfFoooter = DescendNode(Post, [0,0,1,1])
+										if (NodeOfFoooter.IsSuccessful) {
+											let LastNode = [...NodeOfFoooter.OutputNode.childNodes].at(-1)
+											NodeOfReplyRepostLikes_Array = [...LastNode.childNodes]
+										}
+										if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
+											ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
+											RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
+											LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
+										}
+										
+									}
+									if ((PostURL != "")&&(UserTitle != "")&&(UserHandle != "")) {
+										PostGroup.push({
+											RepostedByUserTitle: RepostedByUserTitle,
+											PostURL: PostURL,
+											ReplyConnections: {
+												PostHasRepliesLineBelow: PostHasRepliesLineBelow,
+												PostIsAReplyLineToAbove: PostIsAReplyLineToAbove,
+												IsCurrentPostURL: IsCurrentPostURL,
+												IsViewFullThread: false
+											},
+											ReplyToURL: ReplyToURL,
+											RepliesURLs: RepliesURLs,
+											UserTitle: UserTitle,
+											UserHandle: UserHandle,
+											UserAvatar: UserAvatar,
+											PostTimeStamp: PostTimeStamp,
+											PostContent: PostContent,
+											ReplyCount: ReplyCount,
+											RepostCount: RepostCount,
+											LikesCount: LikesCount,
+											DateTimeOfScrape: DateTimeOfScrape
+										})
+									}
+								} else {
+									//Post ommitted in between (a non-post array element saying "View full thread")
+									//We need this object in the array, then reply-connect-detect,
+									//then filter out the non-posts
+									PostGroup.push({
+										ReplyConnections: {
+											IsViewFullThread: true
+										}
 									})
 								}
 							}
-							
-						})
-					}
-					let ListOfPosts_Clean = ListOfPosts.map((ArrayElement) => { //Have a version without ReplyConnections attribute since we do not need it if we are just looking at posts
-						return {
-							RepostedByUserTitle: ArrayElement.RepostedByUserTitle,
-							PostURL: ArrayElement.PostURL,
-							ReplyToURL: ArrayElement.ReplyToURL,
-							RepliesURLs: ArrayElement.RepliesURLs,
-							UserTitle: ArrayElement.UserTitle,
-							UserHandle: ArrayElement.UserHandle,
-							UserAvatar: ArrayElement.UserAvatar,
-							PostTimeStamp: ArrayElement.PostTimeStamp,
-							PostContent: ArrayElement.PostContent,
-							ReplyCount: ArrayElement.ReplyCount,
-							RepostCount: ArrayElement.RepostCount,
-							LikesCount: ArrayElement.LikesCount,
-							DateTimeOfScrape: ArrayElement.DateTimeOfScrape
+							//Now fill out the reply to and from that are inside a box (connect them)
+							let PostGroupLengthCache = PostGroup.length
+							for (let i = 0; i < PostGroupLengthCache; i++) {
+								if (PostGroup[i].ReplyConnections.PostHasRepliesLineBelow && (!PostGroup[i].ReplyConnections.IsViewFullThread)) {
+									if (i+1 < PostGroupLengthCache) {
+										if (PostGroup[i+1].ReplyConnections.PostIsAReplyLineToAbove && (!PostGroup[i+1].ReplyConnections.IsViewFullThread)) {
+											if (!PostGroup[i].RepliesURLs.includes(PostGroup[i+1].PostURL)) {
+												PostGroup[i].RepliesURLs.push(PostGroup[i+1].PostURL) //Current post has reply
+											}
+											if (PostGroup[i+1].ReplyToURL == "") {
+												PostGroup[i+1].ReplyToURL = PostGroup[i].PostURL //In reply to a post above
+											}
+										}
+									}
+								}
+							}
+							PostGroup = PostGroup.filter((Post) => {
+								return (!Post.ReplyConnections.IsViewFullThread)
+							})
+							ListOfPosts.push(...PostGroup)
 						}
 					})
-				//Saving...
-					if (!ConfirmationPause) {
-						//Saving posts
-						let SavedBskyPostList = Saved_Extracted_Posts
-						ListOfPosts_Clean.forEach((ExtractedPost, ExtractedPostIndex) => {
-							//Loop through what we have extracted it, and try to add it to the saved list, unless we already have it, then update it
-							let MatchedPostIndex = SavedBskyPostList.findIndex((SavedPost) => { //Search all in the saved list to find a matching post
-								return (ExtractedPost.PostURL == SavedPost.PostURL)
-							})
-							if (ExtractedPostIndex == 5) {
-								let bp = 0
-								
-							}
-							if (MatchedPostIndex == -1) { //If not found, add it to the list
-								if (Setting_MaxNumberOfPosts < 0) {
-									SavedBskyPostList.push(ListOfPosts_Clean[ExtractedPostIndex])
-								} else {
-									if (SavedBskyPostList.length < Setting_MaxNumberOfPosts) {
-										SavedBskyPostList.push(ListOfPosts_Clean[ExtractedPostIndex])
-									} else {
-										console.log("Bsky-scrape: post count limit reached.")
-									}
-								}
-							} else {
-								//Match occurred, replace it (but keep the list of reply URLs and what's replying to)
-								let SavedList_WhatToReplace = SavedBskyPostList[MatchedPostIndex]
-								let ExtractList_ReplaceWith = ExtractedPost
-								
-								let Set_ListOfURLsSaved = new Set(SavedList_WhatToReplace.RepliesURLs) //Start what we have that is saved
-								ExtractList_ReplaceWith.RepliesURLs.forEach((Extracted_Replies) => {
-									//Loop each reply URLs from what we newly extracted, and add them to the saved version's list of reply URLs,
-									//unless if it is already added
-									Set_ListOfURLsSaved.add(Extracted_Replies)
-								})
-								SavedList_WhatToReplace.RepliesURLs = [...Set_ListOfURLsSaved]
-								
-								if ((SavedList_WhatToReplace.ReplyToURL == "") && (ExtractList_ReplaceWith.ReplyToURL != "")) { //If discovered that the post has a reply, add a URL to it.
-									SavedList_WhatToReplace.ReplyToURL = ExtractList_ReplaceWith.ReplyToURL
-								}
-							}
-						})
-						await GM.setValue("BSkyScrape_PostList", JSON.stringify(SavedBskyPostList)).then(() => {
-							CopiedListOfPosts = JSON.stringify(SavedBskyPostList, null, " ")
-							//console.log("Bsky-scrape: extracted post count: " + SavedBskyPostList.length.toFixed(0))
-							
-							if (Div_PostSaveCount != null) {
-								Div_PostSaveCount.textContent = SavedBskyPostList.length.toFixed(0)
-							}
-						},
-						() => {
-							window.alert("Bsky-scrape: saving post failed!")
-						});
+					//Obtain user profile
+						let ProfileNode = {}
 						
-						
-						//Save profile data
-						let SavedBskyProfileList = Saved_Extracted_Profiles
-						if ((Object.keys(Profile).length != 0) && (Profile.ProfileURL != "")) {
-							let IndexOfSavedMatching = SavedBskyProfileList.findIndex((SavedProfile) => {
-								if (SavedProfile.ProfileURL == Profile.ProfileURL) {
-									return true
-								}
+						let UserProfileHandle = [...document.getElementsByTagName("DIV")].find((DivElement) => {
+							if (isAncestorsStyleDisplayNone(DivElement)) {
 								return false
-							})
+							}
+							let OuterNodeNotAAhref = AscendNode(DivElement, 1)
+							if (!OuterNodeNotAAhref.IsSuccessful) {
+								return false
+							}
+							if (!(/^@(?:[a-zA-Z\d\-]+\.)+[a-zA-Z\d\-]+$/.test(DivElement.innerHTML))) {
+								return false
+							}
+							if (OuterNodeNotAAhref.OutputNode.tagName == "A") {
+								return false
+							}
+							ProfileNode = AscendNode(DivElement, 4).OutputNode
+							return true
+						})
+						if (typeof UserProfileHandle != "undefined") {
 							
-							if (IndexOfSavedMatching == -1) {
-								//If haven't add it
-								if (Setting_MaxNumberOfProfiles < 0) {
-									SavedBskyProfileList.push(Profile)
-								} else {
-									if (SavedBskyProfileList.length < Setting_MaxNumberOfProfiles) {
-										SavedBskyProfileList.push(Profile)
-									} else {
-										console.log("Bsky-scrape: profile page count limit reached.")
-									}
+							let ProfileURL = HttpToTtp(window.location.href)
+							
+							let Profile_UserTitle = ""
+							let Node_Profile_UserTitle = DescendNode(ProfileNode, [1,1,0])
+							if (Node_Profile_UserTitle.IsSuccessful) {
+								Profile_UserTitle = CleanString(Node_Profile_UserTitle.OutputNode.textContent)
+							}
+							
+							let Profile_UserHandle = ""
+							let Node_Profile_UserHandle = DescendNode(ProfileNode, [1,1,1])
+							if (Node_Profile_UserHandle.IsSuccessful) {
+								Profile_UserHandle = CleanString(Node_Profile_UserHandle.OutputNode.textContent)
+							}
+							
+							let Profile_Avatar = ""
+							let Node_Profile_Avatar = DescendNode(ProfileNode, [3,0,0,1])
+							if (Node_Profile_Avatar.IsSuccessful) {
+								Profile_Avatar = HttpToTtp(Node_Profile_Avatar.OutputNode.src)
+							}
+							
+							let Profile_BackgroundImg = ""
+							let Node_Profile_BackgroundImg = DescendNode(ProfileNode, [0,0,0,0])
+							if (Node_Profile_BackgroundImg.IsSuccessful) {
+								Profile_BackgroundImg = HttpToTtp(Node_Profile_BackgroundImg.OutputNode.src)
+							}
+							
+							let Profile_TextContent = {
+								Text: ""
+							}
+							let Node_TextContent = DescendNode(ProfileNode, [1,3])
+							if (Node_TextContent.IsSuccessful) {
+								Profile_TextContent.Text = Node_TextContent.OutputNode.textContent
+								let ListOfLinks = GetLinksURLs(Node_TextContent.OutputNode)
+								if (ListOfLinks.length != 0) {
+									Profile_TextContent.Links = ListOfLinks
 								}
+							}
+							
+							//ProfileNode.childNodes[1].childNodes[3]
+							let Profile_FollowCount = ""
+							let Profile_FollowingCount = ""
+							let Profile_PostCount = ""
+							let NodeOfFollowFollowingPost = DescendNode(ProfileNode, [1,2])
+							if (NodeOfFollowFollowingPost.IsSuccessful) {
+								let ArrayOf_FollowFollowingPost = [...NodeOfFollowFollowingPost.OutputNode.childNodes]
 								
-							} else {
-								//if gotten already, replace it
-								SavedBskyProfileList[IndexOfSavedMatching] = Profile
+								Profile_FollowCount = ArrayOf_FollowFollowingPost[0].textContent.replace(/^([\d\.A-Za-z]+).*$/, "$1")
+								Profile_FollowingCount = ArrayOf_FollowFollowingPost[1].textContent.replace(/^([\d\.A-Za-z]+).*$/, "$1")
+								Profile_PostCount = ArrayOf_FollowFollowingPost[2].textContent.replace(/^([\d\.A-Za-z]+).*$/, "$1")
+							}
+							
+							Profile = {
+								Type: "UserProfile",
+								ProfileURL: ProfileURL,
+								UserTitle: Profile_UserTitle,
+								UserHandle: Profile_UserHandle,
+								UserAvatar: Profile_Avatar,
+								BackgroundImg: Profile_BackgroundImg,
+								TextContent: Profile_TextContent,
+								ProfileFollowCount: Profile_FollowCount,
+								ProfileFollowingCount: Profile_FollowingCount,
+								ProfilePostCount: Profile_PostCount,
+								DateTimeOfScrape: DateTimeOfScrape
 							}
 						}
-						await GM.setValue("BSkyScrape_ProfileList", JSON.stringify(SavedBskyProfileList)).then(() => {
-							CopiedListOfProfiles = JSON.stringify(SavedBskyProfileList, null, " ")
-							//console.log("Bsky-scrape: extracted profile count: " + SavedBskyProfileList.length.toFixed(0))
-							if (Div_ProfileSaveCount != null) {
-								Div_ProfileSaveCount.textContent = SavedBskyProfileList.length.toFixed(0)
+				} else if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-\.:]+\/post\/[a-zA-Z\d\-]+\/?/.test(window.location.href)) { //Post page
+					//https://bsky.app/profile/<UserHandle>/post/<base64_string>
+					//https://bsky.app/profile/did:plc:<base64_string>/post/<base64_string> when "View full thread" is clicked.
+					//[post page]
+					//First, find an a div containing a timestamp as a reference. We then ascend the nodes to get the lowest node that at least has all the posts.
+					//Reason not to get a "a href" link to post is because if there is only 1 post on the page and it is the post you are directly viewing, then
+					//there is no a href link we can use as a reference to jump a fixed number of hierarchy levels without being in the wrong node.
+					UserPostArea = GetNodeByFooterTimestamp(6)
+					
+					
+					//"UserPostArea" will now contain "boxes" that contains 0 or 1 posts:
+					//0 posts if it is a placeholder area or a blank box at the bottom of the page, as well as "Write your Reply"
+					
+					
+					let PostsSeperator = ""
+					//^Now, in some time in the future, bsky may be updated to include recommended posts that aren't necessarily a reply to posts above,
+					// so this text here serves as a placeholder as the following forEach determine that the adjacent posts are something like "for you"
+					// (if such a separator exists, PostsSeperator will update and future boxes in this array will reflect on it (anthing after "for you"))
+					
+					let PostGroup = []
+					UserPostArea.forEach((Box, BoxIndex) => { //Loop each box
+						let RepostedByUserTitle = ""
+						let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
+						
+						let PostHasRepliesLineBelow = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
+						let PostIsAReplyLineToAbove = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
+						let IsCurrentPostURL = false //Used to determine the post that doesn't have a href link to determine the post below it is a reply to it
+						let Type = IdentifyPostLayoutType(Box) //Stuff in the column could be a post, a non-post like "Write your Reply"
+						
+						let ReplyToURL = "" //Reply to post above
+						let RepliesURLs = [] //Replies of the current post
+						let UserTitle = ""
+						let UserHandle = ""
+						let UserAvatar = ""
+						let PostTimeStamp = {}
+						let PostContent = {}
+						let ReplyCount = ""
+						let RepostCount = ""
+						let LikesCount = ""
+						
+						if (Type == "Post_CurrentlyViewed_AtTop") {
+							PostURL = HttpToTtp(window.location.href)
+							
+							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0]
+							UserTitle = CleanString(DescendNode(Box, [0,0,0,1,0,0,0]).OutputNode.textContent)
+							
+							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0]
+							UserHandle = CleanString(DescendNode(Box, [0,0,0,1,1,0,0]).OutputNode.textContent)
+							
+							if (/https:\/\/bsky\.app\/profile\/did:plc/.test(PostURL)) { //"View full thread" button is clicked, goes to a handle-less version of a post URL
+								//Replace the "did:plc:<base64_string>" with the handle.
+								let UserHandleNoAt = UserHandle.replace(/^@/, "")
+								PostURL = PostURL.replace(/(https:\/\/bsky\.app\/profile\/)[a-zA-Z\d\-\.:]+(\/post\/[a-zA-Z\d\-]+\/?)/, "$1" + UserHandleNoAt + "$2")
 							}
-						},
-						() => {
-							window.alert("Bsky-scrape: saving profile failed!")
-						});
-					} else {
-						console.log("Bsky-scrape: Paused")
+							
+							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1]
+							let NodeOfAvatarImg = DescendNode(Box, [0,0,0,0,0,0,0,0,0,1])
+							if (NodeOfAvatarImg.IsSuccessful) {
+								UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
+							}
+							
+							//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0]
+							PostTimeStamp = PostDateInfo(DescendNode(Box, [0,0,1,1,0]).OutputNode.textContent)
+							
+							let NodeOfPostContent = DescendNode(Box, [0,0,1,0])
+							if (NodeOfPostContent.IsSuccessful) {
+								PostContent = GetPostContent(NodeOfPostContent.OutputNode)
+							}
+							
+							
+							let NodeOfReplyRepostLikes_Array = []
+							//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[N]
+							//where N is the last element because sometimes a post have duplicate counts between the date and timestamp at the bottom
+							let NodeOfFoooter = DescendNode(Box, [0,0,1])
+							if (NodeOfFoooter.IsSuccessful) {
+								let LastNode = [...NodeOfFoooter.OutputNode.childNodes].at(-1)
+								let NodeOfFooterDeepest = DescendNode(LastNode, [0])
+								if (NodeOfFooterDeepest.IsSuccessful) {
+									NodeOfReplyRepostLikes_Array = [...NodeOfFooterDeepest.OutputNode.childNodes]
+								}
+							}
+							if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
+								ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
+								RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
+								LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
+							}
+							
+							
+						} else if (Type == "Post_CurrentlyViewed_NotAtTop") {
+							PostURL = HttpToTtp(window.location.href)
+							
+							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0]
+							let ReplyLineUpNode = DescendNode(Box, [0,0,0,0])
+							if (ReplyLineUpNode.IsSuccessful) {
+								if (typeof ReplyLineUpNode.OutputNode.style != "undefined") {
+									if (ReplyLineUpNode.OutputNode.style.length > 1) {
+										PostIsAReplyLineToAbove = true
+									}
+								}
+							}
+							
+							//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].textContent
+							UserTitle = CleanString(DescendNode(Box, [0,1,0,1,0,0,0]).OutputNode.textContent)
+							
+							//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].textContent
+							UserHandle = CleanString(DescendNode(Box, [0,1,0,1,1,0,0]).OutputNode.textContent)
+							
+							if (/https:\/\/bsky\.app\/profile\/did:plc/.test(PostURL)) { //"View full thread" button is clicked, goes to a handle-less version of a post URL
+								//Replace the "did:plc:<base64_string>" with the handle.
+								let UserHandleNoAt = UserHandle.replace(/^@/, "")
+								PostURL = PostURL.replace(/(https:\/\/bsky\.app\/profile\/)[a-zA-Z\d\-\.:]+(\/post\/[a-zA-Z\d\-]+\/?)/, "$1" + UserHandleNoAt + "$2")
+							}
+							
+							//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+							//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+							let NodeOfAvatarImg = DescendNode(Box, [0,1,0,0,0,0,0,0,0,1])
+							if (NodeOfAvatarImg.IsSuccessful) {
+								UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
+							}
+							
+							//Box.childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].textContent
+							PostTimeStamp = PostDateInfo(DescendNode(Box, [0,1,1,1,0]).OutputNode.textContent)
+							
+
+							//Box.childNodes[0].childNodes[1].childNodes[1].childNodes[0]
+							let NodeOfPostContent = DescendNode(Box, [0,1,1,0])
+							if (NodeOfPostContent.IsSuccessful) {
+								PostContent = GetPostContent(NodeOfPostContent.OutputNode, Type)
+							}
+							
+							//Box.childNodes[0].childNodes[1].childNodes[1] - get the footer (position varies)
+							let PostFooter = [...DescendNode(Box, [0,1,1]).OutputNode.childNodes]
+							PostFooter = PostFooter.at(-1)
+							NodeOfReplyRepostLikes_Array = [...DescendNode(PostFooter, [0]).OutputNode.childNodes]
+							
+							if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
+								ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
+								RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
+								LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
+							}
+						} else if (Type == "Post_NotCurrentlyViewed") {
+							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].href
+							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2]
+							PostURL = HttpToTtp(DescendNode(Box, [0,0,0,1,1,0,2]).OutputNode.href)
+							
+							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[1].style
+							let ReplyLineDownNode = DescendNode(Box, [0,0,0,1,0,1])
+							if (ReplyLineDownNode.IsSuccessful) {
+								if (typeof ReplyLineDownNode.OutputNode.style != "undefined") {
+									PostHasRepliesLineBelow = true
+								}
+							}
+							
+							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].style
+							let ReplyLineUpNode = DescendNode(Box, [0,0,0,0,0,0])
+							if (ReplyLineUpNode.IsSuccessful) {
+								if (typeof ReplyLineUpNode.OutputNode.style != "undefined") {
+									if (ReplyLineUpNode.OutputNode.style.length > 1) {
+										PostIsAReplyLineToAbove = true
+									}
+								}
+							}
+							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
+							UserTitle = CleanString(DescendNode(Box, [0,0,0,1,1,0,0,0,0,0]).OutputNode.textContent)
+							
+							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/^\s/, "")
+							UserHandle = CleanString(DescendNode(Box, [0,0,0,1,1,0,0,0,0,1]).OutputNode.textContent)
+							
+							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+							let NodeOfAvatarImg = DescendNode(Box, [0,0,0,1,0,0,0,0,0,0,1])
+							if (NodeOfAvatarImg.IsSuccessful) {
+								UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
+							}
+							
+							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
+							PostTimeStamp = PostDateInfo(DescendNode(Box, [0,0,0,1,1,0,2]).OutputNode.dataset.tooltip)
+							
+							
+							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1] - This also contains the header and footer...
+							let NodeOfPostContent = DescendNode(Box, [0,0,0,1,1])
+							if (NodeOfPostContent.IsSuccessful) {
+								PostContent = GetPostContent(NodeOfPostContent.OutputNode, Type)
+							}
+							
+							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[N]
+							let NodeOfReplyRepostLikes_Array = []
+							let NodeOfFoooter = DescendNode(Box, [0,0,0,1,1])
+							if (NodeOfFoooter.IsSuccessful) {
+								let LastNode = [...NodeOfFoooter.OutputNode.childNodes].at(-1)
+								let NodeOfFooterDeepest = LastNode
+								NodeOfReplyRepostLikes_Array = [...NodeOfFooterDeepest.childNodes]
+								
+							}
+							if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
+								ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
+								RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
+								LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
+							}
+							
+						}
+						if (/^Post_/.test(Type)&&(PostURL != "")&&(UserTitle != "")&&(UserHandle != "")) {
+							PostGroup.push({
+								RepostedByUserTitle: RepostedByUserTitle,
+								PostURL: PostURL,
+								ReplyConnections: {
+									PostHasRepliesLineBelow: PostHasRepliesLineBelow,
+									PostIsAReplyLineToAbove: PostIsAReplyLineToAbove,
+									IsCurrentPostURL: IsCurrentPostURL,
+									Type: Type
+								},
+								ReplyToURL: ReplyToURL,
+								RepliesURLs: RepliesURLs,
+								UserTitle: UserTitle,
+								UserHandle: UserHandle,
+								UserAvatar: UserAvatar,
+								PostTimeStamp: PostTimeStamp,
+								PostContent: PostContent,
+								ReplyCount: ReplyCount,
+								RepostCount: RepostCount,
+								LikesCount: LikesCount,
+								DateTimeOfScrape: DateTimeOfScrape
+							})
+						}
+					})
+					//Connect replies
+					let PostGroupLengthCache = PostGroup.length
+					let IndexOfPostCurrentlyViewed = -1
+					//^Will be an index value representing the currently viewd post (the one without the a href that you just clicked on)
+					// Any posts below it lacking a line pointing upwards are replies to that post
+					for (let i = 0; i < PostGroupLengthCache; i++) {
+						if (/^Post_CurrentlyViewed/.test(PostGroup[i].ReplyConnections.Type)) {
+							IndexOfPostCurrentlyViewed = i
+						}
+						if ((!PostGroup[i].ReplyConnections.PostIsAReplyLineToAbove) && (i > IndexOfPostCurrentlyViewed) && (IndexOfPostCurrentlyViewed >= 0)) {
+							if (!PostGroup[IndexOfPostCurrentlyViewed].RepliesURLs.includes(PostGroup[i].PostURL)) {
+								PostGroup[IndexOfPostCurrentlyViewed].RepliesURLs.push(PostGroup[i].PostURL) //Add a reply (without the line pointing upwards) to currently viewed post 
+							}
+							if (PostGroup[i].ReplyToURL == "") {
+								PostGroup[i].ReplyToURL = PostGroup[IndexOfPostCurrentlyViewed].PostURL //In reply to a post above
+							}
+						}
+						if (PostGroup[i].ReplyConnections.PostHasRepliesLineBelow) {
+							if (i+1 < PostGroupLengthCache) {
+								if (PostGroup[i+1].ReplyConnections.PostIsAReplyLineToAbove) {
+									if (!PostGroup[i].RepliesURLs.includes(PostGroup[i+1].PostURL)) {
+										PostGroup[i].RepliesURLs.push(PostGroup[i+1].PostURL) //Current post has reply
+									}
+									if (PostGroup[i+1].ReplyToURL == "") {
+										PostGroup[i+1].ReplyToURL = PostGroup[i].PostURL //In reply to a post above
+									}
+								}
+							}
+						}
 					}
-				
-				if (Saved_Setting_StartStop) {
-					ID_TimeoutMainCode = setTimeout(MainCode, Saved_Setting_ScanFrequency)
+					ListOfPosts.push(...PostGroup)
+				} else if (/https:\/\/bsky\.app\/search/.test(window.location.href)) { //Search page
+					UserPostArea = GetPostBoxesByLink(9)
+					
+					UserPostArea.forEach((Post) => {
+						if (Post.textContent != "") {
+							let RepostedByUserTitle = ""
+							let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
+							
+							let ReplyToURL = "" //Reply to post above
+							let RepliesURLs = [] //Replies of the current post
+							let UserTitle = ""
+							let UserHandle = ""
+							let UserAvatar = ""
+							let PostTimeStamp = {}
+							let PostContent = {}
+							let ReplyCount = ""
+							let RepostCount = ""
+							let LikesCount = ""
+							
+							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].href
+							PostURL = HttpToTtp(DescendNode(Post, [0,0,1,0,2]).OutputNode.href)
+							
+							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
+							UserTitle = CleanString(DescendNode(Post, [0,0,1,0,0,0,0,0]).OutputNode.textContent)
+							
+							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/^\s/, "")
+							UserHandle = CleanString(DescendNode(Post, [0,0,1,0,0,0,0,1]).OutputNode.textContent)
+							
+							//Post.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+							//Post.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
+							let NodeOfAvatar = DescendNode(Post, [0,0,0,0,0,0,0,0,1])
+							if (NodeOfAvatar.IsSuccessful) {
+								UserAvatar = HttpToTtp(NodeOfAvatar.OutputNode.src)
+							}
+							
+							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
+							PostTimeStamp = PostDateInfo(DescendNode(Post, [0,0,1,0,2]).OutputNode.dataset.tooltip)
+							
+							let ReplyToOffset = 0
+							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].textContent
+							let NodeOfReplyTo = DescendNode(Post, [0,0,1,1,1])
+							if (NodeOfReplyTo.IsSuccessful) {
+								if (/^Reply to/.test(NodeOfReplyTo.OutputNode.textContent)) {
+									ReplyToOffset++
+								}
+							}
+							
+							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1]
+							PostContent = GetPostContent(DescendNode(Post, [0,0,1,1+ReplyToOffset]).OutputNode, "SearchPage")
+							
+							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes
+							let NodeOfReplyRepostLikes_Array = []
+							let NodeOfFoooter = DescendNode(Post, [0,0,1])
+							if (NodeOfFoooter.IsSuccessful) {
+								let LastNode = [...NodeOfFoooter.OutputNode.childNodes].at(-1)
+								let NodeOfFooterDeepest = LastNode
+								NodeOfReplyRepostLikes_Array = [...NodeOfFooterDeepest.childNodes]
+								
+							}
+							if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
+								ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
+								RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
+								LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
+							}
+							if ((PostURL != "")&&(UserTitle != "")&&(UserHandle != "")&&(PostContent.Segments.length != 0)) {
+								ListOfPosts.push({
+									RepostedByUserTitle: RepostedByUserTitle,
+									PostURL: PostURL,
+									ReplyToURL: ReplyToURL,
+									RepliesURLs: RepliesURLs,
+									UserTitle: UserTitle,
+									UserHandle: UserHandle,
+									UserAvatar: UserAvatar,
+									PostTimeStamp: PostTimeStamp,
+									PostContent: PostContent,
+									ReplyCount: ReplyCount,
+									RepostCount: RepostCount,
+									LikesCount: LikesCount
+								})
+							}
+						}
+						
+					})
 				}
-				
-				//Set a breakpoint here after everything loads to test the results stored in "ListOfPosts".
-				RaceConditionLock = false
-			}
+				let ListOfPosts_Clean = ListOfPosts.map((ArrayElement) => { //Have a version without ReplyConnections attribute since we do not need it if we are just looking at posts
+					return {
+						RepostedByUserTitle: ArrayElement.RepostedByUserTitle,
+						PostURL: ArrayElement.PostURL,
+						ReplyToURL: ArrayElement.ReplyToURL,
+						RepliesURLs: ArrayElement.RepliesURLs,
+						UserTitle: ArrayElement.UserTitle,
+						UserHandle: ArrayElement.UserHandle,
+						UserAvatar: ArrayElement.UserAvatar,
+						PostTimeStamp: ArrayElement.PostTimeStamp,
+						PostContent: ArrayElement.PostContent,
+						ReplyCount: ArrayElement.ReplyCount,
+						RepostCount: ArrayElement.RepostCount,
+						LikesCount: ArrayElement.LikesCount,
+						DateTimeOfScrape: ArrayElement.DateTimeOfScrape
+					}
+				})
+			//Saving...
+				if (!ConfirmationPause) {
+					//Saving posts
+					let SavedBskyPostList = Saved_Extracted_Posts
+					ListOfPosts_Clean.forEach((ExtractedPost, ExtractedPostIndex) => {
+						//Loop through what we have extracted it, and try to add it to the saved list, unless we already have it, then update it
+						let MatchedPostIndex = SavedBskyPostList.findIndex((SavedPost) => { //Search all in the saved list to find a matching post
+							return (ExtractedPost.PostURL == SavedPost.PostURL)
+						})
+						if (ExtractedPostIndex == 5) {
+							let bp = 0
+							
+						}
+						if (MatchedPostIndex == -1) { //If not found, add it to the list
+							if (Setting_MaxNumberOfPosts < 0) {
+								SavedBskyPostList.push(ListOfPosts_Clean[ExtractedPostIndex])
+							} else {
+								if (SavedBskyPostList.length < Setting_MaxNumberOfPosts) {
+									SavedBskyPostList.push(ListOfPosts_Clean[ExtractedPostIndex])
+								} else {
+									console.log("Bsky-scrape: post count limit reached.")
+								}
+							}
+						} else {
+							//Match occurred, replace it (but keep the list of reply URLs and what's replying to)
+							let SavedList_WhatToReplace = SavedBskyPostList[MatchedPostIndex]
+							let ExtractList_ReplaceWith = ExtractedPost
+							
+							let Set_ListOfURLsSaved = new Set(SavedList_WhatToReplace.RepliesURLs) //Start what we have that is saved
+							ExtractList_ReplaceWith.RepliesURLs.forEach((Extracted_Replies) => {
+								//Loop each reply URLs from what we newly extracted, and add them to the saved version's list of reply URLs,
+								//unless if it is already added
+								Set_ListOfURLsSaved.add(Extracted_Replies)
+							})
+							SavedList_WhatToReplace.RepliesURLs = [...Set_ListOfURLsSaved]
+							
+							if ((SavedList_WhatToReplace.ReplyToURL == "") && (ExtractList_ReplaceWith.ReplyToURL != "")) { //If discovered that the post has a reply, add a URL to it.
+								SavedList_WhatToReplace.ReplyToURL = ExtractList_ReplaceWith.ReplyToURL
+							}
+						}
+					})
+					await GM.setValue("BSkyScrape_PostList", JSON.stringify(SavedBskyPostList)).then(() => {
+						CopiedListOfPosts = JSON.stringify(SavedBskyPostList, null, " ")
+						//console.log("Bsky-scrape: extracted post count: " + SavedBskyPostList.length.toFixed(0))
+						
+						if (Div_PostSaveCount != null) {
+							Div_PostSaveCount.textContent = SavedBskyPostList.length.toFixed(0)
+						}
+					},
+					() => {
+						window.alert("Bsky-scrape: saving post failed!")
+					});
+					
+					
+					//Save profile data
+					let SavedBskyProfileList = Saved_Extracted_Profiles
+					if ((Object.keys(Profile).length != 0) && (Profile.ProfileURL != "")) {
+						let IndexOfSavedMatching = SavedBskyProfileList.findIndex((SavedProfile) => {
+							if (SavedProfile.ProfileURL == Profile.ProfileURL) {
+								return true
+							}
+							return false
+						})
+						
+						if (IndexOfSavedMatching == -1) {
+							//If haven't add it
+							if (Setting_MaxNumberOfProfiles < 0) {
+								SavedBskyProfileList.push(Profile)
+							} else {
+								if (SavedBskyProfileList.length < Setting_MaxNumberOfProfiles) {
+									SavedBskyProfileList.push(Profile)
+								} else {
+									console.log("Bsky-scrape: profile page count limit reached.")
+								}
+							}
+							
+						} else {
+							//if gotten already, replace it
+							SavedBskyProfileList[IndexOfSavedMatching] = Profile
+						}
+					}
+					await GM.setValue("BSkyScrape_ProfileList", JSON.stringify(SavedBskyProfileList)).then(() => {
+						CopiedListOfProfiles = JSON.stringify(SavedBskyProfileList, null, " ")
+						//console.log("Bsky-scrape: extracted profile count: " + SavedBskyProfileList.length.toFixed(0))
+						if (Div_ProfileSaveCount != null) {
+							Div_ProfileSaveCount.textContent = SavedBskyProfileList.length.toFixed(0)
+						}
+					},
+					() => {
+						window.alert("Bsky-scrape: saving profile failed!")
+					});
+				} else {
+					console.log("Bsky-scrape: Paused")
+				}
+			
+			//Set a breakpoint here after everything loads to test the results stored in "ListOfPosts".
+			RaceConditionLock = false
 		}
 	//reused/helper Functions
 		function ConsoleLoggingURL(URL_String) {
@@ -1485,10 +1505,15 @@
 						window.alert(error + " Failure at getting link preview")
 					}
 				} else if (PostSegmentType == "FlaggedNotification") {
-					PostContent.Segments.push({
+					let OutputObject = {
 						Type: "FlaggedNotification",
 						FlagType: PostSegment.textContent
-					})
+					}
+					let MediaURLs = GetMediaURLs(PostSegment)
+					if (MediaURLs.length != 0) {
+						OutputObject.MediaURLs = MediaURLs
+					}
+					PostContent.Segments.push(OutputObject)
 				}
 			})
 			return PostContent
