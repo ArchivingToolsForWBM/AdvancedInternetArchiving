@@ -505,6 +505,12 @@
 			document.getElementById("InvalidJsonMessage").hidden = true
 			ListOfDatedThings.forEach((ArrEle) => {
 				let Rectangle = createSVGElement("rect")
+				Rectangle.addEventListener(
+					"mouseup",
+					function () {
+						SVGGraph.focus()
+					}
+				)
 				//We need to clamp to prevent extreme widths and heights that would cause glitches (such as a rectangle whose XY pos is extremely far to the left or beyond the top)
 				let Rectangle_LeftPos = clamp(CalculateXPos(ArrEle.TimeMS.StartingTimeMS), -10, Setting_SVGSpace_Width+10) //This prevents I would think a floating point precision error with the width of the bar when zoomed in with long
 				let Rectangle_RightPos = clamp(CalculateXPos(ArrEle.TimeMS.EndingTimeMS), -10, Setting_SVGSpace_Width+10)  //duration (e.g. 10 years long with a zoom level of seconds). Clamped to 10px off the graph so rounded corners are not shown when extended off
