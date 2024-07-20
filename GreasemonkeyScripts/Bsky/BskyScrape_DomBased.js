@@ -1516,6 +1516,8 @@
 						OutputObject.MediaURLs = MediaURLs
 					}
 					PostContent.Segments.push(OutputObject)
+				} else if (PostSegmentType == "Deleted") {
+					PostContent.Segments.push({Type: "Deleted"})
 				}
 			})
 			return PostContent
