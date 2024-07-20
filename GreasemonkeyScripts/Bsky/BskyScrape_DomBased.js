@@ -335,7 +335,7 @@
 								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[0] - Avatar image and reply line below
 								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1] - post content
 								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[0] - User title, handle and timestamp
-								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[1] - Post content (text, media, and quotes)
+								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[1] - Post content (text, media, and embedded posts)
 								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[X] - each segment of above
 								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[2] - Replies, reposts, and likes.
 								
@@ -425,7 +425,7 @@
 											}
 										}
 									}
-									//Thankfully, unlike being at the post page, the text content and quotes are in a INNER node, meaning
+									//Thankfully, unlike being at the post page, the text content and embeds are in a INNER node, meaning
 									//the header (user title, handle, timestamp) and footer (comments, repost, and likes) are not in the
 									//same hierarchy as in between, and it also doesn't matter how many stuff in between, since it won't
 									//affect the header and footer index locations.
@@ -1212,7 +1212,7 @@
 		function GetLinksURLs(Node) {
 			//Returns an array listing URLs of outlinks
 			let Output = []
-			if (Node.childNodes.length != 0) { //Quoted posts
+			if (Node.childNodes.length != 0) { //embedded posts
 				Output = [...Node.getElementsByTagName("a")].map((Links) => {
 					return HttpToTtp(Links.href)
 				});
@@ -1392,7 +1392,7 @@
 						MediaContent.MediaURLs = MediaURLs
 						PostContent.Segments.push(MediaContent)
 					}
-				} else if (PostSegmentType == "Attachments") { //Attachments (div under post text containing a mixture of images, quotes, and links to another page)
+				} else if (PostSegmentType == "Attachments") { //Attachments (div under post text containing a mixture of images, embeds, and links to another page)
 					let AttachmentListNode = DescendNode(PostSegment, [0])
 					if (AttachmentListNode.IsSuccessful) {
 						let AttachmentOutput = {
@@ -1419,11 +1419,11 @@
 								}
 							} else if (AttachmentPostType == "Attachments") {
 								let SubAttachmentType = (function () {
-									let QuotedPost = [...Node.querySelectorAll("a")].find((HTMLElement) => {
+									let EmbeddedPost = [...Node.querySelectorAll("a")].find((HTMLElement) => {
 										return /^https:\/\/bsky\.app\/profile\//.test(HTMLElement.href)
 									})
-									if (typeof QuotedPost != "undefined") {
-										return "QuotedPost"
+									if (typeof EmbeddedPost != "undefined") {
+										return "EmbeddedPost"
 									}
 									let ExernalLinkPost = [...Node.querySelectorAll("a")].find((ExternalLink) => {
 										return !(/^https:\/\/bsky\.app\/profile\//.test(ExternalLink.href))
@@ -1438,33 +1438,33 @@
 									}
 								})(Node);
 								
-								if (SubAttachmentType == "QuotedPost") {
-									//The levels where the node of quoted posts resides varies depending on the post layout type
-									let QuotedPost = null
+								if (SubAttachmentType == "EmbeddedPost") {
+									//The levels where the node of embedded posts resides varies depending on the post layout type
+									let EmbeddedPost = null
 									let DateDomTest = 0
 									try {
 										let DateInfoData = Node.childNodes[0].childNodes[3].dataset.tooltip //Test if it can get the tooltip
-										QuotedPost = GetQuotedPost(Node.parentNode)
+										EmbeddedPost = GetEmbeddedPost(Node.parentNode)
 									} catch {}
-									if (QuotedPost == null) {
+									if (EmbeddedPost == null) {
 										try {
-											let DateInfoData = Node.childNodes[0].childNodes[0].childNodes[3].dataset.tooltip //Test if it can get the tooltip (search page with only text and quoted post, no images in the main post)
-											QuotedPost = GetQuotedPost(Node)
+											let DateInfoData = Node.childNodes[0].childNodes[0].childNodes[3].dataset.tooltip //Test if it can get the tooltip (search page with only text and embedded post, no images in the main post)
+											EmbeddedPost = GetEmbeddedPost(Node)
 										} catch {}
 									}
-									if (QuotedPost == null) {
+									if (EmbeddedPost == null) {
 										try {
 											let DateInfoData = Node.childNodes[0].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
-											QuotedPost = GetQuotedPost(Node.childNodes[0])
+											EmbeddedPost = GetEmbeddedPost(Node.childNodes[0])
 										} catch {}
 									}
 									
 									if (DateDomTest == 0) {
 										
 									} else {
-										QuotedPost = GetQuotedPost(Node.childNodes[0])
+										EmbeddedPost = GetEmbeddedPost(Node.childNodes[0])
 									}
-									AttachmentOutput.AttachmentContents.push(QuotedPost)
+									AttachmentOutput.AttachmentContents.push(EmbeddedPost)
 								} else if (SubAttachmentType == "ExternalLink") {
 									let ExternalLinkObject = GetExternalLinkPreview(Node.childNodes[0])
 									
@@ -1523,7 +1523,7 @@
 		function IdentifyPostSegmentType(ElementContainingPostSegments, PostSegmentIndex) {
 			//Tests:
 			// https://bsky.app/profile/mobute.bsky.social/post/3kqtldm7r6h27 -> A post quoting another post, no images besides avatar images.
-			// https://bsky.app/profile/dumjaveln.bsky.social/post/3klkgthv63q2z - > A post with plain text, image, and a quote that contains text and image
+			// https://bsky.app/profile/dumjaveln.bsky.social/post/3klkgthv63q2z - > A post with plain text, image, and a embed that contains text and image
 			//
 			let HasImages = false
 			let HasPostImages = false
@@ -1625,13 +1625,13 @@
 			})
 			return OutputLinkPreview
 		}
-		function GetQuotedPost(Node) {
+		function GetEmbeddedPost(Node) {
 			//This function takes a given "Node" that is a DIV that MUST CONTAIN the lowest DOM node that:
-			//-when going lower from this "Node" will be parts of the quoted post, e.g Node.childNodes[0]
+			//-when going lower from this "Node" will be parts of the embedded post, e.g Node.childNodes[0]
 			// points to the avatar/user-title/handle
-			//-At least all the contents inside the quote, including images if it has it.
-			let QuotedContent = {
-				Type: "QuotedPost",
+			//-At least all the contents inside the embedded, including images if it has it.
+			let EmbeddedContent = {
+				Type: "EmbeddedPost",
 				Contents: {
 					PostURL: "",
 					UserTitle: "",
@@ -1650,40 +1650,40 @@
 			//Can't use "Type" because it is scoped only to "GetPostContent", thus inner functions cannot access it.
 			let NodeOfPostURL = DescendNode(Node, [0,0,3])
 			if (NodeOfPostURL.IsSuccessful) {
-				QuotedContent.Contents.PostURL = NodeOfPostURL.OutputNode.href
+				EmbeddedContent.Contents.PostURL = NodeOfPostURL.OutputNode.href
 			}
 			
 			//Node.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].textContent
 			let NodeOfUserTitle = DescendNode(Node, [0,0,1,0,0,0])
 			if (NodeOfUserTitle.IsSuccessful) {
-				QuotedContent.Contents.UserTitle = NodeOfUserTitle.OutputNode.textContent
+				EmbeddedContent.Contents.UserTitle = NodeOfUserTitle.OutputNode.textContent
 			}
 			//Node.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[1].textContent.replace(/\s/, "")
 			//Node.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0]
 			let NodeOfUserHandle = DescendNode(Node, [0,0,1,0,0,1])
 			if (NodeOfUserHandle.IsSuccessful) {
-				QuotedContent.Contents.UserHandle = CleanString(NodeOfUserHandle.OutputNode.textContent)
+				EmbeddedContent.Contents.UserHandle = CleanString(NodeOfUserHandle.OutputNode.textContent)
 			}
 			//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
 			//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1]
 			let NodeOfUserAvatar = DescendNode(Node, [0,0,0,0,0,0,0,0,1])
 			if (NodeOfUserAvatar.IsSuccessful) {
-				QuotedContent.Contents.UserAvatar = NodeOfUserAvatar.OutputNode.src
+				EmbeddedContent.Contents.UserAvatar = NodeOfUserAvatar.OutputNode.src
 			}
 			//Node.childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
 			let NodeOfPostTimeStamp = DescendNode(Node, [0,0,3])
 			if (NodeOfPostTimeStamp.IsSuccessful) {
-				QuotedContent.Contents.PostTimeStamp = PostDateInfo(NodeOfPostTimeStamp.OutputNode.dataset.tooltip)
+				EmbeddedContent.Contents.PostTimeStamp = PostDateInfo(NodeOfPostTimeStamp.OutputNode.dataset.tooltip)
 			}
 			//Node.childNodes[0].childNodes
-			//Get quoted post content
+			//Get embedded post content
 			let ArrayOfPostSegments = [...Node.childNodes]
 			
 			ArrayOfPostSegments.shift() //Remove the header showing the avatar, name, handle, etc. All stuff beyond that are content
-			ArrayOfPostSegments.forEach((QuotedPostSegment) => {
+			ArrayOfPostSegments.forEach((EmbeddedPostSegment) => {
 				let ExternalLink = ""
-				//QuotedPostSegment.childNodes[0].childNodes[0].href
-				let NodeOfExternalLink = DescendNode(QuotedPostSegment, [0,0])
+				//EmbeddedPostSegment.childNodes[0].childNodes[0].href
+				let NodeOfExternalLink = DescendNode(EmbeddedPostSegment, [0,0])
 				if (NodeOfExternalLink.IsSuccessful) {
 					if (!/^https:\/\/bsky\.app\/profile/.test(NodeOfExternalLink.OutputNode.href)) {
 						if (typeof NodeOfExternalLink.OutputNode.href != "undefined") {
@@ -1691,22 +1691,22 @@
 						}
 					}
 				}
-				if (!/^(\s|ALT)*$/.test(QuotedPostSegment.textContent)&&(ExternalLink == "")) {
-					QuotedContent.Contents.PostContent.Segments.push({
+				if (!/^(\s|ALT)*$/.test(EmbeddedPostSegment.textContent)&&(ExternalLink == "")) {
+					EmbeddedContent.Contents.PostContent.Segments.push({
 						Type: "Text",
-						UserPostedText: QuotedPostSegment.textContent
+						UserPostedText: EmbeddedPostSegment.textContent
 					})
 				} else if (ExternalLink != "") {
-					let ExternalLinkObject = GetExternalLinkPreview(QuotedPostSegment.childNodes[0].childNodes[0])
-					QuotedContent.Contents.PostContent.Segments.push(ExternalLinkObject)
+					let ExternalLinkObject = GetExternalLinkPreview(EmbeddedPostSegment.childNodes[0].childNodes[0])
+					EmbeddedContent.Contents.PostContent.Segments.push(ExternalLinkObject)
 				} else {
-					let MediaList = GetMediaURLs(QuotedPostSegment) //has image or video
+					let MediaList = GetMediaURLs(EmbeddedPostSegment) //has image or video
 					if (MediaList.length != 0) {
-						QuotedContent.Contents.PostContent.Segments.push(MediaList)
+						EmbeddedContent.Contents.PostContent.Segments.push(MediaList)
 					}
 				}
 			})
-			return QuotedContent
+			return EmbeddedContent
 		}
 		async function UpdateSavedValues() {
 			Saved_Setting_StartStop = await GM.getValue("BskyScrape_StartStopFlag", false).catch( () => {

@@ -58,13 +58,13 @@
 			<ul>MediaText
 				<li><label><input type="checkbox" class="FilterInclude_Posts" onchange="AutoUpdate()" id="FilterInclude_Posts_Media">Has media</label></li>
 				<li><label><input type="checkbox" class="FilterInclude_Posts" onchange="AutoUpdate()" id="FilterInclude_Posts_Text">Has text in content</label></li>
-				<li><label><input type="checkbox" class="FilterInclude_Posts" onchange="AutoUpdate()" id="FilterInclude_Posts_Quote">Has quoted post</label></li>
+				<li><label><input type="checkbox" class="FilterInclude_Posts" onchange="AutoUpdate()" id="FilterInclude_Posts_Embed">Has embedded post</label></li>
 			</ul>
 			Exclude: <button onclick="ChangeFilterSettings('FilterExclude_Posts', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterExclude_Posts', 0); AutoUpdate()">Unheck all</button><button onclick="ChangeFilterSettings('FilterExclude_Posts', 2); AutoUpdate()">Invert</button>
 			<ul>
 				<li><label><input type="checkbox" class="FilterExclude_Posts" onchange="AutoUpdate()" id="FilterExclude_Posts_Media">Has media</label></li>
 				<li><label><input type="checkbox" class="FilterExclude_Posts" onchange="AutoUpdate()" id="FilterExclude_Posts_Text">Has text in content</label></li>
-				<li><label><input type="checkbox" class="FilterExclude_Posts" onchange="AutoUpdate()" id="FilterExclude_Posts_Quote">Has quoted post</label></li>
+				<li><label><input type="checkbox" class="FilterExclude_Posts" onchange="AutoUpdate()" id="FilterExclude_Posts_Embed">Has embedded post</label></li>
 				<li>Is within date range (UTC):
 					<ul>
 						<li>Exclude posts earlier than: <input type="date" id="FilterExclude_Posts_DateEarliest" onchange="ValidateDateRange(); AutoUpdate()"> <span id="MinDateAppliedState" hidden style="color: #00FF00">Applied</span></li>
@@ -276,23 +276,23 @@
 				let FilteredPostList = SavedJson_PostList.filter((Post) => {
 					let hasMedia = Boolean(Post.PostContent.Segments.find((PostSegment) => {return (PostSegment.ContentType == "Media"||PostSegment.Type === "Media")}))
 					let hasText = Boolean(Post.PostContent.Segments.find((PostSegment) => {return PostSegment.ContentType == "Text"}))
-					let hasQuote = false
+					let hasEmbed = false
 					{
-						let FindQuote = Post.PostContent.Segments.find((Segment) => {
-							if (Segment.ContentType == "Quote") {
-								hasQuote = true
+						let FindEmbed = Post.PostContent.Segments.find((Segment) => {
+							if (Segment.Type == "EmbeddedPost") {
+								hasEmbed = true
 								return true
 							}
-							if (Segment.ContentType == "Attachment") {
-								Segment.Content.find((SubContent) => {
-									if (SubContent.ContentType == "Quote") {
-										hasQuote = true
+							if (Segment.Type == "Attachment") {
+								Segment.AttachmentContents.find((SubContent) => {
+									if (SubContent.Type == "EmbeddedPost") {
+										hasEmbed = true
 										return true
 									}
 								})
 							}
 						})
-						if (typeof FindQuote != "undefined") {
+						if (typeof FindEmbed != "undefined") {
 							return true
 						}
 					}
@@ -304,7 +304,7 @@
 						if (document.getElementById("FilterInclude_Posts_Text").checked && (!hasText)) { //If text is required and not have one, filter out
 							return false
 						}
-						if (document.getElementById("FilterInclude_Posts_Quote").checked && (!hasQuote)) { //If quote is required and not have one, filter out
+						if (document.getElementById("FilterInclude_Posts_Embed").checked && (!hasEmbed)) { //If Embed is required and not have one, filter out
 							return false
 						}
 					//Prohibited rules
@@ -314,7 +314,7 @@
 						if (document.getElementById("FilterExclude_Posts_Text").checked && (hasText)) { //If text is prohibited and have one, filter out
 							return false
 						}
-						if (document.getElementById("FilterExclude_Posts_Quote").checked && (hasQuote)) { //If quote is prohibited and not have one, filter out
+						if (document.getElementById("FilterExclude_Posts_Embed").checked && (hasEmbed)) { //If Embed is prohibited and not have one, filter out
 							return false
 						}
 					//No earlier than
