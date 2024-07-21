@@ -369,7 +369,7 @@
 							}
 					}
 				}
-			//Display progress bar on process tracking URL pages
+			//Display progress bar on process tracking URL pages (not so sure why WBGS not have it on those pages despite being shown on start process page)
 				if (/^https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id/.test(CurrentWBGSURL)) {
 					(() => {
 						let DivContainingProcessStatus = document.querySelector("div.progress-status, mt-2")
@@ -392,7 +392,7 @@
 							let ProcessedURLsCount = parseInt(ProcessNumbersSubstring[0])
 							let TotalURLsCount = parseInt(ProcessNumbersSubstring[1])
 							DivProgressBar.style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(ProcessedURLsCount, TotalURLsCount, "to right", "#0000ff", "#c0c0c0")
-						} catch {
+						} catch (e) {
 							console.log("Generating progress bar error")
 						}
 					})();
