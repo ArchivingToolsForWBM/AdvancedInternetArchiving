@@ -59,6 +59,8 @@
 		let ProcessHistory = []
 		let WBGS_Utility_Settings = {}
 		
+		let DivProgressBar = null
+		
 		try {
 			ProcessHistory = JSON.parse(await GM.getValue("WBGS_ProcessHistory", "[]").catch(() => {
 				console.log("WBGS utility: Loading log failed!")
@@ -226,147 +228,178 @@
 		}
 		
 		async function Code() {
-			if (!RaceConditionLock) {
-				RaceConditionLock = true
-				if (CurrentWBGSURL != window.location.href) {
-					HavePrintedListOfProcess = false //if the user moves to a different URL, we need to update the textarea
-				}
-				CurrentWBGSURL = window.location.href
-				let CurrentTimeMS = Date.now()
-				
-				//Check the "save results in a new sheets" option
-					if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=archive") {
-						let Element_SaveInNewSheetOption = [...document.querySelectorAll('input[type=checkbox]')].find((CheckBox) => {
-							return CheckBox.parentElement.textContent == "Save results in a new Sheet."
-						});
-						if (typeof Element_SaveInNewSheetOption != "undefined") {
-							if (!Element_SaveInNewSheetOption.checked) {
-								Element_SaveInNewSheetOption.click()
-							}
-						}
-						//^Had to use .click() instead of just directly setting the checked state to true bc if user interacts with other inputs, it will uncheck it.
-						// Probably because of this: https://stackoverflow.com/questions/30488218/checkbox-onchange-event-not-firing that JS setting checked to true
-						// does not fire the onchange event because it is changing the attribute.
-					}
-				//On any given start process page, get the process tracking URL and extract various info from it, and write it to the textarea
-					let ProcessTrackingURLString = ""
-					let TrackingURL = [...document.querySelectorAll("small")].find((HTMLElement) => {
-						return /Tracking URL: https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=/.test(HTMLElement.textContent)
-					})
-					if (typeof TrackingURL !== "undefined") {
-						if (!HavePrintedListOfProcess) {
-							ProcessTrackingURLString = TrackingURL.textContent.match(/https:\/\/archive\.org\/services\/wayback-gsheets\/check[^\s]+$/)[0]
-							//console.log("Tracking URL: " + ProcessTrackingURLString.replace(/^https/, "ttps")) //URLs in the console log gets truncated and the text may not be preserved depending on browser.
-							let ProcessType = ((URL) => {
-								let TypeInURL = ""
-								try {
-									TypeInURL = URL.match(/(?<=check\?method=).*$/)[0]
-								} catch {
-									TypeInURL = ""
-								}
-								let ListOfProcessTypes = { //Object literal technique -> mapping strings to another string, credit - FlutterMapp on youtube.
-									"archive": "Archive URLs",
-									"availability": "Check if URLs are archived in the Wayback Machine",
-									"live": "Check if URLs are available in the Live Web"
-								}
-								return ListOfProcessTypes[TypeInURL] ?? "Unknown"
-							})(window.location.href);
-							
-							let OBJ_WBGS_TrackingInfo = {
-								TrackingURL: HttpToTtp(ProcessTrackingURLString), //URLs in the console log gets truncated and the text may not be preserved depending on browser.
-								GoogleSheetURL: HttpToTtp(ProcessTrackingURLString.replace(/^.+?\&google_sheet_url=/g, "").replaceAll("%3A", ":").replaceAll("%2F", "/").replaceAll("%23", "#").replaceAll("%3D", "=").replaceAll("%3F", "?")),
-								JobID: ProcessTrackingURLString.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
-								TimestampOfInitalProcess: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(CurrentTimeMS).toISOString()),
-								ProcessType: ProcessType
-							}
-							
-							let NodeContainingArchiveProcessSettings = [...document.querySelectorAll("button")].find((ele) => ele.textContent == "Archive")
-							if (typeof NodeContainingArchiveProcessSettings != "undefined") {
-								let SettingsObject = GetProcessSettings(NodeContainingArchiveProcessSettings.parentNode)
-								OBJ_WBGS_TrackingInfo.ProcessSettings = SettingsObject //Add a new property referencing to the settings
-							}
-							
-							
-							JSONTextarea.textContent = JSON.stringify(OBJ_WBGS_TrackingInfo, "", " ")
-							HavePrintedListOfProcess = true
-							
-							//Save history to a log
-								
-								let IndexWithSameProcess = ProcessHistory.findIndex((ArrEle) => { //Find if we already have that process in the list (failsafe)
-									return ArrEle.TrackingURL == OBJ_WBGS_TrackingInfo.TrackingURL
-								})
-								if (IndexWithSameProcess == -1) { //This if statement is a failsafe to prevent duplicate entries
-									if (ProcessHistory.length >= Setting_ProcessLogLimit) { //If you somehow have multiple items past the limit, this will repeatedly remove oldest item until 1-below the limit
-										ProcessHistory.splice(0, ProcessHistory.length - (Setting_ProcessLogLimit-1)) //Delete oldest item (array will have MaxNumber-1, -1 so we have one empty slot to place)
-									}
-									ProcessHistory.push(OBJ_WBGS_TrackingInfo)
-									await GM.setValue("WBGS_ProcessHistory", JSON.stringify(ProcessHistory)).catch(() => {
-										console.log("WBGS utility: Saving log failed!")
-									})
-								}
-						}
-					}
-				//Extract info from the WBGS home page
-					if (/https:\/\/archive\.org\/services\/wayback-gsheets\/options.*/.test(CurrentWBGSURL)) {
-						let JsonExtractedInfo = {
-							CurrentDateTime: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(CurrentTimeMS).toISOString()),
-							ListOfProcesses: [],
-							SystemQueueMessage: ""
-						}
-						let TableListingProcess = document.querySelector("table") //Get entire table of running processes
-						if (TableListingProcess != null) { //If no process exists, don't list it
-							let ListOfProcesses = [...TableListingProcess.querySelectorAll("tr")]
-							let ListOfProcessesItems = ListOfProcesses.filter((WBGSProcess) => { //Get the running processes
-								let ColCountCorrect = WBGSProcess.childNodes.length == 6 //Get only items that have 6 columns (exclude row with "There are no running processes.")
-								let IsRowAProcess = /https:\/\/docs\.google\.com\/spreadsheets\//.test(WBGSProcess.childNodes[0].textContent) //Exclude the table headers row
-								return (ColCountCorrect && IsRowAProcess)
-							})
-							if (DisplayEasyCopyableListOfProcess && (!HavePrintedListOfProcess) && ListOfProcessesItems.length != 0) {
-								//Convert into json info containing process info
-									let OBJ_WBGS_ListOfProcesses = ListOfProcessesItems.map((WBGSProcess) => {
-										let TrackingURL = WBGSProcess.childNodes[5].childNodes[0].href
-										let HowLongAgo = DisplayTimeDuration(CurrentTimeMS - new Date(WBGSProcess.childNodes[1].textContent + " UTC").valueOf()) + " ago"
-										return {
-											TrackingURL: HttpToTtp(TrackingURL),
-											JobID: TrackingURL.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
-											GoogleSheetURL: HttpToTtp(WBGSProcess.childNodes[0].textContent),
-											StartedTime: WBGSProcess.childNodes[1].textContent + " (" + HowLongAgo + ")",
-											Status: WBGSProcess.childNodes[4].textContent
-										}
-									})
-									JsonExtractedInfo.ListOfProcesses = OBJ_WBGS_ListOfProcesses
-							}
-							if (!HavePrintedListOfProcess) {
-								//Get queue quantity
-									let DivMsgQueueWarning = [...document.querySelectorAll("div")]
-									DivMsgQueueWarning = DivMsgQueueWarning.find((Element) => {
-										return /^There are \d+ processes waiting in the system queue!/.test(Element.textContent)
-									})
-									if (typeof DivMsgQueueWarning != "undefined") {
-										JsonExtractedInfo.SystemQueueMessage = DivMsgQueueWarning.textContent
-									}
-								
-								//Output the json
-									if (JsonExtractedInfo.ListOfProcesses.length != 0 || JsonExtractedInfo.SystemQueueMessage != "") { //If there is something there, then print it.
-										JSONTextarea.textContent = JSON.stringify(JsonExtractedInfo, "", " ")
-										HavePrintedListOfProcess = true
-									}
-							}
-							//Auto-abort any finish-locked processes
-								let ListOfFinishLockedProcesses = ListOfProcessesItems.filter((WBGSProcess) => {
-									return WBGSProcess.childNodes[4].textContent == "SUCCESS" //Find only processes that are labeled "SUCCESS"
-								})
-								if ((ClickAllAbortsCount < MaxClickAllAborts)&&(ListOfFinishLockedProcesses.length != 0)) {
-									ListOfFinishLockedProcesses.forEach((WBGSProcess) => {
-										let AbortButton = WBGSProcess.childNodes[5].childNodes[1]
-										AbortButton.click()
-									})
-									ClickAllAbortsCount++
-								}
-						}
-					}
-				RaceConditionLock = false
+			if (RaceConditionLock) {
+				return
 			}
+			RaceConditionLock = true
+			if (CurrentWBGSURL != window.location.href) {
+				HavePrintedListOfProcess = false //if the user moves to a different URL, we need to update the textarea
+			}
+			CurrentWBGSURL = window.location.href
+			let CurrentTimeMS = Date.now()
+			
+			//Check the "save results in a new sheets" option
+				if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=archive") {
+					let Element_SaveInNewSheetOption = [...document.querySelectorAll('input[type=checkbox]')].find((CheckBox) => {
+						return CheckBox.parentElement.textContent == "Save results in a new Sheet."
+					});
+					if (typeof Element_SaveInNewSheetOption != "undefined") {
+						if (!Element_SaveInNewSheetOption.checked) {
+							Element_SaveInNewSheetOption.click()
+						}
+					}
+					//^Had to use .click() instead of just directly setting the checked state to true bc if user interacts with other inputs, it will uncheck it.
+					// Probably because of this: https://stackoverflow.com/questions/30488218/checkbox-onchange-event-not-firing that JS setting checked to true
+					// does not fire the onchange event because it is changing the attribute.
+				}
+			//On any given start process page, get the process tracking URL and extract various info from it, and write it to the textarea
+				let ProcessTrackingURLString = ""
+				let TrackingURL = [...document.querySelectorAll("small")].find((HTMLElement) => {
+					return /Tracking URL: https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=/.test(HTMLElement.textContent)
+				})
+				if (typeof TrackingURL !== "undefined") {
+					if (!HavePrintedListOfProcess) {
+						ProcessTrackingURLString = TrackingURL.textContent.match(/https:\/\/archive\.org\/services\/wayback-gsheets\/check[^\s]+$/)[0]
+						//console.log("Tracking URL: " + ProcessTrackingURLString.replace(/^https/, "ttps")) //URLs in the console log gets truncated and the text may not be preserved depending on browser.
+						let ProcessType = ((URL) => {
+							let TypeInURL = ""
+							try {
+								TypeInURL = URL.match(/(?<=check\?method=).*$/)[0]
+							} catch {
+								TypeInURL = ""
+							}
+							let ListOfProcessTypes = { //Object literal technique -> mapping strings to another string, credit - FlutterMapp on youtube.
+								"archive": "Archive URLs",
+								"availability": "Check if URLs are archived in the Wayback Machine",
+								"live": "Check if URLs are available in the Live Web"
+							}
+							return ListOfProcessTypes[TypeInURL] ?? "Unknown"
+						})(window.location.href);
+						
+						let OBJ_WBGS_TrackingInfo = {
+							TrackingURL: HttpToTtp(ProcessTrackingURLString), //URLs in the console log gets truncated and the text may not be preserved depending on browser.
+							GoogleSheetURL: HttpToTtp(ProcessTrackingURLString.replace(/^.+?\&google_sheet_url=/g, "").replaceAll("%3A", ":").replaceAll("%2F", "/").replaceAll("%23", "#").replaceAll("%3D", "=").replaceAll("%3F", "?")),
+							JobID: ProcessTrackingURLString.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
+							TimestampOfInitalProcess: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(CurrentTimeMS).toISOString()),
+							ProcessType: ProcessType
+						}
+						
+						let NodeContainingArchiveProcessSettings = [...document.querySelectorAll("button")].find((ele) => ele.textContent == "Archive")
+						if (typeof NodeContainingArchiveProcessSettings != "undefined") {
+							let SettingsObject = GetProcessSettings(NodeContainingArchiveProcessSettings.parentNode)
+							OBJ_WBGS_TrackingInfo.ProcessSettings = SettingsObject //Add a new property referencing to the settings
+						}
+						
+						
+						JSONTextarea.textContent = JSON.stringify(OBJ_WBGS_TrackingInfo, "", " ")
+						HavePrintedListOfProcess = true
+						
+						//Save history to a log
+							
+							let IndexWithSameProcess = ProcessHistory.findIndex((ArrEle) => { //Find if we already have that process in the list (failsafe)
+								return ArrEle.TrackingURL == OBJ_WBGS_TrackingInfo.TrackingURL
+							})
+							if (IndexWithSameProcess == -1) { //This if statement is a failsafe to prevent duplicate entries
+								if (ProcessHistory.length >= Setting_ProcessLogLimit) { //If you somehow have multiple items past the limit, this will repeatedly remove oldest item until 1-below the limit
+									ProcessHistory.splice(0, ProcessHistory.length - (Setting_ProcessLogLimit-1)) //Delete oldest item (array will have MaxNumber-1, -1 so we have one empty slot to place)
+								}
+								ProcessHistory.push(OBJ_WBGS_TrackingInfo)
+								await GM.setValue("WBGS_ProcessHistory", JSON.stringify(ProcessHistory)).catch(() => {
+									console.log("WBGS utility: Saving log failed!")
+								})
+							}
+					}
+				}
+			//Extract info from the WBGS home page
+				if (/https:\/\/archive\.org\/services\/wayback-gsheets\/options.*/.test(CurrentWBGSURL)) {
+					let JsonExtractedInfo = {
+						CurrentDateTime: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(CurrentTimeMS).toISOString()),
+						ListOfProcesses: [],
+						SystemQueueMessage: ""
+					}
+					let TableListingProcess = document.querySelector("table") //Get entire table of running processes
+					if (TableListingProcess != null) { //If no process exists, don't list it
+						let ListOfProcesses = [...TableListingProcess.querySelectorAll("tr")]
+						let ListOfProcessesItems = ListOfProcesses.filter((WBGSProcess) => { //Get the running processes
+							let ColCountCorrect = WBGSProcess.childNodes.length == 6 //Get only items that have 6 columns (exclude row with "There are no running processes.")
+							let IsRowAProcess = /https:\/\/docs\.google\.com\/spreadsheets\//.test(WBGSProcess.childNodes[0].textContent) //Exclude the table headers row
+							return (ColCountCorrect && IsRowAProcess)
+						})
+						if (DisplayEasyCopyableListOfProcess && (!HavePrintedListOfProcess) && ListOfProcessesItems.length != 0) {
+							//Convert into json info containing process info
+								let OBJ_WBGS_ListOfProcesses = ListOfProcessesItems.map((WBGSProcess) => {
+									let TrackingURL = WBGSProcess.childNodes[5].childNodes[0].href
+									let HowLongAgo = DisplayTimeDuration(CurrentTimeMS - new Date(WBGSProcess.childNodes[1].textContent + " UTC").valueOf()) + " ago"
+									return {
+										TrackingURL: HttpToTtp(TrackingURL),
+										JobID: TrackingURL.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
+										GoogleSheetURL: HttpToTtp(WBGSProcess.childNodes[0].textContent),
+										StartedTime: WBGSProcess.childNodes[1].textContent + " (" + HowLongAgo + ")",
+										Status: WBGSProcess.childNodes[4].textContent
+									}
+								})
+								JsonExtractedInfo.ListOfProcesses = OBJ_WBGS_ListOfProcesses
+						}
+						if (!HavePrintedListOfProcess) {
+							//Get queue quantity
+								let DivMsgQueueWarning = [...document.querySelectorAll("div")]
+								DivMsgQueueWarning = DivMsgQueueWarning.find((Element) => {
+									return /^There are \d+ processes waiting in the system queue!/.test(Element.textContent)
+								})
+								if (typeof DivMsgQueueWarning != "undefined") {
+									JsonExtractedInfo.SystemQueueMessage = DivMsgQueueWarning.textContent
+								}
+							
+							//Output the json
+								if (JsonExtractedInfo.ListOfProcesses.length != 0 || JsonExtractedInfo.SystemQueueMessage != "") { //If there is something there, then print it.
+									JSONTextarea.textContent = JSON.stringify(JsonExtractedInfo, "", " ")
+									HavePrintedListOfProcess = true
+								}
+						}
+						//Auto-abort any finish-locked processes
+							let ListOfFinishLockedProcesses = ListOfProcessesItems.filter((WBGSProcess) => {
+								return WBGSProcess.childNodes[4].textContent == "SUCCESS" //Find only processes that are labeled "SUCCESS"
+							})
+							if ((ClickAllAbortsCount < MaxClickAllAborts)&&(ListOfFinishLockedProcesses.length != 0)) {
+								ListOfFinishLockedProcesses.forEach((WBGSProcess) => {
+									let AbortButton = WBGSProcess.childNodes[5].childNodes[1]
+									AbortButton.click()
+								})
+								ClickAllAbortsCount++
+							}
+					}
+				}
+			//Display progress bar on process tracking URL pages
+				if (/^https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id/.test(CurrentWBGSURL)) {
+					(() => {
+						let DivContainingProcessStatus = document.querySelector("div.progress-status, mt-2")
+						if (DivContainingProcessStatus == null) {
+							return
+						}
+						let ProcessStatusText = DivContainingProcessStatus.textContent
+						if (!/Processed \d+ of \d+/.test(ProcessStatusText)) {
+							return
+						}
+						try {
+							let ProcessNumbersSubstring = ProcessStatusText.match(/\d+/g)
+							
+							if (DivProgressBar == null) { //Create and place progress bar div unless it already have.
+								DivProgressBar = document.createElement("div")
+								DivProgressBar.style.borderRadius = "3px"
+								DivProgressBar.style.height = "20px"
+								DivContainingProcessStatus.parentNode.appendChild(DivProgressBar)
+							}
+							let ProcessedURLsCount = parseInt(ProcessNumbersSubstring[0])
+							let TotalURLsCount = parseInt(ProcessNumbersSubstring[1])
+							DivProgressBar.style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(ProcessedURLsCount, TotalURLsCount, "to right", "#0000ff", "#c0c0c0")
+						} catch {
+							console.log("Generating progress bar error")
+						}
+					})();
+				} else {
+					DivProgressBar = null //Set back to null when user leaves the process tracking page
+				}
+			RaceConditionLock = false
 		}
 		function AlternativeProcessActivityLogger() {
 			let CurrentTimeMS = Date.now()
@@ -557,5 +590,21 @@
 				}
 			}
 			return OutputString
+		}
+		function CSSBackgroundImageLinearGradiantPercentageBarGraph(Quantity, MaxQuantity, Direction, Color_Full, Color_Empty) {
+			//Returns a percentage displayed as a gradient representing a bar graph as CSS. Preferably as a background image.
+			let Percentage = 0
+			if (MaxQuantity != 0) {
+				Percentage = Quantity * 100/MaxQuantity //Multiply first so that it only rounds at the last step, minimizing rounding errors.
+			}
+			Percentage = clamp(Percentage, 0, 100)
+			return "linear-gradient("+Direction+", "+Color_Full+" "+Percentage+"%, "+Color_Empty+" "+Percentage+"% 100%)"
+		}
+		function clamp(num, min, max) {
+			//Restrict a number within a specified range.
+				if (isNaN(num) == true) {
+					num = 0
+				}
+				return num <= min ? min : num >= max ? max : num;
 		}
 })();
