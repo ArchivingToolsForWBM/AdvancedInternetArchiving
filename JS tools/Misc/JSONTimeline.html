@@ -54,6 +54,12 @@
 		it ignores <a href="https://en.wikipedia.org/wiki/Unix_time#Leap_seconds">leap seconds</a>. If you're recording some event into a JSON, and the start and end happens on the leap second and the second after (assuming a positive leap
 		second), it's possible you have an end date a second before the start date, which causes a slight display issue on the graph.</li>
 	</ul>
+	JSON modes:
+	<ul>
+		<li><label><input onchange="AutoUpdate()" type="radio" name="JSONMode" id="JSONReadmode_Regular" checked>Regular mode (uses aforementioned JSON format above)</label></li>
+		<li><label><input onchange="AutoUpdate()" type="radio" name="JSONMode" id="JSONReadmode_WBGSProcessHistory">WBGS process history</label></li>
+	
+	</ul>
 	<label><input type="checkbox" id="AutoUpdate" checked>Auto Update</label><br>
 	
 	<textarea id="JSONInput" cols="100" rows="30" oninput="TextareaChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
@@ -373,10 +379,19 @@
 				return
 			}
 			try {
+				if (document.getElementById("JSONReadmode_Regular").checked) {
+					ListOfDatedThings = [...JSON.parse(InputJSONTimelineString)] //Test if the outermost object is array (failsafe)
+				} else if (document.getElementById("JSONReadmode_WBGSProcessHistory").checked) {
+					ListOfDatedThings = [...JSON.parse(InputJSONTimelineString).List]
+				}
 				
-				ListOfDatedThings = [...JSON.parse(InputJSONTimelineString)] //Test if the outermost object is array
+				
 				ListOfDatedThings = ListOfDatedThings.map((ArrEle) => {
-					let StartingTimeMS = new Date(ArrEle.Start).valueOf()
+					let StartingName = "Start"
+					if (document.getElementById("JSONReadmode_WBGSProcessHistory").checked) {
+						StartingName = "TimestampOfInitalProcess"
+					}
+					let StartingTimeMS = new Date(ArrEle[StartingName]).valueOf()
 					if (EarliestRecordedMS > StartingTimeMS) {
 						EarliestRecordedMS = StartingTimeMS
 					}
@@ -420,7 +435,6 @@
 			if (DisplayedGraphYScroll < Setting_SVGSpace_Height - Setting_SVGTime_PositionFromBottom) {
 				DisplayedGraphYScroll = Setting_SVGSpace_Height - Setting_SVGTime_PositionFromBottom
 			}
-			
 			
 		//Display intervals of time (month, day, hours, minutes...)
 		//The for loop's "i" value acts as a failsafe to prevent huge loops
@@ -542,6 +556,9 @@
 				Rectangle.setAttribute("y", (Rectangle_TopPos).toString(10))
 				
 				let ColorToUse = "#808080"
+				if (document.getElementById("JSONReadmode_WBGSProcessHistory").checked) {
+					ColorToUse = "#0000ff"
+				}
 				if (ArrEle.Original.hasOwnProperty("Color")) {
 					ColorToUse = ArrEle.Original.Color
 				}

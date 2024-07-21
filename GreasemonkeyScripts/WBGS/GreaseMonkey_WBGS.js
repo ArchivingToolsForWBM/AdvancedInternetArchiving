@@ -385,8 +385,8 @@
 							
 							if (DivProgressBar == null) { //Create and place progress bar div unless it already have.
 								DivProgressBar = document.createElement("div")
-								DivProgressBar.style.borderRadius = "3px"
-								DivProgressBar.style.height = "20px"
+								DivProgressBar.style.borderRadius = ".25rem"
+								DivProgressBar.style.height = "1rem"
 								DivContainingProcessStatus.parentNode.appendChild(DivProgressBar)
 							}
 							let ProcessedURLsCount = parseInt(ProcessNumbersSubstring[0])
