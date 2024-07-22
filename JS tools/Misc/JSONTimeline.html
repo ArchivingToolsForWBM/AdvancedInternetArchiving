@@ -77,7 +77,8 @@
 	<button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button><br>
 	<button onclick="ResetYScroll();">Reset Y scroll</button><br>
 	<svg style="outline: 1px solid; overflow: hidden" id="DrawingSpace" class="Dragable" tabindex="0" onclick="this.focus()"></svg><br>
-	<kbd>Date of mouse position: <span id="MousePosToTime"></kbd>
+	<kbd>Date of mouse position: <span id="MousePosToTime"></kbd><br>
+	<kbd>Current time: <span id="CurrentUTCTime"></span></kbd>
 
 <script>
 //Settings
@@ -149,6 +150,7 @@
 			}
 		})
 //Code below
+
 	let SVGGraph = document.getElementById("DrawingSpace")
 	SVGGraph.addEventListener("wheel", (e) => { //Scroll wheel to scroll/zoom the graph
 		e.preventDefault()
@@ -304,6 +306,7 @@
 		GraphCurrentTimeDisplay.setAttribute("stroke-width", "3")
 		document.getElementById("DrawingSpace").appendChild(GraphCurrentTimeDisplay)
 		
+		document.getElementById("CurrentUTCTime").textContent = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString()).replace(/:\d+ UTC/, " UTC")
 	}
 	function InitalizeDate() {
 		let CurrentTimeMS = Date.now()
