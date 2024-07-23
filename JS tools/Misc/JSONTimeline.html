@@ -26,10 +26,10 @@
 	
 	<p>This tool is useful for visualizing the events and/or performance of something.</p>
 	
-	<p>The JSON must be formatted like this: An array (wrapped in square brackets) whose elements are objects (wrapped in curly braces), which that containing property names <kbd>Start</kbd> and <kbd>End</kbd>, that their values must be a string
-	representing a date (preferably a UTC date, else it assumes local date). See examples below.</p>
+	<p>The JSON must be correctly formatted. For <kbd>Regular mode</kbd> it must contain property names <kbd>Start</kbd> and <kbd>End</kbd>, that their values must be a string
+	representing a date (preferably a UTC date, else it assumes local date). See example below.</p>
 	
-	Example:<br>
+	Example (regular mode):<br>
 	<textarea readonly style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color: #000000; color: #ffffff" rows="20" cols="50">
 [
 	{
@@ -54,12 +54,10 @@
 		it ignores <a href="https://en.wikipedia.org/wiki/Unix_time#Leap_seconds">leap seconds</a>. If you're recording some event into a JSON, and the start and end happens on the leap second and the second after (assuming a positive leap
 		second), it's possible you have an end date a second before the start date, which causes a slight display issue on the graph.</li>
 	</ul>
-	JSON modes:
-	<ul>
-		<li><label><input onchange="AutoUpdate()" type="radio" name="JSONMode" id="JSONReadmode_Regular" checked>Regular mode (uses aforementioned JSON format above)</label></li>
-		<li><label><input onchange="AutoUpdate()" type="radio" name="JSONMode" id="JSONReadmode_WBGSProcessHistory">WBGS process history</label></li>
-	
-	</ul>
+	JSON read mode: <select onchange="AutoUpdate()">
+		<option id="JSONReadMode_Regular" selected>Regular (uses aforementioned JSON format)</option>
+		<option id="JSONReadMode_WBGSProcessHistory">WBGS process history</option>
+	</select>
 	<label><input type="checkbox" id="AutoUpdate" checked>Auto Update</label><br>
 	
 	<textarea id="JSONInput" cols="100" rows="30" oninput="TextareaChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
@@ -76,8 +74,10 @@
 	Date and time (UTC): <input type="text" id="DateAndTime" size="25" onchange="CheckDateValid(); AutoUpdate()"><br>
 	<button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button><br>
 	<button onclick="ResetYScroll();">Reset Y scroll</button><br>
-	<svg style="outline: 1px solid; overflow: hidden" id="DrawingSpace" class="Dragable" tabindex="0" onclick="this.focus()"></svg><br>
-	<kbd>Date of mouse position: <span id="MousePosToTime"></kbd><br>
+	<div id="GraphResults">
+		<svg style="outline: 1px solid; overflow: hidden" id="DrawingSpace" class="Dragable" tabindex="0" onclick="this.focus()"></svg><br>
+		<kbd>Date of mouse position: <span id="MousePosToTime"></kbd><br>
+	</div>
 	<kbd>Current time: <span id="CurrentUTCTime"></span></kbd>
 
 <script>
@@ -362,7 +362,7 @@
 		}
 		let OutputGraph = document.getElementById("DrawingSpace")
 		let ClearableSVGElements = [...OutputGraph.querySelectorAll("*.Clearable")]
-		ClearableSVGElements.forEach((SVGEle) => {
+		ClearableSVGElements.forEach((SVGEle) => { //Clear the graph
 			OutputGraph.removeChild(SVGEle)
 		})
 		let InputJSONTimelineString = document.getElementById("JSONInput").value
@@ -382,16 +382,16 @@
 				return
 			}
 			try {
-				if (document.getElementById("JSONReadmode_Regular").checked) {
+				if (document.getElementById("JSONReadMode_Regular").selected) {
 					ListOfDatedThings = [...JSON.parse(InputJSONTimelineString)] //Test if the outermost object is array (failsafe)
-				} else if (document.getElementById("JSONReadmode_WBGSProcessHistory").checked) {
+				} else if (document.getElementById("JSONReadMode_WBGSProcessHistory").selected) {
 					ListOfDatedThings = [...JSON.parse(InputJSONTimelineString).List]
 				}
 				
 				
 				ListOfDatedThings = ListOfDatedThings.map((ArrEle) => {
 					let StartingName = "Start"
-					if (document.getElementById("JSONReadmode_WBGSProcessHistory").checked) {
+					if (document.getElementById("JSONReadMode_WBGSProcessHistory").selected) {
 						StartingName = "TimestampOfInitalProcess"
 					}
 					let StartingTimeMS = new Date(ArrEle[StartingName]).valueOf()
@@ -426,6 +426,7 @@
 				ListOfDatedThings.sort((a, b) => a.TimeMS.StartingTimeMS - b.TimeMS.StartingTimeMS) //We sort so that we have consistency that any "later" time overlaps the "earlier"
 			} catch (e) {
 				document.getElementById("InvalidJsonMessage").hidden = false
+				document.getElementById("GraphResults").hidden = true
 				return
 			}
 			Saved_EarliestRecordedMS = EarliestRecordedMS
@@ -559,7 +560,7 @@
 				Rectangle.setAttribute("y", (Rectangle_TopPos).toString(10))
 				
 				let ColorToUse = "#808080"
-				if (document.getElementById("JSONReadmode_WBGSProcessHistory").checked) {
+				if (document.getElementById("JSONReadMode_WBGSProcessHistory").checked) {
 					ColorToUse = "#0000ff"
 				}
 				if (ArrEle.Original.hasOwnProperty("Color")) {
@@ -598,6 +599,8 @@
 					OutputGraph.insertBefore(TextTimestamp, GraphCurrentTimeDisplay)
 				}
 			})
+		//No errors, show graph
+			document.getElementById("GraphResults").hidden = false
 	}
 	function isJsonString(str) {
 		//https://stackoverflow.com/questions/3710204/how-to-check-if-a-string-is-a-valid-json-string
