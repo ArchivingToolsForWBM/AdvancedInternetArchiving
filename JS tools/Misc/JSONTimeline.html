@@ -62,8 +62,6 @@
 	
 	<textarea id="JSONInput" cols="100" rows="30" oninput="TextareaChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
 	<span hidden id="InvalidJsonMessage" style="color: #ff0000"> Invalid JSON or JSON format!</span>
-	
-	<span hidden id="InvalidDateMessage" style="color: #ff0000"> Invalid date! Please enter in <kbd>YYYY-MM-DDTHH:mm:ss.sssZ</kbd> or any readable format.</span><br>
 	<ul>
 		<li><b>Left/Right</b> or <b>a/d</b> keys: Scroll backward/forward through time. Holding down the left mouse button and moving the mouse also works, as well as rolling the scroll wheel.</li>
 		<li><b>Up/Down</b> or <b>w/s</b> keys (when &ldquo;Scale vertical length to fit to graph&rdquo; is unchecked): Scroll up/down. Used to view when bar heights exceed the display height</li>
@@ -71,7 +69,7 @@
 	</ul>
 	<label><input type="checkbox" id="YScaleFit" onchange="MainCode()" checked>Scale vertical length to fit to graph</label><br>
 	<span id="ZoomUI">Zoom: <input type="range" min="1" max="100000000000000" step="1" value="101900" id="GraphZoomLevel" oninput="AutoUpdate()" style="width: 800px "><kbd id="ZoomLevelDisplay"></kbd><br></span>
-	Date and time (UTC): <input type="text" id="DateAndTime" size="25" onchange="CheckDateValid(); AutoUpdate()"><br>
+	Date and time (UTC): <input type="text" id="DateAndTime" size="25" onchange="CheckDateValid(); AutoUpdate()"><span hidden id="InvalidDateMessage" style="color: #ff0000"> Invalid date! Please enter in <kbd>YYYY-MM-DDTHH:mm:ss.sssZ</kbd> or any readable format.</span><br>
 	<button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button><br>
 	<button onclick="ResetYScroll();">Reset Y scroll</button><br>
 	<div id="GraphResults">
@@ -332,6 +330,8 @@
 		if (!invalidDateState) {
 			document.getElementById("DateAndTime").value = DateToCheck.toISOString()
 			DisplayedGraphTimeMS = DateToCheck.valueOf()
+		} else {
+			document.getElementById("GraphResults").hidden = true
 		}
 	}
 	function JumpToEarliest() {
