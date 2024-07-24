@@ -35,7 +35,6 @@
 		let String_WBGSNewSheetList = ""
 	
 	//Code below
-		let ScanInterval = setInterval(GetSheetTabTimestamp, Setting_ScanRate)
 		
 		function GetSheetTabTimestamp() {
 			//Get sheets tab at bottom of screen, and obtain their names
@@ -81,6 +80,7 @@
 		}
 		GM.registerMenuCommand("Copy WBGS result sheets", CopyWBGSSheets, "");
 		function CopyWBGSSheets() {
+			GetSheetTabTimestamp()
 			GM.setClipboard(String_WBGSNewSheetList)
 		}
 })();
