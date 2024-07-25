@@ -1,0 +1,118 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+			input { font-family: monospace;}
+			
+			label, input[type='checkbox'], input[type='radio'] {
+				cursor: pointer;
+			}
+		</style>
+	</head>
+	<p>When entering timestamp, to enter the current time, hold down CTRL and press space.</p>
+	<p>Enter start date: <input type="text" id="Input_DateTimeStart"><span id="Input_DateTimeStart_ErrorMsg" style="color: red" hidden class="HiddenMsg">Invalid date</span></p>
+	<p>Enter end date: <input type="text" id="Input_DateTimeEnd"><span id="Input_DateTimeEnd_ErrorMsg" style="color: red" hidden class="HiddenMsg">Invalid date</span></p>
+<hr>
+<span id="Output" style="font-family: monospace"></span>
+
+
+<script>
+	[...document.querySelectorAll("input")].forEach(ele => {
+		ele.addEventListener(
+			"change", () => {
+				Main();
+			}
+		);
+		ele.addEventListener(
+			"keydown", (e) => {
+				if (e.ctrlKey && e.key == " ") {
+					e.preventDefault()
+					ele.value = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString());
+					Main();
+				}
+			}
+		)
+	});
+	function Main() {
+		document.getElementById("Output").textContent = "";
+		[...document.querySelectorAll("*.HiddenMsg")].forEach(ele => ele.hidden = true)
+		
+		try {
+			let DatesWrong = false
+			let StartDate = new Date(document.getElementById("Input_DateTimeStart").value)
+			if (StartDate.toString() == "Invalid Date") {
+				document.getElementById("Input_DateTimeStart_ErrorMsg").hidden = false
+				DatesWrong = true
+			}
+			let EndDate = new Date(document.getElementById("Input_DateTimeEnd").value)
+			if (EndDate.toString() == "Invalid Date") {
+				document.getElementById("Input_DateTimeEnd_ErrorMsg").hidden = false
+				DatesWrong = true
+			}
+			if (DatesWrong) {
+				return
+			}
+			
+			let TimeDiff = EndDate.valueOf() - StartDate.valueOf()
+			if (TimeDiff < 0) {
+				document.getElementById("Output").textContent = "End date before start."
+				return
+			}
+			let DurationString = DisplayTimeDuration(TimeDiff)
+			
+			document.getElementById("Output").textContent = "Duration: " + DurationString + " (" + TimeDiff.toFixed(0) + " ms)"
+		} catch {
+			return
+		}
+	}
+	function DisplayTimeDuration(Duration) {
+		let OutputString = ""
+		
+		Duration = Math.abs(Duration)
+		
+		let UnitsOfTimeArray = []
+		let Seconds = Math.floor(Duration/1000)
+		UnitsOfTimeArray.unshift({Unit: Seconds % 60, UnitName: "s"})
+		
+		let Minute = Math.floor(Seconds/60)
+		UnitsOfTimeArray.unshift({Unit: Minute % 60, UnitName: "m"})
+		
+		let Hour = Math.floor(Minute/60)
+		UnitsOfTimeArray.unshift({Unit: Hour % 24, UnitName: "h"})
+		
+		let Day = Math.floor(Hour/24)
+		UnitsOfTimeArray.unshift({Unit: Day, UnitName: "d"})
+		
+		let LeadingUnitIsNonZero = false
+		for (let i = 0; i < UnitsOfTimeArray.length; i++) {
+			if (UnitsOfTimeArray[i].Unit != 0) {
+				LeadingUnitIsNonZero = true //Once it's true, stays true. All remaining units are significant
+			}
+			if (LeadingUnitIsNonZero || i == UnitsOfTimeArray.length-1) {
+				OutputString += UnitsOfTimeArray[i].Unit + UnitsOfTimeArray[i].UnitName
+				if (i != UnitsOfTimeArray.length-1) {
+					OutputString += " "
+				}
+			}
+		}
+		return OutputString
+	}
+	function ISOString_to_YYYY_MM_DD_HH_MM_SS(ISOString) {
+		//YYYY-MM-DDTHH:mm:ss.sssZ or ±YYYYYY-MM-DDTHH:mm:ss.sssZ
+		return ISOString.replace("T", " ").replace(/\.\d{3}Z$/, "") + " UTC"
+	}
+
+</script>
