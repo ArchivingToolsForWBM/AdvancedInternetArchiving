@@ -33,7 +33,7 @@
 		const Setting_ProcessLogLimit = 10
 			//^The maximum number of process logged into the list. Once reached, and a new item is added, the oldest in the array is removed.
 			
-		const Setting_ProcessActivityLogScanFrequency = 1000
+		const Setting_ProcessActivityLogScanFrequency = 5000
 			//^Number of milliseconds each time the alternative logger scans WBGS
 	//Don't touch unless you know what you're doing
 		setInterval(Code, IntervalDelay)
@@ -60,15 +60,19 @@
 		let CurrentWBGSURL = ""
 		
 		let ProcessHistory = []
-		let WBGS_Utility_Settings = {}
+		let WBGS_Utility_Settings = {
+			ProcessActivityLogOrderByRecent: true,
+			ProcessLogOrderByRecent: true,
+		}
 		
 		let DivProgressBar = null
+		
 		
 		try {
 			ProcessHistory = JSON.parse(await GM.getValue("WBGS_ProcessHistory", "[]").catch(() => {
 				console.log("WBGS utility: Loading log failed!")
 			}))
-			WBGS_Utility_Settings = JSON.parse(await GM.getValue("WBGS_UtilitySettings", '{"ProcessLogOrderByRecent": true}').catch(() => {
+			WBGS_Utility_Settings = JSON.parse(await GM.getValue("WBGS_UtilitySettings", JSON.stringify(WBGS_Utility_Settings)).catch(() => {
 				console.log("WBGS utility: loading setting failed!")
 			}))
 		} catch {}
@@ -177,6 +181,26 @@
 							}
 						)
 						DivBox.appendChild(ClearAlternativeProcessActivityLogButton)
+					//Checkbox for process order
+						DivBox.appendChild(document.createElement("br"))
+						let Label_ProcessActivityLog = document.createElement("label")
+						Label_ProcessActivityLog.style.cursor = "pointer"
+						
+						let Checkbox_ProcessActivityLog = document.createElement("input")
+						Checkbox_ProcessActivityLog.type = "checkbox"
+						Checkbox_ProcessActivityLog.addEventListener(
+							"change",
+								function () {
+									WBGS_Utility_Settings.ProcessActivityLogOrderByRecent = this.checked
+									AlternativeProcessActivityLogger()
+									SaveWBGSUtilitySettings()
+								}
+						)
+						Checkbox_ProcessActivityLog.checked = WBGS_Utility_Settings.ProcessActivityLogOrderByRecent
+						Label_ProcessActivityLog.appendChild(Checkbox_ProcessActivityLog)
+						Label_ProcessActivityLog.appendChild(document.createTextNode("Recent to oldest"))
+						
+						DivBox.appendChild(Label_ProcessActivityLog)
 				}
 			//line seperator
 				DivBox.appendChild(document.createElement("hr"))
@@ -187,19 +211,18 @@
 				"click",
 					function () {
 						if (WBGS_Utility_Settings.ProcessLogOrderByRecent) {
-							let CopiedObject = {
+							let FormattedObject = {
 								Order: "Recent to oldest",
 								List: ProcessHistory.toReversed()
 							}
-							GM.setClipboard(JSON.stringify(CopiedObject, "", " "))
+							GM.setClipboard(JSON.stringify(FormattedObject, "", " "))
 						} else {
-							let CopiedObject = {
+							let FormattedObject = {
 								Order: "Oldest to recent",
 								List: ProcessHistory
 							}
-							GM.setClipboard(JSON.stringify(CopiedObject, "", " "))
+							GM.setClipboard(JSON.stringify(FormattedObject, "", " "))
 						}
-						
 					}
 				)
 				DivBox.appendChild(GetProcessHistoryButton)
@@ -486,7 +509,19 @@
 					if (ShouldPushTimeRangeObject) {
 						ProcessTrackingLog.push(ProcessLogObject)
 					}
-					JSONTextarea_Tracking.value = JSON.stringify(ProcessTrackingLog, "", " ")
+					if (WBGS_Utility_Settings.ProcessActivityLogOrderByRecent) {
+						let FormattedObject = {
+							Order: "Recent to oldest",
+							List: ProcessTrackingLog.toReversed()
+						}
+						JSONTextarea_Tracking.value = JSON.stringify(FormattedObject, "", " ")
+					} else {
+						let FormattedObject = {
+							Order: "Oldest to recent",
+							List: ProcessTrackingLog
+						}
+						JSONTextarea_Tracking.value = JSON.stringify(FormattedObject, "", " ")
+					}
 				}
 			}
 		}
