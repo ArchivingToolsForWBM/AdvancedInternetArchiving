@@ -212,6 +212,7 @@
 					function () {
 						FormattedObject = {
 							Order: "",
+							Type: "WBGS_StartProcessHistory",
 							List: []
 						}
 						
