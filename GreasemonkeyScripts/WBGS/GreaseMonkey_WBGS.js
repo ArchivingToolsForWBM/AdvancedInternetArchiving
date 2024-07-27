@@ -210,17 +210,18 @@
 				GetProcessHistoryButton.addEventListener(
 				"click",
 					function () {
+						FormattedObject = {
+							Order: "",
+							List: []
+						}
+						
 						if (WBGS_Utility_Settings.ProcessLogOrderByRecent) {
-							let FormattedObject = {
-								Order: "Recent to oldest",
-								List: ProcessHistory.toReversed()
-							}
+							FormattedObject.Order = "Recent to oldest"
+							FormattedObject.List = ProcessHistory.toReversed()
 							GM.setClipboard(JSON.stringify(FormattedObject, "", " "))
 						} else {
-							let FormattedObject = {
-								Order: "Oldest to recent",
-								List: ProcessHistory
-							}
+							FormattedObject.Order = "Oldest to recent"
+							FormattedObject.List = ProcessHistory
 							GM.setClipboard(JSON.stringify(FormattedObject, "", " "))
 						}
 					}
@@ -470,6 +471,7 @@
 					let ProcessLogObject = null
 					if (typeof LastLogged != "undefined") { //If there is a last item in the array (not when the array is empty)
 						if (LastLogged.Text == StatusText) { //If the text is the same as the one before, merge-with/update the last object instead
+							ProcessLogObject = LastLogged
 							LastLogged.End = CurrentUTCString
 							let DurationMS = new Date(LastLogged.End).getTime() - new Date(LastLogged.Start).getTime()
 							let DurationString = "Just started"
@@ -495,7 +497,10 @@
 						}
 						ShouldPushTimeRangeObject = true
 					}
-					if (ProcessLogObject != null && PageType == "WBGS_ProcessPage") {
+					if (ProcessLogObject == null) {
+						return
+					}
+					if (PageType == "WBGS_ProcessPage") {
 						if (/queued/.test(ProcessLogObject.Text)) {
 							ProcessLogObject.Color = "#FFFF00"
 						} else if (/^Processed [\d,\.]+/.test(ProcessLogObject.Text)) {
@@ -505,21 +510,28 @@
 						} else if (/^Finished processing/.test(ProcessLogObject.Text)) {
 							ProcessLogObject.Color = "#00FF00"
 						}
+					} else if (PageType == "WBGS_Homepage") {
+						ProcessLogObject.Color = "#0000FF"
+						let QueueCountNumber = 5
+						try {
+							QueueCountNumber = parseInt(StatusText.match(/\d+/)[0])
+							ProcessLogObject.BarHeight = QueueCountNumber*5
+						} catch {}
 					}
 					if (ShouldPushTimeRangeObject) {
 						ProcessTrackingLog.push(ProcessLogObject)
 					}
+					let FormattedObject = {
+						Order: "",
+						Type: PageType,
+					}
 					if (WBGS_Utility_Settings.ProcessActivityLogOrderByRecent) {
-						let FormattedObject = {
-							Order: "Recent to oldest",
-							List: ProcessTrackingLog.toReversed()
-						}
+						FormattedObject.Order = "Recent to oldest"
+						FormattedObject.List = ProcessTrackingLog.toReversed()
 						JSONTextarea_Tracking.value = JSON.stringify(FormattedObject, "", " ")
 					} else {
-						let FormattedObject = {
-							Order: "Oldest to recent",
-							List: ProcessTrackingLog
-						}
+						FormattedObject.Order = "Oldest to recent"
+						FormattedObject.List = ProcessTrackingLog
 						JSONTextarea_Tracking.value = JSON.stringify(FormattedObject, "", " ")
 					}
 				}

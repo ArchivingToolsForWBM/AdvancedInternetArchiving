@@ -382,17 +382,22 @@
 				return
 			}
 			try {
+				let WBGS_HistoryType = ""
 				if (document.getElementById("JSONReadMode_Regular").selected) {
 					ListOfDatedThings = [...JSON.parse(InputJSONTimelineString)] //Test if the outermost object is array (failsafe)
 				} else if (document.getElementById("JSONReadMode_WBGSProcessHistory").selected) {
-					ListOfDatedThings = [...JSON.parse(InputJSONTimelineString).List]
+					let JSONThing = JSON.parse(InputJSONTimelineString)
+					ListOfDatedThings = [...JSONThing.List]
+					WBGS_HistoryType = JSONThing.Type
 				}
 				
 				
 				ListOfDatedThings = ListOfDatedThings.map((ArrEle) => {
 					let StartingName = "Start"
 					if (document.getElementById("JSONReadMode_WBGSProcessHistory").selected) {
-						StartingName = "TimestampOfInitalProcess"
+						if (WBGS_HistoryType == "WBGS_ProcessPage") {
+							StartingName = "TimestampOfInitalProcess"
+						}
 					}
 					let StartingTimeMS = new Date(ArrEle[StartingName]).valueOf()
 					if (EarliestRecordedMS > StartingTimeMS) {
