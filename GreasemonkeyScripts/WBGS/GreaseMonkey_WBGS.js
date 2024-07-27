@@ -32,13 +32,16 @@
 			//starts when the page first loads (any subsequent loads besides a refresh does not count).
 		const Setting_ProcessLogLimit = 10
 			//^The maximum number of process logged into the list. Once reached, and a new item is added, the oldest in the array is removed.
+			
+		const Setting_ProcessActivityLogScanFrequency = 1000
+			//^Number of milliseconds each time the alternative logger scans WBGS
 	//Don't touch unless you know what you're doing
 		setInterval(Code, IntervalDelay)
 		if (Setting_AlternativeProcessActivityLog) {
 			setTimeout(AlternativeProcessActivityLoggerStart, 1000)
 			
 			function AlternativeProcessActivityLoggerStart() {
-				setInterval(AlternativeProcessActivityLogger, 10000)
+				setInterval(AlternativeProcessActivityLogger, Setting_ProcessActivityLogScanFrequency)
 			}
 			
 		}
@@ -50,8 +53,8 @@
 		let HavePrintedListOfProcess = false
 			//^This is a flag to make it only update the text only once (not periodically), until the user refreshes or navigates to another page.
 		
-		let JSONTextarea = {}
-		let TrackingTextarea = {}
+		let JSONTextarea = null
+		let JSONTextarea_Tracking = null
 		let ProcessTrackingLog = []
 		
 		let CurrentWBGSURL = ""
@@ -115,7 +118,7 @@
 				CopyJSONButton.addEventListener(
 				"click",
 					function () {
-						GM.setClipboard(JSONTextarea.textContent)
+						GM.setClipboard(JSONTextarea.value)
 					}
 				
 				)
@@ -126,7 +129,7 @@
 				RefreshTextareaButton.addEventListener(
 				"click",
 					function () {
-						JSONTextarea.textContent = ""
+						JSONTextarea.value = ""
 						HavePrintedListOfProcess = false
 						Code()
 					}
@@ -138,20 +141,20 @@
 				if (Setting_AlternativeProcessActivityLog) {
 					DivBox.appendChild(document.createElement("br"))
 					
-					TrackingTextarea = document.createElement("textarea")
-					TrackingTextarea.style.whiteSpace = "pre"
-					TrackingTextarea.style.overflowWrap = "normal"
-					TrackingTextarea.style.overflowX = "scroll"
-					TrackingTextarea.style.backgroundColor = "#000000"
-					TrackingTextarea.style.color = "#ffffff"
-					TrackingTextarea.style.fontFamily = "monospace"
-					TrackingTextarea.style.resize = "both"
+					JSONTextarea_Tracking = document.createElement("textarea")
+					JSONTextarea_Tracking.style.whiteSpace = "pre"
+					JSONTextarea_Tracking.style.overflowWrap = "normal"
+					JSONTextarea_Tracking.style.overflowX = "scroll"
+					JSONTextarea_Tracking.style.backgroundColor = "#000000"
+					JSONTextarea_Tracking.style.color = "#ffffff"
+					JSONTextarea_Tracking.style.fontFamily = "monospace"
+					JSONTextarea_Tracking.style.resize = "both"
 					
-					TrackingTextarea.setAttribute("cols", "50")
-					TrackingTextarea.setAttribute("rows", "10")
-					TrackingTextarea.setAttribute("readonly", "")
+					JSONTextarea_Tracking.setAttribute("cols", "50")
+					JSONTextarea_Tracking.setAttribute("rows", "10")
+					JSONTextarea_Tracking.setAttribute("readonly", "")
 					
-					DivBox.appendChild(TrackingTextarea)
+					DivBox.appendChild(JSONTextarea_Tracking)
 					//Copy log button
 						DivBox.appendChild(document.createElement("br"))
 						let CopyAlternativeProcessActivityLogButton = document.createElement("button")
@@ -159,7 +162,7 @@
 						CopyAlternativeProcessActivityLogButton.addEventListener(
 						"click",
 							function () {
-								GM.setClipboard(TrackingTextarea.textContent)
+								GM.setClipboard(JSONTextarea_Tracking.value)
 							}
 						)
 						DivBox.appendChild(CopyAlternativeProcessActivityLogButton)
@@ -169,7 +172,7 @@
 						ClearAlternativeProcessActivityLogButton.addEventListener(
 						"click",
 							function () {
-								TrackingTextarea.textContent = ""
+								JSONTextarea_Tracking.value = ""
 								ProcessTrackingLog = []
 							}
 						)
@@ -231,11 +234,17 @@
 			if (RaceConditionLock) {
 				return
 			}
-			RaceConditionLock = true
-			if (CurrentWBGSURL != window.location.href) {
-				HavePrintedListOfProcess = false //if the user moves to a different URL, we need to update the textarea
+			if (JSONTextarea == null || JSONTextarea_Tracking == null) {
+				return
 			}
-			CurrentWBGSURL = window.location.href
+			RaceConditionLock = true
+			if (CurrentWBGSURL != window.location.href) { //if the user moves to a different URL, we need to update the textarea and clear various data
+				HavePrintedListOfProcess = false 
+				JSONTextarea.value = "";
+				JSONTextarea_Tracking.value = "";
+				ProcessTrackingLog = []
+			}
+			CurrentWBGSURL = window.location.href //Update previous URL
 			let CurrentTimeMS = Date.now()
 			
 			//Check the "save results in a new sheets" option
@@ -291,7 +300,7 @@
 						}
 						
 						
-						JSONTextarea.textContent = JSON.stringify(OBJ_WBGS_TrackingInfo, "", " ")
+						JSONTextarea.value = JSON.stringify(OBJ_WBGS_TrackingInfo, "", " ")
 						HavePrintedListOfProcess = true
 						
 						//Save history to a log
@@ -352,7 +361,7 @@
 							
 							//Output the json
 								if (JsonExtractedInfo.ListOfProcesses.length != 0 || JsonExtractedInfo.SystemQueueMessage != "") { //If there is something there, then print it.
-									JSONTextarea.textContent = JSON.stringify(JsonExtractedInfo, "", " ")
+									JSONTextarea.value = JSON.stringify(JsonExtractedInfo, "", " ")
 									HavePrintedListOfProcess = true
 								}
 						}
@@ -403,62 +412,82 @@
 		}
 		function AlternativeProcessActivityLogger() {
 			let CurrentTimeMS = Date.now()
-			let WBGSProgressLog = document.querySelector("textarea.progress-log")
-			if (WBGSProgressLog != null) {
-				let CurrentUTC = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(CurrentTimeMS).toISOString())
-				let RecentLine = WBGSProgressLog.value.match(/^(.*)$/m)
-				if (RecentLine != null) {
-					RecentLine = RecentLine[0]
-				}
-				if (RecentLine != "") {
-					RecentLine = RecentLine.replace(/ \d{1,2}:\d{2}:\d{2} (?:A|P)M$/, "")
-				}
-				// RecentLine should now contain only the status and not the local time.
-					if (RecentLine != "") {
-						let LastLogged = ProcessTrackingLog.at(-1)
-						let ProcessLogObject = null
-						if (typeof LastLogged != "undefined") { //If there is a last item in the array (not when the array is empty)
-							if (LastLogged.Text == RecentLine) { //If the text is the same as the one before, merge with the last object
-								LastLogged.End = CurrentUTC
-								let DurationMS = new Date(LastLogged.End).getTime() - new Date(LastLogged.Start).getTime()
-								let DurationString = "Just started"
-								if (DurationMS >= 10000) {
-									DurationString = DisplayTimeDuration(DurationMS)
-								}
-								LastLogged.Duration = DurationString
-							} else { //Otherwise create a separate object
-								ProcessLogObject = {
-									Start: CurrentUTC,
-									End: CurrentUTC,
-									Duration: "Just started",
-									Text: RecentLine
-								}
-								
-							}
-						} else { //If array is empty, this is the first item
-							ProcessLogObject = {
-								Start: CurrentUTC,
-								End: CurrentUTC,
-								Duration: "Just started",
-								Text: RecentLine
-							}
-						}
-						if (ProcessLogObject != null) {
-							if (/queued/.test(ProcessLogObject.Text)) {
-								ProcessLogObject.Color = "#FFFF00"
-							} else if (/^Processed [\d,\.]+/.test(ProcessLogObject.Text)) {
-								ProcessLogObject.Color = "#0000FF"
-								let ProcessNumber = parseInt(ProcessLogObject.Text.match(/(?<=^Processed )[\d,\.]+/)[0].replaceAll(/[,\.]/g, ""))
-								ProcessLogObject.BarHeight = ProcessNumber*5
-							} else if (/^Finished processing/.test(ProcessLogObject.Text)) {
-								ProcessLogObject.Color = "#00FF00"
-							}
-							
-							ProcessTrackingLog.push(ProcessLogObject)
-						}
-						TrackingTextarea.textContent = JSON.stringify(ProcessTrackingLog, "", " ")
+			let CurrentUTCString = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(CurrentTimeMS).toISOString())
+			
+			let StatusText = ""
+			let PageType = ""
+			let LogToExtract = null
+			if (/^https:\/\/archive\.org\/services\/wayback-gsheets\/options.*/.test(CurrentWBGSURL)) { //WBGS home page
+				PageType = "WBGS_Homepage"
+				LogToExtract = document.querySelector("div.alert, alert-warning")
+				
+				if (LogToExtract != null) {
+					let QueueMsg = LogToExtract.textContent
+					if (/There are \d+ processes waiting in the system queue\!/.test(QueueMsg)) {
+						try {
+							StatusText = QueueMsg
+						} catch {}
 					}
-
+				}
+			} else { //Start process page or process tracking URL page
+				PageType = "WBGS_ProcessPage"
+				LogToExtract = document.querySelector("textarea.progress-log")
+				if (LogToExtract != null) {
+					try {
+						StatusText = LogToExtract.value.match(/^(.*)$/m)[0].replace(/ \d{1,2}:\d{2}:\d{2} (?:A|P)M$/, "") // StatusText should now contain only the status and not the local time.
+					} catch {}
+				}
+			}
+			
+			if (LogToExtract != null) {
+				if (StatusText != "") {
+					let ShouldPushTimeRangeObject = false
+					
+					let LastLogged = ProcessTrackingLog.at(-1)
+					let ProcessLogObject = null
+					if (typeof LastLogged != "undefined") { //If there is a last item in the array (not when the array is empty)
+						if (LastLogged.Text == StatusText) { //If the text is the same as the one before, merge-with/update the last object instead
+							LastLogged.End = CurrentUTCString
+							let DurationMS = new Date(LastLogged.End).getTime() - new Date(LastLogged.Start).getTime()
+							let DurationString = "Just started"
+							if (DurationMS >= Setting_ProcessActivityLogScanFrequency) {
+								DurationString = DisplayTimeDuration(DurationMS)
+							}
+							LastLogged.Duration = DurationString //Update the "end" time
+						} else { //Otherwise create a new separate object
+							ProcessLogObject = {
+								Start: CurrentUTCString,
+								End: CurrentUTCString,
+								Duration: "Just started",
+								Text: StatusText
+							}
+							ShouldPushTimeRangeObject = true
+						}
+					} else { //If array is empty, this is the first item
+						ProcessLogObject = {
+							Start: CurrentUTCString,
+							End: CurrentUTCString,
+							Duration: "Just started",
+							Text: StatusText
+						}
+						ShouldPushTimeRangeObject = true
+					}
+					if (ProcessLogObject != null && PageType == "WBGS_ProcessPage") {
+						if (/queued/.test(ProcessLogObject.Text)) {
+							ProcessLogObject.Color = "#FFFF00"
+						} else if (/^Processed [\d,\.]+/.test(ProcessLogObject.Text)) {
+							ProcessLogObject.Color = "#0000FF"
+							let ProcessNumber = parseInt(ProcessLogObject.Text.match(/(?<=^Processed )[\d,\.]+/)[0].replaceAll(/[,\.]/g, ""))
+							ProcessLogObject.BarHeight = ProcessNumber*5
+						} else if (/^Finished processing/.test(ProcessLogObject.Text)) {
+							ProcessLogObject.Color = "#00FF00"
+						}
+					}
+					if (ShouldPushTimeRangeObject) {
+						ProcessTrackingLog.push(ProcessLogObject)
+					}
+					JSONTextarea_Tracking.value = JSON.stringify(ProcessTrackingLog, "", " ")
+				}
 			}
 		}
 		
