@@ -636,10 +636,18 @@
 		let FirstDatedAfterCurrentlyViewed = Saved_ListOfDated.find(ele => ele.TimeMS.StartingTimeMS > DisplayedGraphTimeMS)
 		let LastDatedBeforeCurrentlyViewd = Saved_ListOfDated.findLast(ele => ele.TimeMS.StartingTimeMS < DisplayedGraphTimeMS)
 		
-		if (JumpValue > 0 && typeof FirstDatedAfterCurrentlyViewed != "undefined") {
-			DisplayedGraphTimeMS = FirstDatedAfterCurrentlyViewed.TimeMS.StartingTimeMS
-		} else if (JumpValue < 0 && typeof LastDatedBeforeCurrentlyViewd != "undefined") {
-			DisplayedGraphTimeMS = LastDatedBeforeCurrentlyViewd.TimeMS.StartingTimeMS
+		if (JumpValue > 0) {
+			if (typeof FirstDatedAfterCurrentlyViewed != "undefined") {
+				DisplayedGraphTimeMS = FirstDatedAfterCurrentlyViewed.TimeMS.StartingTimeMS
+			} else {
+				JumpToLatest()
+			}
+		} else if (JumpValue < 0) {
+			if (typeof LastDatedBeforeCurrentlyViewd != "undefined") {
+				DisplayedGraphTimeMS = LastDatedBeforeCurrentlyViewd.TimeMS.StartingTimeMS
+			} else {
+				JumpToEarliest()
+			}
 		}
 		document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
 	}
