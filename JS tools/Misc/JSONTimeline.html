@@ -45,6 +45,13 @@
 		"Text": "Test 2",
 		"BarHeight": 20,
 		"Color": "#ff0000"
+	},
+	{
+		"Start": "2020-01-01 00:00:40 UTC",
+		"End": "2020-01-01 00:00:50 UTC",
+		"Text": "Test 3",
+		"BarHeight": 20,
+		"Color": "#0000ff"
 	}
 ]
 	</textarea><br>
@@ -64,13 +71,15 @@
 	<span hidden id="InvalidJsonMessage" style="color: #ff0000"> Invalid JSON or JSON format!</span>
 	<ul>
 		<li><b>Left/Right</b> or <b>a/d</b> keys: Scroll backward/forward through time. Holding down the left mouse button and moving the mouse also works, as well as rolling the scroll wheel.</li>
+		<li><b>SHIFT + Left/Right</b> or <b>a/d</b> keys: Jump to previous or next time range.</li>
 		<li><b>Up/Down</b> or <b>w/s</b> keys (when &ldquo;Scale vertical length to fit to graph&rdquo; is unchecked): Scroll up/down. Used to view when bar heights exceed the display height</li>
-		<li>SHIFT + <b>Up/Down</b> or <b>w/s</b> keys: Zoom. Alternatively hold down CTRL and roll the scroll wheel also affects the rolling (will zoom to where the mouse is at though). </li>
+		<li><b>SHIFT + Up/Down</b> or <b>w/s</b> keys: Zoom. Alternatively hold down CTRL and roll the scroll wheel also affects the rolling (will zoom to where the mouse is at though). </li>
 	</ul>
 	<label><input type="checkbox" id="YScaleFit" onchange="MainCode()" checked>Scale vertical length to fit to graph</label><br>
 	<span id="ZoomUI">Zoom: <input type="range" min="1" max="100000000000000" step="1" value="101900" id="GraphZoomLevel" oninput="AutoUpdate()" style="width: 800px "><kbd id="ZoomLevelDisplay"></kbd><br></span>
 	Date and time (UTC): <input type="text" id="DateAndTime" size="25" onchange="CheckDateValid(); AutoUpdate()"><span hidden id="InvalidDateMessage" style="color: #ff0000"> Invalid date! Please enter in <kbd>YYYY-MM-DDTHH:mm:ss.sssZ</kbd> or any readable format.</span><br>
 	<button onclick="JumpToEarliest(); AutoUpdate()">Earliest recorded</button><button onclick="JumpToLatest(); AutoUpdate()">Latest recorded</button><button onclick="InitalizeDate(); AutoUpdate()">Current date and time</button><br>
+	<button onclick="JumpPrevNextTimeStamp(-1); MainCode();">Previous logged</button><button onclick="JumpPrevNextTimeStamp(1); MainCode();">Next logged</button><br><br>
 	<button onclick="ResetYScroll();">Reset Y scroll</button><br>
 	<div id="GraphResults">
 		<svg style="outline: 1px solid; overflow: hidden" id="DrawingSpace" class="Dragable" tabindex="0" onclick="this.focus()"></svg><br>
@@ -98,7 +107,8 @@
 	
 	let Saved_ListOfDated = []
 	let Saved_EarliestRecordedMS = Infinity
-	let Saved_LatestRecordedMS = -Infinity
+	let Saved_LatestRecordedMSStart = -Infinity
+	let Saved_LatestRecordedMSEnd = -Infinity
 	let DisplayedGraphTimeMS = 0
 	let DisplayedGraphTimeMSOriginal = 0 //Only used when click-drag so it doesn't add by itself and accumulate.
 	let DisplayedGraphYScroll = Setting_SVGSpace_Height - Setting_SVGTime_PositionFromBottom
@@ -238,15 +248,24 @@
 		//Keyboard input to move and zoom
 		let KeyName = e.key
 		let IsKeyControllingGraph = false
-		if (KeyName == "ArrowLeft"||KeyName == "a"||KeyName == "ArrowRight"||KeyName == "d") {
+		if (KeyName == "ArrowLeft"||KeyName.toLowerCase() == "a"||KeyName == "ArrowRight"||KeyName.toLowerCase() == "d") {
 			IsKeyControllingGraph = true
-			e.preventDefault()
-			let ScrollDirection = 100
-			if (KeyName == "ArrowLeft"||KeyName == "a") {
-				ScrollDirection = ScrollDirection*-1
+			if (e.shiftKey) {
+				let Direction = -1
+				if (KeyName == "ArrowRight" || KeyName.toLowerCase() == "d") {
+					Direction = 1
+				}
+				JumpPrevNextTimeStamp(Direction)
+				
+			} else {
+				e.preventDefault()
+				let ScrollDirection = 100
+				if (KeyName == "ArrowLeft"||KeyName == "a") {
+					ScrollDirection = ScrollDirection*-1
+				}
+				DisplayedGraphTimeMS = clamp(DisplayedGraphTimeMS + Math.round(ScrollDirection * Setting_ZoomDenominator / document.getElementById("GraphZoomLevel").value.toString(10)), Setting_MinDateMS, Setting_MaxDateMS)
+				document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
 			}
-			DisplayedGraphTimeMS = clamp(DisplayedGraphTimeMS + Math.round(ScrollDirection * Setting_ZoomDenominator / document.getElementById("GraphZoomLevel").value.toString(10)), Setting_MinDateMS, Setting_MaxDateMS)
-			document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
 		}
 		if (KeyName == "ArrowUp"||KeyName.toLowerCase() == "w"||KeyName == "ArrowDown"||KeyName.toLowerCase() == "s") {
 			IsKeyControllingGraph = true
@@ -344,12 +363,12 @@
 		
 	}
 	function JumpToLatest() {
-		if (Saved_LatestRecordedMS === -Infinity) {
+		if (Saved_LatestRecordedMSEnd === -Infinity) {
 			return
 		}
 		invalidDateState = false
-		document.getElementById("DateAndTime").value = new Date(Saved_LatestRecordedMS).toISOString()
-		DisplayedGraphTimeMS = Saved_LatestRecordedMS
+		document.getElementById("DateAndTime").value = new Date(Saved_LatestRecordedMSStart).toISOString()
+		DisplayedGraphTimeMS = Saved_LatestRecordedMSStart
 	}
 	function ResetYScroll() {
 		DisplayedGraphYScroll = Setting_SVGSpace_Height - Setting_SVGTime_PositionFromBottom
@@ -367,7 +386,8 @@
 		})
 		let InputJSONTimelineString = document.getElementById("JSONInput").value
 		let EarliestRecordedMS = Infinity
-		let LatestRecordedMS = -Infinity
+		let LatestRecordedMS_Start = -Infinity
+		let LatestRecordedMS_End = -Infinity
 		let ListOfDatedThings = []
 		let ZoomLevel = parseInt(document.getElementById("GraphZoomLevel").value)
 		if (invalidDateState) {
@@ -407,9 +427,13 @@
 					if (typeof ArrEle.End != "undefined") {
 						EndingTimeMS = new Date(ArrEle.End).valueOf()
 					}
-					if (LatestRecordedMS < EndingTimeMS) {
-						LatestRecordedMS = EndingTimeMS
+					if (LatestRecordedMS_End < EndingTimeMS) {
+						LatestRecordedMS_End = EndingTimeMS
 					}
+					if (LatestRecordedMS_Start < StartingTimeMS) {
+						LatestRecordedMS_Start = StartingTimeMS
+					}
+					
 					if (document.getElementById("YScaleFit").checked) {
 						let Height = 0
 						if (ArrEle.hasOwnProperty("BarHeight")) {
@@ -435,7 +459,8 @@
 				return
 			}
 			Saved_EarliestRecordedMS = EarliestRecordedMS
-			Saved_LatestRecordedMS = LatestRecordedMS
+			Saved_LatestRecordedMSStart = LatestRecordedMS_Start
+			Saved_LatestRecordedMSEnd = LatestRecordedMS_End
 			Saved_ListOfDated = ListOfDatedThings //Save to list
 		} else {
 			ListOfDatedThings = Saved_ListOfDated //Load list
@@ -606,6 +631,17 @@
 			})
 		//No errors, show graph
 			document.getElementById("GraphResults").hidden = false
+	}
+	function JumpPrevNextTimeStamp(JumpValue) {
+		let FirstDatedAfterCurrentlyViewed = Saved_ListOfDated.find(ele => ele.TimeMS.StartingTimeMS > DisplayedGraphTimeMS)
+		let LastDatedBeforeCurrentlyViewd = Saved_ListOfDated.findLast(ele => ele.TimeMS.StartingTimeMS < DisplayedGraphTimeMS)
+		
+		if (JumpValue > 0 && typeof FirstDatedAfterCurrentlyViewed != "undefined") {
+			DisplayedGraphTimeMS = FirstDatedAfterCurrentlyViewed.TimeMS.StartingTimeMS
+		} else if (JumpValue < 0 && typeof LastDatedBeforeCurrentlyViewd != "undefined") {
+			DisplayedGraphTimeMS = LastDatedBeforeCurrentlyViewd.TimeMS.StartingTimeMS
+		}
+		document.getElementById("DateAndTime").value = new Date(DisplayedGraphTimeMS).toISOString()
 	}
 	function isJsonString(str) {
 		//https://stackoverflow.com/questions/3710204/how-to-check-if-a-string-is-a-valid-json-string
