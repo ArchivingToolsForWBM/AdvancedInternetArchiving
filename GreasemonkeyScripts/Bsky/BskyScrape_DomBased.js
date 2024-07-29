@@ -42,6 +42,8 @@
 		const Setting_PostImageFullRes = true
 			//^true = all image URLs in the post will be full resolution versions (including external link preview images)
 			// false = use potentially downsized resolution from the HTML.
+		const Setting_ProfileImageFullRes = true
+			//^Save as above but for profile images
 		const Setting_MaxNumberOfPosts = -1
 			//^-1 = No limit on how many posts
 			// <any positive number> = The maximum number of post can be saved. Once reached, any new post won't
@@ -373,7 +375,7 @@
 										let AHrefElement = DescendNode(Post, [0, 0, 1, 1, 0, 2])
 										if (AHrefElement.IsSuccessful) {
 											if (AHrefElement.OutputNode.href != "") {
-												PostURL = HttpToTtp(AHrefElement.OutputNode.href)
+												PostURL = AHrefElement.OutputNode.href
 											}
 										}
 									}
@@ -412,7 +414,7 @@
 										let AvatarImgElement = DescendNode(Post, [0,0,1,0,0,0,0,0,0,1])
 										if (AvatarImgElement.IsSuccessful) {
 											if (typeof AvatarImgElement.OutputNode.src != "undefined") {
-												UserAvatar = HttpToTtp(AvatarImgElement.OutputNode.src)
+												UserAvatar = ConvertAvatarImgToFullRes(AvatarImgElement.OutputNode.src)
 											}
 										}
 									}
@@ -557,7 +559,7 @@
 						})
 						if (typeof UserProfileHandle != "undefined") {
 							
-							let ProfileURL = HttpToTtp(window.location.href)
+							let ProfileURL = window.location.href
 							
 							let Profile_UserTitle = ""
 							let Node_Profile_UserTitle = DescendNode(ProfileNode, [1,1,0])
@@ -574,13 +576,13 @@
 							let Profile_Avatar = ""
 							let Node_Profile_Avatar = DescendNode(ProfileNode, [3,0,0,1])
 							if (Node_Profile_Avatar.IsSuccessful) {
-								Profile_Avatar = HttpToTtp(Node_Profile_Avatar.OutputNode.src)
+								Profile_Avatar = Node_Profile_Avatar.OutputNode.src
 							}
 							
 							let Profile_BackgroundImg = ""
 							let Node_Profile_BackgroundImg = DescendNode(ProfileNode, [0,0,0,0])
 							if (Node_Profile_BackgroundImg.IsSuccessful) {
-								Profile_BackgroundImg = HttpToTtp(Node_Profile_BackgroundImg.OutputNode.src)
+								Profile_BackgroundImg = Node_Profile_BackgroundImg.OutputNode.src
 							}
 							
 							let Profile_TextContent = {
@@ -663,7 +665,7 @@
 						let LikesCount = ""
 						
 						if (Type == "Post_CurrentlyViewed_AtTop") {
-							PostURL = HttpToTtp(window.location.href)
+							PostURL = window.location.href
 							
 							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0]
 							UserTitle = CleanString(DescendNode(Box, [0,0,0,1,0,0,0]).OutputNode.textContent)
@@ -680,7 +682,7 @@
 							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1]
 							let NodeOfAvatarImg = DescendNode(Box, [0,0,0,0,0,0,0,0,0,1])
 							if (NodeOfAvatarImg.IsSuccessful) {
-								UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
+								UserAvatar = NodeOfAvatarImg.OutputNode.src
 							}
 							
 							//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0]
@@ -711,7 +713,7 @@
 							
 							
 						} else if (Type == "Post_CurrentlyViewed_NotAtTop") {
-							PostURL = HttpToTtp(window.location.href)
+							PostURL = window.location.href
 							
 							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0]
 							let ReplyLineUpNode = DescendNode(Box, [0,0,0,0])
@@ -739,7 +741,7 @@
 							//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
 							let NodeOfAvatarImg = DescendNode(Box, [0,1,0,0,0,0,0,0,0,1])
 							if (NodeOfAvatarImg.IsSuccessful) {
-								UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
+								UserAvatar = ConvertAvatarImgToFullRes(NodeOfAvatarImg.OutputNode.src)
 							}
 							
 							//Box.childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].textContent
@@ -765,7 +767,7 @@
 						} else if (Type == "Post_NotCurrentlyViewed") {
 							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].href
 							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2]
-							PostURL = HttpToTtp(DescendNode(Box, [0,0,0,1,1,0,2]).OutputNode.href)
+							PostURL = DescendNode(Box, [0,0,0,1,1,0,2]).OutputNode.href
 							
 							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[1].style
 							let ReplyLineDownNode = DescendNode(Box, [0,0,0,1,0,1])
@@ -793,7 +795,7 @@
 							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
 							let NodeOfAvatarImg = DescendNode(Box, [0,0,0,1,0,0,0,0,0,0,1])
 							if (NodeOfAvatarImg.IsSuccessful) {
-								UserAvatar = HttpToTtp(NodeOfAvatarImg.OutputNode.src)
+								UserAvatar = ConvertAvatarImgToFullRes(NodeOfAvatarImg.OutputNode.src)
 							}
 							
 							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
@@ -897,7 +899,7 @@
 							let LikesCount = ""
 							
 							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].href
-							PostURL = HttpToTtp(DescendNode(Post, [0,0,1,0,2]).OutputNode.href)
+							PostURL = DescendNode(Post, [0,0,1,0,2]).OutputNode.href
 							
 							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
 							UserTitle = CleanString(DescendNode(Post, [0,0,1,0,0,0,0,0]).OutputNode.textContent)
@@ -909,7 +911,7 @@
 							//Post.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
 							let NodeOfAvatar = DescendNode(Post, [0,0,0,0,0,0,0,0,1])
 							if (NodeOfAvatar.IsSuccessful) {
-								UserAvatar = HttpToTtp(NodeOfAvatar.OutputNode.src)
+								UserAvatar = ConvertAvatarImgToFullRes(NodeOfAvatar.OutputNode.src)
 							}
 							
 							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
@@ -1196,7 +1198,7 @@
 						URL: ""
 					}
 					if ((HTMLTag.tagName == "IMG")||(HTMLTag.tagName == "VIDEO")) {
-						MediaOutput.URL = HttpToTtp(FullResConvert(HTMLTag.src))
+						MediaOutput.URL = FullResConvert(HTMLTag.src)
 						if (HTMLTag.alt) {
 							MediaOutput.alt = HTMLTag.alt
 						}
@@ -1209,24 +1211,24 @@
 			}
 			return Output
 		}
+		function ConvertAvatarImgToFullRes(ProfileImgURL) {
+			let ProcessString = ProfileImgURL
+			if (Setting_ProfileImageFullRes) {
+				//https://cdn.bsky.app/img/avatar_thumbnail/plain/did:plc:<base64string>@jpeg
+				//https://cdn.bsky.app/img/avatar/plain/did:plc:<base64string>@jpeg
+				ProcessString = ProcessString.replace(/cdn.bsky.app\/img\/avatar_thumbnail\//, "cdn.bsky.app/img/avatar/")
+			}
+			return ProcessString
+		}
 		function GetLinksURLs(Node) {
 			//Returns an array listing URLs of outlinks
 			let Output = []
 			if (Node.childNodes.length != 0) { //embedded posts
 				Output = [...Node.getElementsByTagName("a")].map((Links) => {
-					return HttpToTtp(Links.href)
+					return Links.href
 				});
 			}
 			return Output
-		}
-		function HttpToTtp(URLString) {
-			if (typeof URLString == "undefined") {
-				return ""
-			}
-			if (Setting_http_ttp) {
-				return URLString.replace(/^http/, "ttp")
-			}
-			return URLString
 		}
 		function FullResConvert(URLString) {
 			//https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:<random_string>/<random_string>@<extension>
