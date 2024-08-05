@@ -4,6 +4,7 @@
 // @version      0.1
 // @description  Utility for WBGS.
 // @include      https://archive.org/services/wayback-gsheets/*
+// @exclude      https://archive.org/services/wayback-gsheets/get_progress/*
 // @grant        GM.setClipboard
 // @grant        GM.setValue
 // @grant        GM.getValue
@@ -309,11 +310,16 @@
 							}
 							return ListOfProcessTypes[TypeInURL] ?? "Unknown"
 						})(window.location.href);
+						let JobIDString = ""
+						try {
+							JobIDString = ProcessTrackingURLString.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0]
+						} catch {}
 						
 						let OBJ_WBGS_TrackingInfo = {
 							TrackingURL: HttpToTtp(ProcessTrackingURLString), //URLs in the console log gets truncated and the text may not be preserved depending on browser.
 							GoogleSheetURL: HttpToTtp(ProcessTrackingURLString.replace(/^.+?\&google_sheet_url=/g, "").replaceAll("%3A", ":").replaceAll("%2F", "/").replaceAll("%23", "#").replaceAll("%3D", "=").replaceAll("%3F", "?")),
-							JobID: ProcessTrackingURLString.match(/(?<=https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id=)[a-zA-Z\d\-]+/)[0],
+							JobID: JobIDString,
+							JSONURLGetProcess: "https://archive.org/services/wayback-gsheets/get_progress/" + JobIDString,
 							TimestampOfInitalProcess: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(CurrentTimeMS).toISOString()),
 							ProcessType: ProcessType
 						}
