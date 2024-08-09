@@ -17,10 +17,6 @@
 			// Had to be an interval instead of a timeout because when you click on links to another WBGS page, that isn't a page refresh
 			// rather a dynamic page (https://en.wikipedia.org/wiki/Dynamic_web_page ) similar to being on twitter and clicking on links
 			// to another twitter page, which result in this JS code not executing until you refresh the page.
-		const MaxClickAllAborts = 1
-			//^Option to auto-click each "abort" button on processes that finished-locked - processes that have finished but didn't
-			// disappear on the WBGS home page. 0 = no, 1 = yes, 2+ = number of times to click each abort button (if it doesn't
-			// respond).
 		const DisplayEasyCopyableListOfProcess = true
 			//^false = no, true = yes (will print out a statement once per page refresh on the textarea that you can copy in case of a
 			// bug of some sort on processes)
@@ -37,7 +33,7 @@
 		const Setting_ProcessActivityLogScanFrequency = 5000
 			//^Number of milliseconds each time the alternative logger scans WBGS
 	//Don't touch unless you know what you're doing
-		setInterval(Code, IntervalDelay)
+		setInterval(IntervalCode, IntervalDelay)
 		if (Setting_AlternativeProcessActivityLog) {
 			setTimeout(AlternativeProcessActivityLoggerStart, 1000)
 			
@@ -50,13 +46,13 @@
 		
 		
 		let RaceConditionLock = false
-		let ClickAllAbortsCount = 0
 		let HavePrintedListOfProcess = false
 			//^This is a flag to make it only update the text only once (not periodically), until the user refreshes or navigates to another page.
 		
 		let JSONTextarea = null
 		let JSONTextarea_Tracking = null
 		let ProcessTrackingLog = []
+		let Button_AbortFinishLocked = null
 		
 		let CurrentWBGSURL = ""
 		
@@ -95,12 +91,18 @@
 				DivBox.style.color = "#ffffff"
 				DivBox.style.borderRadius = "30px"
 				DivBox.style.padding = "15px"
+				DivBox.style.maxWidth = "500px"
+				DivBox.style.maxHeight = "800px"
+				DivBox.style.overflow = "auto"
+			//InnerDiv
+				let DivBox2 = document.createElement("div")
+				//DivBox2.style.overflow = "auto"
 			//Title
 				let Title = document.createElement("h2")
 				//Title.setAttribute("style", "text-align: center;")
 				Title.style.textAlign = "center"
 				Title.appendChild(document.createTextNode("WBGS process info"))
-				DivBox.appendChild(Title)
+				DivBox2.appendChild(Title)
 			//JSON textarea
 				JSONTextarea = document.createElement("textarea")
 				JSONTextarea.style.whiteSpace = "pre"
@@ -114,9 +116,9 @@
 				JSONTextarea.setAttribute("cols", "50")
 				JSONTextarea.setAttribute("rows", "10")
 				JSONTextarea.setAttribute("readonly", "")
-				DivBox.appendChild(JSONTextarea)
+				DivBox2.appendChild(JSONTextarea)
 			//line break
-				DivBox.appendChild(document.createElement("br"))
+				DivBox2.appendChild(document.createElement("br"))
 			//Copy button
 				let CopyJSONButton = document.createElement("button")
 				CopyJSONButton.appendChild(document.createTextNode("Copy data"))
@@ -125,9 +127,8 @@
 					function () {
 						GM.setClipboard(JSONTextarea.value)
 					}
-				
 				)
-				DivBox.appendChild(CopyJSONButton)
+				DivBox2.appendChild(CopyJSONButton)
 			//Refresh button (updates the textarea)
 				let RefreshTextareaButton = document.createElement("button")
 				RefreshTextareaButton.appendChild(document.createTextNode("Refresh"))
@@ -136,15 +137,15 @@
 					function () {
 						JSONTextarea.value = ""
 						HavePrintedListOfProcess = false
-						Code()
+						IntervalCode()
 					}
 				)
-				DivBox.appendChild(RefreshTextareaButton)
+				DivBox2.appendChild(RefreshTextareaButton)
 			//line seperator
-				DivBox.appendChild(document.createElement("hr"))
+				DivBox2.appendChild(document.createElement("hr"))
 			//Tracking textarea
 				if (Setting_AlternativeProcessActivityLog) {
-					DivBox.appendChild(document.createElement("br"))
+					DivBox2.appendChild(document.createElement("br"))
 					
 					JSONTextarea_Tracking = document.createElement("textarea")
 					JSONTextarea_Tracking.style.whiteSpace = "pre"
@@ -159,9 +160,9 @@
 					JSONTextarea_Tracking.setAttribute("rows", "10")
 					JSONTextarea_Tracking.setAttribute("readonly", "")
 					
-					DivBox.appendChild(JSONTextarea_Tracking)
+					DivBox2.appendChild(JSONTextarea_Tracking)
 					//Copy log button
-						DivBox.appendChild(document.createElement("br"))
+						DivBox2.appendChild(document.createElement("br"))
 						let CopyAlternativeProcessActivityLogButton = document.createElement("button")
 						CopyAlternativeProcessActivityLogButton.appendChild(document.createTextNode("Copy log"))
 						CopyAlternativeProcessActivityLogButton.addEventListener(
@@ -170,7 +171,7 @@
 								GM.setClipboard(JSONTextarea_Tracking.value)
 							}
 						)
-						DivBox.appendChild(CopyAlternativeProcessActivityLogButton)
+						DivBox2.appendChild(CopyAlternativeProcessActivityLogButton)
 					//Clear button
 						let ClearAlternativeProcessActivityLogButton = document.createElement("button")
 						ClearAlternativeProcessActivityLogButton.appendChild(document.createTextNode("Clear log"))
@@ -181,9 +182,9 @@
 								ProcessTrackingLog = []
 							}
 						)
-						DivBox.appendChild(ClearAlternativeProcessActivityLogButton)
+						DivBox2.appendChild(ClearAlternativeProcessActivityLogButton)
 					//Checkbox for process order
-						DivBox.appendChild(document.createElement("br"))
+						DivBox2.appendChild(document.createElement("br"))
 						let Label_ProcessActivityLog = document.createElement("label")
 						Label_ProcessActivityLog.style.cursor = "pointer"
 						
@@ -201,10 +202,10 @@
 						Label_ProcessActivityLog.appendChild(Checkbox_ProcessActivityLog)
 						Label_ProcessActivityLog.appendChild(document.createTextNode("Recent to oldest"))
 						
-						DivBox.appendChild(Label_ProcessActivityLog)
+						DivBox2.appendChild(Label_ProcessActivityLog)
 				}
 			//line seperator
-				DivBox.appendChild(document.createElement("hr"))
+				DivBox2.appendChild(document.createElement("hr"))
 			//Button to get process history
 				let GetProcessHistoryButton = document.createElement("button")
 				GetProcessHistoryButton.appendChild(document.createTextNode("Copy Process History"))
@@ -228,9 +229,9 @@
 						}
 					}
 				)
-				DivBox.appendChild(GetProcessHistoryButton)
+				DivBox2.appendChild(GetProcessHistoryButton)
 			//Checkbox setting of recent process history on top or bottom
-				DivBox.appendChild(document.createElement("br"))
+				DivBox2.appendChild(document.createElement("br"))
 				let ProcessHistoryOrderLabel = document.createElement("label")
 				ProcessHistoryOrderLabel.style.cursor = "pointer"
 				
@@ -246,9 +247,36 @@
 				ProcessHistoryOrderCheckbox.checked = WBGS_Utility_Settings.ProcessLogOrderByRecent
 				ProcessHistoryOrderLabel.appendChild(ProcessHistoryOrderCheckbox)
 				ProcessHistoryOrderLabel.appendChild(document.createTextNode("Recent to oldest"))
-				DivBox.appendChild(ProcessHistoryOrderLabel)
-			
+				DivBox2.appendChild(ProcessHistoryOrderLabel)
+			//Abort button
+				DivBox2.appendChild(document.createElement("hr"))
+				Button_AbortFinishLocked = document.createElement("button")
+				Button_AbortFinishLocked.appendChild(document.createTextNode("Abort all listed finished processes"))
+				Button_AbortFinishLocked.addEventListener(
+				"click",
+					function () {
+						let ProcessList = GetWBGSHomepageProcessList()
+						if (ProcessList == null) {
+							return
+						}
+						let FinishLockedProcesses = ProcessList.filter(Process => {
+							try {
+								return (Process.childNodes[4].textContent == "SUCCESS")
+							} catch {
+								return false
+							}
+						})
+						FinishLockedProcesses.forEach(Process => {
+							try {
+								let AbortButton = WBGSProcess.childNodes[5].childNodes[1]
+								AbortButton.click()
+							} catch {}
+						})
+					}
+				)
+				DivBox2.appendChild(Button_AbortFinishLocked)
 			//Add to document
+				DivBox.appendChild(DivBox2)
 				let HTMLBody = [...document.getElementsByTagName("BODY")].find((Element) => {return true})
 				let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0])
 				if (InnerNodeOfHTMLBody.IsSuccessful) {
@@ -256,7 +284,7 @@
 				}
 		}
 		
-		async function Code() {
+		async function IntervalCode() {
 			if (RaceConditionLock) {
 				return
 			}
@@ -273,8 +301,31 @@
 			CurrentWBGSURL = window.location.href //Update previous URL
 			let CurrentTimeMS = Date.now()
 			
+			let WBGS_PageInfo = {
+				Type: "",
+				IsProcessPage: false,
+				IsProcessTrackingURLPage: false
+			}
+			Button_AbortFinishLocked.disabled = true
+			if (/^https:\/\/archive\.org\/services\/wayback-gsheets\/options/.test(CurrentWBGSURL)) {
+				WBGS_PageInfo.Type = "Homepage"
+				Button_AbortFinishLocked.disabled = false
+			} else if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=archive") {
+				WBGS_PageInfo.Type = "ArchiveURLs"
+			} else if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=availability") {
+				WBGS_PageInfo.Type = "CheckURLsArchived"
+			} else if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=live") {
+				WBGS_PageInfo.Type = "CheckURLsLive"
+			}
+			if (/^https:\/\/archive\.org\/services\/wayback-gsheets\/check\?/.test(CurrentWBGSURL)) {
+				WBGS_PageInfo.IsProcessPage = true
+			}
+			if (/^https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id/.test(CurrentWBGSURL)) {
+				WBGS_PageInfo.Type = "ProcessTrackingURLPage"
+				WBGS_PageInfo.IsProcessTrackingURLPage = true
+			}
 			//Check the "save results in a new sheets" option
-				if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=archive") {
+				if (WBGS_PageInfo.Type == "ArchiveURLs") {
 					let Element_SaveInNewSheetOption = [...document.querySelectorAll('input[type=checkbox]')].find((CheckBox) => {
 						return CheckBox.parentElement.textContent == "Save results in a new Sheet."
 					});
@@ -351,20 +402,16 @@
 					}
 				}
 			//Extract info from the WBGS home page
-				if (/https:\/\/archive\.org\/services\/wayback-gsheets\/options.*/.test(CurrentWBGSURL)) {
+				if (WBGS_PageInfo.Type == "Homepage") {
+					Button_AbortFinishLocked.disabled = false
 					let JsonExtractedInfo = {
 						CurrentDateTime: ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(CurrentTimeMS).toISOString()),
 						ListOfProcesses: [],
 						SystemQueueMessage: ""
 					}
-					let TableListingProcess = document.querySelector("table") //Get entire table of running processes
-					if (TableListingProcess != null) { //If no process exists, don't list it
-						let ListOfProcesses = [...TableListingProcess.querySelectorAll("tr")]
-						let ListOfProcessesItems = ListOfProcesses.filter((WBGSProcess) => { //Get the running processes
-							let ColCountCorrect = WBGSProcess.childNodes.length == 6 //Get only items that have 6 columns (exclude row with "There are no running processes.")
-							let IsRowAProcess = /https:\/\/docs\.google\.com\/spreadsheets\//.test(WBGSProcess.childNodes[0].textContent) //Exclude the table headers row
-							return (ColCountCorrect && IsRowAProcess)
-						})
+					let ListOfProcessesItems = GetWBGSHomepageProcessList()
+					if (ListOfProcessesItems != null) { //If no process exists, don't list it
+						
 						if (DisplayEasyCopyableListOfProcess && (!HavePrintedListOfProcess) && ListOfProcessesItems.length != 0) {
 							//Convert into json info containing process info
 								let OBJ_WBGS_ListOfProcesses = ListOfProcessesItems.map((WBGSProcess) => {
@@ -396,21 +443,10 @@
 									HavePrintedListOfProcess = true
 								}
 						}
-						//Auto-abort any finish-locked processes
-							let ListOfFinishLockedProcesses = ListOfProcessesItems.filter((WBGSProcess) => {
-								return WBGSProcess.childNodes[4].textContent == "SUCCESS" //Find only processes that are labeled "SUCCESS"
-							})
-							if ((ClickAllAbortsCount < MaxClickAllAborts)&&(ListOfFinishLockedProcesses.length != 0)) {
-								ListOfFinishLockedProcesses.forEach((WBGSProcess) => {
-									let AbortButton = WBGSProcess.childNodes[5].childNodes[1]
-									AbortButton.click()
-								})
-								ClickAllAbortsCount++
-							}
 					}
 				}
 			//Display progress bar on process tracking URL pages (not so sure why WBGS not have it on those pages despite being shown on start process page)
-				if (/^https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id/.test(CurrentWBGSURL)) {
+				if (WBGS_PageInfo.IsProcessTrackingURLPage) {
 					(() => {
 						let DivContainingProcessStatus = document.querySelector("div.progress-status, mt-2")
 						if (DivContainingProcessStatus == null) {
@@ -555,10 +591,6 @@
 			}
 			return URLString
 		}
-		function CreateProcessLog() {
-			
-			
-		}
 	//helper functions
 		function GetProcessSettings(NodeContainingControls) {
 			let ListOfUserControllableUI = [...NodeContainingControls.querySelectorAll("input, select")]
@@ -582,6 +614,19 @@
 				} catch {}
 			})
 			return SettingsObject
+		}
+		function GetWBGSHomepageProcessList() {
+			//Returns a list of process from the WBGS homepage, if entirely doesn't exists, returns null, else if it exists, outputs an array at any length (including zero)
+			try {
+				let TableElement = document.querySelector("table")
+				let TableLists = [...TableElement.querySelectorAll("tr")]
+				return TableLists.filter(row => {
+					let HasGoogleSheetURL = /https:\/\/docs\.google\.com\/spreadsheets\//.test(row.childNodes[0].textContent) ?? false
+					return (row.childNodes.length == 6)&&HasGoogleSheetURL
+				})
+			} catch {
+				return null
+			}
 		}
 	//Reused functions
 		function DescendNode(Node, LevelsArray) {
