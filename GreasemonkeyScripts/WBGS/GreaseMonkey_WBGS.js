@@ -301,29 +301,32 @@
 			CurrentWBGSURL = window.location.href //Update previous URL
 			let CurrentTimeMS = Date.now()
 			
-			let WBGS_PageInfo = {
-				Type: "",
-				IsProcessPage: false,
-				IsProcessTrackingURLPage: false
-			}
-			Button_AbortFinishLocked.disabled = true
-			if (/^https:\/\/archive\.org\/services\/wayback-gsheets\/options/.test(CurrentWBGSURL)) {
-				WBGS_PageInfo.Type = "Homepage"
-				Button_AbortFinishLocked.disabled = false
-			} else if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=archive") {
-				WBGS_PageInfo.Type = "ArchiveURLs"
-			} else if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=availability") {
-				WBGS_PageInfo.Type = "CheckURLsArchived"
-			} else if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=live") {
-				WBGS_PageInfo.Type = "CheckURLsLive"
-			}
-			if (/^https:\/\/archive\.org\/services\/wayback-gsheets\/check\?/.test(CurrentWBGSURL)) {
-				WBGS_PageInfo.IsProcessPage = true
-			}
-			if (/^https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id/.test(CurrentWBGSURL)) {
-				WBGS_PageInfo.Type = "ProcessTrackingURLPage"
-				WBGS_PageInfo.IsProcessTrackingURLPage = true
-			}
+			let WBGS_PageInfo = (() => {
+				let OutputObject = {
+					Type: "",
+					IsProcessPage: false,
+					IsProcessTrackingURLPage: false
+				}
+				Button_AbortFinishLocked.disabled = true
+				if (/^https:\/\/archive\.org\/services\/wayback-gsheets\/options/.test(CurrentWBGSURL)) {
+					OutputObject.Type = "Homepage"
+					Button_AbortFinishLocked.disabled = false
+				} else if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=archive") {
+					OutputObject.Type = "ArchiveURLs"
+				} else if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=availability") {
+					OutputObject.Type = "CheckURLsArchived"
+				} else if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=live") {
+					OutputObject.Type = "CheckURLsLive"
+				}
+				if (/^https:\/\/archive\.org\/services\/wayback-gsheets\/check\?/.test(CurrentWBGSURL)) {
+					OutputObject.IsProcessPage = true
+				}
+				if (/^https:\/\/archive\.org\/services\/wayback-gsheets\/check\?job_id/.test(CurrentWBGSURL)) {
+					OutputObject.Type = "ProcessTrackingURLPage"
+					OutputObject.IsProcessTrackingURLPage = true
+				}
+				return OutputObject
+			})();
 			//Check the "save results in a new sheets" option
 				if (WBGS_PageInfo.Type == "ArchiveURLs") {
 					let Element_SaveInNewSheetOption = [...document.querySelectorAll('input[type=checkbox]')].find((CheckBox) => {
