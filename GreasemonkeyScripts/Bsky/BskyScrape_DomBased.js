@@ -1660,7 +1660,7 @@
 			//Node.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].textContent
 			let NodeOfUserTitle = DescendNode(Node, [0,0,1,0,0,0])
 			if (NodeOfUserTitle.IsSuccessful) {
-				EmbeddedContent.Contents.UserTitle = NodeOfUserTitle.OutputNode.textContent
+				EmbeddedContent.Contents.UserTitle = CleanString(NodeOfUserTitle.OutputNode.textContent)
 			}
 			//Node.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[1].textContent.replace(/\s/, "")
 			//Node.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0]
