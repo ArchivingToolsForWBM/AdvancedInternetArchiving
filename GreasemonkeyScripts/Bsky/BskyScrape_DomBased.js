@@ -1676,7 +1676,7 @@
 			//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1]
 			let NodeOfUserAvatar = DescendNode(Node, [0,0,0,0,0,0,0,0,1])
 			if (NodeOfUserAvatar.IsSuccessful) {
-				EmbeddedContent.Contents.UserAvatar = NodeOfUserAvatar.OutputNode.src
+				EmbeddedContent.Contents.UserAvatar = ConvertAvatarImgToFullRes(NodeOfUserAvatar.OutputNode.src)
 			}
 			//Node.childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
 			let NodeOfPostTimeStamp = DescendNode(Node, [0,0,3])
