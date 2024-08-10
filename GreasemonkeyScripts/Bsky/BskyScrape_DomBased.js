@@ -1213,10 +1213,14 @@
 		}
 		function ConvertAvatarImgToFullRes(ProfileImgURL) {
 			let ProcessString = ProfileImgURL
-			if (Setting_ProfileImageFullRes) {
-				//https://cdn.bsky.app/img/avatar_thumbnail/plain/did:plc:<base64string>@jpeg
-				//https://cdn.bsky.app/img/avatar/plain/did:plc:<base64string>@jpeg
-				ProcessString = ProcessString.replace(/cdn.bsky.app\/img\/avatar_thumbnail\//, "cdn.bsky.app/img/avatar/")
+			try {
+				if (Setting_ProfileImageFullRes) {
+					//https://cdn.bsky.app/img/avatar_thumbnail/plain/did:plc:<base64string>@jpeg
+					//https://cdn.bsky.app/img/avatar/plain/did:plc:<base64string>@jpeg
+					ProcessString = ProcessString.replace(/cdn.bsky.app\/img\/avatar_thumbnail\//, "cdn.bsky.app/img/avatar/")
+				}
+			} catch {
+				return ""
 			}
 			return ProcessString
 		}
