@@ -421,8 +421,8 @@ Sort:
 			{
 				//Avatar
 				Type:"normal",
-				FindWhat: RegExp("(" + BSkyDomainName_CDN_Domain + "\\/img\\/avatar\\/plain\\/.*$)"),
-				ReplaceWith:[{Replacement:"$1",KeyName:"Bsky_Img_Avatar"}]
+				FindWhat: RegExp("(" + BSkyDomainName_CDN_Domain + "\\/img\\/avatar)(?:_thumbnail)?(\\/plain\\/.*$)"),
+				ReplaceWith:[{Replacement:"$1$2",KeyName:"Bsky_Img_Avatar"}]
 			},
 			{
 				//Banner
