@@ -53,6 +53,7 @@
 		let JSONTextarea_Tracking = null
 		let ProcessHistoryList = null
 		let ProcessTrackingLog = []
+		let Select_ProcessHistoryOrder = null
 		let Button_AbortFinishLocked = null
 		
 		let CurrentWBGSURL = ""
@@ -61,6 +62,18 @@
 		let WBGS_Utility_Settings = {
 			ProcessActivityLogOrderByRecent: true,
 			ProcessLogOrderByRecent: true,
+			ProcessHistoryLogOrderSettings: [
+				{
+					value: "Old2New",
+					visibleText: "Oldest to Newest",
+					isSelected: false
+				},
+				{
+					value: "New2Old",
+					visibleText: "Newest to oldest",
+					isSelected: true
+				},
+			]
 		}
 		
 		let DivProgressBar = null
@@ -76,9 +89,13 @@
 		} catch {}
 		
 		async function SaveWBGSUtilitySettings() {
-			await GM.setValue("WBGS_UtilitySettings", JSON.stringify(WBGS_Utility_Settings)).catch(() => {
+			try {
+				await GM.setValue("WBGS_UtilitySettings", JSON.stringify(WBGS_Utility_Settings)).catch(() => {
+					console.log("WBGS utility: saving setting failed!")
+				})
+			} catch {
 				console.log("WBGS utility: saving setting failed!")
-			})
+			}
 		}
 		
 		async function Spawn_UI_Panel() {
@@ -189,9 +206,9 @@
 						let Label_ProcessActivityLog = document.createElement("label")
 						Label_ProcessActivityLog.style.cursor = "pointer"
 						
-						let Checkbox_ProcessActivityLog = document.createElement("input")
-						Checkbox_ProcessActivityLog.type = "checkbox"
-						Checkbox_ProcessActivityLog.addEventListener(
+						let Checkbox_ProcessActivityLogOrder = document.createElement("input")
+						Checkbox_ProcessActivityLogOrder.type = "checkbox"
+						Checkbox_ProcessActivityLogOrder.addEventListener(
 							"change",
 								function () {
 									WBGS_Utility_Settings.ProcessActivityLogOrderByRecent = this.checked
@@ -199,8 +216,8 @@
 									SaveWBGSUtilitySettings()
 								}
 						)
-						Checkbox_ProcessActivityLog.checked = WBGS_Utility_Settings.ProcessActivityLogOrderByRecent
-						Label_ProcessActivityLog.appendChild(Checkbox_ProcessActivityLog)
+						Checkbox_ProcessActivityLogOrder.checked = WBGS_Utility_Settings.ProcessActivityLogOrderByRecent
+						Label_ProcessActivityLog.appendChild(Checkbox_ProcessActivityLogOrder)
 						Label_ProcessActivityLog.appendChild(document.createTextNode("Recent to oldest"))
 						
 						DivBox2.appendChild(Label_ProcessActivityLog)
@@ -209,9 +226,20 @@
 				DivBox2.appendChild(document.createElement("hr"))
 			//Process history list
 				let ProcessHistoryTitle = document.createElement("h2")
+				ProcessHistoryTitle.appendChild(document.createTextNode("Process history"))
 				DivBox2.appendChild(ProcessHistoryTitle)
 				
-				ProcessHistoryTitle.appendChild(document.createTextNode("Process history"))
+				DivBox2.appendChild(document.createTextNode("List order: "))
+				Select_ProcessHistoryOrder = CreateSelectElement(WBGS_Utility_Settings.ProcessHistoryLogOrderSettings, false)
+				Select_ProcessHistoryOrder.addEventListener(
+					"change",
+					function () {
+						UpdateProcessHistoryList()
+					}
+				)
+				
+				DivBox2.appendChild(Select_ProcessHistoryOrder)
+				
 				let ClippedDiv_ProcessHistoryList = document.createElement("div")
 				ClippedDiv_ProcessHistoryList.style.overflow = "auto"
 				ClippedDiv_ProcessHistoryList.style.height = "200px"
@@ -225,7 +253,7 @@
 				DivBox2.appendChild(ClippedDiv_ProcessHistoryList)
 			//Button to get process history
 				let GetProcessHistoryButton = document.createElement("button")
-				GetProcessHistoryButton.appendChild(document.createTextNode("Copy Process History"))
+				GetProcessHistoryButton.appendChild(document.createTextNode("Copy Process History (JSON)"))
 				GetProcessHistoryButton.addEventListener(
 				"click",
 					function () {
@@ -235,36 +263,18 @@
 							List: []
 						}
 						
-						if (WBGS_Utility_Settings.ProcessLogOrderByRecent) {
-							FormattedObject.Order = "Recent to oldest"
+						if (WBGS_Utility_Settings.ProcessHistoryLogOrderSettings[1].isSelected) {
+							FormattedObject.Order = "Newest to oldest"
 							FormattedObject.List = ProcessHistory.toReversed()
 							GM.setClipboard(JSON.stringify(FormattedObject, "", " "))
 						} else {
-							FormattedObject.Order = "Oldest to recent"
+							FormattedObject.Order = "Oldest to newest"
 							FormattedObject.List = ProcessHistory
 							GM.setClipboard(JSON.stringify(FormattedObject, "", " "))
 						}
 					}
 				)
 				DivBox2.appendChild(GetProcessHistoryButton)
-			//Checkbox setting of recent process history on top or bottom
-				DivBox2.appendChild(document.createElement("br"))
-				let ProcessHistoryOrderLabel = document.createElement("label")
-				ProcessHistoryOrderLabel.style.cursor = "pointer"
-				
-				let ProcessHistoryOrderCheckbox = document.createElement("input")
-				ProcessHistoryOrderCheckbox.type = "checkbox"
-				ProcessHistoryOrderCheckbox.addEventListener(
-				"change",
-					function () {
-						WBGS_Utility_Settings.ProcessLogOrderByRecent = this.checked
-						SaveWBGSUtilitySettings()
-					}
-				)
-				ProcessHistoryOrderCheckbox.checked = WBGS_Utility_Settings.ProcessLogOrderByRecent
-				ProcessHistoryOrderLabel.appendChild(ProcessHistoryOrderCheckbox)
-				ProcessHistoryOrderLabel.appendChild(document.createTextNode("Recent to oldest"))
-				DivBox2.appendChild(ProcessHistoryOrderLabel)
 			//Abort button
 				DivBox2.appendChild(document.createElement("hr"))
 				Button_AbortFinishLocked = document.createElement("button")
@@ -667,38 +677,36 @@
 				//Table header row
 					let ProcessHistoryListHeaderRow = document.createElement("tr")
 					
-					let PlacementColumn = document.createElement("th")
-					ProcessHistoryListHeaderRow.appendChild(PlacementColumn)
-					
 					let DateAndLinkToProcessColumn = document.createElement("th")
 					DateAndLinkToProcessColumn.style.border = "1px solid white"
 					DateAndLinkToProcessColumn.style.borderCollapse = "collapse"
 					DateAndLinkToProcessColumn.appendChild(document.createTextNode("Date & link to process"))
+					DateAndLinkToProcessColumn.style.textWrap = "nowrap"
 					ProcessHistoryListHeaderRow.appendChild(DateAndLinkToProcessColumn)
 					
 					let GoogleSheetLinkColumn = document.createElement("th")
 					GoogleSheetLinkColumn.style.border = "1px solid white"
 					GoogleSheetLinkColumn.style.borderCollapse = "collapse"
 					GoogleSheetLinkColumn.appendChild(document.createTextNode("GSheet link"))
+					GoogleSheetLinkColumn.style.textWrap = "nowrap"
 					ProcessHistoryListHeaderRow.appendChild(GoogleSheetLinkColumn)
 					
 					let ProcessTypeColumn = document.createElement("th")
 					ProcessTypeColumn.style.border = "1px solid white"
 					ProcessTypeColumn.style.borderCollapse = "collapse"
 					ProcessTypeColumn.appendChild(document.createTextNode("Process type"))
+					ProcessTypeColumn.style.textWrap = "nowrap"
 					ProcessHistoryListHeaderRow.appendChild(ProcessTypeColumn)
 					
 					ProcessHistoryList.appendChild(ProcessHistoryListHeaderRow)
 				//Get a list by most recent and generate items for each processes
-					let ProcessListRecentFirst = ProcessHistory.toReversed()
-					ProcessListRecentFirst.forEach((Process, Index) => {
+				
+					let ProcessListRecentFirst = ProcessHistory
+					if (Select_ProcessHistoryOrder.selectedIndex == 1) {
+						ProcessListRecentFirst = ProcessHistory.toReversed()
+					}
+					ProcessListRecentFirst.forEach(Process => {
 						let ProcessRow = document.createElement("tr")
-						
-						let ProcessCell_PositionCount = document.createElement("td")
-						ProcessCell_PositionCount.style.border = "1px solid white"
-						ProcessCell_PositionCount.style.borderCollapse = "collapse"
-						ProcessCell_PositionCount.appendChild(document.createTextNode((Index+1).toString(10)))
-						ProcessRow.appendChild(ProcessCell_PositionCount)
 						
 						let ProcessCell_TimestampAndLinkToProcess = document.createElement("td")
 						ProcessCell_TimestampAndLinkToProcess.style.border = "1px solid white"
@@ -731,7 +739,9 @@
 						let ProcessCell_ProcessType = document.createElement("td")
 						ProcessCell_ProcessType.style.border = "1px solid white"
 						ProcessCell_ProcessType.style.borderCollapse = "collapse"
+						ProcessCell_ProcessType.style.fontFamily = "monospace"
 						ProcessCell_ProcessType.appendChild(document.createTextNode(Process.ProcessType))
+						ProcessCell_ProcessType.style.textWrap = "nowrap"
 						ProcessRow.appendChild(ProcessCell_ProcessType)
 						
 						ProcessHistoryList.appendChild(ProcessRow)
@@ -739,6 +749,37 @@
 			} catch (e) {
 				console.log("Error! ProcessHistoryList not existing!")
 			}
+		}
+		function CreateSelectElement(arrayOptions, allowMultiple) {
+			//Input:
+			//arrayOptions:
+			//	[{value: "ValueString", visibleText: "Text here", isSelected: false}]
+			//allowMultiple: false = select only one, true = allow multiple
+			let HTML_Element_Select = document.createElement("select")
+			HTML_Element_Select.addEventListener(
+				"change",
+				function () {
+					Array.from(this.childNodes).forEach((listedOption, Index) => {
+						arrayOptions[Index].isSelected = listedOption.selected
+					})
+					SaveWBGSUtilitySettings()
+				}
+			)
+			if (allowMultiple) {
+				HTML_Element_Select.setAttribute("multiple", "")
+			}
+			arrayOptions.forEach((listedOption) => {
+				let HTML_Element_Option = document.createElement("option")
+				HTML_Element_Option.setAttribute("value", listedOption.value)
+				if (listedOption.isSelected) {
+					HTML_Element_Option.setAttribute("selected", "")
+				}
+				HTML_Element_Option.appendChild(document.createTextNode(listedOption.visibleText))
+				
+				HTML_Element_Select.appendChild(HTML_Element_Option)
+			})
+			
+			return HTML_Element_Select
 		}
 	//Reused functions
 		function DescendNode(Node, LevelsArray) {
