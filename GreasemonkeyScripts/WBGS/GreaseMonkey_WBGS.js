@@ -667,6 +667,9 @@
 				//Table header row
 					let ProcessHistoryListHeaderRow = document.createElement("tr")
 					
+					let PlacementColumn = document.createElement("th")
+					ProcessHistoryListHeaderRow.appendChild(PlacementColumn)
+					
 					let DateAndLinkToProcessColumn = document.createElement("th")
 					DateAndLinkToProcessColumn.style.border = "1px solid white"
 					DateAndLinkToProcessColumn.style.borderCollapse = "collapse"
@@ -688,8 +691,14 @@
 					ProcessHistoryList.appendChild(ProcessHistoryListHeaderRow)
 				//Get a list by most recent and generate items for each processes
 					let ProcessListRecentFirst = ProcessHistory.toReversed()
-					ProcessListRecentFirst.forEach(Process => {
+					ProcessListRecentFirst.forEach((Process, Index) => {
 						let ProcessRow = document.createElement("tr")
+						
+						let ProcessCell_PositionCount = document.createElement("td")
+						ProcessCell_PositionCount.style.border = "1px solid white"
+						ProcessCell_PositionCount.style.borderCollapse = "collapse"
+						ProcessCell_PositionCount.appendChild(document.createTextNode((Index+1).toString(10)))
+						ProcessRow.appendChild(ProcessCell_PositionCount)
 						
 						let ProcessCell_TimestampAndLinkToProcess = document.createElement("td")
 						ProcessCell_TimestampAndLinkToProcess.style.border = "1px solid white"
