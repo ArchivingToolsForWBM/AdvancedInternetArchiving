@@ -684,6 +684,12 @@
 					DateAndLinkToProcessColumn.style.textWrap = "nowrap"
 					ProcessHistoryListHeaderRow.appendChild(DateAndLinkToProcessColumn)
 					
+					let CopyJSONColumn = document.createElement("th")
+					CopyJSONColumn.style.border = "1px solid white"
+					CopyJSONColumn.style.borderCollapse = "collapse"
+					CopyJSONColumn.appendChild(document.createTextNode("JSON"))
+					ProcessHistoryListHeaderRow.appendChild(CopyJSONColumn)
+					
 					let GoogleSheetLinkColumn = document.createElement("th")
 					GoogleSheetLinkColumn.style.border = "1px solid white"
 					GoogleSheetLinkColumn.style.borderCollapse = "collapse"
@@ -721,6 +727,22 @@
 						LinkToProcessTracking.appendChild(document.createTextNode(Process.TimestampOfInitalProcess))
 						ProcessCell_TimestampAndLinkToProcess.appendChild(LinkToProcessTracking)
 						ProcessRow.appendChild(ProcessCell_TimestampAndLinkToProcess)
+						
+						let ProcessCell_JSONCopy = document.createElement("td")
+						ProcessCell_JSONCopy.style.border = "1px solid white"
+						ProcessCell_JSONCopy.style.borderCollapse = "collapse"
+						
+						let CopyJSONButton = document.createElement("button")
+						CopyJSONButton.appendChild(document.createTextNode("Copy"))
+						CopyJSONButton.addEventListener(
+							"click",
+							function (e) {
+								GM.setClipboard(JSON.stringify(Process, null, " "))
+							}.bind(Process)
+						)
+						
+						ProcessCell_JSONCopy.appendChild(CopyJSONButton)
+						ProcessRow.appendChild(ProcessCell_JSONCopy)
 						
 						let ProcessCell_GoogleSheetLink = document.createElement("td")
 						ProcessCell_GoogleSheetLink.style.border = "1px solid white"
