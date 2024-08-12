@@ -51,6 +51,7 @@
 		
 		let JSONTextarea = null
 		let JSONTextarea_Tracking = null
+		let ProcessHistoryList = null
 		let ProcessTrackingLog = []
 		let Button_AbortFinishLocked = null
 		
@@ -206,6 +207,22 @@
 				}
 			//line seperator
 				DivBox2.appendChild(document.createElement("hr"))
+			//Process history list
+				let ProcessHistoryTitle = document.createElement("h2")
+				DivBox2.appendChild(ProcessHistoryTitle)
+				
+				ProcessHistoryTitle.appendChild(document.createTextNode("Process history"))
+				let ClippedDiv_ProcessHistoryList = document.createElement("div")
+				ClippedDiv_ProcessHistoryList.style.overflow = "auto"
+				ClippedDiv_ProcessHistoryList.style.height = "200px"
+				ClippedDiv_ProcessHistoryList.style.border = "1px solid"
+				ClippedDiv_ProcessHistoryList.style.resize = "both"
+				
+				ProcessHistoryList = document.createElement("ol")
+				
+				UpdateProcessHistoryList()
+				ClippedDiv_ProcessHistoryList.appendChild(ProcessHistoryList)
+				DivBox2.appendChild(ClippedDiv_ProcessHistoryList)
 			//Button to get process history
 				let GetProcessHistoryButton = document.createElement("button")
 				GetProcessHistoryButton.appendChild(document.createTextNode("Copy Process History"))
@@ -394,7 +411,7 @@
 								return ArrEle.TrackingURL == OBJ_WBGS_TrackingInfo.TrackingURL
 							})
 							if (IndexWithSameProcess == -1) { //This if statement is a failsafe to prevent duplicate entries
-								if (ProcessHistory.length >= Setting_ProcessLogLimit) { //If you somehow have multiple items past the limit, this will repeatedly remove oldest item until 1-below the limit
+								if (ProcessHistory.length >= Setting_ProcessLogLimit) { //If you somehow have multiple items past the limit, this will remove a number of items to match the maximum.
 									ProcessHistory.splice(0, ProcessHistory.length - (Setting_ProcessLogLimit-1)) //Delete oldest item (array will have MaxNumber-1, -1 so we have one empty slot to place)
 								}
 								ProcessHistory.push(OBJ_WBGS_TrackingInfo)
@@ -402,6 +419,8 @@
 									console.log("WBGS utility: Saving log failed!")
 								})
 							}
+						//Update the list
+							UpdateProcessHistoryList()
 					}
 				}
 			//Extract info from the WBGS home page
@@ -629,6 +648,32 @@
 				})
 			} catch {
 				return null
+			}
+		}
+		function UpdateProcessHistoryList() {
+			try {
+				//Start with a clear list
+					while (ProcessHistoryList.lastElementChild) {
+						ProcessHistoryList.removeChild(ProcessHistoryList.lastElementChild);
+					}
+				//Get a list by most recent and generate items for each processes
+					let ProcessListRecentFirst = ProcessHistory.toReversed()
+					ProcessListRecentFirst.forEach(Process => {
+						let ProcessItem = document.createElement("li")
+						
+						let LinkToProcessTracking = document.createElement("a")
+						LinkToProcessTracking.href = Process.TrackingURL
+						LinkToProcessTracking.target = "_blank"
+						LinkToProcessTracking.rel = "noopener noreferrer"
+						LinkToProcessTracking.style.fontFamily = "monospace"
+						LinkToProcessTracking.style.textWrap = "nowrap"
+						LinkToProcessTracking.appendChild(document.createTextNode(Process.TimestampOfInitalProcess))
+						
+						ProcessItem.appendChild(LinkToProcessTracking)
+						ProcessHistoryList.appendChild(ProcessItem)
+					})
+			} catch (e) {
+				console.log("Error! ProcessHistoryList not existing!")
 			}
 		}
 	//Reused functions
