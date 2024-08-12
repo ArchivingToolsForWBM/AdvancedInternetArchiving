@@ -324,10 +324,8 @@
 					IsProcessPage: false,
 					IsProcessTrackingURLPage: false
 				}
-				Button_AbortFinishLocked.disabled = true
 				if (/^https:\/\/archive\.org\/services\/wayback-gsheets\/options/.test(CurrentWBGSURL)) {
 					OutputObject.Type = "Homepage"
-					Button_AbortFinishLocked.disabled = false
 				} else if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=archive") {
 					OutputObject.Type = "ArchiveURLs"
 				} else if (CurrentWBGSURL == "https://archive.org/services/wayback-gsheets/check?method=availability") {
@@ -344,6 +342,16 @@
 				}
 				return OutputObject
 			})();
+			if (WBGS_PageInfo.Type != "Homepage") { //On any other WBGS page that don't display running processes, disable the abort button.
+				if (!Button_AbortFinishLocked.disabled) { //Prevent devtool element tab from constantly highlighting a change
+					Button_AbortFinishLocked.disabled = true
+				}
+			} else { //On homepage, enable the abort button unless done already
+				if (Button_AbortFinishLocked.disabled) { //Prevent devtool element tab from constantly highlighting a change
+					Button_AbortFinishLocked.disabled = false
+				}
+			}
+			
 			//Check the "save results in a new sheets" option
 				if (WBGS_PageInfo.Type == "ArchiveURLs") {
 					let Element_SaveInNewSheetOption = [...document.querySelectorAll('input[type=checkbox]')].find((CheckBox) => {
