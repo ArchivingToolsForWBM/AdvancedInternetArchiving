@@ -218,7 +218,7 @@
 				ClippedDiv_ProcessHistoryList.style.border = "1px solid"
 				ClippedDiv_ProcessHistoryList.style.resize = "both"
 				
-				ProcessHistoryList = document.createElement("ol")
+				ProcessHistoryList = document.createElement("table")
 				
 				UpdateProcessHistoryList()
 				ClippedDiv_ProcessHistoryList.appendChild(ProcessHistoryList)
@@ -664,10 +664,36 @@
 					while (ProcessHistoryList.lastElementChild) {
 						ProcessHistoryList.removeChild(ProcessHistoryList.lastElementChild);
 					}
+				//Table header row
+					let ProcessHistoryListHeaderRow = document.createElement("tr")
+					
+					let DateAndLinkToProcessColumn = document.createElement("th")
+					DateAndLinkToProcessColumn.style.border = "1px solid white"
+					DateAndLinkToProcessColumn.style.borderCollapse = "collapse"
+					DateAndLinkToProcessColumn.appendChild(document.createTextNode("Date & link to process"))
+					ProcessHistoryListHeaderRow.appendChild(DateAndLinkToProcessColumn)
+					
+					let GoogleSheetLinkColumn = document.createElement("th")
+					GoogleSheetLinkColumn.style.border = "1px solid white"
+					GoogleSheetLinkColumn.style.borderCollapse = "collapse"
+					GoogleSheetLinkColumn.appendChild(document.createTextNode("GSheet link"))
+					ProcessHistoryListHeaderRow.appendChild(GoogleSheetLinkColumn)
+					
+					let ProcessTypeColumn = document.createElement("th")
+					ProcessTypeColumn.style.border = "1px solid white"
+					ProcessTypeColumn.style.borderCollapse = "collapse"
+					ProcessTypeColumn.appendChild(document.createTextNode("Process type"))
+					ProcessHistoryListHeaderRow.appendChild(ProcessTypeColumn)
+					
+					ProcessHistoryList.appendChild(ProcessHistoryListHeaderRow)
 				//Get a list by most recent and generate items for each processes
 					let ProcessListRecentFirst = ProcessHistory.toReversed()
 					ProcessListRecentFirst.forEach(Process => {
-						let ProcessItem = document.createElement("li")
+						let ProcessRow = document.createElement("tr")
+						
+						let ProcessCell_TimestampAndLinkToProcess = document.createElement("td")
+						ProcessCell_TimestampAndLinkToProcess.style.border = "1px solid white"
+						ProcessCell_TimestampAndLinkToProcess.style.borderCollapse = "collapse"
 						
 						let LinkToProcessTracking = document.createElement("a")
 						LinkToProcessTracking.href = Process.TrackingURL
@@ -676,9 +702,30 @@
 						LinkToProcessTracking.style.fontFamily = "monospace"
 						LinkToProcessTracking.style.textWrap = "nowrap"
 						LinkToProcessTracking.appendChild(document.createTextNode(Process.TimestampOfInitalProcess))
+						ProcessCell_TimestampAndLinkToProcess.appendChild(LinkToProcessTracking)
+						ProcessRow.appendChild(ProcessCell_TimestampAndLinkToProcess)
 						
-						ProcessItem.appendChild(LinkToProcessTracking)
-						ProcessHistoryList.appendChild(ProcessItem)
+						let ProcessCell_GoogleSheetLink = document.createElement("td")
+						ProcessCell_GoogleSheetLink.style.border = "1px solid white"
+						ProcessCell_GoogleSheetLink.style.borderCollapse = "collapse"
+						
+						let LinkToGoogleSheet = document.createElement("a")
+						LinkToGoogleSheet.href = Process.GoogleSheetURL
+						LinkToGoogleSheet.target = "_blank"
+						LinkToGoogleSheet.rel = "noopener noreferrer"
+						LinkToGoogleSheet.style.fontFamily = "monospace"
+						LinkToGoogleSheet.style.textWrap = "nowrap"
+						LinkToGoogleSheet.appendChild(document.createTextNode("Link"))
+						ProcessCell_GoogleSheetLink.appendChild(LinkToGoogleSheet)
+						ProcessRow.appendChild(ProcessCell_GoogleSheetLink)
+						
+						let ProcessCell_ProcessType = document.createElement("td")
+						ProcessCell_ProcessType.style.border = "1px solid white"
+						ProcessCell_ProcessType.style.borderCollapse = "collapse"
+						ProcessCell_ProcessType.appendChild(document.createTextNode(Process.ProcessType))
+						ProcessRow.appendChild(ProcessCell_ProcessType)
+						
+						ProcessHistoryList.appendChild(ProcessRow)
 					})
 			} catch (e) {
 				console.log("Error! ProcessHistoryList not existing!")
