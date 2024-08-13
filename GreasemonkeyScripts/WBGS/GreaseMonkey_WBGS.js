@@ -90,9 +90,7 @@
 		
 		async function SaveWBGSUtilitySettings() {
 			try {
-				await GM.setValue("WBGS_UtilitySettings", JSON.stringify(WBGS_Utility_Settings)).catch(() => {
-					console.log("WBGS utility: saving setting failed!")
-				})
+				await GM.setValue("WBGS_UtilitySettings", JSON.stringify(WBGS_Utility_Settings))
 			} catch {
 				console.log("WBGS utility: saving setting failed!")
 			}
@@ -477,10 +475,12 @@
 								if (ProcessHistory.length >= WBGS_Utility_Settings.ProcessLogHistoryLimit) { //If you somehow have multiple items past the limit, this will remove a number of items to match the maximum.
 									ProcessHistory.splice(0, ProcessHistory.length - (WBGS_Utility_Settings.ProcessLogHistoryLimit-1)) //Delete oldest item (array will have MaxNumber-1, -1 so we have one empty slot to place)
 								}
-								ProcessHistory.push(OBJ_WBGS_TrackingInfo)
-								await GM.setValue("WBGS_ProcessHistory", JSON.stringify(ProcessHistory)).catch(() => {
+								ProcessHistory.push(OBJ_WBGS_TrackingInfo) //Push item making up that one empty slot
+								try {
+									await GM.setValue("WBGS_ProcessHistory", JSON.stringify(ProcessHistory))
+								} catch {
 									console.log("WBGS utility: Saving log failed!")
-								})
+								}
 							}
 						//Update the list
 							UpdateProcessHistoryList()
