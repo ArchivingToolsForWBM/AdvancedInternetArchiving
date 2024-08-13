@@ -55,6 +55,7 @@
 		let ProcessTrackingLog = []
 		let Select_ProcessHistoryOrder = null
 		let Button_AbortFinishLocked = null
+		let DisplayText_HistoryLogCount = null
 		
 		let CurrentWBGSURL = ""
 		
@@ -225,20 +226,35 @@
 			//line seperator
 				DivBox2.appendChild(document.createElement("hr"))
 			//Process history list
+				
 				let ProcessHistoryTitle = document.createElement("h2")
 				ProcessHistoryTitle.appendChild(document.createTextNode("Process history"))
 				DivBox2.appendChild(ProcessHistoryTitle)
 				
-				DivBox2.appendChild(document.createTextNode("List order: "))
+				DivBox2.appendChild(document.createElement("br"))
+				
+				let Label_ListOrder = document.createElement("label")
+				Label_ListOrder.style.fontFamily = "monospace"
+				Label_ListOrder.appendChild(document.createTextNode("List order: "))
+				
 				Select_ProcessHistoryOrder = CreateSelectElement(WBGS_Utility_Settings.ProcessHistoryLogOrderSettings, false)
+				Select_ProcessHistoryOrder.style.fontFamily = "monospace"
 				Select_ProcessHistoryOrder.addEventListener(
 					"change",
 					function () {
 						UpdateProcessHistoryList()
 					}
 				)
+				Label_ListOrder.appendChild(Select_ProcessHistoryOrder)
 				
-				DivBox2.appendChild(Select_ProcessHistoryOrder)
+				DivBox2.appendChild(Label_ListOrder)
+				
+				DivBox2.appendChild(document.createElement("br"))
+				
+				DisplayText_HistoryLogCount = document.createElement("span")
+				DisplayText_HistoryLogCount.appendChild(document.createTextNode(""))
+				DisplayText_HistoryLogCount.style.fontFamily = "monospace"
+				DivBox2.appendChild(DisplayText_HistoryLogCount)
 				
 				let ClippedDiv_ProcessHistoryList = document.createElement("div")
 				ClippedDiv_ProcessHistoryList.style.overflow = "auto"
@@ -670,6 +686,8 @@
 		}
 		function UpdateProcessHistoryList() {
 			try {
+				//How many logged
+					DisplayText_HistoryLogCount.textContent = "Count: " + ProcessHistory.length.toString(10)
 				//Start with a clear list
 					while (ProcessHistoryList.lastElementChild) {
 						ProcessHistoryList.removeChild(ProcessHistoryList.lastElementChild);
@@ -707,11 +725,11 @@
 					ProcessHistoryList.appendChild(ProcessHistoryListHeaderRow)
 				//Get a list by most recent and generate items for each processes
 				
-					let ProcessListRecentFirst = ProcessHistory
+					let ProcessHistoryDisplay = ProcessHistory
 					if (Select_ProcessHistoryOrder.selectedIndex == 1) {
-						ProcessListRecentFirst = ProcessHistory.toReversed()
+						ProcessHistoryDisplay = ProcessHistory.toReversed()
 					}
-					ProcessListRecentFirst.forEach(Process => {
+					ProcessHistoryDisplay.forEach(Process => {
 						let ProcessRow = document.createElement("tr")
 						
 						let ProcessCell_TimestampAndLinkToProcess = document.createElement("td")
