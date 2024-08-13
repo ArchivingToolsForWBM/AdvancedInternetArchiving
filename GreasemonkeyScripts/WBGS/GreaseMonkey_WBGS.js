@@ -27,8 +27,6 @@
 			//Display alternative process activity log. This is if you want to see the time in UTC conveniently.
 			//Note that this is not in sync since despite WBGS updates the display every 10 seconds, that timer starts the moment you start a process, while this script
 			//starts when the page first loads (any subsequent loads besides a refresh does not count).
-		const Setting_ProcessLogLimit = 10
-			//^The maximum number of process logged into the list. Once reached, and a new item is added, the oldest in the array is removed.
 			
 		const Setting_ProcessActivityLogScanFrequency = 5000
 			//^Number of milliseconds each time the alternative logger scans WBGS
@@ -63,6 +61,7 @@
 		let WBGS_Utility_Settings = {
 			ProcessActivityLogOrderByRecent: true,
 			ProcessLogOrderByRecent: true,
+			ProcessLogHistoryLimit: 10,
 			ProcessHistoryLogOrderSettings: [
 				{
 					value: "Old2New",
@@ -256,6 +255,40 @@
 				DisplayText_HistoryLogCount.style.fontFamily = "monospace"
 				DivBox2.appendChild(DisplayText_HistoryLogCount)
 				
+				DivBox2.appendChild(document.createElement("br"))
+			//Process history log limit count
+				let Abbr_ProcessHistoryLogLimit = document.createElement("abbr")
+				Abbr_ProcessHistoryLogLimit.title = "Once this number is reached, and you start a new process, oldest items are deleted until the number is equal to this value."
+				
+				let Label_ProcessHistoryLogLimit = document.createElement("label")
+				Abbr_ProcessHistoryLogLimit.appendChild(Label_ProcessHistoryLogLimit)
+				
+				Label_ProcessHistoryLogLimit.appendChild(document.createTextNode("Max logging count: "))
+				Label_ProcessHistoryLogLimit.style.fontFamily = "monospace"
+
+				let InputNumber_MaxProcessHistoryCount = document.createElement("input")
+				InputNumber_MaxProcessHistoryCount.type = "number"
+				InputNumber_MaxProcessHistoryCount.min = "1"
+				InputNumber_MaxProcessHistoryCount.step = "1"
+				InputNumber_MaxProcessHistoryCount.style.fontFamily = "monospace"
+				InputNumber_MaxProcessHistoryCount.value = WBGS_Utility_Settings.ProcessLogHistoryLimit.toString(10)
+				InputNumber_MaxProcessHistoryCount.addEventListener(
+					"change",
+					function () {
+						let EnteredNumber = parseInt(this.value)
+						if (isNaN(EnteredNumber)) {
+							EnteredNumber = 20
+						}
+						EnteredNumber = clamp(EnteredNumber, 1, 100)
+						this.value = EnteredNumber
+						WBGS_Utility_Settings.ProcessLogHistoryLimit = EnteredNumber
+						SaveWBGSUtilitySettings()
+					}
+				)
+				Label_ProcessHistoryLogLimit.appendChild(InputNumber_MaxProcessHistoryCount)
+				Abbr_ProcessHistoryLogLimit.appendChild(Label_ProcessHistoryLogLimit)
+				DivBox2.appendChild(Abbr_ProcessHistoryLogLimit)
+				
 				let ClippedDiv_ProcessHistoryList = document.createElement("div")
 				ClippedDiv_ProcessHistoryList.style.overflow = "auto"
 				ClippedDiv_ProcessHistoryList.style.height = "200px"
@@ -445,8 +478,8 @@
 								return ArrEle.TrackingURL == OBJ_WBGS_TrackingInfo.TrackingURL
 							})
 							if (IndexWithSameProcess == -1) { //This if statement is a failsafe to prevent duplicate entries
-								if (ProcessHistory.length >= Setting_ProcessLogLimit) { //If you somehow have multiple items past the limit, this will remove a number of items to match the maximum.
-									ProcessHistory.splice(0, ProcessHistory.length - (Setting_ProcessLogLimit-1)) //Delete oldest item (array will have MaxNumber-1, -1 so we have one empty slot to place)
+								if (ProcessHistory.length >= WBGS_Utility_Settings.ProcessLogHistoryLimit) { //If you somehow have multiple items past the limit, this will remove a number of items to match the maximum.
+									ProcessHistory.splice(0, ProcessHistory.length - (WBGS_Utility_Settings.ProcessLogHistoryLimit-1)) //Delete oldest item (array will have MaxNumber-1, -1 so we have one empty slot to place)
 								}
 								ProcessHistory.push(OBJ_WBGS_TrackingInfo)
 								await GM.setValue("WBGS_ProcessHistory", JSON.stringify(ProcessHistory)).catch(() => {
