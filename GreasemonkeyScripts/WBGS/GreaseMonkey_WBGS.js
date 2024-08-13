@@ -703,8 +703,17 @@
 		function GetWBGSHomepageProcessList() {
 			//Returns a list of process from the WBGS homepage, if entirely doesn't exists, returns null, else if it exists, outputs an array at any length (including zero)
 			try {
-				let TableElement = document.querySelector("table")
-				let TableLists = [...TableElement.querySelectorAll("tr")]
+				let ProcessListTable = [...document.querySelectorAll("table")].find(Ele_table => {
+					try {
+						return Ele_table.classList.value == "table table-bordered table-sm"
+					} catch {
+						return false
+					}
+				})
+				if (typeof ProcessListTable == "undefined") {
+					return null
+				}
+				let TableLists = [...ProcessListTable.querySelectorAll("tr")]
 				return TableLists.filter(row => {
 					let HasGoogleSheetURL = /https:\/\/docs\.google\.com\/spreadsheets\//.test(row.childNodes[0].textContent) ?? false
 					return (row.childNodes.length == 6)&&HasGoogleSheetURL
