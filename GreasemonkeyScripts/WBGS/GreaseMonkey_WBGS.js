@@ -230,26 +230,6 @@
 				ProcessHistoryTitle.appendChild(document.createTextNode("Process history"))
 				DivBox2.appendChild(ProcessHistoryTitle)
 				
-				DivBox2.appendChild(document.createElement("br"))
-				
-				let Label_ListOrder = document.createElement("label")
-				Label_ListOrder.style.fontFamily = "monospace"
-				Label_ListOrder.appendChild(document.createTextNode("List order: "))
-				
-				Select_ProcessHistoryOrder = CreateSelectElement(WBGS_Utility_Settings.ProcessHistoryLogOrderSettings, false)
-				Select_ProcessHistoryOrder.style.fontFamily = "monospace"
-				Select_ProcessHistoryOrder.addEventListener(
-					"change",
-					function () {
-						UpdateProcessHistoryList()
-					}
-				)
-				Label_ListOrder.appendChild(Select_ProcessHistoryOrder)
-				
-				DivBox2.appendChild(Label_ListOrder)
-				
-				DivBox2.appendChild(document.createElement("br"))
-				
 				DisplayText_HistoryLogCount = document.createElement("span")
 				DisplayText_HistoryLogCount.appendChild(document.createTextNode(""))
 				DisplayText_HistoryLogCount.style.fontFamily = "monospace"
@@ -288,6 +268,22 @@
 				Label_ProcessHistoryLogLimit.appendChild(InputNumber_MaxProcessHistoryCount)
 				Abbr_ProcessHistoryLogLimit.appendChild(Label_ProcessHistoryLogLimit)
 				DivBox2.appendChild(Abbr_ProcessHistoryLogLimit)
+				
+				let Label_ListOrder = document.createElement("label")
+				Label_ListOrder.style.fontFamily = "monospace"
+				Label_ListOrder.appendChild(document.createTextNode("List order: "))
+				
+				Select_ProcessHistoryOrder = CreateSelectElement(WBGS_Utility_Settings.ProcessHistoryLogOrderSettings, false)
+				Select_ProcessHistoryOrder.style.fontFamily = "monospace"
+				Select_ProcessHistoryOrder.addEventListener(
+					"change",
+					function () {
+						UpdateProcessHistoryList()
+					}
+				)
+				Label_ListOrder.appendChild(Select_ProcessHistoryOrder)
+				
+				DivBox2.appendChild(Label_ListOrder)
 				
 				let ClippedDiv_ProcessHistoryList = document.createElement("div")
 				ClippedDiv_ProcessHistoryList.style.overflow = "auto"
