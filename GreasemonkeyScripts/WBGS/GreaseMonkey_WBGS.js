@@ -52,12 +52,12 @@
 		let JSONTextarea_Tracking = null
 		let ProcessHistoryList = null
 		let ProcessTrackingLog = []
-		let Select_ProcessHistoryOrder = null
-		let Select_ProcessHistoryFilterType = null
-		let Button_AbortFinishLocked = null
+		let OBJ_ProcessHistoryCheckboxes = {}
+		let InputText_SearchBySheet = null
 		let DisplayText_ProcessHistoryLogCount = null
 		let DisplayText_FilteredProcessHistoryLogCount = null
-		let InputText_SearchBySheet = null
+		let Select_ProcessHistoryOrder = null
+		let Button_AbortFinishLocked = null
 		
 		let CurrentWBGSURL = ""
 		
@@ -112,6 +112,7 @@
 				DivBox.style.color = "#ffffff"
 				DivBox.style.borderRadius = "30px"
 				DivBox.style.padding = "15px"
+				DivBox.style.width = "500px"
 				DivBox.style.maxWidth = "500px"
 				DivBox.style.maxHeight = "800px"
 				DivBox.style.overflow = "auto"
@@ -273,37 +274,79 @@
 				Abbr_ProcessHistoryLogLimit.appendChild(Label_ProcessHistoryLogLimit)
 				DivBox2.appendChild(Abbr_ProcessHistoryLogLimit)
 			//Process history log filters (will not delete history log items, just changes the display)
-				let Label_ProcessHistoryFilterSettings = document.createElement("label")
-				Label_ProcessHistoryFilterSettings.style.fontFamily = "monospace"
-				Label_ProcessHistoryFilterSettings.appendChild(document.createTextNode("Filter: (hold CTRL to select multiple/toggle)"))
+				let Div_ContainingListOfProcessTypes = document.createElement("div")
+			
+				let Span_ProcessHistoryFilterSettings = document.createElement("span")
+				Span_ProcessHistoryFilterSettings.style.fontFamily = "monospace"
+				Span_ProcessHistoryFilterSettings.appendChild(document.createTextNode("Filter: (check to include):"))
+				Div_ContainingListOfProcessTypes.appendChild(Span_ProcessHistoryFilterSettings)
+				Div_ContainingListOfProcessTypes.appendChild(document.createElement("br"))
 				
-				Select_ProcessHistoryFilterType = CreateSelectElement([
-				{
-					value: "Archive URLs",
-					visibleText: "Archive URLs",
-					isSelected: true
-				},
-				{
-					value: "Check if URLs are archived in the Wayback Machine",
-					visibleText: "Check URLs saved",
-					isSelected: true
-				},
-				{
-					value: "Check if URLs are available in the Live Web",
-					visibleText: "Check URLs live",
-					isSelected: true
-				}
-				], true)
-				Select_ProcessHistoryFilterType.addEventListener(
-					"change",
-					function () {
-						UpdateProcessHistoryList()
+				let ListOfButtonsToChangeCheckboxes = [
+					{
+						Title: "Check All",
+						Setting: 1
+					},
+					{
+						Title: "Uncheck All",
+						Setting: 0
+					},
+					{
+						Title: "Invert",
+						Setting: 2
 					}
-				)
-				Label_ProcessHistoryFilterSettings.appendChild(document.createElement("br"))
-				Label_ProcessHistoryFilterSettings.appendChild(Select_ProcessHistoryFilterType)
-				DivBox2.appendChild(Label_ProcessHistoryFilterSettings)
+				]
+				ListOfButtonsToChangeCheckboxes.forEach(btn => {
+					let Button_ChangeCheckbox = document.createElement("button")
+					Button_ChangeCheckbox.appendChild(document.createTextNode(btn.Title))
+					Button_ChangeCheckbox.addEventListener(
+						"click",
+						function () {
+							changeCheckboxSettings(Div_ContainingListOfProcessTypes, btn.Setting)
+							UpdateProcessHistoryList()
+						}.bind(btn.Setting)
+					)
+					Div_ContainingListOfProcessTypes.appendChild(Button_ChangeCheckbox)
+				})
+				let ListOfProcessHistoryFilterTypes = [
+					{
+						Title: "Archive URLs",
+						RealTitle: "Archive URLs"
+					},
+					{
+						Title: "Check if URLs archived",
+						RealTitle: "Check if URLs are archived in the Wayback Machine"
+					},
+					{
+						Title: "Check if URLs are live",
+						RealTitle: "Check if URLs are available in the Live Web"
+					}
+				]
+				ListOfProcessHistoryFilterTypes.forEach(FilterType => {
+					let Div_FilterItem = document.createElement("div")
+					
+					let Label_FilterItem = document.createElement("label")
+					Div_FilterItem.appendChild(Label_FilterItem)
+					
+					let CheckBoxFilterItem = document.createElement("input")
+					CheckBoxFilterItem.type = "checkbox"
+					CheckBoxFilterItem.checked = true
+					Label_FilterItem.appendChild(CheckBoxFilterItem)
+					CheckBoxFilterItem.addEventListener(
+						"change",
+						function () {
+							UpdateProcessHistoryList()
+						}
+					
+					)
+					Label_FilterItem.appendChild(document.createTextNode(FilterType.Title))
+					
+					OBJ_ProcessHistoryCheckboxes[FilterType.RealTitle] = CheckBoxFilterItem
+					
+					Div_ContainingListOfProcessTypes.appendChild(Div_FilterItem)
+				})
 				
+				DivBox2.appendChild(Div_ContainingListOfProcessTypes)
 				DivBox2.appendChild(document.createElement("br"))
 			//Search process history by sheet
 				let Label_SearchBySheet = document.createElement("label")
@@ -796,8 +839,7 @@
 				//How many logged
 					DisplayText_ProcessHistoryLogCount.textContent = "Count: " + ProcessHistory.length.toString(10)
 				//Get filtered list and also how many that exists after filtering
-					let OptionFilterProcessTypes = [...Select_ProcessHistoryFilterType.querySelectorAll("option")]
-					FilteredProcessHistory = ProcessHistory.filter(CurrentProcess => {
+					FilteredProcessHistory = ProcessHistory.filter(CurrentProcess => { //Filter based on search and type
 						if (RegExp_GoogleSheetURL.test(InputText_SearchBySheet.value)) { //If user enters a google sheet URL...
 							let GoogleSheetURLSubstring = InputText_SearchBySheet.value.match(RegExp_GoogleSheetURL)[0].replace(/\s*$/, "")
 							let ProcessedGoogleSheetSubstring = CurrentProcess.GoogleSheetURL.match(RegExp_GoogleSheetURL)[0]
@@ -805,13 +847,7 @@
 								return false
 							}
 						}
-						let MatchedProcessType = OptionFilterProcessTypes.find(ListedProcessType => {
-							return ListedProcessType.value == CurrentProcess.ProcessType
-						})
-						if (typeof MatchedProcessType == "undefined") {
-							return false
-						}
-						if (!MatchedProcessType.selected) {
+						if (!OBJ_ProcessHistoryCheckboxes[CurrentProcess.ProcessType].checked) {
 							return false
 						}
 						return true
@@ -1040,6 +1076,19 @@
 				}
 			}
 			return OutputString
+		}
+		function changeCheckboxSettings(node, setting) {
+			let CheckboxesToModify = [...node.querySelectorAll("input[type=checkbox")]
+			CheckboxesToModify.forEach(ele => {
+				if (setting == 0) {
+					ele.checked = false
+				} else if (setting == 1) {
+					ele.checked = true
+				} else {
+					ele.checked = !ele.checked
+				}
+			})
+			
 		}
 		function CSSBackgroundImageLinearGradiantPercentageBarGraph(Quantity, MaxQuantity, Direction, Color_Full, Color_Empty) {
 			//Returns a percentage displayed as a gradient representing a bar graph as CSS. Preferably as a background image.
