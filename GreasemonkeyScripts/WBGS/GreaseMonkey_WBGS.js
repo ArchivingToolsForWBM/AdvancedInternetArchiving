@@ -42,6 +42,7 @@
 		}
 		setTimeout(Spawn_UI_Panel, 500)
 		
+		let RegExp_GoogleSheetURL = /^\s*https:\/\/docs\.google\.com\/spreadsheets\/d\/[a-zA-Z\d\-_]+\/edit\?gid=\d+#gid=\d+\s*$/
 		
 		let RaceConditionLock = false
 		let HavePrintedListOfProcess = false
@@ -52,8 +53,11 @@
 		let ProcessHistoryList = null
 		let ProcessTrackingLog = []
 		let Select_ProcessHistoryOrder = null
+		let Select_ProcessHistoryFilterType = null
 		let Button_AbortFinishLocked = null
-		let DisplayText_HistoryLogCount = null
+		let DisplayText_ProcessHistoryLogCount = null
+		let DisplayText_FilteredProcessHistoryLogCount = null
+		let InputText_SearchBySheet = null
 		
 		let CurrentWBGSURL = ""
 		
@@ -228,12 +232,13 @@
 				ProcessHistoryTitle.appendChild(document.createTextNode("Process history"))
 				DivBox2.appendChild(ProcessHistoryTitle)
 				
-				DisplayText_HistoryLogCount = document.createElement("span")
-				DisplayText_HistoryLogCount.appendChild(document.createTextNode(""))
-				DisplayText_HistoryLogCount.style.fontFamily = "monospace"
-				DivBox2.appendChild(DisplayText_HistoryLogCount)
+				DisplayText_ProcessHistoryLogCount = document.createElement("span")
+				DisplayText_ProcessHistoryLogCount.appendChild(document.createTextNode(""))
+				DisplayText_ProcessHistoryLogCount.style.fontFamily = "monospace"
+				DivBox2.appendChild(DisplayText_ProcessHistoryLogCount)
 				
 				DivBox2.appendChild(document.createElement("br"))
+				
 			//Process history log limit count
 				let Abbr_ProcessHistoryLogLimit = document.createElement("abbr")
 				Abbr_ProcessHistoryLogLimit.title = "Once this number is reached, and you start a new process, oldest items are deleted until the number is equal to this value."
@@ -266,10 +271,73 @@
 				Label_ProcessHistoryLogLimit.appendChild(InputNumber_MaxProcessHistoryCount)
 				Abbr_ProcessHistoryLogLimit.appendChild(Label_ProcessHistoryLogLimit)
 				DivBox2.appendChild(Abbr_ProcessHistoryLogLimit)
+			//Process history log filters (will not delete history log items, just changes the display)
+				let Label_ProcessHistoryFilterSettings = document.createElement("label")
+				Label_ProcessHistoryFilterSettings.style.fontFamily = "monospace"
+				Label_ProcessHistoryFilterSettings.appendChild(document.createTextNode("Filter: "))
 				
-				let Label_ListOrder = document.createElement("label")
-				Label_ListOrder.style.fontFamily = "monospace"
-				Label_ListOrder.appendChild(document.createTextNode("List order: "))
+				Select_ProcessHistoryFilterType = CreateSelectElement([
+				{
+					value: "Archive URLs",
+					visibleText: "Archive URLs",
+					isSelected: true
+				},
+				{
+					value: "Check if URLs are archived in the Wayback Machine",
+					visibleText: "Check URLs saved",
+					isSelected: true
+				},
+				{
+					value: "Check if URLs are available in the Live Web",
+					visibleText: "Check URLs live",
+					isSelected: true
+				}
+				], true)
+				Select_ProcessHistoryFilterType.addEventListener(
+					"change",
+					function () {
+						UpdateProcessHistoryList()
+					}
+				)
+				Label_ProcessHistoryFilterSettings.appendChild(document.createElement("br"))
+				Label_ProcessHistoryFilterSettings.appendChild(Select_ProcessHistoryFilterType)
+				DivBox2.appendChild(Label_ProcessHistoryFilterSettings)
+				
+				DivBox2.appendChild(document.createElement("br"))
+				
+				let Label_SearchBySheet = document.createElement("label")
+				Label_SearchBySheet.style.fontFamily = "monospace"
+				Label_SearchBySheet.appendChild(document.createTextNode("Search by sheet: "))
+				
+				
+				InputText_SearchBySheet = document.createElement("input")
+				InputText_SearchBySheet.type = "text"
+				InputText_SearchBySheet.style.fontFamily = "monospace"
+				InputText_SearchBySheet.addEventListener(
+					"input",
+					function () {
+						if (RegExp_GoogleSheetURL.test(this.value)||(/^\s*$/.test(this.value))) {
+							InputText_SearchBySheet.style.backgroundColor = "#ffffff"
+						} else {
+							InputText_SearchBySheet.style.backgroundColor = "salmon"
+						}
+						UpdateProcessHistoryList()
+					}
+				)
+				Label_SearchBySheet.appendChild(InputText_SearchBySheet)
+				DivBox2.appendChild(Label_SearchBySheet)
+				DivBox2.appendChild(document.createElement("br"))
+				
+				DisplayText_FilteredProcessHistoryLogCount = document.createElement("span")
+				DisplayText_FilteredProcessHistoryLogCount.appendChild(document.createTextNode(""))
+				DisplayText_FilteredProcessHistoryLogCount.style.fontFamily = "monospace"
+				DivBox2.appendChild(DisplayText_FilteredProcessHistoryLogCount)
+				
+				DivBox2.appendChild(document.createElement("br"))
+			//Process history log order
+				let Label_ProcessHistoryListOrder = document.createElement("label")
+				Label_ProcessHistoryListOrder.style.fontFamily = "monospace"
+				Label_ProcessHistoryListOrder.appendChild(document.createTextNode("List order: "))
 				
 				Select_ProcessHistoryOrder = CreateSelectElement(WBGS_Utility_Settings.ProcessHistoryLogOrderSettings, false)
 				Select_ProcessHistoryOrder.style.fontFamily = "monospace"
@@ -279,9 +347,9 @@
 						UpdateProcessHistoryList()
 					}
 				)
-				Label_ListOrder.appendChild(Select_ProcessHistoryOrder)
+				Label_ProcessHistoryListOrder.appendChild(Select_ProcessHistoryOrder)
 				
-				DivBox2.appendChild(Label_ListOrder)
+				DivBox2.appendChild(Label_ProcessHistoryListOrder)
 				
 				let ClippedDiv_ProcessHistoryList = document.createElement("div")
 				ClippedDiv_ProcessHistoryList.style.overflow = "auto"
@@ -725,7 +793,29 @@
 		function UpdateProcessHistoryList() {
 			try {
 				//How many logged
-					DisplayText_HistoryLogCount.textContent = "Count: " + ProcessHistory.length.toString(10)
+					DisplayText_ProcessHistoryLogCount.textContent = "Count: " + ProcessHistory.length.toString(10)
+				//Get filtered list and also how many that exists after filtering
+					let OptionFilterProcessTypes = [...Select_ProcessHistoryFilterType.querySelectorAll("option")]
+					let FilteredListOfProcesses = ProcessHistory.filter(CurrentProcess => {
+						if (RegExp_GoogleSheetURL.test(InputText_SearchBySheet.value)) { //If user enters a google sheet URL...
+							let GoogleSheetURLSubstring = InputText_SearchBySheet.value.match(RegExp_GoogleSheetURL)[0]
+							GoogleSheetURLSubstring = GoogleSheetURLSubstring.replace(/^\s+/, "").replace(/\s*$/, "")
+							if (GoogleSheetURLSubstring != CurrentProcess.GoogleSheetURL) { //and fails to match with the process's google sheet it runs on, then exclude
+								return false
+							}
+						}
+						let MatchedProcessType = OptionFilterProcessTypes.find(ListedProcessType => {
+							return ListedProcessType.value == CurrentProcess.ProcessType
+						})
+						if (typeof MatchedProcessType == "undefined") {
+							return false
+						}
+						if (!MatchedProcessType.selected) {
+							return false
+						}
+						return true
+					})
+					DisplayText_FilteredProcessHistoryLogCount.textContent = "Displayed: " + FilteredListOfProcesses.length.toString(10)
 				//Start with a clear list
 					while (ProcessHistoryList.lastElementChild) {
 						ProcessHistoryList.removeChild(ProcessHistoryList.lastElementChild);
@@ -763,9 +853,9 @@
 					ProcessHistoryList.appendChild(ProcessHistoryListHeaderRow)
 				//Get a list by most recent and generate items for each processes
 				
-					let ProcessHistoryDisplay = ProcessHistory
+					let ProcessHistoryDisplay = FilteredListOfProcesses
 					if (Select_ProcessHistoryOrder.selectedIndex == 1) {
-						ProcessHistoryDisplay = ProcessHistory.toReversed()
+						ProcessHistoryDisplay = FilteredListOfProcesses.toReversed()
 					}
 					ProcessHistoryDisplay.forEach(Process => {
 						let ProcessRow = document.createElement("tr")
