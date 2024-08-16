@@ -42,7 +42,7 @@
 		}
 		setTimeout(Spawn_UI_Panel, 500)
 		
-		let RegExp_GoogleSheetURL = /^\s*https:\/\/docs\.google\.com\/spreadsheets\/d\/[a-zA-Z\d\-_]+\/edit\?gid=\d+#gid=\d+\s*$/
+		let RegExp_GoogleSheetURL = /^https:\/\/docs\.google\.com\/spreadsheets\/d\/[a-zA-Z\d\-_]+/
 		
 		let RaceConditionLock = false
 		let HavePrintedListOfProcess = false
@@ -62,6 +62,7 @@
 		let CurrentWBGSURL = ""
 		
 		let ProcessHistory = []
+		let FilteredProcessHistory = []
 		let WBGS_Utility_Settings = {
 			ProcessActivityLogOrderByRecent: true,
 			ProcessLogOrderByRecent: true,
@@ -274,7 +275,7 @@
 			//Process history log filters (will not delete history log items, just changes the display)
 				let Label_ProcessHistoryFilterSettings = document.createElement("label")
 				Label_ProcessHistoryFilterSettings.style.fontFamily = "monospace"
-				Label_ProcessHistoryFilterSettings.appendChild(document.createTextNode("Filter: "))
+				Label_ProcessHistoryFilterSettings.appendChild(document.createTextNode("Filter: (hold CTRL to select multiple/toggle)"))
 				
 				Select_ProcessHistoryFilterType = CreateSelectElement([
 				{
@@ -304,7 +305,7 @@
 				DivBox2.appendChild(Label_ProcessHistoryFilterSettings)
 				
 				DivBox2.appendChild(document.createElement("br"))
-				
+			//Search process history by sheet
 				let Label_SearchBySheet = document.createElement("label")
 				Label_SearchBySheet.style.fontFamily = "monospace"
 				Label_SearchBySheet.appendChild(document.createTextNode("Search by sheet: "))
@@ -376,11 +377,11 @@
 						
 						if (WBGS_Utility_Settings.ProcessHistoryLogOrderSettings[1].isSelected) {
 							FormattedObject.Order = "Newest to oldest"
-							FormattedObject.List = ProcessHistory.toReversed()
+							FormattedObject.List = FilteredProcessHistory.toReversed()
 							GM.setClipboard(JSON.stringify(FormattedObject, "", " "))
 						} else {
 							FormattedObject.Order = "Oldest to newest"
-							FormattedObject.List = ProcessHistory
+							FormattedObject.List = FilteredProcessHistory
 							GM.setClipboard(JSON.stringify(FormattedObject, "", " "))
 						}
 					}
@@ -406,7 +407,7 @@
 						})
 						FinishLockedProcesses.forEach(Process => {
 							try {
-								let AbortButton = WBGSProcess.childNodes[5].childNodes[1]
+								let AbortButton = Process.childNodes[5].childNodes[1]
 								AbortButton.click()
 							} catch {}
 						})
@@ -796,11 +797,11 @@
 					DisplayText_ProcessHistoryLogCount.textContent = "Count: " + ProcessHistory.length.toString(10)
 				//Get filtered list and also how many that exists after filtering
 					let OptionFilterProcessTypes = [...Select_ProcessHistoryFilterType.querySelectorAll("option")]
-					let FilteredListOfProcesses = ProcessHistory.filter(CurrentProcess => {
+					FilteredProcessHistory = ProcessHistory.filter(CurrentProcess => {
 						if (RegExp_GoogleSheetURL.test(InputText_SearchBySheet.value)) { //If user enters a google sheet URL...
-							let GoogleSheetURLSubstring = InputText_SearchBySheet.value.match(RegExp_GoogleSheetURL)[0]
-							GoogleSheetURLSubstring = GoogleSheetURLSubstring.replace(/^\s+/, "").replace(/\s*$/, "")
-							if (GoogleSheetURLSubstring != CurrentProcess.GoogleSheetURL) { //and fails to match with the process's google sheet it runs on, then exclude
+							let GoogleSheetURLSubstring = InputText_SearchBySheet.value.match(RegExp_GoogleSheetURL)[0].replace(/\s*$/, "")
+							let ProcessedGoogleSheetSubstring = CurrentProcess.GoogleSheetURL.match(RegExp_GoogleSheetURL)[0]
+							if (GoogleSheetURLSubstring != ProcessedGoogleSheetSubstring) { //and fails to match with the process's google sheet it runs on, then exclude
 								return false
 							}
 						}
@@ -815,7 +816,7 @@
 						}
 						return true
 					})
-					DisplayText_FilteredProcessHistoryLogCount.textContent = "Displayed: " + FilteredListOfProcesses.length.toString(10)
+					DisplayText_FilteredProcessHistoryLogCount.textContent = "Displayed: " + FilteredProcessHistory.length.toString(10)
 				//Start with a clear list
 					while (ProcessHistoryList.lastElementChild) {
 						ProcessHistoryList.removeChild(ProcessHistoryList.lastElementChild);
@@ -853,9 +854,9 @@
 					ProcessHistoryList.appendChild(ProcessHistoryListHeaderRow)
 				//Get a list by most recent and generate items for each processes
 				
-					let ProcessHistoryDisplay = FilteredListOfProcesses
+					let ProcessHistoryDisplay = FilteredProcessHistory
 					if (Select_ProcessHistoryOrder.selectedIndex == 1) {
-						ProcessHistoryDisplay = FilteredListOfProcesses.toReversed()
+						ProcessHistoryDisplay = FilteredProcessHistory.toReversed()
 					}
 					ProcessHistoryDisplay.forEach(Process => {
 						let ProcessRow = document.createElement("tr")
