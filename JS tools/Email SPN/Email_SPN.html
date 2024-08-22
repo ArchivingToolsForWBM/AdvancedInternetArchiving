@@ -111,12 +111,12 @@
 				<li><label><input type="checkbox" onchange="Auto_update()" id="Option_IncludeStatusAsPlaintext">Include save result and status in plaintext</label></li>
 			</ul>
 			<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="Textarea_EnteredURLResult" cols="100" rows="30" readonly></textarea><br>
-			<button onclick="setClipboard(document.getElementById('Textarea_EnteredURLResult').value, 'CopiedTextMessage')" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
+			<div><button onclick="setClipboard(document.getElementById('Textarea_EnteredURLResult').value)">Copy</button><span></span></div>
 		</td>
 		<td>
 			<kbd>Count: <span id="Count_NonMatchingWBMResults">0</span></kbd><br>
 			<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="Textarea_LeftoverWBMResult" cols="100" rows="30" readonly></textarea><br>
-			<button onclick="setClipboard(document.getElementById('Textarea_LeftoverWBMResult').value, 'CopiedTextMessage2')" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage2"></span>
+			<div><button onclick="setClipboard(document.getElementById('Textarea_LeftoverWBMResult').value)">Copy</button><span></span></div>
 		</td>
 	</tr>
 	<tr>
@@ -591,36 +591,34 @@
 		//Restrict a number within a specified range, bigInt edition (since NaN cannot be represented in bigint).
 			return num <= min ? min : num >= max ? max : num;
 	}
-	function escapeHTMLChars(string) {
-		//Should the user's input contains "<", ">", and "&", prevent the innerHTML from treating these as HTML tags/escapes
-			string = string.replaceAll("&", "&amp;") //This must be done first, to avoid replacing already-replaced symbol's ampersand character.
-			string = string.replaceAll("<", "&lt;")
-			string = string.replaceAll(">", "&gt;")
-			string = string.replaceAll("\n", "<br>") //Again just in case if WBGS would ever use linebreaks in a cell.
-			return string
-	}
 
 	//Copy text from textarea
-		function setClipboard(String, CopyMessageID) {
+		function DeleteCopyMessage(HTMLElement) {
+			HTMLElement.textContent = ""
+		}
+		
+		function setClipboard(String) {
 			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
 			const type = "text/plain";
 			const blob = new Blob([String], { type });
 			const data = [new ClipboardItem({ [type]: blob })];
-	
+			
+			let EventElement = event.target
+			let CopiedMessage = EventElement.parentNode.querySelector("span")
+		
 			navigator.clipboard.write(data).then(
-				() => {
+				((EventElement) => {
 				/* success */
-					document.getElementById(CopyMessageID).innerHTML = " <span style='color: #00FF00;'>Copied!</span>"
-					setTimeout(DeleteCopyMessage.bind(null, CopyMessageID), 1500)
-				},
-				() => {
+					CopiedMessage.textContent = "Copied!"
+					CopiedMessage.style.color = "#00FF00"
+					setTimeout(DeleteCopyMessage.bind(null, CopiedMessage), 1500)
+				}).bind(null, EventElement),
+				((EventElement) => {
 				/* failure */
-					document.getElementById(CopyMessageID).innerHTML = " <span style='color: #FF0000;'>Copy failed!</span>"
-					setTimeout(DeleteCopyMessage.bind(null, CopyMessageID), 1500)
-				}
+					CopiedMessage.textContent = "Failed!"
+					CopiedMessage.style.color = "#FF0000"
+					setTimeout(DeleteCopyMessage.bind(null, CopiedMessage), 1500)
+				}).bind(null, EventElement)
 			);
-		}
-		function DeleteCopyMessage(CopyMessageID) {
-			document.getElementById(CopyMessageID).innerHTML = ""
 		}
 </script>

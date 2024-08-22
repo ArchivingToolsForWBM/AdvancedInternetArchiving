@@ -64,7 +64,7 @@ Sort:
 <hr>
 <kbd><span id="Output_URL_Count">0</span> URLs generated.</kbd><br>
 <textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="Textarea_OutputList" cols="100" rows="30" readonly></textarea><br>
-<button onclick="setClipboard(document.getElementById('Textarea_OutputList').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br><br>
+<div><button onclick="setClipboard(document.getElementById('Textarea_OutputList').value)">Copy</button><span></span></div>
 <div style="overflow: scroll; height: 600px; border: solid 1px; resize: both;">
 <span id="URL_OutputTable"></span>
 </div>
@@ -519,27 +519,33 @@ Sort:
 		}
 	}
 	//Copy text from textarea
+		function DeleteCopyMessage(HTMLElement) {
+			HTMLElement.textContent = ""
+		}
+		
 		function setClipboard(String) {
 			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
 			const type = "text/plain";
 			const blob = new Blob([String], { type });
 			const data = [new ClipboardItem({ [type]: blob })];
-	
+			
+			let EventElement = event.target
+			let CopiedMessage = EventElement.parentNode.querySelector("span")
+		
 			navigator.clipboard.write(data).then(
-				() => {
+				((EventElement) => {
 				/* success */
-					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #00FF00;'>Copied!</span>"
-					setTimeout(DeleteCopyMessage, 1500)
-				},
-				() => {
+					CopiedMessage.textContent = "Copied!"
+					CopiedMessage.style.color = "#00FF00"
+					setTimeout(DeleteCopyMessage.bind(null, CopiedMessage), 1500)
+				}).bind(null, EventElement),
+				((EventElement) => {
 				/* failure */
-					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #FF0000;'>Copy failed!</span>"
-					setTimeout(DeleteCopyMessage, 1500)
-				}
+					CopiedMessage.textContent = "Failed!"
+					CopiedMessage.style.color = "#FF0000"
+					setTimeout(DeleteCopyMessage.bind(null, CopiedMessage), 1500)
+				}).bind(null, EventElement)
 			);
-		}
-		function DeleteCopyMessage() {
-			document.getElementById("CopiedTextMessage").innerHTML = ""
 		}
 	{
 		let OutputSet = new Set() //Had to have set contain strings because if set contains any object and not primitive, would allow duplicates.

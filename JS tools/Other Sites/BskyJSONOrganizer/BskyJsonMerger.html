@@ -127,7 +127,7 @@ Settings:<br>
 	</tr>
 </table>
 <textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
-<button onclick="setClipboard(document.getElementById('Output_Plaintext').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span>
+<div><button onclick="setClipboard(document.getElementById('Output_Plaintext').value)">Copy</button><span></span></div>
 <script>
 	//Display current time (UTC) for element "CurrentTime"
 		UpdateCurrentDisplayTime() //Display at the moment the page loads...
@@ -526,28 +526,35 @@ Settings:<br>
 		}
 		return true;
 	}
-	function setClipboard(String) {
-		//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
-		const type = "text/plain";
-		const blob = new Blob([String], { type });
-		const data = [new ClipboardItem({ [type]: blob })];
-	
-		navigator.clipboard.write(data).then(
-			() => {
-			/* success */
-				document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #00FF00;'>Copied!</span>"
-				setTimeout(DeleteCopyMessage, 1500)
-			},
-			() => {
-			/* failure */
-				document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #FF0000;'>Copy failed!</span>"
-				setTimeout(DeleteCopyMessage, 1500)
-			}
-		);
-	}
-	function DeleteCopyMessage() {
-		document.getElementById("CopiedTextMessage").innerHTML = ""
-	}
+	//Copy text from textarea
+		function DeleteCopyMessage(HTMLElement) {
+			HTMLElement.textContent = ""
+		}
+		
+		function setClipboard(String) {
+			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
+			const type = "text/plain";
+			const blob = new Blob([String], { type });
+			const data = [new ClipboardItem({ [type]: blob })];
+			
+			let EventElement = event.target
+			let CopiedMessage = EventElement.parentNode.querySelector("span")
+		
+			navigator.clipboard.write(data).then(
+				((EventElement) => {
+				/* success */
+					CopiedMessage.textContent = "Copied!"
+					CopiedMessage.style.color = "#00FF00"
+					setTimeout(DeleteCopyMessage.bind(null, CopiedMessage), 1500)
+				}).bind(null, EventElement),
+				((EventElement) => {
+				/* failure */
+					CopiedMessage.textContent = "Failed!"
+					CopiedMessage.style.color = "#FF0000"
+					setTimeout(DeleteCopyMessage.bind(null, CopiedMessage), 1500)
+				}).bind(null, EventElement)
+			);
+		}
 	function ErrorStats() {
 		document.getElementById("Output_Statistic_ProfileCount_Replace").textContent = "Error"
 		document.getElementById("Output_Statistic_ProfileCountWithoutDupes_Replace").textContent = "Error"

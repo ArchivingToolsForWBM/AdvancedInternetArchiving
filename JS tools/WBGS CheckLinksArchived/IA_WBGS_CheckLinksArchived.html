@@ -102,7 +102,7 @@ Sort:<br>
 </table><br>
 <kbd><span id="TextareaCount">0</span> result(s)</kbd><br>
 <textarea readonly id="Output_List" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
-<button onclick="setClipboard(document.getElementById('Output_List').value)" id="Button_CopyOutput">Copy to clipboard</button><span id="CopiedTextMessage"></span><br><br>
+<div><button onclick="setClipboard(document.getElementById('Output_List').value)">Copy</button><span></span></div>
 <div style="overflow: scroll; height: 600px;border: solid 1px; resize: both;">
 	<span id="Output_table"></span>
 </div>
@@ -534,26 +534,32 @@ Sort:<br>
 			return num <= min ? min : num >= max ? max : num;
 	}
 	//Copy text from textarea
+		function DeleteCopyMessage(HTMLElement) {
+			HTMLElement.textContent = ""
+		}
+		
 		function setClipboard(String) {
 			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
 			const type = "text/plain";
 			const blob = new Blob([String], { type });
 			const data = [new ClipboardItem({ [type]: blob })];
-	
+			
+			let EventElement = event.target
+			let CopiedMessage = EventElement.parentNode.querySelector("span")
+		
 			navigator.clipboard.write(data).then(
-				() => {
+				((EventElement) => {
 				/* success */
-					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #00FF00;'>Copied!</span>"
-					setTimeout(DeleteCopyMessage, 1500)
-				},
-				() => {
+					CopiedMessage.textContent = "Copied!"
+					CopiedMessage.style.color = "#00FF00"
+					setTimeout(DeleteCopyMessage.bind(null, CopiedMessage), 1500)
+				}).bind(null, EventElement),
+				((EventElement) => {
 				/* failure */
-					document.getElementById("CopiedTextMessage").innerHTML = " <span style='color: #FF0000;'>Copy failed!</span>"
-					setTimeout(DeleteCopyMessage, 1500)
-				}
+					CopiedMessage.textContent = "Failed!"
+					CopiedMessage.style.color = "#FF0000"
+					setTimeout(DeleteCopyMessage.bind(null, CopiedMessage), 1500)
+				}).bind(null, EventElement)
 			);
-		}
-		function DeleteCopyMessage() {
-			document.getElementById("CopiedTextMessage").innerHTML = ""
 		}
 </script>
