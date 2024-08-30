@@ -14,6 +14,7 @@
 	let SavedData = []
 	
 	let RegExpPreset_BlankOrJustSpaces = /^$[\s\u200B]*/
+	let RegExpPreset_ClassNotionBlockName = /notion-(?:text|image|column_list)-block/
 	
 	setInterval(RevealAll, 2000)
 	setTimeout(ExtractPageContent, 4000)
@@ -127,21 +128,39 @@
 			Contents: []
 		}
 		//Identify type
-			try {
-				let Role = node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].role
-				OutputObject.Type = Role ?? ""
-			} catch (e) {
-				let a = 0
-			}
-		//Extract differently based on  type
+			OutputObject.Type = (() => {
+				try {
+					let Role = node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].role ?? ""
+					if (Role == "table") {
+						return "Table"
+					}
+					let ColumnGalleryNode = [...node.childNodes[0].childNodes]
+					let NonNotionBlock = ColumnGalleryNode.find(ColumnGalleryBlock => { //Try to find a thing that isn't a notion block content
+						return (!RegExpPreset_ClassNotionBlockName.test(ColumnGalleryBlock.getAttribute("class")))
+					})
+					
+					if (typeof NonNotionBlock == "undefined") {
+						return "ContentColumn"
+					}
+					
+					let a = 0
+				} catch (e) {
+					return "Unknown"
+				}
+				
+				
+			})(node);
+
+			
+		//Extract differently based on type
 			if (Index == 0) {
 				//Image/mugshot and title.
 				let TitleObject = {}
 				OutputObject.Type = "Header"
 				TitleObject.Title = node.textContent
-				TitleObject.Images = [...node.querySelectorAll("img")].map(Image => FormatNotionImageURL(Image.src))
+				TitleObject.Images = [...node.querySelectorAll("img")].map(Image => FormatNotionImageURL(FormatNotionImageURL(Image.src)))
 				OutputObject.Contents.push(TitleObject)
-			} else if (OutputObject.Type == "table") {
+			} else if (OutputObject.Type == "Table") {
 				//Table
 				let TableRows = [...node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes]
 				OutputTableObjectFormatted = TableRows.map(Row => {
@@ -149,12 +168,50 @@
 					let Cells = [...Row.childNodes[0].childNodes]
 					OutputTableRows.TableKey = Cells[0].textContent
 					OutputTableRows.TableValue = {
-						HTMLCode: Cells[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerHTML, //SVG, background images, images, so innerHTML works here.
 						Text: Cells[1].innerText
 					}
+					try {
+						OutputTableRows.TableValue.HTMLCode = Cells[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerHTML ?? "?" //SVG, background images, images, so innerHTML works here.
+					} catch {}
 					return OutputTableRows
 				})
 				OutputObject.Contents.push(OutputTableObjectFormatted)
+			} else if (OutputObject.Type == "ContentColumn") {
+				
+				let ContentColumn = [...node.childNodes[0].childNodes]
+				OutputNotionColumnConverted = ContentColumn.map(NotionBlock => {
+					try {
+						let NotionBlockName = (NotionBlock.getAttribute("class")).match(RegExpPreset_ClassNotionBlockName)[0]
+						if (NotionBlockName == "notion-image-block") {
+							let Image = NotionBlock.querySelector("img")
+							let ImageURL = FormatNotionImageURL(Image.src)
+							return {
+								Image: ImageURL
+							}
+						} else if (NotionBlockName == "notion-text-block") {
+							let OutputNotionBlock = {
+								Text: NotionBlock.innerText
+							}
+							let Links = ExtractLinks(NotionBlock)
+							if (Links.length != 0) {
+								OutputNotionBlock.Links = Links
+							}
+							return OutputNotionBlock
+						} else if (NotionBlockName == "notion-column_list-block") {
+							let NotionListBlock = {Type: "List"}
+							let SubBlocksNode = NotionBlock.childNodes[0]
+							let OutputList = GetSubBlocks(SubBlocksNode)
+							NotionListBlock.Contents = OutputList
+							return NotionListBlock
+						}
+					} catch {
+						return {
+							Error: "Unknown ContentColumn format",
+							HTMLContent: NotionBlock.innerHTML
+						}
+					}
+				})
+				OutputObject.Contents.push(OutputNotionColumnConverted)
 			}
 		//Done
 			return OutputObject
@@ -170,69 +227,36 @@
 		
 	}
 	
-	function GetContent(node) {
-		let Childrens = [...node.childNodes]
-		let CurrentNodeTagName = node.tagName ?? ""
-		let CurrentNodeRole = node.role ?? ""
-		if (CurrentNodeTagName == "DIV" && CurrentNodeRole == "table") {
-			//Table content
-			let TableContent = {
-				Type: "NameValueTable",
-				Content: []
-			}
-			let TableItems = [...node.childNodes]
-			TableItems.forEach(Item => {
-				try {
-					let OutputObject = {}
-					let TableCellsInRow = [...Item.childNodes[0].childNodes]
-					let Name = TableCellsInRow[0].textContent
-					let Value = TableCellsInRow[1].textContent
-					OutputObject[Name] = Value
-					TableContent.Content.push(OutputObject)
-				} catch (e) {}
-				ObjectRecursionOutput.push(TableContent)
-			})
-			let a = 0
-		} else if (Childrens.length != 0) {
-			for (let i=0; i<Childrens.length; i++) {
-				let CurrentChild = Childrens[i]
-				GetContent(CurrentChild) //Recursively descend the DOM node
-			}
-		} else { //No more to descend node
-			let ReturnObject = {}
-			if (CurrentNodeTagName == "") {
-				ReturnObject.Text = node.textContent
-			} else {
-				switch (CurrentNodeTagName) {
-					case "DIV":
-						ReturnObject.Text = node.textContent
-						break
-					case "H1":
-						ReturnObject.Text = node.textContent
-						break
-					case "IMG":
-						ReturnObject.ImageURL = node.src
-						break
-					case "A":
-						ReturnObject.Text = node.textContent
-						ReturnObject.Link = node.href
-						break
-					default:
-						ReturnObject.Error = "Unknown type"
+	function GetSubBlocks(node) {
+		let ListOfBlocks = [...node.querySelectorAll(".notion-image-block,notion-text-block")]
+		OutputList = ListOfBlocks.map(Block => {
+			try {
+				let BlockType = Block.getAttribute("class").match(RegExpPreset_ClassNotionBlockName)[0]
+				if (BlockType == "notion-image-block") {
+					let ImageTag = Block.querySelector("img")
+					let ImageURL = FormatNotionImageURL(ImageTag.src)
+					return {
+						Image: ImageURL
+					}
+				} else if (BlockType == "notion-text-block") {
+					let OutputNotionBlock = {
+						Text: Block.innerText
+					}
+					let Links = ExtractLinks(Block)
+					if (Links.length != 0) {
+						OutputNotionBlock.Links = Links
+					}
+					return OutputNotionBlock
+				}
+			} catch (e) {
+				return {
+					Error: "Unknown subblocks type",
+					ErrorTitle: e,
+					HTMLCode: Block.innerHTML
 				}
 			}
-			if (typeof ReturnObject.Text != "undefined") {
-				if (/^[\s\u200B]*$/.test(ReturnObject.Text)) {
-					return
-				}
-			}
-			if (typeof ReturnObject.Error == "undefined") {
-				ObjectRecursionOutput.push({
-					Type: "Other",
-					Content: ReturnObject
-				})
-			}
-		}
+		})
+		return OutputList
 	}
 	//Helper
 		function getElementsByText(ObjReference, RegexText, Tag) {
@@ -273,5 +297,14 @@
 		function FormatNotionImageURL(string) {
 			let RegexToFindReplace = /^(https:\/\/[a-zA-Z0-9_\-]+\.notion\.site\/image\/https%3A%2F%2F(s3-us-west-2\.amazonaws\.com|prod-files-secure\.s3\.us-west-2\.amazonaws\.com)%2F(?:(?!&width=\d+).)*).*$/ //thank you https://stackoverflow.com/a/3850095/11030779 , match all string, up to but not including "&width=<number>"
 			return string.replace(RegexToFindReplace, "$1")
+		}
+		function ExtractLinks(Node) {
+			let Links = [...Node.querySelectorAll("a")].filter(Link => {
+				if (typeof Link.href == "undefined") { //Failsafe if there are anchor tags without a link to another page
+					return false
+				}
+				return true
+			}).map(Link => Link.href)
+			return Links
 		}
 })();
