@@ -33,9 +33,11 @@
 		const RegExpPreset_ClassNotionBlockName = /notion-(?:text|image|column_list|(?:sub_)+header|toggle)-block/
 		const RegExpPreset_NotionPage = /https:\/\/[a-zA-Z\d_\-]+\.notion.[a-zA-Z\d_\-]+\/[a-zA-Z\d_\-]+/
 		
-		setTimeout(RevealAll, 2000)
+		setInterval(RevealAll, 1000)
 		setTimeout(SpawnUI, 2000)
 		let ExtractorTimeout = setTimeout(ExtractPageContent, SavedData.Settings.ScanFrequency)
+		let FunctionRecursionCounter = 0 //Prevents recursive functions from potentially cause out-of-memory errors
+		const FunctionRecursionCounter_Limit = 100
 	//Elements to remember (best not to touch)
 		let UI_Button_OnOff = null
 		let UI_TextDisplay_ScrapedPageCount = null
@@ -441,6 +443,10 @@
 			return OutputObject
 	}
 	function GetBlocksRecusively(node) {
+		FunctionRecursionCounter++
+		if (FunctionRecursionCounter >= FunctionRecursionCounter_Limit) {
+			window.alert("GetBlocksRecusively maxed out the recusion limit")
+		}
 		let ListOfElements = [...node.childNodes].filter(ele => {
 			let Text = ele.innerText
 			let Images = []
@@ -472,7 +478,7 @@
 					ClassText = ""
 				}
 			//Dive deeper until a block not containing any other blocks
-				if (/notion-(?:image|text|table|collection_view)-block/.test(ClassText)) { //If its a block that CANNOT contain another block, we stop diving deeper
+				if (/notion-(?:image|text|table|toggle|collection_view)-block/.test(ClassText)) { //If its a block that CANNOT contain another block, we stop diving deeper
 					if (ClassText == "notion-image-block") {
 						let Images = ExtractImages(Content)
 						SubContent.Data = {
@@ -571,6 +577,30 @@
 							}
 						})
 						SubContent.Data = OutputCollectionView
+					} else if (ClassText == "notion-toggle-block") {
+						try {
+							let ToggleContents = [...Content.childNodes[0].childNodes[1].childNodes]
+							ToggleContents = ToggleContents.map((TogglePart, Index) => {
+								if (Index == 0) {
+									return {
+										ToggleTitle: TogglePart.innerText
+									}
+								} else {
+									let NextBlockLayer = TogglePart.childNodes[0]
+									let ToggleContent = GetBlocksRecusively(NextBlockLayer)
+									return ToggleContent
+								}
+							})
+							SubContent.Data = {
+								Type: ClassText,
+								ToggledContent: ToggleContents
+							}
+						} catch {
+							return {
+								Error: "Unknown Toggle Format"
+							}
+						}
+						
 					}
 				} else {
 					let NestedBlock = {
@@ -582,6 +612,7 @@
 			//done
 				return SubContent
 		})
+		FunctionRecursionCounter--
 		return OutputBlocksExtracted
 	}
 		
