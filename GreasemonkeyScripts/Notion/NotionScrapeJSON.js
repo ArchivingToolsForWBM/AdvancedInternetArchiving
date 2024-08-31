@@ -11,10 +11,19 @@
 // ==/UserScript==
 
 (() => {
+	//Notes
+	//-Make sure you do not click on anything that would bring up a popup box of another page. This script runs a code that clicks every "show more"
+	// buttons at an interval to ensure all its content is loaded prior to grabbing content. To avoid this, always open the links in a new tab.
+	
+	
+	
+	
+	
 	//Initialize some values
 		let SavedData = {
 			Settings: {
-				OnOffState: false
+				OnOffState: false,
+				ScanFrequency: 3000
 			},
 			ScrapedContent: []
 		}
@@ -25,10 +34,11 @@
 		
 		setInterval(RevealAll, 2000)
 		setTimeout(SpawnUI, 2000)
-		setTimeout(ExtractPageContent, 4000)
+		let ExtractorTimeout = setTimeout(ExtractPageContent, SavedData.Settings.ScanFrequency)
 	//Elements to remember (best not to touch)
 		let UI_Button_OnOff = null
 		let UI_TextDisplay_ScrapedPageCount = null
+		let UI_InputRange_ScanFrequency_Display = null
 	
 	
 	function RevealAll() {
@@ -129,6 +139,9 @@
 					this.textContent = "Start"
 					if (SavedData.Settings.OnOffState) {
 						this.textContent = "Stop"
+						ExtractPageContent()
+					} else {
+						clearTimeout(ExtractorTimeout)
 					}
 					SaveSavedValues()
 				}
@@ -160,6 +173,32 @@
 			)
 			DivBox.appendChild(UI_ClearScrapedData)
 			DivBox.appendChild(document.createElement("br"))
+		//Scan frequency
+			let UI_InputRange_ScanFrequency = document.createElement("input")
+			UI_InputRange_ScanFrequency.type = "range"
+			UI_InputRange_ScanFrequency.min = "500"
+			UI_InputRange_ScanFrequency.max = "10000"
+			UI_InputRange_ScanFrequency.step = "500"
+			UI_InputRange_ScanFrequency.style.appearance = "auto"
+			UI_InputRange_ScanFrequency.value = SavedData.Settings.ScanFrequency.toString(10)
+			UI_InputRange_ScanFrequency.addEventListener(
+				"input",
+				function () {
+					let NumberValue = parseInt(this.value)
+					SavedData.Settings.ScanFrequency = NumberValue
+					SaveSavedValues()
+					UI_InputRange_ScanFrequency_Display.textContent = (NumberValue/1000).toFixed(1) + " Sec"
+				}
+			)
+			
+			
+			DivBox.appendChild(UI_InputRange_ScanFrequency)
+			
+			
+			UI_InputRange_ScanFrequency_Display = document.createElement("span")
+			UI_InputRange_ScanFrequency_Display.style.fontFamily = "monospace"
+			UI_InputRange_ScanFrequency_Display.appendChild(document.createTextNode((SavedData.Settings.ScanFrequency/1000).toFixed(1) + " Sec" ))
+			DivBox.appendChild(UI_InputRange_ScanFrequency_Display)
 		//Statistics
 			let StatisticsTable = document.createElement("table")
 			let StatisticsTable_Row_ScrapePageCount = document.createElement("tr")
@@ -185,6 +224,10 @@
 			UpdateUIInfoDisplay()
 	}
 	function ExtractPageContent() {
+		if (!SavedData.Settings.OnOffState) {
+			return
+		}
+		
 		let CollectedDataOfPage = {
 			PageURL: location.href.replace(/\?pvs=\d*$/),
 			PageContent: []
@@ -207,19 +250,22 @@
 				CollectedDataOfPage.PageContent.push(Data)
 			});
 			
-			let DuplicateItem = SavedData.ScrapedContent.find(PageOfContent => { //Find duplicates
+			let DuplicateItemIndex = SavedData.ScrapedContent.findIndex(PageOfContent => { //Find duplicates
 				return CollectedDataOfPage.PageURL == PageOfContent.PageURL
 			})
 			
-			if (typeof DuplicateItem == "undefined") { //If no dupes found, insert it.
+			if (DuplicateItemIndex == -1) { //If no dupes found, insert it.
 				SavedData.ScrapedContent.push(CollectedDataOfPage)
 				SaveSavedValues()
+			} else { //Otherwise replace what we already have with potentially a newer version
+				SavedData.ScrapedContent[DuplicateItemIndex] = CollectedDataOfPage
 			}
 
 		} else { //"gallery" page
 			
 			
 		}
+		ExtractorTimeout = setTimeout(ExtractPageContent, SavedData.Settings.ScanFrequency)
 	}
 	
 	function GetContentFromSection(node, Index) {
