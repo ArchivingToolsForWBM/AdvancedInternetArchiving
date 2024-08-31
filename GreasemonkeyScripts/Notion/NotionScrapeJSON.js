@@ -3,7 +3,7 @@
 // @namespace    https://*.notion.*/
 // @version      0.2
 // @description  try to take over the world!
-// @include      https://*.notion.site/*
+// @include      /https://[a-zA-Z\d_\-]+.notion.site/.*/
 // @grant        GM.setValue
 // @grant        GM.getValue
 // @grant        GM.registerMenuCommand
@@ -29,8 +29,9 @@
 		}
 		LoadSavedValues()
 	//Don't touch
-		let RegExpPreset_BlankOrJustSpaces = /^$[\s\u200B]*/
-		let RegExpPreset_ClassNotionBlockName = /notion-(?:text|image|column_list|(?:sub_)+header|toggle)-block/
+		const RegExpPreset_BlankOrJustSpaces = /^$[\s\u200B]*/
+		const RegExpPreset_ClassNotionBlockName = /notion-(?:text|image|column_list|(?:sub_)+header|toggle)-block/
+		const RegExpPreset_NotionPage = /https:\/\/[a-zA-Z\d_\-]+\.notion.[a-zA-Z\d_\-]+\/[a-zA-Z\d_\-]+/
 		
 		setInterval(RevealAll, 2000)
 		setTimeout(SpawnUI, 2000)
@@ -160,7 +161,7 @@
 			DivBox.appendChild(UI_CopyScrapeJson)
 		//Clear scraped data
 			let UI_ClearScrapedData = document.createElement("button")
-			UI_ClearScrapedData.textContent = "Clear Scraped data"
+			UI_ClearScrapedData.textContent = "Reset"
 			UI_ClearScrapedData.style.color = "#000000"
 			UI_ClearScrapedData.addEventListener(
 				"click",
@@ -253,24 +254,40 @@
 			PageContent: []
 		}
 		let ReferenceNode = document.querySelector(".layout-content") //Start at the title header
-		if (ReferenceNode != null) { //Rid out blank stuff
-			let Contents = [...ReferenceNode.parentElement.childNodes]
-			Contents = Contents.filter(ele => {
-				if (ele.innerHTML == "") {
-					return false
-				}
-				if (RegExpPreset_BlankOrJustSpaces.test(ele.textContent) && [...ele.querySelectorAll("img")].length == 0) {
-					return false
-				}
-				return true
-			})
+		if (ReferenceNode != null) { //"Content page
+				let Contents = [...ReferenceNode.parentElement.childNodes]
+			//Rid out blank stuff
+				Contents = Contents.filter(ele => {
+					if (ele.innerHTML == "") {
+						return false
+					}
+					if (RegExpPreset_BlankOrJustSpaces.test(ele.textContent) && [...ele.querySelectorAll("img")].length == 0) {
+						return false
+					}
+					return true
+				})
 			
 			let ExtractedPageContent = Contents.map((ContentThing, Index) => {
-				let Data = GetContentFromSection(ContentThing, Index)
+				let Data = ContentPage_GetContentFromSection(ContentThing, Index)
 				return (Data)
 			});
 			CollectedDataOfPage.PageContent = ExtractedPageContent
 			
+
+		} else { //"gallery" page. NOTE: does not fully extract lists that unloads based on scrolling position. Image gallery loads entirely (after all "view" buttons clicked)
+			let ReferenceNode = document.querySelector(".notion-scroller,vertical horizontal")
+			let Contents = [...ReferenceNode.childNodes]
+			Contents.shift()
+			Contents.pop()
+			
+			let ExtractedPageContent = Contents.map((Section, Index) => {
+				let OutputObject = GalleryPage_GetContentFromSection(Section, Index)
+				return OutputObject
+			})
+			
+			CollectedDataOfPage.PageContent = ExtractedPageContent
+		}
+		//Handle duplicates
 			let DuplicateItemIndex = SavedData.ScrapedContent.findIndex(PageOfContent => { //Find duplicates
 				return CollectedDataOfPage.PageURL == PageOfContent.PageURL
 			})
@@ -281,17 +298,46 @@
 			} else { //Otherwise replace what we already have with potentially a newer version
 				SavedData.ScrapedContent[DuplicateItemIndex] = CollectedDataOfPage
 			}
-
-		} else { //"gallery" page
-			
-			
-		}
+		
 		ExtractorTimeout = setTimeout(ExtractPageContent, SavedData.Settings.ScanFrequency)
 	}
-	
-	function GetContentFromSection(node, Index) {
+	function GalleryPage_GetContentFromSection(node, Index) {
 		let OutputObject = {
 			Type: "",
+			PageType: "GalleryPage"
+		}
+		if (Index == 0) { //header
+			let SubHeader = [...node.childNodes] //Parts of the header data
+			let ExtractedHeaderData = SubHeader.map(HeaderSection => {
+				let OutputObjectSection = {}
+				let Textdata = "";
+				try {
+					Textdata = HeaderSection.childNodes[1].innerText
+				} catch {}
+				let Links = ExtractLinks(HeaderSection)
+				let Images = ExtractImages(HeaderSection)
+				
+				if (!RegExpPreset_BlankOrJustSpaces.test(Textdata)) {
+					OutputObjectSection.Text = Textdata
+				}
+				if (Links.length != 0) {
+					OutputObjectSection.Links = Links
+				}
+				if (Images.length != 0) {
+					OutputObjectSection.Images = Images
+				}
+				return OutputObjectSection
+			});
+			OutputObject.Header = ExtractedHeaderData
+		}
+		
+		
+		return OutputObject
+	}
+	function ContentPage_GetContentFromSection(node, Index) {
+		let OutputObject = {
+			Type: "",
+			PageType: "PostPage",
 			Contents: []
 		}
 		//Identify type
@@ -314,7 +360,7 @@
 				} catch (e) {
 					return "Unknown"
 				}
-				
+				return "Other"
 				
 			})(node);
 
@@ -325,7 +371,7 @@
 				let TitleObject = {}
 				OutputObject.Type = "Header"
 				TitleObject.Title = node.textContent
-				TitleObject.Images = [...node.querySelectorAll("img")].map(Image => FormatNotionImageURL(FormatNotionImageURL(Image.src)))
+				TitleObject.Images = ExtractImages(node)
 				OutputObject.Contents.push(TitleObject)
 			} else if (OutputObject.Type == "Table") {
 				//Table
@@ -387,6 +433,18 @@
 					}
 				})
 				OutputObject.Contents = OutputNotionColumnConverted
+			} else if (OutputObject.Type) {
+				let MixedObject = {}
+				MixedObject.HTMLCode = node.innerHTML
+				let Links = ExtractLinks(node)
+				if (Links.length != 0) {
+					MixedObject.Links = Links
+				}
+				let Images = ExtractImages(node)
+				if (Images.length != 0) {
+					MixedObject.Images = Images
+				}
+				OutputObject.Contents.push(MixedObject)
 			}
 		//Done
 			return OutputObject
@@ -437,7 +495,7 @@
 					}
 					return OutputObject
 				} else if (BlockType == "notion-image-block") {
-					let Images = [...Block.querySelectorAll("img")].map(Image => FormatNotionImageURL(FormatNotionImageURL(Image.src)))
+					let Images = ExtractImages(Block)
 					return {Images: Images}
 				}
 			} catch {
@@ -529,16 +587,39 @@
 			return isHidden
 		}
 		function FormatNotionImageURL(string) {
-			let RegexToFindReplace = /^(https:\/\/[a-zA-Z0-9_\-]+\.notion\.site\/image\/https%3A%2F%2F(s3-us-west-2\.amazonaws\.com|prod-files-secure\.s3\.us-west-2\.amazonaws\.com)%2F(?:(?!&width=\d+).)*).*$/ //thank you https://stackoverflow.com/a/3850095/11030779 , match all string, up to but not including "&width=<number>"
+			let RegexToFindReplace = /^(https:\/\/[a-zA-Z\d_\-]+\.notion\.site\/image\/https%3A%2F%2F(s3-us-west-2\.amazonaws\.com|prod-files-secure\.s3\.us-west-2\.amazonaws\.com)%2F(?:(?!&width=\d+).)*).*$/ //thank you https://stackoverflow.com/a/3850095/11030779 , match all string, up to but not including "&width=<number>"
 			return string.replace(RegexToFindReplace, "$1")
 		}
-		function ExtractLinks(Node) {
-			let Links = [...Node.querySelectorAll("a")].filter(Link => {
+		function ExtractLinks(node) {
+			let Links = [...node.querySelectorAll("a")].filter(Link => {
 				if (typeof Link.href == "undefined") { //Failsafe if there are anchor tags without a link to another page
 					return false
 				}
+				if (RegExpPreset_BlankOrJustSpaces.test(Link.href)) {
+					return false
+				}
 				return true
-			}).map(Link => Link.href)
+			}).map(Link => {
+				let URL = Link.href
+				if (RegExpPreset_NotionPage.test(URL)) {
+					URL = URL.replace(/\?pvs=\d+/, "")
+				}
+				return URL
+			})
+			Links = [...new Set(Links)]
 			return Links
+		}
+		function ExtractImages(node) {
+			let Images = [...node.querySelectorAll("img")].filter(Image => {
+				if (typeof Image.src == "undefined") {
+					return false
+				}
+				return true
+			}).map(Image => {
+				let ConvertedNotionImage = FormatNotionImageURL(Image.src)
+				return ConvertedNotionImage
+			})
+			Images = [...new Set(Images)]
+			return Images
 		}
 })();
