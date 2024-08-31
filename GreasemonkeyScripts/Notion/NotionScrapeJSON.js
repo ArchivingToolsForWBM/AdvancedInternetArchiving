@@ -327,7 +327,7 @@
 					
 					return OutputTableRows
 				})
-				OutputObject.Contents.push(OutputTableObjectFormatted)
+				OutputObject.Contents = OutputTableObjectFormatted
 			} else if (OutputObject.Type == "ContentColumn") {
 				
 				let ContentColumn = [...node.childNodes[0].childNodes]
