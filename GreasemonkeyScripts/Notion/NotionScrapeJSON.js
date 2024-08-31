@@ -173,6 +173,24 @@
 			)
 			DivBox.appendChild(UI_ClearScrapedData)
 			DivBox.appendChild(document.createElement("br"))
+		//Table of settings
+			let UI_TableSettings = document.createElement("table")
+			
+			let UI_TableSettings_Row_ScanFrequency = document.createElement("tr")
+			UI_TableSettings.appendChild(UI_TableSettings_Row_ScanFrequency)
+			
+			let UI_TableSettings_Cell_ScanFrequency_Key = document.createElement("td")
+			UI_TableSettings_Cell_ScanFrequency_Key.style.padding = "5px"
+			UI_TableSettings_Cell_ScanFrequency_Key.appendChild(document.createTextNode("Scan frequency"))
+			UI_TableSettings_Cell_ScanFrequency_Key.style.alignContent = "center"
+			UI_TableSettings_Row_ScanFrequency.appendChild(UI_TableSettings_Cell_ScanFrequency_Key)
+			
+			let UI_TableSettings_Cell_ScanFrequency_Value = document.createElement("td")
+			UI_TableSettings_Cell_ScanFrequency_Value.style.padding = "5px"
+			UI_TableSettings_Cell_ScanFrequency_Value.style.textAlign = "center"
+			UI_TableSettings_Row_ScanFrequency.appendChild(UI_TableSettings_Cell_ScanFrequency_Value)
+			
+			DivBox.appendChild(UI_TableSettings)
 		//Scan frequency
 			let UI_InputRange_ScanFrequency = document.createElement("input")
 			UI_InputRange_ScanFrequency.type = "range"
@@ -190,15 +208,14 @@
 					UI_InputRange_ScanFrequency_Display.textContent = (NumberValue/1000).toFixed(1) + " Sec"
 				}
 			)
-			
-			
-			DivBox.appendChild(UI_InputRange_ScanFrequency)
-			
+			UI_TableSettings_Cell_ScanFrequency_Value.appendChild(UI_InputRange_ScanFrequency)
+			UI_TableSettings_Cell_ScanFrequency_Value.appendChild(document.createElement("br"))
 			
 			UI_InputRange_ScanFrequency_Display = document.createElement("span")
 			UI_InputRange_ScanFrequency_Display.style.fontFamily = "monospace"
+			UI_InputRange_ScanFrequency_Display.style.textAlign = "center"
 			UI_InputRange_ScanFrequency_Display.appendChild(document.createTextNode((SavedData.Settings.ScanFrequency/1000).toFixed(1) + " Sec" ))
-			DivBox.appendChild(UI_InputRange_ScanFrequency_Display)
+			UI_TableSettings_Cell_ScanFrequency_Value.appendChild(UI_InputRange_ScanFrequency_Display)
 		//Statistics
 			let StatisticsTable = document.createElement("table")
 			let StatisticsTable_Row_ScrapePageCount = document.createElement("tr")
