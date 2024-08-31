@@ -245,10 +245,11 @@
 				return true
 			})
 			
-			Contents.forEach((ContentThing, Index) => {
+			let ExtractedPageContent = Contents.map((ContentThing, Index) => {
 				let Data = GetContentFromSection(ContentThing, Index)
-				CollectedDataOfPage.PageContent.push(Data)
+				return (Data)
 			});
+			CollectedDataOfPage.PageContent = ExtractedPageContent
 			
 			let DuplicateItemIndex = SavedData.ScrapedContent.findIndex(PageOfContent => { //Find duplicates
 				return CollectedDataOfPage.PageURL == PageOfContent.PageURL
