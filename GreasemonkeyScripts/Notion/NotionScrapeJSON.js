@@ -167,6 +167,7 @@
 				function () {
 					if (window.confirm("Are you sure you want to clear it?")) {
 						SavedData.ScrapedContent = []
+						clearTimeout(ExtractorTimeout)
 						SavedData.OnOffState = false
 						UI_Button_OnOff.textContent = "Start"
 						SaveSavedValues()
