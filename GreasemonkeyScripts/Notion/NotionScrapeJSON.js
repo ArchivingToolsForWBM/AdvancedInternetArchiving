@@ -14,7 +14,7 @@
 	let SavedData = []
 	
 	let RegExpPreset_BlankOrJustSpaces = /^$[\s\u200B]*/
-	let RegExpPreset_ClassNotionBlockName = /notion-(?:text|image|column_list)-block/
+	let RegExpPreset_ClassNotionBlockName = /notion-(?:text|image|column_list|(?:sub_)+header|toggle)-block/
 	
 	setInterval(RevealAll, 2000)
 	setTimeout(ExtractPageContent, 4000)
@@ -107,7 +107,6 @@
 				return true
 			})
 			
-			let a = 0
 			Contents.forEach((ContentThing, Index) => {
 				let Data = GetContentFromSection(ContentThing, Index)
 				CollectedDataObject.PageContent.push(Data)
@@ -188,7 +187,7 @@
 							return {
 								Image: ImageURL
 							}
-						} else if (NotionBlockName == "notion-text-block") {
+						} else if (/notion-(?:text|(?:sub_)+header)-block/.test(NotionBlockName)) {
 							let OutputNotionBlock = {
 								Text: NotionBlock.innerText
 							}
@@ -200,9 +199,12 @@
 						} else if (NotionBlockName == "notion-column_list-block") {
 							let NotionListBlock = {Type: "List"}
 							let SubBlocksNode = NotionBlock.childNodes[0]
-							let OutputList = GetSubBlocks(SubBlocksNode)
+							let OutputList = GetListSubBlocks(SubBlocksNode)
 							NotionListBlock.Contents = OutputList
 							return NotionListBlock
+						} else if (NotionBlockName == "notion-toggle-block") {
+							let SubBlocksToggle = GetToggleBlockData(NotionBlock.childNodes[0].childNodes[1])
+							return SubBlocksToggle
 						}
 					} catch {
 						return {
@@ -227,7 +229,7 @@
 		
 	}
 	
-	function GetSubBlocks(node) {
+	function GetListSubBlocks(node) {
 		let ListOfBlocks = [...node.querySelectorAll(".notion-image-block,notion-text-block")]
 		OutputList = ListOfBlocks.map(Block => {
 			try {
@@ -257,6 +259,56 @@
 			}
 		})
 		return OutputList
+	}
+	function GetToggleBlockData(node) {
+		let Output = {Type: "Toggle"}
+		let ListOfDivs = [...node.childNodes]
+		let OutputToggleList = ListOfDivs.map((ToggleBlock, Index) => {
+			if ((!RegExpPreset_BlankOrJustSpaces.test(ToggleBlock.innerText)) && Index == 0) {
+				let Text = ToggleBlock.innerText
+				return {
+					Title: ToggleBlock.innerText
+				}
+			} else {
+				try {
+					let NotionBlocksOfToggle = GetNotionBlocks(ToggleBlock.childNodes[0])
+					return NotionBlocksOfToggle
+				} catch (e) {
+					return "Error! Unknown format"
+				}
+			}
+			
+		})
+		Output.ToggleItems = OutputToggleList
+		return Output
+	}
+	function GetNotionBlocks(node) {
+		let BlocksArray = [...node.childNodes]
+		let OutputObjectArr = BlocksArray.map(Block => {
+			try {
+				let BlockType = Block.getAttribute("class").match(RegExpPreset_ClassNotionBlockName)[0]
+				if (BlockType == "notion-text-block") {
+					let OutputObject = {
+						ToggleTitleText: Block.innerText,
+					}
+					let Links = ExtractLinks(Block)
+					if (Links.length != 0) {
+						OutputObject.Links = Links
+					}
+					return OutputObject
+				} else if (BlockType == "notion-image-block") {
+					let Images = [...Block.querySelectorAll("img")].map(Image => FormatNotionImageURL(FormatNotionImageURL(Image.src)))
+					return {Images: Images}
+				}
+			} catch {
+				return {
+					Error: "Error. Unknown format",
+					HTML: Block.innerHTML
+				}
+			}
+			
+		})
+		return OutputObjectArr
 	}
 	//Helper
 		function getElementsByText(ObjReference, RegexText, Tag) {
