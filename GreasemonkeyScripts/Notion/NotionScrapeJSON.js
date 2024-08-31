@@ -746,16 +746,36 @@
 			return Links
 		}
 		function ExtractImages(node) {
-			let Images = [...node.querySelectorAll("img")].filter(Image => {
-				if (typeof Image.src == "undefined") {
-					return false
+			let URLOutput = []
+			let Images = [...node.querySelectorAll("*")].forEach(ele => {
+				let OutputString = ""
+				if (ele.tagName == "IMG") {
+					if (typeof ele.src != "undefined") {
+						URLOutput.push(ele.src)
+					}
 				}
-				return true
-			}).map(Image => {
-				let ConvertedNotionImage = FormatNotionImageURL(Image.src)
-				return ConvertedNotionImage
+				try {
+					let TLD = window.location.href.match(/https?:\/\/[a-zA-Z\d-\.]+/)[0]
+					let BackgroundImgURL = ele.style.backgroundImage
+					if (/url\(\".*"\)/.test(BackgroundImgURL)) {
+						BackgroundImgURL = BackgroundImgURL.replace(/url\(\"/, "").replace(/\"\)$/, "")
+						if (!/^https?:\/\//.test(BackgroundImgURL)) {
+							OutputString = TLD + BackgroundImgURL
+						} else {
+							OutputString = BackgroundImgURL
+						}
+					}
+				} catch {}
+				
+				
+				if (OutputString != "") {
+					URLOutput.push(OutputString)
+				}
 			})
-			Images = [...new Set(Images)]
-			return Images
+			
+			
+			
+			URLOutput = [...new Set(URLOutput)]
+			return URLOutput
 		}
 })();
