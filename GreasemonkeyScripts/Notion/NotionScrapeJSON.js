@@ -33,7 +33,7 @@
 		const RegExpPreset_ClassNotionBlockName = /notion-(?:text|image|column_list|(?:sub_)+header|toggle)-block/
 		const RegExpPreset_NotionPage = /https:\/\/[a-zA-Z\d_\-]+\.notion.[a-zA-Z\d_\-]+\/[a-zA-Z\d_\-]+/
 		
-		setInterval(RevealAll, 2000)
+		setTimeout(RevealAll, 2000)
 		setTimeout(SpawnUI, 2000)
 		let ExtractorTimeout = setTimeout(ExtractPageContent, SavedData.Settings.ScanFrequency)
 	//Elements to remember (best not to touch)
@@ -266,14 +266,13 @@
 					}
 					return true
 				})
+			//Extract
+				let ExtractedPageContent = Contents.map((ContentThing, Index) => {
+					let Data = ContentPage_GetContentFromSection(ContentThing, Index)
+					return (Data)
+				});
+				CollectedDataOfPage.PageContent = ExtractedPageContent
 			
-			let ExtractedPageContent = Contents.map((ContentThing, Index) => {
-				let Data = ContentPage_GetContentFromSection(ContentThing, Index)
-				return (Data)
-			});
-			CollectedDataOfPage.PageContent = ExtractedPageContent
-			
-
 		} else { //"gallery" page. NOTE: does not fully extract lists that unloads based on scrolling position. Image gallery loads entirely (after all "view" buttons clicked)
 			let ReferenceNode = document.querySelector(".notion-scroller,vertical horizontal")
 			let Contents = [...ReferenceNode.childNodes]
@@ -433,22 +432,159 @@
 					}
 				})
 				OutputObject.Contents = OutputNotionColumnConverted
-			} else if (OutputObject.Type) {
-				let MixedObject = {}
-				MixedObject.HTMLCode = node.innerHTML
-				let Links = ExtractLinks(node)
-				if (Links.length != 0) {
-					MixedObject.Links = Links
-				}
-				let Images = ExtractImages(node)
-				if (Images.length != 0) {
-					MixedObject.Images = Images
-				}
-				OutputObject.Contents.push(MixedObject)
+			} else if (OutputObject.Type == "Other") {
+				let Blocks = GetBlocksRecusively(node.childNodes[0])
+				
+				OutputObject.Contents = Blocks
 			}
 		//Done
 			return OutputObject
 	}
+	function GetBlocksRecusively(node) {
+		let ListOfElements = [...node.childNodes].filter(ele => {
+			let Text = ele.innerText
+			let Images = []
+			try {
+				Images = [...ele.querySelectorAll("img")]
+			} catch {}
+			if (RegExpPreset_BlankOrJustSpaces.test(Text) && Images.length == 0) {
+				return false
+			}
+			return true
+		})
+		let OutputBlocksExtracted = ListOfElements.map(Content => {
+			//Handle block type stated in the class
+				let SubContent = {
+					Type: "NestedBlocks",
+					Data: {}
+				}
+				//If it is just plaintext
+					if (typeof Content.tagName == "undefined") {
+						SubContent.Data = {
+							PlainText: Content.textContent
+						}
+						return SubContent
+					}
+				let ClassText = (Content.getAttribute("class")) ?? ""
+				try {
+					ClassText = ClassText.match(/notion-[a-zA-Z\d_\-]+-block/)[0]
+				} catch {
+					ClassText = ""
+				}
+			//Dive deeper until a block not containing any other blocks
+				if (/notion-(?:image|text|table|collection_view)-block/.test(ClassText)) { //If its a block that CANNOT contain another block, we stop diving deeper
+					if (ClassText == "notion-image-block") {
+						let Images = ExtractImages(Content)
+						SubContent.Data = {
+							NotionBlockType: ClassText,
+							Images: Images
+						}
+					} else if (ClassText == "notion-table-block") {
+						let Table = Content.querySelector("table")
+						let TableHTMLCode = Table.innerHTML
+						SubContent.Data = {
+							NotionBlockType: ClassText,
+							HTMLCode: TableHTMLCode
+						}
+						let Links = ExtractLinks(Content)
+						if (Links.length != 0) {
+							SubContent.Data.Links = Links
+						}
+						let Images = ExtractImages(Content)
+						if (Images.length != 0) {
+							SubContent.Data.Images = Images
+						}
+					} else if (ClassText == "notion-text-block") {
+						try {
+							let HTMLCode = Content.childNodes[0].childNodes[0].childNodes[0].innerHTML //HTML code can contain images that are emojis
+							SubContent.Data = {
+								NotionBlockType: ClassText,
+								HTMLCode: HTMLCode
+							}
+							let Links = ExtractLinks(Content)
+							if (Links.length != 0) {
+								SubContent.Data.Links = Links
+							}
+							let Images = ExtractImages(Content)
+							if (Images.length != 0) {
+								SubContent.Data.Images = Images
+							}
+						} catch (e) {
+							SubContent.Data = {
+								Error: "Error on GetBlocksRecusively function - unknown format"
+							}
+						}
+						
+					} else if (ClassText == "notion-collection_view-block") {
+						let CollectionViewObject = {
+							Title: "",
+							ListOfCollectionItems: []
+						}
+						let CollectionViewParts = [...Content.childNodes]
+						CollectionViewParts = CollectionViewParts.filter(Parts => {
+							let Text = Parts.innerText
+							let Images = [...Parts.querySelectorAll("img")]
+							if (RegExpPreset_BlankOrJustSpaces.test(Text) && Images.length == 0) {
+								return false
+							}
+							return true
+						})
+						let OutputCollectionView = CollectionViewParts.map((Part, Index) => {
+							if (Index == 0) {
+								return {
+									CollectionViewPartType: "Title",
+									CollectionViewPartTitle: Part.textContent
+								}
+							} else {
+								try {
+									let CollectionItems = [...Part.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes]
+									CollectionItems = CollectionItems.filter(Item => {
+										let Text = Item.innerText
+										let Images = [...Item.querySelectorAll("img")]
+										if (RegExpPreset_BlankOrJustSpaces.test(Text) && Images.length == 0) {
+											return false
+										}
+										return true
+									})
+									let OutputCollectionItems = CollectionItems.map(Item => {
+										let ItemOutput = {Type: "CollectionViewItem"}
+										let Text = Item.innerText
+										if (!RegExpPreset_BlankOrJustSpaces.test(Text)) {
+											ItemOutput.Text = Text
+										}
+										let Links = ExtractLinks(Item)
+										if (Links.length != 0) {
+											ItemOutput.Links = Links
+										}
+										let Images = ExtractImages(Item)
+										if (Images.length != 0) {
+											ItemOutput.Images = Images
+										}
+										return ItemOutput
+									})
+									return OutputCollectionItems
+								} catch {
+									return {
+										Error: "Unknown collection view format"
+									}
+								}
+							}
+						})
+						SubContent.Data = OutputCollectionView
+					}
+				} else {
+					let NestedBlock = {
+						NotionBlockType: ClassText
+					}
+					NestedBlock.Contains = GetBlocksRecusively(Content)
+					SubContent.Data = NestedBlock
+				}
+			//done
+				return SubContent
+		})
+		return OutputBlocksExtracted
+	}
+		
 	function GetListSubBlocks(node) {
 		let ListOfBlocks = [...node.querySelectorAll(".notion-image-block,notion-text-block")]
 		OutputList = ListOfBlocks.map(Block => {
