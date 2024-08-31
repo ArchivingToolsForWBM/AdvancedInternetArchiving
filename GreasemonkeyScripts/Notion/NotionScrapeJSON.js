@@ -213,7 +213,7 @@
 						}
 					}
 				})
-				OutputObject.Contents.push(OutputNotionColumnConverted)
+				OutputObject.Contents = OutputNotionColumnConverted
 			}
 		//Done
 			return OutputObject
