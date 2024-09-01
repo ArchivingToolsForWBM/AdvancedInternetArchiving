@@ -478,7 +478,7 @@
 					ClassText = ""
 				}
 			//Dive deeper until a block not containing any other blocks
-				if (/notion-(?:image|text|table|toggle|collection_view)-block/.test(ClassText)) { //If its a block that CANNOT contain another block, we stop diving deeper
+				if (/notion-(?:image|text|table|toggle|collection_view|column_list)-block/.test(ClassText)) { //If its a block that CANNOT contain another block, we stop diving deeper
 					if (ClassText == "notion-image-block") {
 						let Images = ExtractImages(Content)
 						SubContent.Data = {
@@ -538,7 +538,6 @@
 						let OutputCollectionView = CollectionViewParts.map((Part, Index) => {
 							if (Index == 0) {
 								return {
-									CollectionViewPartType: "Title",
 									CollectionViewPartTitle: Part.textContent
 								}
 							} else {
@@ -576,7 +575,11 @@
 								}
 							}
 						})
-						SubContent.Data = OutputCollectionView
+						SubContent.Data = {
+							Type: "CollectionView",
+							BlockType: ClassText,
+							Data: OutputCollectionView
+						}
 					} else if (ClassText == "notion-toggle-block") {
 						try {
 							let ToggleContents = [...Content.childNodes[0].childNodes[1].childNodes]
@@ -601,6 +604,25 @@
 							}
 						}
 						
+					} else if (ClassText == "notion-column_list-block") {
+						let a = 0
+						try {
+							let ColumnListItems =Content.childNodes[0]
+							//^Make sure you don't dive in too deep with additional ".childNodes[0]"s else you could skip and miss
+							// potentially other Content (like another content you bypassed .childNodes[1])
+							//
+							// Therefore it's best to test them to mitigate indentation of the output but not so much it skips
+							let ColumnListContent = GetBlocksRecusively(ColumnListItems)
+							SubContent.Data = {
+								Type: ClassText,
+								Data: ColumnListContent
+							}
+							
+						} catch {
+							return {
+								Error: "Unknown column list block format"
+							}
+						}
 					}
 				} else {
 					let NestedBlock = {
@@ -782,7 +804,8 @@
 				let OutputString = ""
 				if (ele.tagName == "IMG") {
 					if (typeof ele.src != "undefined") {
-						URLOutput.push(ele.src)
+						let ConvertedURL = FormatNotionImageURL(ele.src)
+						URLOutput.push(ConvertedURL)
 					}
 				}
 				try {
@@ -796,16 +819,13 @@
 							OutputString = BackgroundImgURL
 						}
 					}
+					OutputString = FormatNotionImageURL(OutputString)
 				} catch {}
-				
 				
 				if (OutputString != "") {
 					URLOutput.push(OutputString)
 				}
 			})
-			
-			
-			
 			URLOutput = [...new Set(URLOutput)]
 			return URLOutput
 		}
