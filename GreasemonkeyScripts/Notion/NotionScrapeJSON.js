@@ -2,7 +2,7 @@
 // @name         Notion-scrape
 // @namespace    https://*.notion.*/
 // @version      0.2
-// @description  try to take over the world!
+// @description  Collects notion content
 // @include      /https://[a-zA-Z\d_\-]+.notion.site/.*/
 // @grant        GM.setValue
 // @grant        GM.getValue
@@ -357,7 +357,11 @@
 						return "ContentColumn"
 					}
 					
-					let a = 0
+					let PotentialTitle = node.childNodes[0].childNodes[0]
+					let Element_H1 = PotentialTitle.querySelector("h1")
+					if (Element_H1 != null) {
+						return "Header"
+					}
 				} catch (e) {
 					return "Unknown"
 				}
@@ -367,7 +371,7 @@
 
 			
 		//Extract differently based on type
-			if (Index == 0) {
+			if (OutputObject.Type == "Header") {
 				//Image/mugshot and title.
 				let TitleObject = {}
 				OutputObject.Type = "Header"
