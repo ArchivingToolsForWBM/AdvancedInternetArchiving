@@ -1,0 +1,188 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+			input { font-family: monospace;}
+			
+			label, input[type='checkbox'], input[type='radio'] {
+				cursor: pointer;
+			}
+		</style>
+	</head>
+<body>
+<p>Works similarly to Bsky JSON organizer tool. If you don't know here, please refer to the other.</p>
+<p>As always, dupes within each text area are ignored (first of the copies will exists), and the latter text area will prioritize what exists in the output</p>
+<table>
+	<tr>
+		<th>Items to replace</th>
+		<th>Items to replace with</th>
+	</tr>
+	<tr>
+		<td><textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" oninput="UpdateNotified()" cols="50" rows="30" id="JSONInput_ToBeReplaced"></textarea></td>
+		<td><textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" oninput="UpdateNotified()" cols="50" rows="30" id="JSONInput_ReplaceWith"></textarea></td>
+	</tr>
+	<tr>
+		<td>
+			<span style="font-family: monospace">Number of unique items: <span id="Output_Statistic_ToReplace">0</span></span>
+		</td>
+		<td>
+			<span style="font-family: monospace">Number of unique items: <span id="Output_Statistic_ReplaceWith">0</span></span>
+		</td>
+	</tr>
+</table>
+	Sort: <select onchange="MainCode()">
+		<option id="Sort_None" selected>Same order as entered in first textarea</option>
+		<option id="Sort_ByURL">By URL</option>
+	</select><label><input type="checkbox" id="Sort_Reverse" onchange="MainCode()">Reverse</label><br>
+	Format: <select onchange="MainCode()">
+		<option id="JSONOutputFormat_Compressed">Compressed</option>
+		<option id="JSONOutputFormat_HumanReadable" selected>Human-readable</option>
+	</select>
+	<hr>
+	<span style="font-family: monospace">Count: <span id="Output_Statistic_OutputCount">0</span></span><br>
+	<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; color: #ffffff; background-color: #000000" readonly cols="200" rows="30" id="OutputText"></textarea>
+	<div><button onclick="setClipboard(document.getElementById('OutputText').value)">Copy</button><span></span></div>
+<script>
+	let ToBeReplacedList = []
+	let ReplaceWithList = []
+	let OutputList = []
+	let IsInputChanged = false
+	function UpdateNotified() {
+		IsInputChanged = true
+		MainCode()
+	}
+	function MainCode() {
+		let ErrorState = false
+		document.getElementById("OutputText").value = ""
+		document.getElementById("Output_Statistic_ToReplace").textContent = "0"
+		document.getElementById("Output_Statistic_ReplaceWith").textContent = "0"
+		document.getElementById("Output_Statistic_OutputCount").textContent = "0"
+		
+		if (IsInputChanged) {
+			//Verify entered information
+				if (document.getElementById("JSONInput_ToBeReplaced").value != "") {
+					try {
+						ToBeReplacedList = JSON.parse(document.getElementById("JSONInput_ToBeReplaced").value)
+						ToBeReplacedList = [...ToBeReplacedList]
+						
+						
+					} catch {
+						document.getElementById("OutputText").value += "Error! JSON not valid or compatible format on the \"to replace\".\n"
+						ErrorState = true
+					}
+				}
+				if (document.getElementById("JSONInput_ReplaceWith").value != "") {
+					try {
+						ReplaceWithList = JSON.parse(document.getElementById("JSONInput_ReplaceWith").value)
+						ToBeReplacedList = [...ToBeReplacedList]
+						
+						
+					} catch {
+						document.getElementById("OutputText").value += "Error! JSON not valid or compatible format on the \"ReplaceWith\"."
+						ErrorState = true
+					}
+				}
+				if (ErrorState) {
+					return
+				}
+			//Rid duplicates in each
+				ToBeReplacedList = RemoveDupes(ToBeReplacedList)
+				ReplaceWithList = RemoveDupes(ReplaceWithList)
+			//Statistics
+				document.getElementById("Output_Statistic_ToReplace").textContent = ToBeReplacedList.length.toString(10)
+				document.getElementById("Output_Statistic_ReplaceWith").textContent = ReplaceWithList.length.toString(10)
+			//Latter textarea items that matches with the former are prioritized
+				OutputList = ToBeReplacedList.map(Item => Item) //Make a shallow copy
+				ReplaceWithList.forEach(ReplaceWithItem => {
+					let ItemIndex = OutputList.findIndex(NonDupe => {
+						return NonDupe.PageURL == ReplaceWithItem.PageURL
+					})
+					
+					if (ItemIndex == -1) { //Match not found
+						OutputList.push(ReplaceWithItem)
+					} else { //Match found
+						OutputList[ItemIndex] = ReplaceWithItem
+					}
+				})
+				document.getElementById("Output_Statistic_OutputCount").textContent = OutputList.length.toString(10)
+			//Default back to false so changing the sorts and other stuff will skip the unnecessary re-processing
+				IsInputChanged = false
+		}
+		//Handle output formatting
+		//Sorting
+			let SortReverseFlag = 1
+			let OutputData = OutputList
+			if (document.getElementById("Sort_Reverse").checked) {
+				SortReverseFlag = -1
+			}
+			if (document.getElementById("Sort_ByURL").selected) {
+				OutputData = OutputList.toSorted((a,b) => {
+					if (a.PageURL === b.PageURL) {
+						return 0;
+					} else {
+						return ((a.PageURL < b.PageURL) ? -1 : 1)*SortReverseFlag
+					}
+				})
+			}
+		//Display
+			let OutputJSON = ""
+			if (document.getElementById("JSONOutputFormat_Compressed").selected) {
+				OutputJSON = JSON.stringify(OutputData)
+			} else {
+				OutputJSON = JSON.stringify(OutputData, null, " ")
+			}
+			document.getElementById("OutputText").value = OutputJSON
+	}
+	function RemoveDupes(Arr) {
+		let OutputArr = []
+		Arr.forEach(InputElement => {
+			let MatchedIndex = OutputArr.findIndex(OutputElement => InputElement.PageURL == OutputElement.PageURL)
+			if (MatchedIndex == -1) {
+				OutputArr.push(InputElement)
+			}
+		})
+		return OutputArr
+	}
+	//Copy text from textarea
+		function DeleteCopyMessage(HTMLElement) {
+			HTMLElement.textContent = ""
+		}
+		
+		function setClipboard(String) {
+			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
+			const type = "text/plain";
+			const blob = new Blob([String], { type });
+			const data = [new ClipboardItem({ [type]: blob })];
+			
+			let EventElement = event.target
+			let CopiedMessage = EventElement.parentNode.querySelector("span")
+		
+			navigator.clipboard.write(data).then(
+				((EventElement) => {
+				/* success */
+					CopiedMessage.textContent = "Copied!"
+					CopiedMessage.style.color = "#00FF00"
+					setTimeout(DeleteCopyMessage.bind(null, CopiedMessage), 1500)
+				}).bind(null, EventElement),
+				((EventElement) => {
+				/* failure */
+					CopiedMessage.textContent = "Failed!"
+					CopiedMessage.style.color = "#FF0000"
+					setTimeout(DeleteCopyMessage.bind(null, CopiedMessage), 1500)
+				}).bind(null, EventElement)
+			);
+		}
+</script>
