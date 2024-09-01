@@ -14,8 +14,11 @@
 	//Notes
 	//-Make sure you do not click on anything that would bring up a popup box of another page. This script runs a code that clicks every "show more"
 	// buttons at an interval to ensure all its content is loaded prior to grabbing content. To avoid this, always open the links in a new tab.
-	
-	
+	//
+	//Note to self
+	//-Elements of notion blocks conveniently have [data-block-id="<NotionBlockId>"] in the HTML tags, where <NotionBlockId> is the ID formatted
+	// ********-****-****-****-************ where the "*" is a number and letter (both upper and lowercase).
+	//
 	
 	
 	
@@ -251,223 +254,117 @@
 			return
 		}
 		
-		let CollectedDataOfPage = {
+		let OutputPageData = {
 			PageURL: location.href.replace(/\?pvs=\d*$/),
-			PageContent: []
+			PageContent: {}
 		}
-		let ReferenceNode = document.querySelector(".layout-content") //Start at the title header
-		if (ReferenceNode != null) { //"Content page
-				let Contents = [...ReferenceNode.parentElement.childNodes]
-			//Rid out blank stuff
-				Contents = Contents.filter(ele => {
-					if (ele.innerHTML == "") {
-						return false
-					}
-					if (RegExpPreset_BlankOrJustSpaces.test(ele.textContent) && [...ele.querySelectorAll("img")].length == 0) {
-						return false
-					}
-					return true
-				})
-			//Extract
-				let ExtractedPageContent = Contents.map((ContentThing, Index) => {
-					let Data = ContentPage_GetContentFromSection(ContentThing, Index)
-					return (Data)
-				});
-				CollectedDataOfPage.PageContent = ExtractedPageContent
-			
-		} else { //"gallery" page. NOTE: does not fully extract lists that unloads based on scrolling position. Image gallery loads entirely (after all "view" buttons clicked)
-			let ReferenceNode = document.querySelector(".notion-scroller,vertical horizontal")
-			let Contents = [...ReferenceNode.childNodes]
-			Contents.shift()
-			Contents.pop()
-			
-			let ExtractedPageContent = Contents.map((Section, Index) => {
-				let OutputObject = GalleryPage_GetContentFromSection(Section, Index)
-				return OutputObject
-			})
-			
-			CollectedDataOfPage.PageContent = ExtractedPageContent
+		
+		let ReferenceNode_HeaderStuff = null
+		try {
+			ReferenceNode_HeaderStuff = document.querySelector(".notion-frame").childNodes[0].childNodes[0].childNodes[1].childNodes[1]
+		} catch {}
+		let ReferenceNode_MainContentBlocks = null
+		try {
+			ReferenceNode_MainContentBlocks = document.querySelector(".notion-frame").childNodes[0].childNodes[0]
+		} catch {
+			window.alert("Unknown page type for getting main content blocks")
+			return
 		}
+		OutputPageData.PageContent.PageHeader = []
+		OutputPageData.PageContent.PageHeader = GetPageHeader(ReferenceNode_HeaderStuff)
+		OutputPageData.PageContent.ContentBlocks = GetBlocksRecusively(ReferenceNode_MainContentBlocks)
+		
 		//Handle duplicates
 			let DuplicateItemIndex = SavedData.ScrapedContent.findIndex(PageOfContent => { //Find duplicates
-				return CollectedDataOfPage.PageURL == PageOfContent.PageURL
+				return OutputPageData.PageURL == PageOfContent.PageURL
 			})
 			
 			if (DuplicateItemIndex == -1) { //If no dupes found, insert it.
-				SavedData.ScrapedContent.push(CollectedDataOfPage)
+				SavedData.ScrapedContent.push(OutputPageData)
 				SaveSavedValues()
 			} else { //Otherwise replace what we already have with potentially a newer version
-				SavedData.ScrapedContent[DuplicateItemIndex] = CollectedDataOfPage
+				SavedData.ScrapedContent[DuplicateItemIndex] = OutputPageData
 			}
 		
 		ExtractorTimeout = setTimeout(ExtractPageContent, SavedData.Settings.ScanFrequency)
 	}
-	function GalleryPage_GetContentFromSection(node, Index) {
-		let OutputObject = {
-			Type: "",
-			PageType: "GalleryPage"
-		}
-		if (Index == 0) { //header
-			let SubHeader = [...node.childNodes] //Parts of the header data
-			let ExtractedHeaderData = SubHeader.map(HeaderSection => {
-				let OutputObjectSection = {}
-				let Textdata = "";
-				try {
-					Textdata = HeaderSection.childNodes[1].innerText
-				} catch {}
-				let Links = ExtractLinks(HeaderSection)
-				let Images = ExtractImages(HeaderSection)
-				
-				if (!RegExpPreset_BlankOrJustSpaces.test(Textdata)) {
-					OutputObjectSection.Text = Textdata
-				}
-				if (Links.length != 0) {
-					OutputObjectSection.Links = Links
-				}
-				if (Images.length != 0) {
-					OutputObjectSection.Images = Images
-				}
-				return OutputObjectSection
-			});
-			OutputObject.Header = ExtractedHeaderData
-		}
-		
-		
-		return OutputObject
-	}
-	function ContentPage_GetContentFromSection(node, Index) {
-		let OutputObject = {
-			Type: "",
-			PageType: "PostPage",
-			Contents: []
-		}
-		//Identify type
-			OutputObject.Type = (() => {
-				try {
-					let Role = node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].role ?? ""
-					if (Role == "table") {
-						return "Table"
-					}
-					let ColumnGalleryNode = [...node.childNodes[0].childNodes]
-					let NonNotionBlock = ColumnGalleryNode.find(ColumnGalleryBlock => { //Try to find a thing that isn't a notion block content
-						return (!RegExpPreset_ClassNotionBlockName.test(ColumnGalleryBlock.getAttribute("class")))
-					})
-					
-					if (typeof NonNotionBlock == "undefined") {
-						return "ContentColumn"
-					}
-					
-					let PotentialTitle = node.childNodes[0].childNodes[0]
-					let Element_H1 = PotentialTitle.querySelector("h1")
-					if (Element_H1 != null) {
-						return "Header"
-					}
-				} catch (e) {
-					return "Unknown"
-				}
-				return "Other"
-				
-			})(node);
-
-			
-		//Extract differently based on type
-			if (OutputObject.Type == "Header") {
-				//Image/mugshot and title.
-				let TitleObject = {}
-				OutputObject.Type = "Header"
-				TitleObject.Title = node.textContent
-				TitleObject.Images = ExtractImages(node)
-				OutputObject.Contents.push(TitleObject)
-			} else if (OutputObject.Type == "Table") {
-				//Table
-				let TableRows = [...node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes]
-				OutputTableObjectFormatted = TableRows.map(Row => {
-					let OutputTableRows = {}
-					let Cells = [...Row.childNodes[0].childNodes]
-					OutputTableRows.TableKey = Cells[0].textContent
-					OutputTableRows.TableValue = {
-						Text: Cells[1].innerText
-					}
-					try {
-						OutputTableRows.TableValue.HTMLCode = Cells[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].innerHTML ?? "?" //SVG, background images, images, so innerHTML works here.
-					} catch {}
-					let Links = ExtractLinks(Cells[1])
-					if (Links.length != 0) {
-						OutputTableRows.Links = Links
-					}
-					
-					return OutputTableRows
-				})
-				OutputObject.Contents = OutputTableObjectFormatted
-			} else if (OutputObject.Type == "ContentColumn") {
-				
-				let ContentColumn = [...node.childNodes[0].childNodes]
-				OutputNotionColumnConverted = ContentColumn.map(NotionBlock => {
-					try {
-						let NotionBlockName = (NotionBlock.getAttribute("class")).match(RegExpPreset_ClassNotionBlockName)[0]
-						if (NotionBlockName == "notion-image-block") {
-							let Image = NotionBlock.querySelector("img")
-							let ImageURL = FormatNotionImageURL(Image.src)
-							return {
-								Image: ImageURL
-							}
-						} else if (/notion-(?:text|(?:sub_)+header)-block/.test(NotionBlockName)) {
-							let OutputNotionBlock = {
-								Text: NotionBlock.innerText
-							}
-							let Links = ExtractLinks(NotionBlock)
-							if (Links.length != 0) {
-								OutputNotionBlock.Links = Links
-							}
-							return OutputNotionBlock
-						} else if (NotionBlockName == "notion-column_list-block") {
-							let NotionListBlock = {Type: "List"}
-							let SubBlocksNode = NotionBlock.childNodes[0]
-							let OutputList = GetListSubBlocks(SubBlocksNode)
-							NotionListBlock.Contents = OutputList
-							return NotionListBlock
-						} else if (NotionBlockName == "notion-toggle-block") {
-							let SubBlocksToggle = GetToggleBlockData(NotionBlock.childNodes[0].childNodes[1])
-							return SubBlocksToggle
-						}
-					} catch {
-						return {
-							Error: "Unknown ContentColumn format",
-							HTMLContent: NotionBlock.innerHTML
-						}
-					}
-				})
-				OutputObject.Contents = OutputNotionColumnConverted
-			} else if (OutputObject.Type == "Other") {
-				let Blocks = GetBlocksRecusively(node.childNodes[0])
-				
-				OutputObject.Contents = Blocks
+	function GetPageHeader(node) {
+		let OutputStuff = [...node.childNodes].filter(ele => {
+			let IsNotationPageBlockExists = ele.querySelector(".notion-page-block")
+			if (IsNotationPageBlockExists == null) {
+				return false
 			}
-		//Done
-			return OutputObject
+			return true
+		})
+		OutputStuff.pop() //Remove content page part
+		
+		OutputStuff = OutputStuff.map(ele => {
+			let ReturnedObject = {
+				HTMLCode: ele.innerHTML
+			}
+			let WhatToGetFrom = ele
+			let Table = ele.querySelector("div[role=table]")
+			if (Table != null) {
+				WhatToGetFrom = Table
+			}
+			let Text = ExtractInnerText(WhatToGetFrom)
+			if (Text != null) {
+				ReturnedObject.Text = Text
+			}
+			let Links = ExtractLinks(WhatToGetFrom)
+			if (Links.length != 0) {
+				ReturnedObject.Links = Links
+			}
+			let Images = ExtractImages(WhatToGetFrom)
+			if (Images.length != 0) {
+				ReturnedObject.Images = Images
+			}
+			return ReturnedObject
+		});
+		return OutputStuff
 	}
 	function GetBlocksRecusively(node) {
+		//Recursive function, the main code that grabs main constent stuff.
+		
 		FunctionRecursionCounter++
 		if (FunctionRecursionCounter >= FunctionRecursionCounter_Limit) {
 			window.alert("GetBlocksRecusively maxed out the recusion limit")
 		}
 		let ListOfElements = [...node.childNodes].filter(ele => {
-			let Text = ele.innerText
-			let Images = []
 			try {
-				Images = [...ele.querySelectorAll("img")]
-			} catch {}
-			if (RegExpPreset_BlankOrJustSpaces.test(Text) && Images.length == 0) {
+				if (typeof ele.tagName == "undefined" && (!RegExpPreset_BlankOrJustSpaces.test(ele.textContent))) {
+					return true
+				}
+				let IsThereANotionBlockDownThisBranch = ele.querySelector("[data-block-id]")
+				let CurrentEleIsDataBlock = ele.getAttribute("data-block-id")
+				
+				let IsSelfAnImage = false
+				if (typeof ele.tagName != "undefined") {
+					if (ele.tagName == "IMG") {
+						IsSelfAnImage = true
+					}
+				}
+				
+				if ((IsThereANotionBlockDownThisBranch == null) && (CurrentEleIsDataBlock == null) && (!IsNodeContainingSomething(ele)) && (!IsSelfAnImage)) {
+					return false
+				}
+			} catch {
 				return false
 			}
 			return true
 		})
+		//DEBUG: Content.querySelector("data-block-id")
 		let OutputBlocksExtracted = ListOfElements.map(Content => {
 			//Handle block type stated in the class
 				let SubContent = {
-					Type: "NestedBlocks",
+					NotionBlockType: "",
+					NotionBlockId: "",
 					Data: {}
 				}
+				try {
+					SubContent.NotionBlockId = Content.getAttribute("data-block-id") ?? "" //Get block ID
+				} catch {}
+				
 				//If it is just plaintext
 					if (typeof Content.tagName == "undefined") {
 						SubContent.Data = {
@@ -475,26 +372,33 @@
 						}
 						return SubContent
 					}
-				let ClassText = (Content.getAttribute("class")) ?? ""
-				try {
-					ClassText = ClassText.match(/notion-[a-zA-Z\d_\-]+-block/)[0]
-				} catch {
-					ClassText = ""
-				}
+					if (Content.tagName == "IMG") {
+						let Images = ExtractImages(Content.parentElement)
+						SubContent.Data = {
+							Images: Images
+						}
+						return SubContent
+					}
+				//Identify class
+					let ClassText = (Content.getAttribute("class")) ?? ""
+					try {
+						ClassText = ClassText.match(/notion-[a-zA-Z\d_\-]+-block/)[0]
+					} catch {
+						ClassText = ""
+					}
+					SubContent.NotionBlockType = ClassText
 			//Dive deeper until a block not containing any other blocks
-				if (/notion-(?:image|text|table|toggle|collection_view|column_list)-block/.test(ClassText)) { //If its a block that CANNOT contain another block, we stop diving deeper
+				if (/notion-(?:callout|collection_view|column_list|image|table|text|toggle)-block/.test(ClassText)) { //If its a block that CANNOT contain another block, we stop diving deeper
 					if (ClassText == "notion-image-block") {
 						let Images = ExtractImages(Content)
 						SubContent.Data = {
-							NotionBlockType: ClassText,
 							Images: Images
 						}
 					} else if (ClassText == "notion-table-block") {
 						let Table = Content.querySelector("table")
-						let TableHTMLCode = Table.innerHTML
+						let HTMLCode = Table.innerHTML
 						SubContent.Data = {
-							NotionBlockType: ClassText,
-							HTMLCode: TableHTMLCode
+							HTMLCode: HTMLCode
 						}
 						let Links = ExtractLinks(Content)
 						if (Links.length != 0) {
@@ -508,7 +412,6 @@
 						try {
 							let HTMLCode = Content.childNodes[0].childNodes[0].childNodes[0].innerHTML //HTML code can contain images that are emojis
 							SubContent.Data = {
-								NotionBlockType: ClassText,
 								HTMLCode: HTMLCode
 							}
 							let Links = ExtractLinks(Content)
@@ -556,7 +459,14 @@
 										return true
 									})
 									let OutputCollectionItems = CollectionItems.map(Item => {
-										let ItemOutput = {Type: "CollectionViewItem"}
+										let ItemOutput = {
+											NotionBlockId: "",
+											Type: "CollectionViewItem"
+										}
+										let NotionBlockId = ""
+										try {
+											ItemOutput.NotionBlockId = Item.getAttribute("data-block-id") ?? ""
+										} catch {}
 										let Text = Item.innerText
 										if (!RegExpPreset_BlankOrJustSpaces.test(Text)) {
 											ItemOutput.Text = Text
@@ -611,28 +521,33 @@
 					} else if (ClassText == "notion-column_list-block") {
 						let a = 0
 						try {
-							let ColumnListItems =Content.childNodes[0]
-							//^Make sure you don't dive in too deep with additional ".childNodes[0]"s else you could skip and miss
-							// potentially other Content (like another content you bypassed .childNodes[1])
-							//
-							// Therefore it's best to test them to mitigate indentation of the output but not so much it skips
-							let ColumnListContent = GetBlocksRecusively(ColumnListItems)
+							let DescendedNode = DescendNodeTilSplitOrNotionBlock(Content)
+							let ColumnListContent = GetBlocksRecusively(DescendedNode)
 							SubContent.Data = {
 								Type: ClassText,
 								Data: ColumnListContent
 							}
 							
-						} catch {
+						} catch (e) {
 							return {
-								Error: "Unknown column list block format"
+								Error: "Unknown column list block format." + e
 							}
 						}
+					} else if (ClassText == "notion-callout-block") {
+						SubContent.Data = {
+							Type: ClassText
+						}
+						let DescendedNode = DescendNodeTilSplitOrNotionBlock(Content)
+						CalloutBlockItems = GetBlocksRecusively(DescendedNode)
+						SubContent.Data.Data = CalloutBlockItems
 					}
 				} else {
 					let NestedBlock = {
 						NotionBlockType: ClassText
 					}
-					NestedBlock.Contains = GetBlocksRecusively(Content)
+					let DescendedNode = DescendNodeTilSplitOrNotionBlock(Content)
+					
+					NestedBlock.Contains = GetBlocksRecusively(DescendedNode)
 					SubContent.Data = NestedBlock
 				}
 			//done
@@ -694,7 +609,7 @@
 			} catch {
 				return {
 					Error: "Error. Unknown format",
-					HTML: Block.innerHTML
+					HTMLCode: Block.innerHTML
 				}
 			}
 			
@@ -832,5 +747,33 @@
 			})
 			URLOutput = [...new Set(URLOutput)]
 			return URLOutput
+		}
+		function ExtractInnerText(node) { //Easier to detect if it just spaces by just making it null if it happens
+			let OutputString = node.innerText
+			if (RegExpPreset_BlankOrJustSpaces.test(OutputString)) {
+				return null
+			}
+			return OutputString
+		}
+		function DescendNodeTilSplitOrNotionBlock(node) {
+			let DescendedNode = node
+			while (true) { //If there are a series of descending a node leads to another node having 1 child, avoid having unnecessary nesting object
+				if ([...DescendedNode.children].length != 1) {
+					break
+				}
+				DescendedNode = DescendedNode.children[0]
+				try {
+					if ((DescendedNode.getAttribute("data-block-id") != null)||([...DescendedNode.children].length == 0)||(typeof ele.tagName == "undefined")) {
+						DescendedNode = DescendedNode.parentElement
+						break
+					}
+				} catch {}
+			}
+			return DescendedNode
+		}
+		function IsNodeContainingSomething(node) {
+			let HasText = (!RegExpPreset_BlankOrJustSpaces.test(node.innerText))
+			let HasImages = node.querySelectorAll("img").length != 0
+			return (HasText||HasImages)
 		}
 })();
