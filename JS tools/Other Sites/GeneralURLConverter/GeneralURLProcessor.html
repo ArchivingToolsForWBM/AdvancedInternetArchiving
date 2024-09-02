@@ -559,7 +559,9 @@ Sort:
 					ListOfURLs = [] //failsafe, prevents Array.map from performing a null which on the browser, would do nothing (if user enters a string with no valid URL).
 				}
 				ListOfURLs = ListOfURLs.filter((URL) => { //Remove URLs that aren't web pages
-					return (!/^ttps?:\/\/(mailto|file|data|irc)/.test(URL))
+					let IsURL = (!/^ttps?:\/\/(mailto|file|data|irc)/.test(URL))
+					let HaveNoBadChar = (!/^.*[\s\<\>]+.*$/.test(URL))
+					return IsURL && HaveNoBadChar
 				})
 				
 				ListOfURLs = ListOfURLs.map(ArrayElement => {

@@ -404,7 +404,7 @@
 						return SubContent
 				}
 			//Dive deeper until a block not containing any other blocks
-				if (/notion-(?:callout|collection_view|column_list|image|table|text|toggle)-block/.test(ClassText)) { //If its a block that CANNOT contain another block, we stop diving deeper
+				if (/notion-(?:bookmark|callout|collection_view|column_list|image|table|text|toggle)-block/.test(ClassText)) { //If its a block that CANNOT contain another block, we stop diving deeper
 					if (ClassText == "notion-image-block") {
 						let Images = ExtractImages(Content)
 						SubContent.Data = {
@@ -443,7 +443,26 @@
 								Error: "Error on GetBlocksRecusively function - unknown format"
 							}
 						}
-						
+					} else if (ClassText == "notion-bookmark-block") {
+							let BookmarkLink = Content.querySelector("a")
+							if (BookmarkLink == null) {
+								SubContent.Data = {
+									Error: "Error, Weird notion bookmark link"
+								}
+								return SubContent
+							}
+							SubContent.Data  = {
+								HTMLCode: BookmarkLink.innerHTML
+							}
+							let MainLink = BookmarkLink.href ?? ""
+							if (MainLink != "") {
+								SubContent.Data.Link = MainLink
+							}
+							let Images = ExtractImages(BookmarkLink)
+							if (Images.length != 0) {
+								SubContent.Data.Images = Images
+							}
+							
 					} else if (ClassText == "notion-collection_view-block") {
 						let CollectionViewObject = {
 							Title: "",
