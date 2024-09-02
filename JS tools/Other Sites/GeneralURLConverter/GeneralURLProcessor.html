@@ -449,6 +449,18 @@ Sort:
 				Type:"normal",
 				FindWhat:/https:\/\/imgur\.com\/([^\/\.]+)/,
 				ReplaceWith:[{Replacement: Setting_Imgur_AlternativeFrontendInstance.replace(/\/$/, "") + "/$1", KeyName:"Imgur_AFE_PageImage"}]
+			},
+			//Notion pages
+			{
+				//Notion images (page URLs uses base64 code, seemingly obfuscated.)
+				Type:"normal",
+				FindWhat:/^(https:\/\/[a-zA-Z0-9_\-]+\.notion\.site\/image\/https%3A%2F%2F(s3-us-west-2\.amazonaws\.com|prod-files-secure\.s3\.us-west-2\.amazonaws\.com)%2F(?:(?!&width=\d+).)*).*$/, //thank you https://stackoverflow.com/a/3850095/11030779 , match all string, up to but not including "&width=<number>"
+				ReplaceWith:[{Replacement:"$1", KeyName:"Notion_Image_Full"}],
+			},
+			{
+				Type:"normal",
+				FindWhat:/^(https:\/\/[a-zA-Z0-9_\-]+\.notion\.site\/(?!image\/)[a-zA-Z0-9]+).*$/,
+				ReplaceWith:[{Replacement:"$1", KeyName:"Notion_Page_Content"}]
 			}
 		]
 	window.onload = LoadCustomToggableFilters
@@ -560,7 +572,7 @@ Sort:
 				}
 				ListOfURLs = ListOfURLs.filter((URL) => { //Remove URLs that aren't web pages
 					let IsURL = (!/^ttps?:\/\/(mailto|file|data|irc)/.test(URL))
-					let HaveNoBadChar = (!/^.*[\s\<\>]+.*$/.test(URL))
+					let HaveNoBadChar = (!/[\s\<\>\n]/.test(URL))
 					return IsURL && HaveNoBadChar
 				})
 				
