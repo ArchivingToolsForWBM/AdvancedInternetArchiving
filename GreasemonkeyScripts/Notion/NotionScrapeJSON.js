@@ -3,7 +3,7 @@
 // @namespace    https://*.notion.*/
 // @version      0.2
 // @description  Collects notion content
-// @include      /https://[a-zA-Z\d_\-]+.notion.site/.*/
+// @include      /^https://[a-zA-Z\d_\-]+.notion.site/.*/
 // @grant        GM.setValue
 // @grant        GM.getValue
 // @grant        GM.registerMenuCommand
@@ -387,6 +387,22 @@
 						ClassText = ""
 					}
 					SubContent.NotionBlockType = ClassText
+			//Miscellaneous item layouts
+				if (Content.role == "table") {
+					//Table that typically appears in character pages bio
+						SubContent.Data = {
+							HTMLCode: Content.innerHTML
+						}
+						let Links = ExtractLinks(Content)
+						if (Links.length != 0) {
+							SubContent.Data.Links = Links
+						}
+						let Images = ExtractImages(Content)
+						if (Images.length != 0) {
+							SubContent.Data.Images = Images
+						}
+						return SubContent
+				}
 			//Dive deeper until a block not containing any other blocks
 				if (/notion-(?:callout|collection_view|column_list|image|table|text|toggle)-block/.test(ClassText)) { //If its a block that CANNOT contain another block, we stop diving deeper
 					if (ClassText == "notion-image-block") {
