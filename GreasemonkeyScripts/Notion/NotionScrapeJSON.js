@@ -72,7 +72,7 @@
 				if (ClickableElementToTrigger.ariaExpanded != "false") {
 					return false
 				}
-				ClickToViewButtons = true
+				IsThereHiddenContent = true
 				return true
 			} catch {
 				return false
@@ -99,7 +99,7 @@
 				if (ClickableElementToTrigger.style.transform == "rotate(180deg)") {
 					return false
 				}
-				ClickToViewButtons = true
+				IsThereHiddenContent = true
 				return true
 			} catch {
 				return false
@@ -120,14 +120,14 @@
 				if (Text != "Show description") {
 					return false
 				}
-				ClickToViewButtons = true
+				IsThereHiddenContent = true
 				return true
 			} catch {
 				return false
 			}
 		})
 		ShowDescriptionButtons.forEach(ele => ele.click())
-		return ClickToViewButtons
+		return IsThereHiddenContent
 	}
 	function SpawnUI() {
 		let DivBox = document.createElement("div")
@@ -165,7 +165,7 @@
 						this.textContent = "Stop"
 						Initalizer()
 					} else {
-						clearTimeout(ExtractorTimeout)
+						clearTimeout(ID_TimeoutScrapeContent)
 					}
 					SaveSavedValues()
 				}
@@ -191,7 +191,9 @@
 				function () {
 					if (window.confirm("Are you sure you want to clear it?")) {
 						SavedData.ScrapedContent = []
-						clearTimeout(ExtractorTimeout)
+						if (typeof ExtractorTimeout != "undefined") {
+							clearTimeout(ExtractorTimeout)
+						}
 						SavedData.OnOffState = false
 						UI_Button_OnOff.textContent = "Start"
 						SaveSavedValues()
