@@ -125,7 +125,6 @@
 					if (BskyScrape_StartStopFlag) {
 						this.textContent = "Stop"
 						CheckForHiddenContent()
-						ID_TimeoutScrapeContent = setTimeout(ScrapeContent, Saved_Setting_ScanFrequency)
 					} else {
 						this.textContent = "Start"
 						if (typeof ID_TimeoutScrapeContent != "undefined") {
@@ -285,7 +284,7 @@
 					}
 				}
 			})
-			if (IsThereHiddenContent) { //If there is hidden content, schedule a re-run of this code to check again
+			if (IsThereHiddenContent) { //If there is hidden content, reveal them and schedule a re-run of this code to check again
 				ID_TimeoutScrapeContent = setTimeout(CheckForHiddenContent, 100) //Content being clicked on will not immediately show results, so delay is needed
 			} else {
 				ScrapeContent()

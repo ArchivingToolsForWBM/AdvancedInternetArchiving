@@ -36,9 +36,13 @@
 		const RegExpPreset_ClassNotionBlockName = /notion-(?:text|image|column_list|(?:sub_)+header|toggle)-block/
 		const RegExpPreset_NotionPage = /https:\/\/[a-zA-Z\d_\-]+\.notion.[a-zA-Z\d_\-]+\/[a-zA-Z\d_\-]+/
 		
-		setInterval(RevealAll, 1000)
 		setTimeout(SpawnUI, 2000)
-		let ExtractorTimeout = setTimeout(ExtractPageContent, SavedData.Settings.ScanFrequency)
+		
+		if (SavedData.Settings.OnOffState) {
+			setTimeout(Initalizer, 1000)
+		}
+		
+		let ID_TimeoutScrapeContent = 0
 		let FunctionRecursionCounter = 0 //Prevents recursive functions from potentially cause out-of-memory errors
 		const FunctionRecursionCounter_Limit = 100
 	//Elements to remember (best not to touch)
@@ -46,9 +50,19 @@
 		let UI_TextDisplay_ScrapedPageCount = null
 		let UI_InputRange_ScanFrequency_Display = null
 	
-	
+	function Initalizer() {
+		let HiddenDetected = RevealAll()
+		if (HiddenDetected) { //If there are content hidden, reveal them and schedule a re-run of this code to check again
+			ID_TimeoutScrapeContent = setTimeout(Initalizer, 100)
+		} else { //Otherwise, once all content is revealed (except for content that loads when scrolling), scrape it
+			ExtractPageContent()
+			ID_TimeoutScrapeContent = setTimeout(Initalizer, SavedData.Settings.ScanFrequency)
+		}
+	}
 	function RevealAll() {
 		//This finds all the "chevron" or any buttons that reveal content without opening an entire new page
+		//Returns true if it detects content hidden, otherwise returns false if all is revealed.
+		let IsThereHiddenContent = false
 		let ClickToViewButtons = [...document.querySelectorAll("svg")].filter(ele => {
 			try {
 				if (!ele.classList[0] == "triangle") {
@@ -58,6 +72,7 @@
 				if (ClickableElementToTrigger.ariaExpanded != "false") {
 					return false
 				}
+				ClickToViewButtons = true
 				return true
 			} catch {
 				return false
@@ -84,6 +99,7 @@
 				if (ClickableElementToTrigger.style.transform == "rotate(180deg)") {
 					return false
 				}
+				ClickToViewButtons = true
 				return true
 			} catch {
 				return false
@@ -104,12 +120,14 @@
 				if (Text != "Show description") {
 					return false
 				}
+				ClickToViewButtons = true
 				return true
 			} catch {
 				return false
 			}
 		})
 		ShowDescriptionButtons.forEach(ele => ele.click())
+		return ClickToViewButtons
 	}
 	function SpawnUI() {
 		let DivBox = document.createElement("div")
@@ -145,7 +163,7 @@
 					this.textContent = "Start"
 					if (SavedData.Settings.OnOffState) {
 						this.textContent = "Stop"
-						ExtractPageContent()
+						Initalizer()
 					} else {
 						clearTimeout(ExtractorTimeout)
 					}
@@ -285,8 +303,6 @@
 			} else { //Otherwise replace what we already have with potentially a newer version
 				SavedData.ScrapedContent[DuplicateItemIndex] = OutputPageData
 			}
-		
-		ExtractorTimeout = setTimeout(ExtractPageContent, SavedData.Settings.ScanFrequency)
 	}
 	function GetPageHeader(node) {
 		let OutputStuff = [...node.childNodes].filter(ele => {
