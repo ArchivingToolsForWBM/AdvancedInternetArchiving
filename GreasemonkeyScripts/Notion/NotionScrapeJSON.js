@@ -730,7 +730,7 @@
 			return isHidden
 		}
 		function FormatNotionImageURL(string) {
-			let RegexToFindReplace = /^(https:\/\/[a-zA-Z\d_\-]+\.notion\.site\/image\/https%3A%2F%2F(s3-us-west-2\.amazonaws\.com|prod-files-secure\.s3\.us-west-2\.amazonaws\.com)%2F(?:(?!&width=\d+).)*).*$/ //thank you https://stackoverflow.com/a/3850095/11030779 , match all string, up to but not including "&width=<number>"
+			let RegexToFindReplace = /^(https:\/\/[a-zA-Z0-9_\-]+\.notion\.site\/image\/.*%2F(?:(?!&width=\d+).)*).*$/ //thank you https://stackoverflow.com/a/3850095/11030779 , match all string, up to but not including "&width=<number>"
 			return string.replace(RegexToFindReplace, "$1")
 		}
 		function ExtractLinks(node) {
@@ -763,12 +763,12 @@
 					}
 				}
 				try {
-					let TLD = window.location.href.match(/https?:\/\/[a-zA-Z\d-\.]+/)[0]
+					let Host = window.location.href.match(/https?:\/\/[a-zA-Z\d-\.]+/)[0]
 					let BackgroundImgURL = ele.style.backgroundImage
 					if (/url\(\".*"\)/.test(BackgroundImgURL)) {
 						BackgroundImgURL = BackgroundImgURL.replace(/url\(\"/, "").replace(/\"\)$/, "")
 						if (!/^https?:\/\//.test(BackgroundImgURL)) {
-							OutputString = TLD + BackgroundImgURL
+							OutputString = Host + BackgroundImgURL
 						} else {
 							OutputString = BackgroundImgURL
 						}
