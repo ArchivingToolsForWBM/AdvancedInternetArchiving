@@ -130,7 +130,8 @@ onload = (async () => {
 			
 			HTMLElement_TextareaURLs.addEventListener(
 				"change",
-				function () {
+				function (e) {
+					e.stopPropagation()
 					let ListOfURLs = HTMLElement_TextareaURLs.value.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/g)
 					if (ListOfURLs == null) {
 						ListOfURLs = []
@@ -199,7 +200,8 @@ onload = (async () => {
 			
 			HTMLElement_ProgressNumber.addEventListener(
 				"change",
-				function () {
+				function (e) {
+					e.stopPropagation()
 					StorageSaved_URLs.ProgressCount_EnteredString = this.value
 					let EnteredNumber = checkIsStringValidInteger(this.value)
 					if (isNaN(EnteredNumber)) {
@@ -213,6 +215,12 @@ onload = (async () => {
 					}
 					//NumberErrorHandler(EnteredNumber)
 					NumberErrorHandler(checkIsStringValidInteger(StorageSaved_URLs.ProgressCount_EnteredString))
+				}
+			)
+			HTMLElement_ProgressNumber.addEventListener(
+				"keydown",
+				function (e) {
+					e.stopPropagation()
 				}
 			)
 			HTMLElement_DivBox2.appendChild(document.createTextNode("Next Position:"))

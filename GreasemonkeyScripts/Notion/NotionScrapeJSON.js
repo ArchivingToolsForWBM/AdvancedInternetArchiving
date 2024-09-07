@@ -26,7 +26,8 @@
 		let SavedData = {
 			Settings: {
 				OnOffState: false,
-				ScanFrequency: 3000
+				ScanFrequency: 3000,
+				ToggleUI: true
 			},
 			ScrapedContent: []
 		}
@@ -36,7 +37,7 @@
 		const RegExpPreset_ClassNotionBlockName = /notion-(?:text|image|column_list|(?:sub_)+header|toggle)-block/
 		const RegExpPreset_NotionPage = /https:\/\/[a-zA-Z\d_\-]+\.notion.[a-zA-Z\d_\-]+\/[a-zA-Z\d_\-]+/
 		
-		setTimeout(SpawnUI, 2000)
+		setTimeout(SpawnUI, 1000)
 		
 		if (SavedData.Settings.OnOffState) {
 			setTimeout(Initalizer, 1000)
@@ -46,10 +47,20 @@
 		let FunctionRecursionCounter = 0 //Prevents recursive functions from potentially cause out-of-memory errors
 		const FunctionRecursionCounter_Limit = 100
 	//Elements to remember (best not to touch)
+		let UI_Divbox = null
 		let UI_Button_OnOff = null
 		let UI_TextDisplay_ScrapedPageCount = null
 		let UI_InputRange_ScanFrequency_Display = null
-	
+	//Menu commands
+		GM.registerMenuCommand("Toggle UI", ToggleUI, "");
+		function ToggleUI() {
+			SavedData.Settings.ToggleUI = !SavedData.Settings.ToggleUI
+			try {
+				UI_Divbox.hidden = !SavedData.Settings.ToggleUI
+				
+			} catch {}
+			SaveSavedValues()
+		}
 	function Initalizer() {
 		let HiddenDetected = RevealAll()
 		if (HiddenDetected) { //If there are content hidden, reveal them and schedule a re-run of this code to check again
@@ -130,21 +141,21 @@
 		return IsThereHiddenContent
 	}
 	function SpawnUI() {
-		let DivBox = document.createElement("div")
+		UI_Divbox = document.createElement("div")
 		//BoxOfUI.setAttribute("style", "position: fixed;bottom: 40px;right: 40px;z-index: 999; background-color: rgba(64, 64, 64, .5); color: #ffffff; border-radius: 30px; padding: 15px;")
-		DivBox.style.position = "fixed"
-		DivBox.style.bottom = "40px"
-		DivBox.style.right = "40px"
-		DivBox.style.zIndex = "999"
-		DivBox.style.backgroundColor = "rgba(64, 64, 64, .5)"
-		DivBox.style.color = "#ffffff"
-		DivBox.style.borderRadius = "30px"
-		DivBox.style.padding = "15px"
-		
+		UI_Divbox.style.position = "fixed"
+		UI_Divbox.style.bottom = "40px"
+		UI_Divbox.style.right = "40px"
+		UI_Divbox.style.zIndex = "999"
+		UI_Divbox.style.backgroundColor = "rgba(64, 64, 64, .5)"
+		UI_Divbox.style.color = "#ffffff"
+		UI_Divbox.style.borderRadius = "30px"
+		UI_Divbox.style.padding = "15px"
+		UI_Divbox.hidden = !SavedData.Settings.ToggleUI
 		
 		try {
-			let DivBoxToPlaceIn = document.querySelector("body")
-			DivBoxToPlaceIn.appendChild(DivBox)
+			let UI_DivboxToPlaceIn = document.querySelector("body")
+			UI_DivboxToPlaceIn.appendChild(UI_Divbox)
 		} catch (e) {
 			window.alert("Failed to place notion scrape UI")
 		}
@@ -170,10 +181,10 @@
 					SaveSavedValues()
 				}
 			)
-			DivBox.appendChild(UI_Button_OnOff)
+			UI_Divbox.appendChild(UI_Button_OnOff)
 		//Copy scraped data
 			let UI_CopyScrapeJson = document.createElement("button")
-			UI_CopyScrapeJson.textContent = "Copy Scraped data"
+			UI_CopyScrapeJson.textContent = "Copy JSON"
 			UI_CopyScrapeJson.style.color = "#000000"
 			UI_CopyScrapeJson.addEventListener(
 				"click",
@@ -181,7 +192,18 @@
 					GM.setClipboard(JSON.stringify(SavedData.ScrapedContent, null, " "))
 				}
 			)
-			DivBox.appendChild(UI_CopyScrapeJson)
+			UI_Divbox.appendChild(UI_CopyScrapeJson)
+		//Same as above but compressed
+			let UI_CopyScrapeJsonCompressed = document.createElement("button")
+			UI_CopyScrapeJsonCompressed.textContent = "Copy JSON (compressed)"
+			UI_CopyScrapeJsonCompressed.style.color = "#000000"
+			UI_CopyScrapeJsonCompressed.addEventListener(
+				"click",
+				function () {
+					GM.setClipboard(JSON.stringify(SavedData.ScrapedContent))
+				}
+			)
+			UI_Divbox.appendChild(UI_CopyScrapeJsonCompressed)
 		//Clear scraped data
 			let UI_ClearScrapedData = document.createElement("button")
 			UI_ClearScrapedData.textContent = "Reset"
@@ -200,8 +222,8 @@
 					}
 				}
 			)
-			DivBox.appendChild(UI_ClearScrapedData)
-			DivBox.appendChild(document.createElement("br"))
+			UI_Divbox.appendChild(UI_ClearScrapedData)
+			UI_Divbox.appendChild(document.createElement("br"))
 		//Table of settings
 			let UI_TableSettings = document.createElement("table")
 			
@@ -219,7 +241,7 @@
 			UI_TableSettings_Cell_ScanFrequency_Value.style.textAlign = "center"
 			UI_TableSettings_Row_ScanFrequency.appendChild(UI_TableSettings_Cell_ScanFrequency_Value)
 			
-			DivBox.appendChild(UI_TableSettings)
+			UI_Divbox.appendChild(UI_TableSettings)
 		//Scan frequency
 			let UI_InputRange_ScanFrequency = document.createElement("input")
 			UI_InputRange_ScanFrequency.type = "range"
@@ -235,6 +257,12 @@
 					SavedData.Settings.ScanFrequency = NumberValue
 					SaveSavedValues()
 					UI_InputRange_ScanFrequency_Display.textContent = (NumberValue/1000).toFixed(1) + " Sec"
+				}
+			)
+			UI_InputRange_ScanFrequency.addEventListener(
+				"keydown",
+				function (e) {
+					e.stopPropagation()
 				}
 			)
 			UI_TableSettings_Cell_ScanFrequency_Value.appendChild(UI_InputRange_ScanFrequency)
@@ -265,7 +293,7 @@
 			
 			UI_TextDisplay_ScrapedPageCount.textContent = SavedData.ScrapedContent.length.toString(10)
 			
-			DivBox.appendChild(StatisticsTable)
+			UI_Divbox.appendChild(StatisticsTable)
 			
 			UpdateUIInfoDisplay()
 	}
