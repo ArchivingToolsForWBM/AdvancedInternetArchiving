@@ -609,66 +609,6 @@
 		FunctionRecursionCounter--
 		return OutputBlocksExtracted
 	}
-		
-	function GetListSubBlocks(node) {
-		let ListOfBlocks = [...node.querySelectorAll(".notion-image-block,notion-text-block")]
-		OutputList = ListOfBlocks.map(Block => {
-			try {
-				let BlockType = Block.getAttribute("class").match(RegExpPreset_ClassNotionBlockName)[0]
-				if (BlockType == "notion-image-block") {
-					let ImageTag = Block.querySelector("img")
-					let ImageURL = FormatNotionImageURL(ImageTag.src)
-					return {
-						Image: ImageURL
-					}
-				} else if (BlockType == "notion-text-block") {
-					let OutputNotionBlock = {
-						Text: Block.innerText
-					}
-					let Links = ExtractLinks(Block)
-					if (Links.length != 0) {
-						OutputNotionBlock.Links = Links
-					}
-					return OutputNotionBlock
-				}
-			} catch (e) {
-				return {
-					Error: "Unknown subblocks type",
-					ErrorTitle: e,
-					HTMLCode: Block.innerHTML
-				}
-			}
-		})
-		return OutputList
-	}
-	function GetNotionBlocks(node) {
-		let BlocksArray = [...node.childNodes]
-		let OutputObjectArr = BlocksArray.map(Block => {
-			try {
-				let BlockType = Block.getAttribute("class").match(RegExpPreset_ClassNotionBlockName)[0]
-				if (BlockType == "notion-text-block") {
-					let OutputObject = {
-						ToggleTitleText: Block.innerText,
-					}
-					let Links = ExtractLinks(Block)
-					if (Links.length != 0) {
-						OutputObject.Links = Links
-					}
-					return OutputObject
-				} else if (BlockType == "notion-image-block") {
-					let Images = ExtractImages(Block)
-					return {Images: Images}
-				}
-			} catch {
-				return {
-					Error: "Error. Unknown format",
-					HTMLCode: Block.innerHTML
-				}
-			}
-			
-		})
-		return OutputObjectArr
-	}
 	//Saved and Statistics
 		async function LoadSavedValues() {
 			try {
@@ -689,28 +629,6 @@
 		function UpdateUIInfoDisplay() {
 			UI_TextDisplay_ScrapedPageCount.textContent = SavedData.ScrapedContent.length.toString(10)
 		}
-	function GetToggleBlockData(node) {
-		let Output = {Type: "Toggle"}
-		let ListOfDivs = [...node.childNodes]
-		let OutputToggleList = ListOfDivs.map((ToggleBlock, Index) => {
-			if ((!RegExpPreset_BlankOrJustSpaces.test(ToggleBlock.innerText)) && Index == 0) {
-				let Text = ToggleBlock.innerText
-				return {
-					Title: ToggleBlock.innerText
-				}
-			} else {
-				try {
-					let NotionBlocksOfToggle = GetNotionBlocks(ToggleBlock.childNodes[0])
-					return NotionBlocksOfToggle
-				} catch (e) {
-					return "Error! Unknown format"
-				}
-			}
-			
-		})
-		Output.ToggleItems = OutputToggleList
-		return Output
-	}
 	//Helper
 		function getElementsByText(ObjReference, RegexText, Tag) {
 			return Array.prototype.slice.call(ObjReference.getElementsByTagName(Tag)).filter(el => RegexText.test(el.textContent.trim())).filter((el) => (el.children.length == 0)&&(el.tagName != "SCRIPT"));
