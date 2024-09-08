@@ -322,6 +322,14 @@
 					//"UserPostArea" will now contain "boxes" that may either be a horizontal line, containing 1 or 2 posts (2 if it has replies, with a vertical line between 2 avatars)
 					UserPostArea.forEach((Box, BoxIndex) => { // Loop each box
 						//[profile page]
+						//
+						let SuggestedForYou = ""
+						try {
+							SuggestedForYou = Box.childNodes[0].childNodes[0].childNodes[0].textContent
+						} catch {}
+						if (SuggestedForYou == "Suggested for you") {
+							return
+						}
 						if (typeof Box.childNodes != "undefined") {
 							let BoxListingPosts = [...Box.childNodes]
 							let BoxListingPostsLengthCache = BoxListingPosts.length
