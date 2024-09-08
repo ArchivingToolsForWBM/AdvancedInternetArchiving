@@ -26,7 +26,7 @@ onload = (async () => {
 	// Wait for documentElement, wait for iframe load event
 	// credit: https://greasyfork.org/en/discussions/requests/234649-prevent-website-from-overriding-userscript-s-js-methods#comment-482804
 		const I = (function() {
-			let iframeWindow = {}
+			let iframeWindow = null
 			try {
 				const iframe = document.createElement('iframe');
 				iframe.setAttribute("style", "display: none")
@@ -55,18 +55,18 @@ onload = (async () => {
 	let RaceConditionLock = false
 	I.setTimeout(Spawn_UI_Panel, 500)
 	let TimeoutBeforeNextPage = -1
-	let HTMLElement_DivBox = {} //The main div box
-	let HTMLElement_DivBox2 = {}
-	let HTMLElement_TextareaURLs = {} //The textarea the user enters a string containing URLs
-	let HTMLElement_URLCounter = {} //The display on how many unique URLs entered by the user
-	let HTMLElement_ProgressNumber = {} //The number input that can be set by the user.
-	let HTMLElement_ProgressNumber_ErrorMsg = {} //Error message when the user enters an invalid string for what URL to start at
-	let HTMLElement_DelayBeforeNextPage = {} //The input range entered by the user
-	let HTMLElement_DelaySettingDisplay = {} //Display how many seconds before loading the next page updated by the setting above
-	let HTMLElement_StartStopButton = {} //Start stop button
-	let HTMLElement_ClippedDivBox = {} //The div showing the list of unique URLs table
-	let HTMLElement_ProgressDisplayText = {} //Shows how many URLs progressed
-	let HTMLElement_ProgressDisplayBar = {} //Percentage bar showing progress
+	let HTMLElement_DivBox = null //The main div box
+	let HTMLElement_DivBox2 = null
+	let HTMLElement_TextareaURLs = null //The textarea the user enters a string containing URLs
+	let HTMLElement_URLCounter = null //The display on how many unique URLs entered by the user
+	let HTMLElement_ProgressNumber = null //The number input that can be set by the user.
+	let HTMLElement_ProgressNumber_ErrorMsg = null //Error message when the user enters an invalid string for what URL to start at
+	let HTMLElement_DelayBeforeNextPage = null //The input range entered by the user
+	let HTMLElement_DelaySettingDisplay = null //Display how many seconds before loading the next page updated by the setting above
+	let HTMLElement_StartStopButton = null //Start stop button
+	let HTMLElement_ClippedDivBox = null //The div showing the list of unique URLs table
+	let HTMLElement_ProgressDisplayText = null //Shows how many URLs progressed
+	let HTMLElement_ProgressDisplayBar = null //Percentage bar showing progress
 	let StorageSaved_URLs = {
 		ToggleUISetting: true,
 		TextareaURLs: "",
@@ -382,9 +382,13 @@ onload = (async () => {
 		return num <= min ? min : num >= max ? max : num;
 	}
 	async function LoadValuesFromStorage() {
-		StorageSaved_URLs = JSON.parse(await GM.getValue("SequenceURLVisit_SaveData", JSON.stringify(StorageSaved_URLs)).catch( () => {
-			GetValueErrorMessage()
-		}))
+		try {
+			StorageSaved_URLs = JSON.parse(await GM.getValue("SequenceURLVisit_SaveData", JSON.stringify(StorageSaved_URLs)).catch( () => {
+				GetValueErrorMessage()
+			}))
+		} catch (e) {
+			window.alert("Loading values error")
+		}
 	}
 	async function SaveValuesToStorage() {
 		await GM.setValue("SequenceURLVisit_SaveData", JSON.stringify(StorageSaved_URLs)).catch( () => {
