@@ -38,10 +38,7 @@
 		const RegExpPreset_NotionPage = /https:\/\/[a-zA-Z\d_\-]+\.notion.[a-zA-Z\d_\-]+\/[a-zA-Z\d_\-]+/
 		
 		setTimeout(SpawnUI, 1000)
-		
-		if (SavedData.Settings.OnOffState) {
-			setTimeout(Initalizer, 1000)
-		}
+		setTimeout(Initalizer, 1000)
 		
 		let ID_TimeoutScrapeContent = 0
 		let FunctionRecursionCounter = 0 //Prevents recursive functions from potentially cause out-of-memory errors
@@ -62,6 +59,9 @@
 			SaveSavedValues()
 		}
 	function Initalizer() {
+		if (!SavedData.Settings.OnOffState) {
+			return
+		}
 		let HiddenDetected = RevealAll()
 		if (HiddenDetected) { //If there are content hidden, reveal them and schedule a re-run of this code to check again
 			ID_TimeoutScrapeContent = setTimeout(Initalizer, 100)

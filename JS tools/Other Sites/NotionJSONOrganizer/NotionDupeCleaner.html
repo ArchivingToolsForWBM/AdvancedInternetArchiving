@@ -36,10 +36,24 @@
 	</tr>
 	<tr>
 		<td>
-			<span style="font-family: monospace">Number of unique items: <span id="Output_Statistic_ToReplace">0</span></span>
+			<table>
+				<tr>
+					<td style="font-family: monospace;">Total found</td><td style="font-family: monospace;" id="Output_Statistic_ToReplace_IncludingDupes">0</td>
+				</tr>
+				<tr>
+					<td style="font-family: monospace;">How many unique</td><td style="font-family: monospace;"><span id="Output_Statistic_ToReplace">0</span> (<span id="Output_Statistic_ToReplace_DupeCount">0</span> dupe(s) found)</td>
+				</tr>
+			</table>
 		</td>
 		<td>
-			<span style="font-family: monospace">Number of unique items: <span id="Output_Statistic_ReplaceWith">0</span></span>
+			<table>
+				<tr>
+					<td style="font-family: monospace;">Total found</td><td style="font-family: monospace;" id="Output_Statistic_ReplaceWith_IncludingDupes">0</td>
+				</tr>
+				<tr>
+					<td style="font-family: monospace;">How many unique</td><td style="font-family: monospace;"><span id="Output_Statistic_ReplaceWith">0</span> (<span id="Output_Statistic_ReplaceWith_DupeCount">0</span> dupe(s) found)</td>
+				</tr>
+			</table>
 		</td>
 	</tr>
 </table>
@@ -66,12 +80,19 @@
 	}
 	function MainCode() {
 		let ErrorState = false
-		document.getElementById("OutputText").value = ""
-		document.getElementById("Output_Statistic_ToReplace").textContent = "0"
-		document.getElementById("Output_Statistic_ReplaceWith").textContent = "0"
-		document.getElementById("Output_Statistic_OutputCount").textContent = "0"
 		
 		if (IsInputChanged) {
+			//Reset Statistics
+				document.getElementById("OutputText").value = ""
+				document.getElementById("Output_Statistic_ToReplace_IncludingDupes").textContent = "0"
+				document.getElementById("Output_Statistic_ToReplace").textContent = "0"
+				document.getElementById("Output_Statistic_ToReplace_DupeCount").textContent = "0"
+				
+				document.getElementById("Output_Statistic_ReplaceWith_IncludingDupes").textContent = "0"
+				document.getElementById("Output_Statistic_ReplaceWith").textContent = "0"
+				document.getElementById("Output_Statistic_ReplaceWith_DupeCount").textContent = "0"
+				
+				document.getElementById("Output_Statistic_OutputCount").textContent = "0"
 			//Verify entered information
 				if (document.getElementById("JSONInput_ToBeReplaced").value != "") {
 					try {
@@ -87,7 +108,7 @@
 				if (document.getElementById("JSONInput_ReplaceWith").value != "") {
 					try {
 						ReplaceWithList = JSON.parse(document.getElementById("JSONInput_ReplaceWith").value)
-						ToBeReplacedList = [...ToBeReplacedList]
+						ReplaceWithList = [...ReplaceWithList]
 						
 						
 					} catch {
@@ -98,12 +119,21 @@
 				if (ErrorState) {
 					return
 				}
+				
+			//Count
+				let ToBeReplacedList_OriginalCount = ToBeReplacedList.length
+				document.getElementById("Output_Statistic_ToReplace_IncludingDupes").textContent = ToBeReplacedList.length.toString(10)
+				let ReplaceWithList_OriginalCount = ReplaceWithList.length
+				document.getElementById("Output_Statistic_ReplaceWith_IncludingDupes").textContent = ReplaceWithList.length.toString(10)
 			//Rid duplicates in each
 				ToBeReplacedList = RemoveDupes(ToBeReplacedList)
 				ReplaceWithList = RemoveDupes(ReplaceWithList)
 			//Statistics
 				document.getElementById("Output_Statistic_ToReplace").textContent = ToBeReplacedList.length.toString(10)
+				document.getElementById("Output_Statistic_ToReplace_DupeCount").textContent = (ToBeReplacedList_OriginalCount - ToBeReplacedList.length).toString(10)
+				
 				document.getElementById("Output_Statistic_ReplaceWith").textContent = ReplaceWithList.length.toString(10)
+				document.getElementById("Output_Statistic_ReplaceWith_DupeCount").textContent = (ReplaceWithList_OriginalCount - ReplaceWithList.length).toString(10)
 			//Latter textarea items that matches with the former are prioritized
 				OutputList = ToBeReplacedList.map(Item => Item) //Make a shallow copy
 				ReplaceWithList.forEach(ReplaceWithItem => {
