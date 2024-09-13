@@ -272,7 +272,7 @@ Sort:
 			{
 				//Images (convert nitter images to twitter modern images)
 				Type:"normal",
-				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/orig\\/media%2F([a-zA-Z0-9\\-_]+)\\.([a-zA-Z0-9]+)$"),
+				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/orig\\/media(?:%2F|\/)([a-zA-Z0-9\\-_]+)\\.([a-zA-Z0-9]+)$"),
 				ReplaceWith:[{Replacement:"https://pbs.twimg.com/media/$1?format=$2&name=orig", KeyName:"Twitter_Images_Modern_Orig"},{Replacement:"https://pbs.twimg.com/media/$1?format=$2&name=thumb", KeyName:"Twitter_Images_Modern_thumb"}]
 			},
 			{
@@ -281,7 +281,7 @@ Sort:
 				
 				//Nitter images (from a tweet that has pictures)
 				Type:"normal",
-				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "(\\/pic\\/orig\\/media%2F[a-zA-Z0-9\\-_]+\\.[a-zA-Z0-9]+)$"),
+				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "(\\/pic\\/orig\\/media(?:%2F|\/)[a-zA-Z0-9\\-_]+\\.[a-zA-Z0-9]+)$"),
 				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "$1", KeyName:"Nitter_Images"}]
 			},
 			{
