@@ -36,7 +36,7 @@ onload = (async () => {
 				fragment.appendChild(iframe);  
 				document.body.appendChild(fragment);  //tendency to output "null" when "run-at" is set to "document-start".
 				
-				iframeWindow = iframe.contentWindow;  
+				iframeWindow = iframe.contentWindow;
 				
 				//iframe.remove();
 			} catch {
@@ -342,7 +342,8 @@ onload = (async () => {
 		}
 	}
 	if (TimeBeforeOrAfterLoad == 0) {
-		window.addEventListener('load', LoadURLAfterTimer)
+		//window.addEventListener('load', LoadURLAfterTimer)
+		I.setTimeout(LoadURLAfterTimer, 1000) //Have to wait so that the load save data is finished first, then perform this with the correctly updated values.
 	} else {
 		LoadURLAfterTimer()
 	}

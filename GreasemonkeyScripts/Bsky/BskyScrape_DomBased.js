@@ -1204,11 +1204,13 @@
 						Type: HTMLTag.tagName,
 						URL: ""
 					}
-					if ((HTMLTag.tagName == "IMG")||(HTMLTag.tagName == "VIDEO")) {
+					if (HTMLTag.tagName == "IMG") {
 						MediaOutput.URL = FullResConvert(HTMLTag.src)
 						if (HTMLTag.alt) {
 							MediaOutput.alt = HTMLTag.alt
 						}
+					} else if(HTMLTag.tagName == "VIDEO") {
+						MediaOutput.URL = FullResConvert(HTMLTag.poster)
 					}
 					
 					return MediaOutput
@@ -1556,8 +1558,17 @@
 			if (ListOfButtons.length != 0) {
 				let ListOfSVG = [...ElementContainingPostSegments.querySelectorAll("svg")]
 				let AHrefLink = ElementContainingPostSegments.querySelector("a")
-				if (ListOfSVG.length != 0 && AHrefLink == null) {
+				let FlaggedNotificationButton = ListOfButtons.find(Btn => { //FlaggedNotification elements are always buttons with text on it.
+					let Text = Btn.textContent
+					if (/Sexually Suggestive/.test(Text)) {
+						return true
+					}
+				})
+				if (ListOfSVG.length != 0 && AHrefLink == null && (typeof FlaggedNotificationButton != "undefined")) {
 					return "FlaggedNotification"
+				}
+				if (ElementContainingPostSegments.querySelector("video") != null) {
+					HasVideo = true
 				}
 			}
 			
@@ -1594,7 +1605,7 @@
 			if ((!HasImages)&&(!HasTimestamp)&&(!HasVideo)&&(!IsLinkPreview)&&(!HasSVG)) {
 				return "PlainText"
 			}
-			if (HasPostImages && (!HasAHref)) {
+			if ((HasPostImages||HasVideo) && (!HasAHref)) {
 				return "ImageGallery"
 			}
 			if (IsLinkPreview&&(!HasTimestamp)&&(!HasSVG)) {
