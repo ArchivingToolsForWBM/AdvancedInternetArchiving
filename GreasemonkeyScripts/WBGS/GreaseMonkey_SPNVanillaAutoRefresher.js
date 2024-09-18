@@ -65,7 +65,7 @@
 			HTMLElement_DivCountdownDisplay_TimerProgressbar.style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(RandomDelay-CountdownValue, RandomDelay, "to right", "#0000ff", "#808080")
 			if (CountdownValue < 1) {
 				let IndexOfSessionLimitMsg = [...document.querySelectorAll("p")].findIndex((Ele) => {
-					return (/^(?:You have already reached the limit of active Save Page Now sessions\.|The server didn't respond in time for|Job failed)/.test(Ele.textContent))
+					return (/^(?:You have already reached the limit of active Save Page Now sessions\.|The server didn't respond in time for|Job failed|The capture failed because Save Page Now does not have access rights for)/.test(Ele.textContent))
 				})
 			
 				if (IndexOfSessionLimitMsg != -1 && (!HaveRefreshed)) {

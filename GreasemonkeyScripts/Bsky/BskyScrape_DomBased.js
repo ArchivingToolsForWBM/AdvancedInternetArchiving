@@ -30,6 +30,8 @@
 	// is hit "start" only when loading is done and you are not scrolling, then hit stop. Preferably scroll down as far as you can go, then start-stop.
 	//-The bsky home page after logging in won't work due to different layout, and also a potential privacy concern (like leaving the script running.)
 	//-Does not work if the URL is "base-64 mode", e.g. https://bsky.app/profile/did:plc:<base_64_string>
+	//-This tool only works if you have the language setting set to "English" on the app language. This is because the page layout and info layout must match with the regex in order to work.
+	// In case of future of new settings, I recommend using default settings for stuff besides the app language.
 	//Settings
 	// Note: Changes apply when the page is refreshed. Either reload the page via a browser or enter the address bar. It's not a reload if only part of the page loads content while
 	// everything else persist.
@@ -996,10 +998,6 @@
 						let MatchedPostIndex = SavedBskyPostList.findIndex((SavedPost) => { //Search all in the saved list to find a matching post
 							return (ExtractedPost.PostURL == SavedPost.PostURL)
 						})
-						if (ExtractedPostIndex == 5) {
-							let bp = 0
-							
-						}
 						if (MatchedPostIndex == -1) { //If not found, add it to the list
 							if (Setting_MaxNumberOfPosts < 0) {
 								SavedBskyPostList.push(ListOfPosts_Clean[ExtractedPostIndex])
@@ -1119,7 +1117,7 @@
 			let ListOfElements = [...document.getElementsByTagName("DIV")]
 			let BoxList = []
 			ListOfElements.find((ArrayElement) => { //Search all the div
-				if (!/^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d+, \d+ at \d+:\d+ (?:A|P)M$/.test(ArrayElement.innerHTML)) { //Is the text the timestamp? (must be the innermost div that contains *JUST* the date)
+				if (!/^(?:January|February|March|April|May|June|July|August|September|October|November|December) \d+, \d+ at \d+:\d+ (?:A|P)M$/.test(ArrayElement.innerHTML)) { //Is the text the timestamp? (must be the innermost div that contains *JUST* the date)
 					return false
 				}
 				let ReferenceNode = AscendNode(ArrayElement, Levels)
