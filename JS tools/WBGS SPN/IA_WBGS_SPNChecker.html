@@ -259,7 +259,7 @@ Misc:
 		if (Setting_PercentagePrecision != 0) {
 			PercentageMinLength++
 		}
-		
+		document.getElementById("GsheetInput").addEventListener("keydown", this.keyHandler_Tab, false)
 	function AutoUpdate() {
 		if (document.getElementById("AutoUpdate").checked) {
 			CheckURLs()
@@ -918,5 +918,41 @@ Misc:
 					setTimeout(DeleteCopyMessage.bind(null, CopiedMessage), 1500)
 				}).bind(null, EventElement)
 			);
+		}
+	//Tab key to insert tab character
+		function keyHandler_Tab(e) {
+	
+			let target;
+			if (!e) e = window.event;
+			if (e.target) target = e.target;
+			else if (e.srcElement) target = e.srcElement;
+	
+			if(e.keyCode == 9) {
+				if (document.selection) {
+					e.preventDefault()
+					target.focus();
+					sel = document.selection.createRange();
+					sel.text = '\t';
+				} else if (target.selectionStart || target.selectionStart === 0) {
+					e.preventDefault()
+					let startPos = target.selectionStart;
+					let endPos = target.selectionEnd;
+					target.value = target.value.substring(0, startPos) + '\t' + target.value.substring(endPos, target.value.length);
+					target.oninput()	//Fix an issue where if a tab is inserted and results the format being valid, the function to display the address won't update.
+	
+					target.selectionStart = startPos + 1;
+					target.selectionEnd = startPos + 1;
+	
+				} else {
+					e.preventDefault()
+					target.value += '\t';
+				}
+	
+				if(e.preventDefault) {
+					e.preventDefault();
+					target.oninput()	//Fix an issue where if a tab is inserted and results the format being valid, the function to display the address won't update.
+				}
+				return false;
+			}
 		}
 </script>

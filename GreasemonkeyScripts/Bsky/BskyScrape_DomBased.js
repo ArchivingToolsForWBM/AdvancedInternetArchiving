@@ -103,7 +103,15 @@
 		async function LoadScrapeUI() {
 			//div box
 			let BoxOfUI = document.createElement("div")
-			BoxOfUI.setAttribute("style", "position: fixed;bottom: 40px;right: 40px;z-index: 999; background-color: rgba(64, 64, 64, .5); color: #ffffff; border-radius: 30px; padding: 15px;")
+			//BoxOfUI.setAttribute("style", "position: fixed;bottom: 40px;right: 40px;z-index: 999; background-color: rgba(64, 64, 64, .5); color: #ffffff; border-radius: 30px; padding: 15px;")
+			BoxOfUI.style.position = "fixed"
+			BoxOfUI.style.bottom = "40px"
+			BoxOfUI.style.right = "40px"
+			BoxOfUI.style.zIndex = "999"
+			BoxOfUI.style.backgroundColor = "rgba(64, 64, 64, .5)"
+			BoxOfUI.style.color = "#ffffff"
+			BoxOfUI.style.borderRadius = "30px"
+			BoxOfUI.style.padding = "15px"
 			
 			let Title = document.createElement("h2")
 			Title.appendChild(document.createTextNode("Blue sky scraper"))

@@ -165,7 +165,7 @@
 				DivBox2.appendChild(RefreshTextareaButton)
 			//line seperator
 				DivBox2.appendChild(document.createElement("hr"))
-			//Tracking textarea
+			//Tracking textarea (this logs the queue count and how many URLs traversed on the process activity log)
 				if (Setting_AlternativeProcessActivityLog) {
 					DivBox2.appendChild(document.createElement("br"))
 					
