@@ -1218,13 +1218,14 @@
 						Type: HTMLTag.tagName,
 						URL: ""
 					}
-					if (HTMLTag.tagName == "IMG") {
+					if (/(?:IMG|VIDEO)/.test(HTMLTag.tagName)) {
 						MediaOutput.URL = FullResConvert(HTMLTag.src)
 						if (HTMLTag.alt) {
 							MediaOutput.alt = HTMLTag.alt
 						}
-					} else if(HTMLTag.tagName == "VIDEO") {
-						MediaOutput.URL = FullResConvert(HTMLTag.poster)
+						if (HTMLTag.ariaLabel) {
+							MediaOutput.ariaLabel = HTMLTag.ariaLabel
+						}
 					}
 					
 					return MediaOutput
