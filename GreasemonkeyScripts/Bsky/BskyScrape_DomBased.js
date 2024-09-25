@@ -65,6 +65,8 @@
 		let ConfirmationPause = false
 			//^This makes the reset function not fail should the main code execute right when the user
 			// selects reset.
+		let HaveAlertedUnreconizedURL = false
+			//^prevents repeated alerts when on a unrecognized URL e.g. https://bsky.app/profile/did:plc:<base64string>
 		//no duplicates on the console log
 			const SetOfURLs = new Set()
 			const SetOfPostsURLs = new Set()
@@ -174,6 +176,7 @@
 					ConfirmationPause = true
 					if (window.confirm("Bsky-scrape: Are you sure you want to reset?")) {
 						BskyScrape_StartStopFlag = false
+						HaveAlertedUnreconizedURL = false
 						Button_StopStart.textContent = "Start"
 						if (typeof ID_TimeoutScrapeContent != "undefined") {
 							clearTimeout(ID_TimeoutScrapeContent);
@@ -979,6 +982,11 @@
 						}
 						
 					})
+				} else {
+					if (!HaveAlertedUnreconizedURL) {
+						window.alert("URL not recognized, please make sure the URL does not contain \"did:plc:<base64string>\" part.")
+						HaveAlertedUnreconizedURL = true
+					}
 				}
 				let ListOfPosts_Clean = ListOfPosts.map((ArrayElement) => { //Have a version without ReplyConnections attribute since we do not need it if we are just looking at posts
 					return {
