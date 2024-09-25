@@ -20,6 +20,15 @@
 			label, input[type='checkbox'], input[type='radio'] {
 				cursor: pointer;
 			}
+			div.TabbedFilters {
+				padding-left: 1rem;
+			}
+			div.TabbedFiltersGroup {
+				padding-top: 1rem;
+				padding-bottom: 1rem;
+				padding-right: 1rem;
+				border: 1px solid white;
+			}
 		</style>
 	</head>
 <body>
@@ -76,46 +85,44 @@ SentURL3	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	Fir
 Paste your google sheet result here:<br><br>
 <input type="checkbox" id="AutoUpdate" checked onchange="AutoUpdate()"><label for="AutoUpdate">Auto update</label><br>
 <textarea id="GsheetInput" cols="100" rows="30" oninput="SaveStatusesChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br><br>
+
 Preset settings:<br>
 <ul>
 	<li><button onclick="PresetSetting_UnsureSaved(); AutoUpdate()">Filter by unsure saved</button></li>
 	<li><button onclick="PresetSetting_DuplicatedProcess(); AutoUpdate()">Filter by sure-saved and only entered URLs as plaintext</button> &leftarrow; Use this option if your process duplicates, in conjunction of a list cleaner.</li>
 </ul>
 
-Filters:<button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('FilterSettings_ArchiveStatus', 2); AutoUpdate()">Invert</button>
-<ul>
-	<li>Sure saved: <button onclick="ChangeFilterSettings('SureSaved', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('SureSaved', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('SureSaved', 2); AutoUpdate()">Invert</button></li>
-	<ul>
-		<li><label style="color: #008000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_SavedBefore" class="FilterSettings_ArchiveStatus SureSaved" data-status_list_name="Success_SavedBefore">Success (have saved before (green))</label></li>
-		<li><label style="color: #00C000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_FirstArchive" class="FilterSettings_ArchiveStatus SureSaved" data-status_list_name="Success_FirstArchive">Success (&ldquo;First Archive&rdquo; (light green)) </label></li>
-	</ul>
-	<li>Unsure saved: <button onclick="ChangeFilterSettings('UnsureSaved', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('UnsureSaved', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('UnsureSaved', 2); AutoUpdate()">Invert</button></li>
-	<ul>
-		<li><label style="color: #808080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_NoIAResult" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_NoIAResult">No results (grey)</label></li>
-		<li><label style="color: #A08080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_BlankColumnD" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_BlankColumnD">Result but column D is blank (light red)</label></li>
-		<li><label style="color: #808000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Redirected" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_Redirected">Redirects (yellow)</label></li>
-		<li><label style="color: #800000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Error" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_Error">Errors (red)</label></li>
-		<li><label style="color: #FFA500;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_SavedANon2XX" checked class="FilterSettings_ArchiveStatus UnsureSaved" data-status_list_name="Unsure_SavedANon2XX">Saved but isn't a 2XX (3XX/4XX/5XX) (orange).<sup><abbr title="Sometimes saving a URL may have this situation happen: column D's save result data show the playback URL as if it was saved properly, but column C says error 5XX, and visiting the playback URL will show an error page. You probably should re-attempt to save these URLs.">[note]</abbr></sup></label></li>
-	</ul>
-	<li>Can't save <button onclick="ChangeFilterSettings('CantSave', 1); AutoUpdate()">Check all</button><button onclick="ChangeFilterSettings('CantSave', 0); AutoUpdate()">Uncheck all</button><button onclick="ChangeFilterSettings('CantSave', 2); AutoUpdate()">Invert</button></li>
-	<ul>
-		<li><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_BlockListed" checked class="FilterSettings_ArchiveStatus CantSave" data-status_list_name="CantSave_BlockListed">&ldquo;This URL is in the Save Page Now service block list and cannot be captured.&rdquo; (dark red)</label></li>
-		<li><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error401" checked class="FilterSettings_ArchiveStatus CantSave" data-status_list_name="CantSave_Error401">&ldquo;The target server requires authentication for &lt;URL&gt; (HTTP status=401).&rdquo; (dark red)</label></li>
-		<li><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error404" checked class="FilterSettings_ArchiveStatus CantSave" data-status_list_name="CantSave_Error404">&ldquo;The target server cannot find the requested resource &lt;URL&gt; (HTTP status=404).&rdquo; (dark red)</label></li>
-		<li><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error403" checked class="FilterSettings_ArchiveStatus CantSave" data-status_list_name="CantSave_Error403">&ldquo;The capture failed because Save Page Now does not have access rights for &lt;URL&gt; (HTTP status=403).&rdquo; (dark red)</label></li>
-		<li><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_CantResolve" checked class="FilterSettings_ArchiveStatus CantSave" data-status_list_name="CantSave_CantResolve">&ldquo;Cannot resolve host &lt;URL&gt;&rdquo; (dark red)</label></li>
-	</ul>
-</ul>
-<p>Please note that pages flagged as "can't save" can change between being able to be save or not. That's why they're checked by default.
-Sort:<br>
-<ul>
-<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_UserSentURLOrder" name="Sort_Output">Same order of URLs you set (not sorting at all)</label></li>
-<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse" name="Sort_Output" checked>Based on the status message (sort by column D). Note: Any results displaying the URL versions are ordered <abbr title="It is because the URL starts with &ldquo;https://web.archive.org/web/YYYYMMDDhhmmss/[...]&rdquo; and &ldquo;YYYYMMDDhhmmss&rdquo; is the timestamp.">chronologically</abbr></label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusResponse_Reverse" name="Sort_Output">Reverse</label>)</li>
-<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SubmittedURLsABC" name="Sort_Output">By URLs you sent, alphabetically</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SubmittedURLsABC_Reverse" name="Sort_Output">Reverse</label>)</li>
-<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusType" name="Sort_Output">Based on the status <abbr title="Missing data, missing URLs, errors, redirects, and successes.">type</abbr> identified from the save results</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_SaveStatusType_Reverse" name="Sort_Output">Reverse</label>)</li>
-<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_HTTPStatus" name="Sort_Output">Based on the HTTP status code (column C)</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_HTTPStatus_Reverse" name="Sort_Output">Reverse</label>)</li>
-<li><label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_OutlinksCount" name="Sort_Output">Out links count (column E)</label> (<label><input type="radio" onchange="AutoUpdate()" id="Sort_Output_OutlinksCount_Reverse" name="Sort_Output">Reverse</label>)</li>
-</ul>
+<div class="TabbedFilters TabbedFiltersGroup">
+Filters: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
+	<div class="TabbedFilters TabbedFiltersGroup" id="FilterGroup_SureSaved">Successfully saved: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
+		<div class="TabbedFilters"><label style="color: #008000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_SavedBefore" data-status_list_name="Success_SavedBefore">Success (have saved before (green))</label></div>
+		<div class="TabbedFilters"><label style="color: #00C000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_FirstArchive" data-status_list_name="Success_FirstArchive">Success (&ldquo;First Archive&rdquo; (light green)) </label></div>
+	</div>
+	<div class="TabbedFilters TabbedFiltersGroup" id="FilterGroup_Unsures">Unsure: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
+		<div class="TabbedFilters"><label style="color: #808080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_NoIAResult" checked data-status_list_name="Unsure_NoIAResult">No results (grey)</label></div>
+		<div class="TabbedFilters"><label style="color: #A08080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_BlankColumnD" checked data-status_list_name="Unsure_BlankColumnD">Result but column D is blank (light red)</label></div>
+		<div class="TabbedFilters"><label style="color: #808000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Redirected" checked data-status_list_name="Unsure_Redirected">Redirects (yellow)</label></div>
+		<div class="TabbedFilters"><label style="color: #800000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Error" checked data-status_list_name="Unsure_Error">Errors (red)</label></div>
+		<div class="TabbedFilters"><label style="color: #FFA500;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_SavedANon2XX" checked data-status_list_name="Unsure_SavedANon2XX">Saved but isn't a 2XX (3XX/4XX/5XX) (orange).<sup><abbr title="Sometimes saving a URL may have this situation happen: column D's save result data show the playback URL as if it was saved properly, but column C says error 5XX, and visiting the playback URL will show an error page. You probably should re-attempt to save these URLs.">[note]</abbr></sup></label></div>
+	</div>
+	<div class="TabbedFilters TabbedFiltersGroup" id="FilterGroup_CantSaves">Cannot save: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
+		<div class="TabbedFilters"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_BlockListed" checked data-status_list_name="CantSave_BlockListed">&ldquo;This URL is in the Save Page Now service block list and cannot be captured.&rdquo; (dark red)</label></div>
+		<div class="TabbedFilters"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error401" checked data-status_list_name="CantSave_Error401">&ldquo;The target server requires authentication for &lt;URL&gt; (HTTP status=401).&rdquo; (dark red)</label></div>
+		<div class="TabbedFilters"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error404" checked data-status_list_name="CantSave_Error404">&ldquo;The target server cannot find the requested resource &lt;URL&gt; (HTTP status=404).&rdquo; (dark red)</label></div>
+		<div class="TabbedFilters"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error403" checked data-status_list_name="CantSave_Error403">&ldquo;The capture failed because Save Page Now does not have access rights for &lt;URL&gt; (HTTP status=403).&rdquo; (dark red)</label></div>
+		<div class="TabbedFilters"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_CantResolve" checked data-status_list_name="CantSave_CantResolve">&ldquo;Cannot resolve host &lt;URL&gt;&rdquo; (dark red)</label></div>
+		Please note that pages flagged as "can't save" can change between being able to be save or not. That's why they're checked by default.
+	</div>
+</div>
+Sort by <select onchange="AutoUpdate()">
+	<option id="Sort_Output_None">None</option>
+	<option id="Sort_Output_SaveStatusResponse" selected>Status message (Column D)</option>
+	<option id="Sort_Output_SubmittedURLsABC">By URLs entered (Column A)</option>
+	<option id="Sort_Output_SaveStatusType">By status type detected</option>
+	<option id="Sort_Output_HTTPStatus">HTTP status code</option>
+	<option id="Sort_Output_OutlinksCount">Outlinks count (Column E)</option>
+
+</select><label><input type="checkbox" onchange="AutoUpdate()" id="Sort_Output_Reverse">Reverse</label><br>
 Plaintext format settings (post-filter):<br>
 	<ul>
 		<li><label><input type="radio" name="TextOutputFormat" onchange="AutoUpdate()" id="PlainText_DisplayInfo_EnteredURLsOnly">Display just entered URLs in the plaintext</label></li>
@@ -270,21 +277,15 @@ Misc:
 		IsListOrModeChanged = true //If you edit the textarea, changed the "ignore fragment identifier", those are considered a change to the list.
 	}
 
-	function ChangeFilterSettings(ElementClass, Setting) {
-		//ElementClass: the element class to be affected by this function
-		//Setting:
-		//0 = uncheck
-		//1 = check
-		//2+ = invert
-		if (Setting < 2) {
-			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
-				document.getElementsByClassName(ElementClass)[i].checked = Setting
+	function ChangeCheckboxesByChildren(Setting, NodeToGrab) {
+		let Checkboxes = [...NodeToGrab.querySelectorAll("input[type=checkbox]")].forEach(ele => {
+			if (Setting < 2) {
+				ele.checked = Setting
+			} else {
+				ele.checked = !ele.checked
 			}
-		} else {
-			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
-				document.getElementsByClassName(ElementClass)[i].checked = document.getElementsByClassName(ElementClass)[i].checked ^ 1
-			}
-		}
+		});
+		AutoUpdate()
 	}
 
 	function CheckURLs() {
@@ -453,82 +454,54 @@ Misc:
 				return document.getElementById("Filter_" + ArrayElement.SaveStatus).checked
 			});
 		//Sort the filtered data. NOTE: array.reverse() is unstable, meaning the order of same keys will be reversed.
-			if (document.getElementById("Sort_Output_SaveStatusResponse").checked) {
+			let ReverseSetting = 1
+			if (document.getElementById("Sort_Output_Reverse").checked) {
+				ReverseSetting = -1
+			}
+			if (document.getElementById("Sort_Output_None").selected) {
+				document.getElementById("Sort_Output_Reverse").disabled = true
+			} else if (document.getElementById("Sort_Output_SaveStatusResponse").selected) {
+				document.getElementById("Sort_Output_Reverse").disabled = false
 				FilteredListForDisplay.sort((a, b) => {
 					if (a.WBM_SaveResponse === b.WBM_SaveResponse) {
 						return 0;
 					} else {
-						return (a.WBM_SaveResponse < b.WBM_SaveResponse) ? -1 : 1;
+						return ((a.WBM_SaveResponse < b.WBM_SaveResponse) ? -1 : 1) * ReverseSetting;
 					}
 				});
-			} else if (document.getElementById("Sort_Output_SaveStatusResponse_Reverse").checked) {
-				FilteredListForDisplay.sort((a, b) => {
-					if (a.WBM_SaveResponse === b.WBM_SaveResponse) {
-						return 0;
-					} else {
-						return (a.WBM_SaveResponse < b.WBM_SaveResponse) ? 1 : -1;
-					}
-				});
-			} else if (document.getElementById("Sort_Output_SubmittedURLsABC").checked) {
+			} else if (document.getElementById("Sort_Output_SubmittedURLsABC").selected) {
+				document.getElementById("Sort_Output_Reverse").disabled = false
 				FilteredListForDisplay.sort((a, b) => {
 					if (a.SentURL === b.SentURL) {
 						return 0;
 					} else {
-						return (a.SentURL < b.SentURL) ? -1 : 1;
+						return ((a.SentURL < b.SentURL) ? -1 : 1) * ReverseSetting;
 					}
 				});
-			} else if (document.getElementById("Sort_Output_SubmittedURLsABC_Reverse").checked) {
-				FilteredListForDisplay.sort((a, b) => {
-					if (a.SentURL === b.SentURL) {
-						return 0;
-					} else {
-						return (a.SentURL < b.SentURL) ? 1 : -1;
-					}
-				});
-			} else if (document.getElementById("Sort_Output_SaveStatusType").checked) {
+			} else if (document.getElementById("Sort_Output_SaveStatusType").selected) {
+				document.getElementById("Sort_Output_Reverse").disabled = false
 				FilteredListForDisplay.sort((a, b) => {
 					if (a.SaveStatus === b.SaveStatus) {
 						return 0;
 					} else {
-						return (a.SaveStatus < b.SaveStatus) ? -1 : 1;
+						return ((a.SaveStatus < b.SaveStatus) ? -1 : 1) * ReverseSetting;
 					}
 				});
-			} else if (document.getElementById("Sort_Output_SaveStatusType_Reverse").checked) {
-				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareStatusIndicatorReverse)
-				FilteredListForDisplay.sort((a, b) => {
-					if (a.SaveStatus === b.SaveStatus) {
-						return 0;
-					} else {
-						return (a.SaveStatus < b.SaveStatus) ? 1 : -1;
-					}
-				});
-			} else if (document.getElementById("Sort_Output_HTTPStatus").checked) {
+			} else if (document.getElementById("Sort_Output_HTTPStatus").selected) {
 				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareHTTPStatus)
+				document.getElementById("Sort_Output_Reverse").disabled = false
 				FilteredListForDisplay.sort((a, b) => {
 					if (a.HTTPStatus === b.HTTPStatus) {
 						return 0;
 					} else {
-						return (a.HTTPStatus < b.HTTPStatus) ? -1 : 1;
+						return ((a.HTTPStatus < b.HTTPStatus) ? -1 : 1) * ReverseSetting;
 					}
 				});
-			} else if (document.getElementById("Sort_Output_HTTPStatus_Reverse").checked) {
-				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareHTTPStatusReverse)
-				FilteredListForDisplay.sort((a, b) => {
-					if (a.HTTPStatus === b.HTTPStatus) {
-						return 0;
-					} else {
-						return (a.HTTPStatus < b.HTTPStatus) ? 1 : -1;
-					}
-				});
-			} else if (document.getElementById("Sort_Output_OutlinksCount").checked) {
+			} else if (document.getElementById("Sort_Output_OutlinksCount").selected) {
 				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareOutlinksCount)
+				document.getElementById("Sort_Output_Reverse").disabled = false
 				FilteredListForDisplay.sort((a, b) => {
-					return Number(a.OutLinksCountNumber - b.OutLinksCountNumber) //if this was bigint, do subtraction first, then convert to a double-float (which rounds here) to prevent potential issues if 2 large numbers are close to one another.
-				});
-			} else if (document.getElementById("Sort_Output_OutlinksCount_Reverse").checked) {
-				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareOutlinksCountReverse)
-				FilteredListForDisplay.sort((a, b) => {
-					return Number(b.OutLinksCountNumber - a.OutLinksCountNumber) //again...
+					return Number(a.OutLinksCountNumber - b.OutLinksCountNumber) * ReverseSetting //if this was bigint, do subtraction first, then convert to a double-float (which rounds here) to prevent potential issues if 2 large numbers are close to one another.
 				});
 			}
 		//Output data
@@ -714,7 +687,7 @@ Misc:
 	}
 	function Reset() {
 		document.getElementById("GsheetInput").value = ""
-		SetAllFilterSpecificValue(false, true, true)
+		
 		document.getElementById("PlainText_DisplayInfo_WBGSInfo").checked = true
 		document.getElementById("Sort_Output_SaveStatusResponse").checked = true
 		{
@@ -726,25 +699,15 @@ Misc:
 		ClearOutputs()
 	}
 	function PresetSetting_UnsureSaved() {
-		SetAllFilterSpecificValue(false, true, true)
+		ChangeCheckboxesByChildren(0, document.getElementById("FilterGroup_SureSaved"))
+		ChangeCheckboxesByChildren(1, document.getElementById("FilterGroup_Unsures"))
+		ChangeCheckboxesByChildren(1, document.getElementById("FilterGroup_CantSaves"))
 	}
 	function PresetSetting_DuplicatedProcess() {
-		SetAllFilterSpecificValue(true, false, false)
+		ChangeCheckboxesByChildren(1, document.getElementById("FilterGroup_SureSaved"))
+		ChangeCheckboxesByChildren(0, document.getElementById("FilterGroup_Unsures"))
+		ChangeCheckboxesByChildren(0, document.getElementById("FilterGroup_CantSaves"))
 		document.getElementById("PlainText_DisplayInfo_EnteredURLsOnly").checked = true
-	}
-	function SetAllFilterSpecificValue(SureSaved, UnsureSaved, CantSave) {
-		let ListOfSureSaved = Array.from(document.getElementsByClassName("SureSaved"))
-		ListOfSureSaved.forEach((Element) => {
-			Element.checked = SureSaved
-		})
-		let ListOfUnsureSaved = Array.from(document.getElementsByClassName("UnsureSaved"))
-		ListOfUnsureSaved.forEach((Element) => {
-			Element.checked = UnsureSaved
-		})
-		let ListOfCantSave = Array.from(document.getElementsByClassName("CantSave"))
-		ListOfCantSave.forEach((Element) => {
-			Element.checked = CantSave
-		})
 	}
 	function ClearOutputs() {
 		Array.from(document.getElementsByTagName("span")).filter((ArrayElement) => { //Clear Statistic table
