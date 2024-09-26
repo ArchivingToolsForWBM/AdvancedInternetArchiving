@@ -17,9 +17,6 @@
 			}
 			input { font-family: monospace;}
 			
-			label, input[type='checkbox'], input[type='radio'] {
-				cursor: pointer;
-			}
 			div.TabbedFilters {
 				padding-left: 1rem;
 			}
@@ -117,7 +114,7 @@ Filters: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)
 		Please note that pages flagged as "can't save" can change between being able to be save or not. That's why they're checked by default.
 	</div>
 </div>
-Sort by <select onchange="AutoUpdate()">
+Sort by <select onchange="CheckShouldReverseSortDisabled(); AutoUpdate()">
 	<option id="Sort_Output_None">None (same order as entered)</option>
 	<option id="Sort_Output_SaveStatusResponse" selected>Status message (Column D)</option>
 	<option id="Sort_Output_SubmittedURLsABC">By URLs entered (Column A)</option>
@@ -290,7 +287,9 @@ Misc:
 		});
 		AutoUpdate()
 	}
-
+	function CheckShouldReverseSortDisabled() {
+		document.getElementById("Sort_Output_Reverse").disabled = document.getElementById("Sort_Output_None").selected
+	}
 	function CheckURLs() {
 		const regex_IA_URLPart = /^https:\/\/web\.archive\.org\/web\/\d*\//
 		const regex_IAURLExtractMainSiteURL_Start = /(?<=https:\/\/web\.archive\.org\/web\/\d*\/)/
@@ -461,10 +460,7 @@ Misc:
 			if (document.getElementById("Sort_Output_Reverse").checked) {
 				ReverseSetting = -1
 			}
-			if (document.getElementById("Sort_Output_None").selected) {
-				document.getElementById("Sort_Output_Reverse").disabled = true
-			} else if (document.getElementById("Sort_Output_SaveStatusResponse").selected) {
-				document.getElementById("Sort_Output_Reverse").disabled = false
+			if (document.getElementById("Sort_Output_SaveStatusResponse").selected) {
 				FilteredListForDisplay.sort((a, b) => {
 					if (a.WBM_SaveResponse === b.WBM_SaveResponse) {
 						return 0;
@@ -473,7 +469,6 @@ Misc:
 					}
 				});
 			} else if (document.getElementById("Sort_Output_SubmittedURLsABC").selected) {
-				document.getElementById("Sort_Output_Reverse").disabled = false
 				FilteredListForDisplay.sort((a, b) => {
 					if (a.SentURL === b.SentURL) {
 						return 0;
@@ -482,7 +477,6 @@ Misc:
 					}
 				});
 			} else if (document.getElementById("Sort_Output_SaveStatusType").selected) {
-				document.getElementById("Sort_Output_Reverse").disabled = false
 				FilteredListForDisplay.sort((a, b) => {
 					if (a.SaveStatus === b.SaveStatus) {
 						return 0;
@@ -492,7 +486,6 @@ Misc:
 				});
 			} else if (document.getElementById("Sort_Output_HTTPStatus").selected) {
 				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareHTTPStatus)
-				document.getElementById("Sort_Output_Reverse").disabled = false
 				FilteredListForDisplay.sort((a, b) => {
 					if (a.HTTPStatus === b.HTTPStatus) {
 						return 0;
@@ -502,7 +495,6 @@ Misc:
 				});
 			} else if (document.getElementById("Sort_Output_OutlinksCount").selected) {
 				//FilteredListForDisplay = FilteredListForDisplay.sort(CompareOutlinksCount)
-				document.getElementById("Sort_Output_Reverse").disabled = false
 				FilteredListForDisplay.sort((a, b) => {
 					return Number(a.OutLinksCountNumber - b.OutLinksCountNumber) * ReverseSetting //if this was bigint, do subtraction first, then convert to a double-float (which rounds here) to prevent potential issues if 2 large numbers are close to one another.
 				});
