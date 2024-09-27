@@ -11,6 +11,19 @@
 // ==/UserScript==
 
 (async () => {
+	//This is a utility script that:
+	//-Autoclicks "Save results in a new sheet" when archiving URLs, to avoid potentially duped processes from overwriting another save result data.
+	//-Logs the history of:
+	//--On start process page (the page you start a process) and the process tracking URL page (the page linked to from the start process page or from the email): logs the progress,
+	//  for bar graphing to see the performance (how many URLs traversed).
+	//--On the WBGS home page: Records the data from the list of running processes (sometimes the info disappears spontaneously despite the process not finishing or aborting)
+	//--On the WBGS home page: Logs the queue count should there be a yellow notice showing the number of processes in the queue.
+	//It also keeps track of your process history, for the purpose of referring to if you need to report bugs and glitches with the system and have not received an email referencing the
+	//process.
+	//
+	//NOTE: If you are starting a process, do not leave the page until the process tracking URL page appears at the bottom of the page, as this script will not record the process until that
+	//process info appears on the page.
+	
 	//Settings
 		const IntervalDelay = 100
 			//^How many milliseconds between each "scan" of the WBGS page.
