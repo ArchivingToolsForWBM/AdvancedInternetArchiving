@@ -348,12 +348,23 @@ Misc:
 						let SaveStatus = ""
 						let StatusColor = ""
 						let Timestamp = "?"
+						
+						
+						let ComparedEnteredUrl = Col_A_SentUrl
+						//Ignore fragment identifier to ignore it (WBM always remove it in its saved URLs on the spreadsheet).
+							if (document.getElementById("MiscSetting_IgnoreFragment").checked) {
+								ComparedEnteredUrl = ComparedEnteredUrl.replace(/#.*$/, "")
+							}
+						//Handle ignoring HTTP/HTTPS difference
+							if (document.getElementById("MiscSetting_IgnoreHttpHttpsDifference").checked) {
+								ComparedEnteredUrl = ComparedEnteredUrl.replace(/^http:\/\//, "https://")
+							}
+						
 						if (Col_B_YesNo == "" && Col_C_HttpStatus == "" && Col_D_SavedURLOrError == "" && Col_E_OutlinksCount == "" && Col_F_FirstArchive == "") { //If absolutely no results...
 							SaveStatus = "Unsure_NoIAResult"
 							StatusColor = "#808080"
 							Count_Unsure_NoIAResult++
 						} else if (/^https:\/\/web\.archive\.org\/web\/\d+/.test(Col_D_SavedURLOrError)) { //If there's a WBM version of a webpage...
-							let ComparedEnteredUrl = Col_A_SentUrl
 							//Get timestamp
 								Timestamp = Col_D_SavedURLOrError.replace(/^https:\/\/web\.archive\.org\/web\/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2}).*$/, "$1-$2-$3 $4:$5:$6")
 								
@@ -363,15 +374,8 @@ Misc:
 								if ((Timestamp > Date_Latest)||(Date_Latest == "?")) { //If there is an later timestamp than the timestamp OR we newly found a given timestamp the first time, set it to it
 									Date_Latest = Timestamp
 								}
-							//Ignore fragment identifier to ignore it (WBM always remove it in its saved URLs on the spreadsheet).
-								if (document.getElementById("MiscSetting_IgnoreFragment").checked) {
-									ComparedEnteredUrl = ComparedEnteredUrl.replace(/#.*$/, "")
-								}
 							//Handle ignoring HTTP/HTTPS difference
-								if (document.getElementById("MiscSetting_IgnoreHttpHttpsDifference").checked) {
-									ComparedEnteredUrl = ComparedEnteredUrl.replace(/^http:\/\//, "https://")
-								}
-								let IA_PageURLOnly = Col_D_SavedURLOrError.replace(/^http(s)?\:\/\/web\.archive\.org\/web\/\d+\//, "")
+								let IA_PageURLOnly = Col_D_SavedURLOrError.replace(/^http(s)?\:\/\/web\.archive\.org\/web\/\d+\//, "") //Get page URL from WBM version. NOTE: WBM save results have fragment stripped out automatically
 								if (document.getElementById("MiscSetting_IgnoreHttpHttpsDifference").checked) {
 									IA_PageURLOnly = IA_PageURLOnly.replace(/^http:\/\//, "https://")
 								}
@@ -425,6 +429,19 @@ Misc:
 							StatusColor = "#800000"
 							Count_Unsure_Error++
 						}
+					//For error results, if the URL in the error message matches the entered URL, replace it with "<Entered_URL>", not only this is potentially shorter string, it makes sorting save results of the response quicker
+						let Col_D_SavedURLOrError_WithoutEnteredURL = Col_D_SavedURLOrError
+						let URLInErrorMessage = ""
+						try {
+							URLInErrorMessage = Col_D_SavedURLOrError_WithoutEnteredURL.match(/https?:\/\/[^\s]+/)[0].replace(/[\.,]*$/, "")
+						} catch {}
+						if (document.getElementById("MiscSetting_IgnoreHttpHttpsDifference").checked) {
+							URLInErrorMessage = URLInErrorMessage.replace(/^http:\/\//, "https://")
+						}
+						if (!/^Success_/.test(SaveStatus) && (URLInErrorMessage == ComparedEnteredUrl)) {
+							Col_D_SavedURLOrError_WithoutEnteredURL = Col_D_SavedURLOrError_WithoutEnteredURL.replace(/https?:\/\/(?:(?!\.(?:\s|$))[^\s])+/, "<Entered_URL>")
+						}
+						
 					//Outlinks count
 						let OutLinksCountNumber = 0n
 						if (/\d+ outlinks? captured/.test(Col_E_OutlinksCount)) {
@@ -435,10 +452,10 @@ Misc:
 							SpreadSheetRowData_Array : SpreadSheetRowData_Array, //The array version of a google sheet row
 							SentURL : Col_A_SentUrl,
 							HTTPStatus : Col_C_HttpStatus,
-							WBM_SaveResponse : Col_D_SavedURLOrError, //The text on column D either a WBM URL or a message saying it errored or cannot save it at all
+							WBM_SaveResponse : Col_D_SavedURLOrError_WithoutEnteredURL, //The text on column D either a WBM URL or a message saying it errored or cannot save it at all
 							
 							SaveStatus : SaveStatus, //Unsure_NoIAResult, Unsure_BlankColumnD, Success_SavedBefore, Success_FirstArchive, Unsure_Redirected, Unsure_Error, Unsure_SavedANon2XX, CantSave_BlockListed
-							StatusColor : StatusColor, //Color of the savestatus
+							StatusColor : StatusColor, //Color of the SaveStatus
 							SpreadSheetRowNumber : ArrayElement.SpreadSheetRowNumber, //The row numbers the URL were placed on the spreadsheet
 							OutLinksCountNumber : OutLinksCountNumber, //Outlinks count, bigint for save count > 2^53 (just in case).
 							Timestamp : Timestamp
@@ -645,10 +662,9 @@ Misc:
 							RowItem.appendChild(Cell_HTTPStatus)
 							
 							let Cell_SaveStatus = document.createElement("td")
-							//Cell_SaveStatus.style.fontFamily = "monospace"
 							Cell_SaveStatus.style.backgroundColor = Item.StatusColor
 							Cell_SaveStatus_Pre = document.createElement("pre") //In case of forced line breaks
-							Cell_SaveStatus_Pre.appendChild(document.createTextNode(Item.SpreadSheetRowData_Array[3].replace(/^\"/, "").replace(/\"$/, "")))
+							Cell_SaveStatus_Pre.appendChild(document.createTextNode(Item.WBM_SaveResponse.replace(/^\"/, "").replace(/\"$/, "")))
 							Cell_SaveStatus.appendChild(Cell_SaveStatus_Pre)
 							RowItem.appendChild(Cell_SaveStatus)
 							
