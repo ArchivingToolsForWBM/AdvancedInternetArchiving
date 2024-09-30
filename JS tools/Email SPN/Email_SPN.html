@@ -15,19 +15,32 @@
 			span.NoLineBreak {
 				white-space: nowrap;
 			}
+			
+			div.TabbedFilters {
+				padding-left: 1rem;
+			}
+			div.TabbedFiltersGroup {
+				padding-top: 1rem;
+				padding-bottom: 1rem;
+				padding-right: 1rem;
+				border: 1px solid white;
+			}
+			td.Stat {
+				min-width: 150px;
+			}
 		</style>
 	</head>
 <body>
 
 
-<label><input type="checkbox" checked id="Option_AutoUpdate" onchange="Auto_update()">Auto update</label>
+<label><input type="checkbox" checked id="Option_AutoUpdate" onchange="AutoUpdate()">Auto update</label>
 <table>
 <tr><th>Enter the list of URLs here</th><th>Enter the list save result here</th></tr>
 <tr>
-	<td><textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" id="Input_EnteredURLs" cols="100" rows="30" oninput="NotifyInputChanged(); Auto_update()"></textarea></td>
+	<td><textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" id="Input_EnteredURLs" cols="100" rows="30" oninput="NotifyInputChanged(); AutoUpdate()"></textarea></td>
 	<td>
 		<p>Note: Each line must contain a WBM result. This is by design in case if there is a format bug by WBGS or something.</p>
-		<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" id="Input_ResultURLs" cols="100" rows="30" oninput="NotifyInputChanged(); Auto_update()"></textarea>
+		<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" id="Input_ResultURLs" cols="100" rows="30" oninput="NotifyInputChanged(); AutoUpdate()"></textarea>
 	</td>
 </tr>
 </table>
@@ -92,23 +105,22 @@
 	<tr><th>URLs you entered results (filtered)</th><th>Leftover results that not matched</th></tr>
 	<tr>
 		<td>
-			Filter:<button onclick="ChangeFilterSettings('Filter_URLOutput', 1); Auto_update()">Check all</button><button onclick="ChangeFilterSettings('Filter_URLOutput', 0); Auto_update()">Uncheck all</button><button onclick="ChangeFilterSettings('Filter_URLOutput', 2); Auto_update()">Invert</button>
-			<ul>
-				<li><label><input type="checkbox" onchange="Auto_update()" class="Filter_URLOutput" id="FilterSetting_Success_FirstArchive">First archive</label></li>
-				<li><label><input type="checkbox" onchange="Auto_update()" class="Filter_URLOutput" id="FilterSetting_Success_SavedBefore">Saved before</label></li>
-				<li><label><input type="checkbox" onchange="Auto_update()" class="Filter_URLOutput" checked id="FilterSetting_Unsure_Error">Error</label></li>
-				<li><label><input type="checkbox" onchange="Auto_update()" class="Filter_URLOutput" checked id="FilterSetting_Unsure_NoMatch">URL not matching with any of result</label></li>
-			</ul>
-			Sort:
-			<ul>
-				<li><label><input type="radio" name="Sort_EnteredURLs" onchange="Auto_update()" id="Sort_none" checked>Same order as you entered</label></li>
-				<li><label><input type="radio" name="Sort_EnteredURLs" onchange="Auto_update()" id="Sort_URLs_ABC">By URLs you entered alphabetically</label>/<label><input type="radio" name="Sort_EnteredURLs" id="Sort_URLs_ABC_Rev" onchange="Auto_update()">Reverse</label></li>
-				<li><label><input type="radio" name="Sort_EnteredURLs" onchange="Auto_update()" id="Sort_WBMResult">By WBM result alphabetically</label>/<label><input type="radio" name="Sort_EnteredURLs" id="Sort_WBMResult_Rev" onchange="Auto_update()">Reverse</label></li>
-				<li><label><input type="radio" name="Sort_EnteredURLs" onchange="Auto_update()" id="Sort_URLs_Status">By URLs save status flagged</label>/<label><input type="radio" name="Sort_EnteredURLs" id="Sort_URLs_Status_Rev" onchange="Auto_update()">Reverse</label></li>
-			</ul>
+			<div class="TabbedFilters TabbedFiltersGroup">
+				Filter: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
+				<div class="TabbedFilters"><label><input type="checkbox" onchange="AutoUpdate()" class="Filter_URLOutput" id="FilterSetting_Success_FirstArchive">First archive</label></div>
+				<div class="TabbedFilters"><label><input type="checkbox" onchange="AutoUpdate()" class="Filter_URLOutput" id="FilterSetting_Success_SavedBefore">Saved before</label></div>
+				<div class="TabbedFilters"><label><input type="checkbox" onchange="AutoUpdate()" class="Filter_URLOutput" checked id="FilterSetting_Unsure_Error">Error</label></div>
+				<div class="TabbedFilters"><label><input type="checkbox" onchange="AutoUpdate()" class="Filter_URLOutput" checked id="FilterSetting_Unsure_NoMatch">URL not matching with any of result</label></div>
+			</div>
+			Sort: <select onchange="CheckShouldReverseSortDisabled(); AutoUpdate()">
+				<option id="Sort_Output_None" selected>None (same order as entered)</option>
+				<option id="Sort_Output_URLs_ABC">By URLs you entered alphabetically</option>
+				<option id="Sort_Output_WBMResult">By WBM result alphabetically</option>
+				<option id="Sort_Output_URLs_Status">By URLs save status flagged</option>
+			</select> <label><input type="checkbox" onchange="AutoUpdate()" disabled id="Sort_Output_Reverse">Reverse</label><br>
 			Other:
 			<ul>
-				<li><label><input type="checkbox" onchange="Auto_update()" id="Option_IncludeStatusAsPlaintext">Include save result and status in plaintext</label></li>
+				<li><label><input type="checkbox" onchange="AutoUpdate()" id="Option_IncludeStatusAsPlaintext">Include save result and status in plaintext</label></li>
 			</ul>
 			<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="Textarea_EnteredURLResult" cols="100" rows="30" readonly></textarea><br>
 			<div><button onclick="setClipboard(document.getElementById('Textarea_EnteredURLResult').value)">Copy</button><span></span></div>
@@ -140,27 +152,23 @@
 		InputChanged = true
 	}
 	
-	function Auto_update() {
+	function AutoUpdate() {
 		if (document.getElementById("Option_AutoUpdate").checked) {
 			MainFunction()
 		}
 	}
-	
-	function ChangeFilterSettings(ElementClass, Setting) {
-		//ElementClass: the element class to be affected by this function
-		//Setting:
-		//0 = uncheck
-		//1 = check
-		//2+ = invert
-		if (Setting < 2) {
-			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
-				document.getElementsByClassName(ElementClass)[i].checked = Setting
+	function ChangeCheckboxesByChildren(Setting, NodeToGrab) {
+		let Checkboxes = [...NodeToGrab.querySelectorAll("input[type=checkbox]")].forEach(ele => {
+			if (Setting < 2) {
+				ele.checked = Setting
+			} else {
+				ele.checked = !ele.checked
 			}
-		} else {
-			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
-				document.getElementsByClassName(ElementClass)[i].checked = document.getElementsByClassName(ElementClass)[i].checked ^ 1
-			}
-		}
+		});
+		AutoUpdate()
+	}
+	function CheckShouldReverseSortDisabled() {
+		document.getElementById("Sort_Output_Reverse").disabled = document.getElementById("Sort_Output_None").selected
 	}
 	{
 		let OutputList = {
@@ -327,53 +335,32 @@
 			
 			document.getElementById("StatisticDate_Earliest").textContent  = Date_Earliest
 			document.getElementById("StatisticDate_Latest").textContent  = Date_Latest
-
-			if (document.getElementById("Sort_URLs_ABC").checked) {
-				Filtered_ListOfURLs.sort((a, b) => {
+			let SortDirection = 1
+			if (document.getElementById("Sort_Output_Reverse").checked) {
+				SortDirection = -1
+			}
+			if (document.getElementById("Sort_Output_URLs_ABC").selected) {
+				Filtered_ListOfURLs.sort((a,b) => {
 					if (a.GivenURL === b.GivenURL) {
 						return 0;
 					} else {
-						return (a.GivenURL < b.GivenURL) ? -1 : 1;
+						return ((a.GivenURL < b.GivenURL) ? -1 : 1) * SortDirection;
 					}
-				});
-			} else if (document.getElementById("Sort_URLs_ABC_Rev").checked) {
-				Filtered_ListOfURLs.sort((a, b) => {
-					if (a.GivenURL === b.GivenURL) {
-						return 0;
-					} else {
-						return (a.GivenURL < b.GivenURL) ? 1 : -1;
-					}
-				});
-			} else if (document.getElementById("Sort_WBMResult").checked) {
+				})
+			} else if (document.getElementById("Sort_Output_WBMResult").selected) {
 				Filtered_ListOfURLs.sort((a, b) => {
 					if (a.StatusMessage === b.StatusMessage) {
 						return 0;
 					} else {
-						return (a.StatusMessage < b.StatusMessage) ? -1 : 1;
+						return ((a.StatusMessage < b.StatusMessage) ? -1 : 1) * SortDirection;
 					}
 				});
-			} else if (document.getElementById("Sort_WBMResult_Rev").checked) {
-				Filtered_ListOfURLs.sort((a, b) => {
-					if (a.StatusMessage === b.StatusMessage) {
-						return 0;
-					} else {
-						return (a.StatusMessage < b.StatusMessage) ? 1 : -1;
-					}
-				});
-			} else if (document.getElementById("Sort_URLs_Status").checked) {
+			} else if (document.getElementById("Sort_Output_URLs_Status").selected) {
 				Filtered_ListOfURLs.sort((a, b) => {
 					if (a.StatusType === b.StatusType) {
 						return 0;
 					} else {
-						return (a.StatusType < b.StatusType) ? -1 : 1;
-					}
-				});
-			} else if (document.getElementById("Sort_URLs_Status_Rev").checked) {
-				Filtered_ListOfURLs.sort((a, b) => {
-					if (a.StatusType === b.StatusType) {
-						return 0;
-					} else {
-						return (a.StatusType < b.StatusType) ? 1 : -1;
+						return ((a.StatusType < b.StatusType) ? -1 : 1) * SortDirection;
 					}
 				});
 			}
