@@ -232,8 +232,8 @@
 					return (ArrayElement.Result != "")
 				});
 				//Connect MatchWiths between two arrays.
-				ListOfURLs.forEach((EnteredURL, i) => {
-					ListOfWBMResult.findIndex((WBMResult, i2) => {
+				ListOfURLs.forEach((EnteredURL, IndexOfListOfURLs) => {
+					let MatchedWBMResultIndex = ListOfWBMResult.findIndex((WBMResult, IndexOfWBMResult) => {
 						if (WBMResult.InputURLMatchWith != -1) { //If WBM result already matches with another URL, skip, for optimization purposes
 							return false
 						}
@@ -242,32 +242,37 @@
 							URLOfResult = WBMResult.Result.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/)[0]
 						}
 						URLOfResult = URLOfResult.replace(/https:\/\/web\.archive\.org\/web\/\d+\//, "") //Rid out the WBM URL substring to match the original URL
-						let HasWBMSubstring = /https:\/\/web\.archive\.org\/web\/\d+\//.test(WBMResult.Result) //Failsafe if somehow the WBM result outputs a URL without the WBM substring.
-						let HasErrored = /Error!/.test(WBMResult.Result)
 						if (EnteredURL.GivenURL == URLOfResult) { //If a match is found with a proper condition...
-							EnteredURL.Timestamp = WBMResult.Timestamp
-							EnteredURL.MatchWith = i2
-							WBMResult.InputURLMatchWith = i
-							EnteredURL.StatusMessage = WBMResult.Result
-							if (HasErrored&&(HasWBMSubstring==false)) { //If error, it should not have the WBM part of the URL and have the "Error!".
-								EnteredURL.StatusType = "Unsure_Error"
-								EnteredURL.StatusColor = "#800000"
-								Count_Unsure_Error++
-							} else if (/.*First Archive.*/.test(EnteredURL.StatusMessage)&&HasWBMSubstring&&(HasErrored==false)){ //If success, it must have the WBM part of the URL AND not have an "Error!" as a failsafe.
-								EnteredURL.StatusType = "Success_FirstArchive"
-								EnteredURL.StatusColor = "#00C000"
-								Count_Success_FirstArchive++
-							} else if (HasWBMSubstring&&(HasErrored==false)){
-								EnteredURL.StatusType = "Success_SavedBefore"
-								EnteredURL.StatusColor = "#008000"
-								Count_Success_SavedBefore++
-							}
 							return true
 						}
 						return false
 					})
-					if (EnteredURL.MatchWith == -1) { //If it finds none that matches (loop through entire WBM result, resulting in the matchwith field to remain -1)
+					if (MatchedWBMResultIndex == -1) { //If it finds none that matches (loop through entire WBM result, resulting in the matchwith field to remain -1)
 						Count_Unsure_NoMatch++
+					} else {
+						MatchedWBMResultItem = ListOfWBMResult[MatchedWBMResultIndex]
+
+						let HasWBMSubstring = /https:\/\/web\.archive\.org\/web\/\d+\//.test(MatchedWBMResultItem.Result) //Failsafe if somehow the WBM result outputs a URL without the WBM substring.
+						let HasErrored = /Error!/.test(MatchedWBMResultItem.Result)
+						
+						EnteredURL.Timestamp = MatchedWBMResultItem.Timestamp
+						EnteredURL.MatchWith = MatchedWBMResultIndex
+						MatchedWBMResultItem.InputURLMatchWith = IndexOfListOfURLs
+						EnteredURL.StatusMessage = MatchedWBMResultItem.Result
+						if (HasErrored&&(HasWBMSubstring==false)) { //If error, it should not have the WBM part of the URL and have the "Error!".
+							EnteredURL.StatusType = "Unsure_Error"
+							EnteredURL.StatusColor = "#800000"
+							Count_Unsure_Error++
+						} else if (/.*First Archive.*/.test(EnteredURL.StatusMessage)&&HasWBMSubstring&&(HasErrored==false)){ //If success, it must have the WBM part of the URL AND not have an "Error!" as a failsafe.
+							EnteredURL.StatusType = "Success_FirstArchive"
+							EnteredURL.StatusColor = "#00C000"
+							Count_Success_FirstArchive++
+						} else if (HasWBMSubstring&&(HasErrored==false)){
+							EnteredURL.StatusType = "Success_SavedBefore"
+							EnteredURL.StatusColor = "#008000"
+							Count_Success_SavedBefore++
+						}
+					
 					}
 				
 				})
