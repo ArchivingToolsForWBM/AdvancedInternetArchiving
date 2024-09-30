@@ -100,7 +100,7 @@
 	</tr>
 </table><br>
 
-<span style="color: yellow;"><span id="URLsToWBMResultRatioMismatchWarning"></span></span>
+<span style="color: yellow;"><span style="font-family: monospace;" id="URLsToWBMResultRatioMismatchWarning"></span></span>
 <table>
 	<tr><th>URLs you entered results (filtered)</th><th>Leftover results that not matched</th></tr>
 	<tr>
@@ -231,61 +231,47 @@
 				ListOfWBMResult = ListOfWBMResult.filter((ArrayElement) => {
 					return (ArrayElement.Result != "")
 				});
-				for (let i=0; i<ListOfURLs.length;i++) { //Scan every entered URL to match with the results
-					for (let i2=0;i2<ListOfWBMResult.length;i2++) { //Loop through every WBM result to find a match (if multiple matches on WBMResult, only the first is read), if not, 
-						if (ListOfWBMResult[i2].InputURLMatchWith == -1) {
-						//^Optimization, when matches are found not to check this WBM result again. Also prevents an issue where
-						//having duplicate submitted URLs can result in a WBM result's match with to be set to the last URL that is a duplicate.
-							let URLOfResult = ""
-							if (ListOfWBMResult[i2].Result.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/) != null) {
-								URLOfResult = ListOfWBMResult[i2].Result.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/)[0]
-							}
-							URLOfResult = URLOfResult.replace(/https:\/\/web\.archive\.org\/web\/\d+\//, "") //Rid out the WBM URL substring to match the original URL
-							let HasWBMSubstring = /https:\/\/web\.archive\.org\/web\/\d+\//.test(ListOfWBMResult[i2].Result) //Failsafe if somehow the WBM result outputs a URL without the WBM substring.
-							let HasErrored = /Error!/.test(ListOfWBMResult[i2].Result)
-							
-							//^Conditions above acts as a failsafe that if ever that the WBM URL result would be:
-							//-Having an error with the WBM URL part as if it did save (like this: https://web.archive.org/web/YYYYMMDDhhmmss/https://example.com Error! <description>)
-							//-Successfully save but lacks the WBM substring (like saying https://example.com (x embeds) Seed URL)
-							//
-							//Thus the rule to match URLs is that if it errors out, it must be a non-WBM URL with the error text, otherwise if it was a successful save, it must have a WBM substring of the URL
-							//with no error text.
-							if (ListOfURLs[i].GivenURL == URLOfResult) { //If a match is found with a proper condition...
-								ListOfURLs[i].Timestamp = ListOfWBMResult[i2].Timestamp
-								//ListOfURLs[i].StatusMessage = ListOfWBMResult[i2].Result.replace(/^http(s)?\:\/\/(?!data:)[^\s\"\']+ /, "")
-								ListOfURLs[i].StatusMessage = ListOfWBMResult[i2].Result
-								if (HasErrored&&(HasWBMSubstring==false)) { //If error, it should not have the WBM part of the URL and have the "Error!".
-									ListOfURLs[i].MatchWith = i2
-									ListOfWBMResult[i2].InputURLMatchWith = i
-									ListOfURLs[i].StatusType = "Unsure_Error"
-									ListOfURLs[i].StatusColor = "#800000"
-									Count_Unsure_Error++
-									
-									break;
-								} else if (/.*First Archive.*/.test(ListOfURLs[i].StatusMessage)&&HasWBMSubstring&&(HasErrored==false)){ //If success, it must have the WBM part of the URL AND not have an "Error!" as a failsafe.
-									ListOfURLs[i].MatchWith = i2
-									ListOfWBMResult[i2].InputURLMatchWith = i
-									ListOfURLs[i].StatusType = "Success_FirstArchive"
-									ListOfURLs[i].StatusColor = "#00C000"
-									Count_Success_FirstArchive++
-									
-									break;
-								} else if (HasWBMSubstring&&(HasErrored==false)){
-									ListOfURLs[i].MatchWith = i2
-									ListOfWBMResult[i2].InputURLMatchWith = i
-									ListOfURLs[i].StatusType = "Success_SavedBefore"
-									ListOfURLs[i].StatusColor = "#008000"
-									Count_Success_SavedBefore++
-									
-									break;
-								}
-							}
+				//Connect MatchWiths between two arrays.
+				ListOfURLs.forEach((EnteredURL, i) => {
+					ListOfWBMResult.findIndex((WBMResult, i2) => {
+						if (WBMResult.InputURLMatchWith != -1) { //If WBM result already matches with another URL, skip, for optimization purposes
+							return false
 						}
-					}
-					if (ListOfURLs[i].MatchWith == -1) { //If it finds none that matches (loop through entire WBM result, resulting in the matchwith field to remain -1)
+						let URLOfResult = ""
+						if (WBMResult.Result.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/) != null) {
+							URLOfResult = WBMResult.Result.match(/http(s)?\:\/\/(?!data:)[^\s\"\']+/)[0]
+						}
+						URLOfResult = URLOfResult.replace(/https:\/\/web\.archive\.org\/web\/\d+\//, "") //Rid out the WBM URL substring to match the original URL
+						let HasWBMSubstring = /https:\/\/web\.archive\.org\/web\/\d+\//.test(WBMResult.Result) //Failsafe if somehow the WBM result outputs a URL without the WBM substring.
+						let HasErrored = /Error!/.test(WBMResult.Result)
+						if (EnteredURL.GivenURL == URLOfResult) { //If a match is found with a proper condition...
+							EnteredURL.Timestamp = WBMResult.Timestamp
+							EnteredURL.MatchWith = i2
+							WBMResult.InputURLMatchWith = i
+							EnteredURL.StatusMessage = WBMResult.Result
+							if (HasErrored&&(HasWBMSubstring==false)) { //If error, it should not have the WBM part of the URL and have the "Error!".
+								EnteredURL.StatusType = "Unsure_Error"
+								EnteredURL.StatusColor = "#800000"
+								Count_Unsure_Error++
+							} else if (/.*First Archive.*/.test(EnteredURL.StatusMessage)&&HasWBMSubstring&&(HasErrored==false)){ //If success, it must have the WBM part of the URL AND not have an "Error!" as a failsafe.
+								EnteredURL.StatusType = "Success_FirstArchive"
+								EnteredURL.StatusColor = "#00C000"
+								Count_Success_FirstArchive++
+							} else if (HasWBMSubstring&&(HasErrored==false)){
+								EnteredURL.StatusType = "Success_SavedBefore"
+								EnteredURL.StatusColor = "#008000"
+								Count_Success_SavedBefore++
+							}
+							return true
+						}
+						return false
+					})
+					if (EnteredURL.MatchWith == -1) { //If it finds none that matches (loop through entire WBM result, resulting in the matchwith field to remain -1)
 						Count_Unsure_NoMatch++
 					}
-				}
+				
+				})
+
 				//Finished processing, save them to a list for optimization purposes
 				OutputList.InputURLList = ListOfURLs
 				OutputList.WBMResultList = ListOfWBMResult
