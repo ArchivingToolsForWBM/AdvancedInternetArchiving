@@ -47,58 +47,6 @@
 <button onclick="MainFunction()">Process</button>
 <hr>
 <span hidden id="AllSavedIndicator" style="color: #00ff00; font-size: 150%;">All URLs have been saved successfully!</span>
-<table>
-	<tr><th colspan="2">Statistics</th></tr>
-	<tr>
-		<td>Total URLs found:</td>
-		<td><kbd><span id="Statistic_NumberOfItems_TotalURLs">0</span></kbd></td>
-	</tr>
-	<tr>
-		<td>How many displayed after filtered:</td>
-		<td id="StatisticPercentage_NumberOfItems_RemainingAfterFilter" class="Stat"><kbd><span id="Statistic_NumberOfItems_RemainingAfterFilter">0</span></kbd></td>
-	</tr>
-	<tr>
-		<td>How many were removed from filter:</td>
-		<td id="StatisticPercentage_NumberOfItems_RemovedAfterFilter" class="Stat"><kbd><span id="Statistic_NumberOfItems_RemovedAfterFilter">0</span></kbd></td>
-	</tr>
-	<tr><th colspan="2">Classification stats</th></tr>
-	<tr>
-		<td><kbd>Success_SavedBefore</kbd></td>
-		<td id="StatisticPercentage_NumberOfItems_Success_SavedBefore" class="Stat"><kbd><span id="Statistic_NumberOfItems_Success_SavedBefore">0</span></kbd></td>
-	</tr>
-	<tr>
-		<td><kbd>Success_FirstArchive</kbd></td>
-		<td id="StatisticPercentage_NumberOfItems_Success_FirstArchive" class="Stat"><kbd><span id="Statistic_NumberOfItems_Success_FirstArchive">0</span></kbd></td>
-	</tr>
-	<tr>
-		<td><kbd>Unsure_Error</kbd></td>
-		<td id="StatisticPercentage_NumberOfItems_Unsure_Error" class="Stat"><kbd><span id="Statistic_NumberOfItems_Unsure_Error">0</span></kbd></td>
-	</tr>
-	<tr>
-		<td><kbd>Unsure_NoMatch</kbd></td>
-		<td id="StatisticPercentage_NumberOfItems_Unsure_NoMatch" class="Stat"><kbd><span id="Statistic_NumberOfItems_Unsure_NoMatch">0</span></kbd></td>
-	</tr>
-		<tr><th colspan="2">Classification totals</th></tr>
-	<tr>
-		<td><kbd>Success</kbd></td>
-		<td id="StatisticPercentage_NumberOfItems_Success_Total" class="Stat"><kbd><span id="Statistic_NumberOfItems_Success_Total">0</span></kbd></td>
-	</tr>
-	<tr>
-		<td><kbd>Unsure</kbd></td>
-		<td id="StatisticPercentage_NumberOfItems_Unsure_Total" class="Stat"><kbd><span id="Statistic_NumberOfItems_Unsure_Total">0</span></kbd></td>
-	</tr>
-	<tr>
-		<th colspan="2">Date range</th>
-	</tr>
-	<tr>
-		<td>Earliest archive date:</td>
-		<td style="text-align: center;"><kbd id="StatisticDate_Earliest">?</kbd></td>
-	</tr>
-	<tr>
-		<td>Latest archive date:</td>
-		<td style="text-align: center;"><kbd id="StatisticDate_Latest">?</kbd></td>
-	</tr>
-</table><br>
 
 <span style="color: yellow;"><span style="font-family: monospace;" id="URLsToWBMResultRatioMismatchWarning"></span></span>
 <table>
@@ -122,6 +70,59 @@
 			<ul>
 				<li><label><input type="checkbox" onchange="AutoUpdate()" id="Option_IncludeStatusAsPlaintext">Include save result and status in plaintext</label></li>
 			</ul>
+			<hr>
+			<table>
+				<tr><th colspan="2">Statistics</th></tr>
+				<tr>
+					<td>Total URLs found:</td>
+					<td><kbd><span id="Statistic_NumberOfItems_TotalURLs">0</span></kbd></td>
+				</tr>
+				<tr>
+					<td>How many displayed after filtered:</td>
+					<td id="StatisticPercentage_NumberOfItems_RemainingAfterFilter" class="Stat"><kbd><span id="Statistic_NumberOfItems_RemainingAfterFilter">0</span></kbd></td>
+				</tr>
+				<tr>
+					<td>How many were removed from filter:</td>
+					<td id="StatisticPercentage_NumberOfItems_RemovedAfterFilter" class="Stat"><kbd><span id="Statistic_NumberOfItems_RemovedAfterFilter">0</span></kbd></td>
+				</tr>
+				<tr><th colspan="2">Classification stats</th></tr>
+				<tr>
+					<td><kbd>Success_SavedBefore</kbd></td>
+					<td id="StatisticPercentage_NumberOfItems_Success_SavedBefore" class="Stat"><kbd><span id="Statistic_NumberOfItems_Success_SavedBefore">0</span></kbd></td>
+				</tr>
+				<tr>
+					<td><kbd>Success_FirstArchive</kbd></td>
+					<td id="StatisticPercentage_NumberOfItems_Success_FirstArchive" class="Stat"><kbd><span id="Statistic_NumberOfItems_Success_FirstArchive">0</span></kbd></td>
+				</tr>
+				<tr>
+					<td><kbd>Unsure_Error</kbd></td>
+					<td id="StatisticPercentage_NumberOfItems_Unsure_Error" class="Stat"><kbd><span id="Statistic_NumberOfItems_Unsure_Error">0</span></kbd></td>
+				</tr>
+				<tr>
+					<td><kbd>Unsure_NoMatch</kbd></td>
+					<td id="StatisticPercentage_NumberOfItems_Unsure_NoMatch" class="Stat"><kbd><span id="Statistic_NumberOfItems_Unsure_NoMatch">0</span></kbd></td>
+				</tr>
+					<tr><th colspan="2">Classification totals</th></tr>
+				<tr>
+					<td><kbd>Success</kbd></td>
+					<td id="StatisticPercentage_NumberOfItems_Success_Total" class="Stat"><kbd><span id="Statistic_NumberOfItems_Success_Total">0</span></kbd></td>
+				</tr>
+				<tr>
+					<td><kbd>Unsure</kbd></td>
+					<td id="StatisticPercentage_NumberOfItems_Unsure_Total" class="Stat"><kbd><span id="Statistic_NumberOfItems_Unsure_Total">0</span></kbd></td>
+				</tr>
+				<tr>
+					<th colspan="2">Date range</th>
+				</tr>
+				<tr>
+					<td>Earliest archive date:</td>
+					<td style="text-align: center;"><kbd id="StatisticDate_Earliest">?</kbd></td>
+				</tr>
+				<tr>
+					<td>Latest archive date:</td>
+					<td style="text-align: center;"><kbd id="StatisticDate_Latest">?</kbd></td>
+				</tr>
+			</table><br>
 			<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="Textarea_EnteredURLResult" cols="100" rows="30" readonly></textarea><br>
 			<div><button onclick="setClipboard(document.getElementById('Textarea_EnteredURLResult').value)">Copy</button><span></span></div>
 		</td>
@@ -247,7 +248,7 @@
 						}
 						return false
 					})
-					if (MatchedWBMResultIndex == -1) { //If it finds none that matches (loop through entire WBM result, resulting in the matchwith field to remain -1)
+					if (MatchedWBMResultIndex == -1) { //If it finds none that matches, count how many failed to match
 						Count_Unsure_NoMatch++
 					} else {
 						MatchedWBMResultItem = ListOfWBMResult[MatchedWBMResultIndex]
