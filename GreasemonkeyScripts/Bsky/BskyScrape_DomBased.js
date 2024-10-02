@@ -1226,6 +1226,9 @@
 						if (HTMLTag.ariaLabel) {
 							MediaOutput.ariaLabel = HTMLTag.ariaLabel
 						}
+						if (HTMLTag.poster) {
+							MediaOutput.poster = HTMLTag.poster
+						}
 					}
 					
 					return MediaOutput
