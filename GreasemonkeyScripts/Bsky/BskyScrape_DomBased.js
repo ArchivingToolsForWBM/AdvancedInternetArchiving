@@ -1223,7 +1223,7 @@
 						if (HTMLTag.alt) {
 							MediaOutput.alt = HTMLTag.alt
 						}
-						if (HTMLTag.ariaLabel) {
+						if (HTMLTag.ariaLabel) { //If the post is a video, this is a blob URL, otherwise this would point to the image.
 							MediaOutput.ariaLabel = HTMLTag.ariaLabel
 						}
 						if (HTMLTag.poster) {
