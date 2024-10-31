@@ -32,6 +32,9 @@
 	//-Does not work if the URL is "base-64 mode", e.g. https://bsky.app/profile/did:plc:<base_64_string>
 	//-This tool only works if you have the language setting set to "English" on the app language. This is because the page layout and info layout must match with the regex in order to work.
 	// In case of future of new settings, I recommend using default settings for stuff besides the app language.
+	//-If using google chrome or any browser with its own translating feature, do not translate it as it breaks things. For example: Content flagged as "Sexually Suggestive", the button
+	// does not change text after it was translated, and causes this script to repeatedly show and hide repeatedly.
+	//--Any form of page-altering feature of the browser or another extension that would change the page layout will also break this.
 	//Settings
 	// Note: Changes apply when the page is refreshed. Either reload the page via a browser or enter the address bar. It's not a reload if only part of the page loads content while
 	// everything else persist.

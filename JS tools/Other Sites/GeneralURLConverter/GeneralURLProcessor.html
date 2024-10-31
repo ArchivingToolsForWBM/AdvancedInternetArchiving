@@ -567,10 +567,7 @@ Sort:
 			OutputSet = new Set() //Reset/clear them to not include previous versions
 			OutputURLObjects = [] //
 			if (InputChanged) {
-				let ListOfURLs = document.getElementById("Input_EnteredURLs").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"\']+/g) //Why ttps instead of https? Blame firefox's URL truncation of long URLs.
-				if (ListOfURLs == null) {
-					ListOfURLs = [] //failsafe, prevents Array.map from performing a null which on the browser, would do nothing (if user enters a string with no valid URL).
-				}
+				let ListOfURLs = document.getElementById("Input_EnteredURLs").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"\']+/g) ?? [] //Why ttps instead of https? Blame firefox's URL truncation of long URLs.
 				ListOfURLs = ListOfURLs.filter((URL) => { //Remove URLs that aren't web pages
 					let IsURL = (!/^ttps?:\/\/(mailto|file|data|irc)/.test(URL))
 					let HaveNoBadChar = (!/[\s\<\>\n]/.test(URL))
