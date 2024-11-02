@@ -17,7 +17,7 @@
 			}
 			input { font-family: monospace;}
 			
-			div.TabbedFilters {
+			div.TabbedItems {
 				padding-left: 1rem;
 			}
 			div.TabbedFiltersGroup {
@@ -106,25 +106,25 @@ Preset settings:<br>
 	<li><button onclick="PresetSetting_DuplicatedProcess(); AutoUpdate()">Filter by sure-saved and only entered URLs as plaintext</button> &leftarrow; Use this option if your process duplicates, in conjunction of a list cleaner.</li>
 </ul>
 
-<div class="TabbedFilters TabbedFiltersGroup">
+<div class="TabbedItems TabbedFiltersGroup">
 Filters: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
-	<div class="TabbedFilters TabbedFiltersGroup" id="FilterGroup_SureSaved">Successfully saved: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
-		<div class="TabbedFilters"><label style="color: #008000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_SavedBefore" data-status_list_name="Success_SavedBefore">Success (have saved before (green))</label></div>
-		<div class="TabbedFilters"><label style="color: #00C000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_FirstArchive" data-status_list_name="Success_FirstArchive">Success (&ldquo;First Archive&rdquo; (light green)) </label></div>
+	<div class="TabbedItems TabbedFiltersGroup" id="FilterGroup_SureSaved">Successfully saved: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
+		<div class="TabbedItems"><label style="color: #008000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_SavedBefore" data-status_list_name="Success_SavedBefore">Success (have saved before (green))</label></div>
+		<div class="TabbedItems"><label style="color: #00C000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_FirstArchive" data-status_list_name="Success_FirstArchive">Success (&ldquo;First Archive&rdquo; (light green)) </label></div>
 	</div>
-	<div class="TabbedFilters TabbedFiltersGroup" id="FilterGroup_Unsures">Unsure: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
-		<div class="TabbedFilters"><label style="color: #808080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_NoIAResult" checked data-status_list_name="Unsure_NoIAResult">No results (grey)</label></div>
-		<div class="TabbedFilters"><label style="color: #A08080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_BlankColumnD" checked data-status_list_name="Unsure_BlankColumnD">Result but column D is blank (light red)</label></div>
-		<div class="TabbedFilters"><label style="color: #808000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Redirected" checked data-status_list_name="Unsure_Redirected">Redirects (yellow)</label></div>
-		<div class="TabbedFilters"><label style="color: #800000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Error" checked data-status_list_name="Unsure_Error">Errors (red)</label></div>
-		<div class="TabbedFilters"><label style="color: #FFA500;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_SavedANon2XX" checked data-status_list_name="Unsure_SavedANon2XX">Saved but isn't a 2XX (3XX/4XX/5XX) (orange).<sup><abbr title="Sometimes saving a URL may have this situation happen: column D's save result data show the playback URL as if it was saved properly, but column C says error 5XX, and visiting the playback URL will show an error page. You probably should re-attempt to save these URLs.">[note]</abbr></sup></label></div>
+	<div class="TabbedItems TabbedFiltersGroup" id="FilterGroup_Unsures">Unsure: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
+		<div class="TabbedItems"><label style="color: #808080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_NoIAResult" checked data-status_list_name="Unsure_NoIAResult">No results (grey)</label></div>
+		<div class="TabbedItems"><label style="color: #A08080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_BlankColumnD" checked data-status_list_name="Unsure_BlankColumnD">Result but column D is blank (light red)</label></div>
+		<div class="TabbedItems"><label style="color: #808000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Redirected" checked data-status_list_name="Unsure_Redirected">Redirects (yellow)</label></div>
+		<div class="TabbedItems"><label style="color: #800000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Error" checked data-status_list_name="Unsure_Error">Errors (red)</label></div>
+		<div class="TabbedItems"><label style="color: #FFA500;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_SavedANon2XX" checked data-status_list_name="Unsure_SavedANon2XX">Saved but isn't a 2XX (3XX/4XX/5XX) (orange).<sup><abbr title="Sometimes saving a URL may have this situation happen: column D's save result data show the playback URL as if it was saved properly, but column C says error 5XX, and visiting the playback URL will show an error page. You probably should re-attempt to save these URLs.">[note]</abbr></sup></label></div>
 	</div>
-	<div class="TabbedFilters TabbedFiltersGroup" id="FilterGroup_CantSaves">Cannot save: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
-		<div class="TabbedFilters"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_BlockListed" checked data-status_list_name="CantSave_BlockListed">&ldquo;This URL is in the Save Page Now service block list and cannot be captured.&rdquo; (dark red)</label></div>
-		<div class="TabbedFilters"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error401" checked data-status_list_name="CantSave_Error401">&ldquo;The target server requires authentication for &lt;URL&gt; (HTTP status=401).&rdquo; (dark red)</label></div>
-		<div class="TabbedFilters"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error404" checked data-status_list_name="CantSave_Error404">&ldquo;The target server cannot find the requested resource &lt;URL&gt; (HTTP status=404).&rdquo; (dark red)</label></div>
-		<div class="TabbedFilters"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error403" checked data-status_list_name="CantSave_Error403">&ldquo;The capture failed because Save Page Now does not have access rights for &lt;URL&gt; (HTTP status=403).&rdquo; (dark red)</label></div>
-		<div class="TabbedFilters"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_CantResolve" checked data-status_list_name="CantSave_CantResolve">&ldquo;Cannot resolve host &lt;URL&gt;&rdquo; (dark red)</label></div>
+	<div class="TabbedItems TabbedFiltersGroup" id="FilterGroup_CantSaves">Cannot save: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
+		<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_BlockListed" checked data-status_list_name="CantSave_BlockListed">&ldquo;This URL is in the Save Page Now service block list and cannot be captured.&rdquo; (dark red)</label></div>
+		<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error401" checked data-status_list_name="CantSave_Error401">&ldquo;The target server requires authentication for &lt;URL&gt; (HTTP status=401).&rdquo; (dark red)</label></div>
+		<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error404" checked data-status_list_name="CantSave_Error404">&ldquo;The target server cannot find the requested resource &lt;URL&gt; (HTTP status=404).&rdquo; (dark red)</label></div>
+		<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error403" checked data-status_list_name="CantSave_Error403">&ldquo;The capture failed because Save Page Now does not have access rights for &lt;URL&gt; (HTTP status=403).&rdquo; (dark red)</label></div>
+		<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_CantResolve" checked data-status_list_name="CantSave_CantResolve">&ldquo;Cannot resolve host &lt;URL&gt;&rdquo; (dark red)</label></div>
 		Please note that pages flagged as "can't save" can change between being able to be save or not. That's why they're checked by default.
 	</div>
 </div>
@@ -137,18 +137,18 @@ Sort by <select onchange="CheckShouldReverseSortDisabled(); AutoUpdate()">
 	<option id="Sort_Output_OutlinksCount">Outlinks count (Column E)</option>
 
 </select><label><input type="checkbox" onchange="AutoUpdate()" id="Sort_Output_Reverse">Reverse</label><br>
-Plaintext format settings (post-filter):<br>
-	<ul>
-		<li><label><input type="radio" name="TextOutputFormat" onchange="AutoUpdate()" id="PlainText_DisplayInfo_EnteredURLsOnly" checked>Display just entered URLs in the plaintext</label></li>
-		<li><label><input type="radio" name="TextOutputFormat" onchange="AutoUpdate()" id="PlainText_DisplayInfo_WBGSInfo">Display entered URLs + WBGS result info in the plaintext</label></li>
-		<li><label><input type="radio" name="TextOutputFormat" onchange="AutoUpdate()" id="PlainText_DisplayInfo_AllAsJson">Display full information as JSON</label></li>
-	</ul>
+<div>
+	Plaintext format settings (post-filter):<br>
+			<div class="TabbedItems"><label><input type="radio" name="TextOutputFormat" onchange="AutoUpdate()" id="PlainText_DisplayInfo_EnteredURLsOnly" checked>Display just entered URLs in the plaintext</label></div>
+			<div class="TabbedItems"><label><input type="radio" name="TextOutputFormat" onchange="AutoUpdate()" id="PlainText_DisplayInfo_WBGSInfo">Display entered URLs + WBGS result info in the plaintext</label></div>
+			<div class="TabbedItems"><label><input type="radio" name="TextOutputFormat" onchange="AutoUpdate()" id="PlainText_DisplayInfo_AllAsJson">Display full information as JSON</label></div>
+</div>
 Misc:
 <p hidden>dev comment: These NEED to call SaveStatusesChanged, which sets IsListOrModeChanged to true, so the system correctly realizes it is in fact a change on treating certain things (http and https for example, have different results depending on the ignore for that) </p>
-<ul>
-	<li><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" class="MiscCheckboxSetting" id="MiscSetting_IgnoreFragment" checked>Ignore </label><a href="https://en.wikipedia.org/wiki/URI_fragment">URI fragment</a><label for="MiscSetting_IgnoreFragment"> (the # and everything after it will be ignored when checking for a match)</label></li>
-	<li><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" class="MiscCheckboxSetting" id="MiscSetting_IgnoreHttpHttpsDifference" checked>Ignore difference between HTTP/HTTPS versions.</label></li>
-</ul>
+<div>
+	<div class="TabbedItems"><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" class="MiscCheckboxSetting" id="MiscSetting_IgnoreFragment" checked>Ignore </label><a href="https://en.wikipedia.org/wiki/URI_fragment">URI fragment</a><label for="MiscSetting_IgnoreFragment"> (the # and everything after it will be ignored when checking for a match)</label></div>
+	<div class="TabbedItems"><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" class="MiscCheckboxSetting" id="MiscSetting_IgnoreHttpHttpsDifference" checked>Ignore difference between HTTP/HTTPS versions.</label></div>
+</div>
 <button onclick="CheckURLs()">Submit</button><button onclick="Reset()">Reset</button><br><br>
 <hr>
 <span id="OutputResults_NoError">
@@ -349,6 +349,9 @@ Misc:
 					// when converted to plaintext, much line windows command prompt when dealing with file path containing spaces.
 					// 
 					// I use that instead of '\n' because of a rare chance in the future should the WBGS ever enters data in a cell that uses newline.
+				if ((InputList.length == 1) && InputList[0] == "") {
+					InputList = []
+				}
 				InputList = InputList.map((ArrayElement, Index) => {
 					return {
 						SpreadSheetRowData : ArrayElement,
