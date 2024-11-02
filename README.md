@@ -28,8 +28,10 @@ https://exampleBlankColumnD.com	Already captured	-		0
 https://exampleNoResultsAtAll.com					
 https://exampleSavedButHTTP4xx	Already captured	429	https://web.archive.org/web/20210101000000/https://exampleSavedButHTTP4xx	0	
 https://exampleBlockListed			This URL is in the Save Page Now service block list and cannot be captured	0 outlinks captured	
+https://exampleError401			The target server requires authentication for https://exampleError401 (HTTP status=404).	0 outlinks captured	
 https://exampleError404			The target server cannot find the requested resource https://exampleError404 (HTTP status=404).	0 outlinks captured	
 https://exampleError403			The capture failed because Save Page Now does not have access rights for https://exampleError403 (HTTP status=403).		
+https://DoesNotExist.com			Cannot resolve host https://DoesNotExist.com		
 ```
 ![image](https://github.com/user-attachments/assets/c1bc74c7-1154-4a96-a53a-6c42424956f1)
 ![image](https://github.com/user-attachments/assets/624fd2c6-4add-483d-b6ed-e8742d54fbd8)
