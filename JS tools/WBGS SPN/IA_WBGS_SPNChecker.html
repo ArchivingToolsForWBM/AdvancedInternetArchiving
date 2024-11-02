@@ -873,14 +873,14 @@ Misc:
 			return WholeNumberPart + "." + DecimalPart + "%"
 		}
 	}
-	function CSSLinearGradientProgressBar({Quantity, MaxQuantity, Direction, ColorFull, ColorEmpty}) {
+	function CSSLinearGradientProgressBar({Quantity = 0, MaxQuantity = 100, Direction = "to right", ColorFull = "#C0C0C0", ColorEmpty = "#000000"}) {
 		//Returns a percentage displayed as a gradient representing a bar graph as CSS. Preferably as a background image.
 		let Percentage = 0
 		if (MaxQuantity != 0) {
 			Percentage = Quantity * 100/MaxQuantity //Multiply first so that it only rounds at the last step, minimizing rounding errors.
 		}
 		Percentage = clamp(Percentage, 0, 100)
-		return "linear-gradient("+Direction+", "+ColorFull+" "+Percentage+"%, "+ColorEmpty+" "+Percentage+"% 100%)"
+		return "linear-gradient("+Direction+", "+ColorFull+" "+Percentage.toFixed(17)+"%, "+ColorEmpty+" "+Percentage.toFixed(17)+"% 100%)"
 	}
 	function clamp(num, min, max) {
 		//Restrict a number within a specified range.
