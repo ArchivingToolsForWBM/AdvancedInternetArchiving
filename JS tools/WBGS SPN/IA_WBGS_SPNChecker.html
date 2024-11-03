@@ -36,28 +36,29 @@
 <p>This tool will take a given <a href="https://en.wikipedia.org/wiki/Tab-separated_values">tab-seperated values (TSV)</a> table from google sheets of the archive results  (&ldquo;Archive URLs&rdquo;), and searches for any potential issues or anomalies.
 Note: this tool only judges based on the output data of the table, not the actual web-page content.</p>
 
-<h3>How to use</h3>
-<ol>
-	<li>Have a google account and go to google drive, create a spreadsheet anywhere you wish.</li><br>
-	<li>
-		Make sure you authorized WBGS the ability to edit that spreadsheet, else it will not be able to write the results. To do that, right-click the spreadsheet file (or the folder it is in) &rightarrow; Share &rightarrow; Under &ldquo;General Access&rdquo; set it to
-		&ldquo;Anyone with the link&rdquo; and the role (a dropdown list to the right) set to &ldquo;Editor&rdquo;. However, even easier, have the folder with that share setting with the google sheet for processing URLs inside of that.
-	</li><br>
-	<li>Open the spreadsheet, and have your list of URLs all on column A (the first column) where each row contains 1 URL, with the first URL on the first row. </li><br>
-	<li>Before you start a process and any subsequent process, make sure the spreadsheet is saved! This is especially for those with weak internet connection.</li><br>
-	<li>
-		On Wayback Gsheets, make sure you are logged in (both the IA and google), and on the main menu, select &ldquo;Archive URLs&rdquo;, paste your URL of the google sheets containing the list of URLs, check the &ldquo;<kbd>Save results in a new Sheet.</kbd>&rdquo; option and press &ldquo;Archive&rdquo;.<br><br>
-		In case you keep forgetting to check the option to have the results in a new sheet, I made a rather simple greasemonkey script in <kbd>AdvancedInternetArchiving/GreasemonkeyScripts/WBGS</kbd>. All it does is automatically check the checkbox of that option when being on the start process page.
-	</li><br>
-	<li>If the process successfully starts, you'll get an email titled &ldquo;Wayback gsheets capture tracking&rdquo; about that process.</li><br>
-	<li>
-		In the newly created sheet (created by the WBGS when the process starts traversing URLs), when URLs get a result (it updates every N URLs processed as it processes), the spreadsheet should be in this format:
-<table><tr><td><pre>SentURL1	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	FirstArchive
+<details>
+	<summary style="font-weight: bold">How to use (click to open)</summary>
+	<ol>
+		<li>Have a google account and go to google drive, create a spreadsheet anywhere you wish.</li><br>
+		<li>
+			Make sure you authorized WBGS the ability to edit that spreadsheet, else it will not be able to write the results. To do that, right-click the spreadsheet file (or the folder it is in) &rightarrow; Share &rightarrow; Under &ldquo;General Access&rdquo; set it to
+			&ldquo;Anyone with the link&rdquo; and the role (a dropdown list to the right) set to &ldquo;Editor&rdquo;. However, even easier, have the folder with that share setting with the google sheet for processing URLs inside of that.
+		</li><br>
+		<li>Open the spreadsheet, and have your list of URLs all on column A (the first column) where each row contains 1 URL, with the first URL on the first row. </li><br>
+		<li>Before you start a process and any subsequent process, make sure the spreadsheet is saved! This is especially for those with weak internet connection.</li><br>
+		<li>
+			On Wayback Gsheets, make sure you are logged in (both the IA and google), and on the main menu, select &ldquo;Archive URLs&rdquo;, paste your URL of the google sheets containing the list of URLs, check the &ldquo;<kbd>Save results in a new Sheet.</kbd>&rdquo; option and press &ldquo;Archive&rdquo;.<br><br>
+			In case you keep forgetting to check the option to have the results in a new sheet, I made a rather simple greasemonkey script in <kbd>AdvancedInternetArchiving/GreasemonkeyScripts/WBGS</kbd>. It automatically checks the checkbox of that option when being on the start process page, along with other features.
+		</li><br>
+		<li>If the process successfully starts, you'll get an email titled &ldquo;Wayback gsheets capture tracking&rdquo; about that process.</li><br>
+		<li>
+			In the newly created sheet (created by the WBGS when the process starts traversing URLs), when URLs get a result (it updates every N URLs processed as it processes), the spreadsheet should be in this format:
+	<table><tr><td><pre>SentURL1	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	FirstArchive
 SentURL2	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	FirstArchive
 SentURL3	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	FirstArchive
 ...</pre></td></tr></table>
-		Here's an example testing each type of save status:<br>
-		<textarea id="SampleInput" readonly style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;">https://example.com	Already captured	-	https://web.archive.org/web/20210101000000/https://example.com	0	
+			Here's an example testing each type of save status:<br>
+			<textarea id="SampleInput" readonly style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;">https://example.com	Already captured	-	https://web.archive.org/web/20210101000000/https://example.com	0	
 https://exampleFirstArchive.com	New capture	-	https://web.archive.org/web/20210101000000/https://exampleFirstArchive.com	0	First Archive
 https://exampleRedirectFrom.com	Already captured	-	https://web.archive.org/web/20210101000000/https://exampleRedirectTo.com	0	
 https://exampleError.com	Already captured	-	Service Unavailable for https://exampleError.com (HTTP status=503)	0	
@@ -69,32 +70,33 @@ https://exampleError401			The target server requires authentication for https://
 https://exampleError404			The target server cannot find the requested resource https://exampleError404 (HTTP status=404).	0 outlinks captured	
 https://exampleError403			The capture failed because Save Page Now does not have access rights for https://exampleError403 (HTTP status=403).		
 https://DoesNotExist.com			Cannot resolve host https://DoesNotExist.com		</textarea><br>
-		<div><button onclick="setClipboard(document.getElementById('SampleInput').value)">Copy</button><span></span></div>
-		After the process finishes (you should get an email saying &ldquo;Wayback gsheets capture report&rdquo; if it did), or if a process queues or gets stuck on the remaining few URLs, <abbr title="I experienced a bug with google sheets where the system may copy up to I think 200 rows of data, make sure you copy the entire list!"><s>select columns A-F</s></abbr> select the cells covering columns A-F and copy (CTRL+C). Then on this HTML file, paste (CTRL+V) your list in the following textarea. The data should be converted into
-		<a href="https://en.wikipedia.org/wiki/Tab-separated_values">tab-seperated values</a>.
-	</li><br>
-	<li>
-		This HTML file will now display various stuff (at the bottom), mainly to filter to only show URLs that probably haven't saved. By default, it will get only URLs that are &ldquo;potentially not saved properly&rdquo;: errors, redirects, or strange things like column D being blank, etc..
-		From this point on, you can re-attempt to save these URLs again. An easy-to-copy URLs is provided in an output textarea.<br><br>
-		<ul>
-			<li>
-				If you happen to run into issues with the process (queued mid-process, stuck on last few URLs, and/or you aborting the process), I strongly recommend starting a new google sheet and use that instead because there is a tendency that a problematic process may run again
-				after a queue, and if you have edited the sheet while there's a process on it, could overwrite the save results.
-			</li><br>
-			<li>
-				The reason why I instructed you to have &ldquo;<kbd>Save results in a new Sheet.</kbd>&rdquo; checked is because of a bug I encountered that a process may duplicate, and overwrite any save results by the second and subsequent duplicate processes. This bug usually happens some
-				time after the process have started after it initally-queues, or finished. When this happens, you get 2+ identical emails titled &ldquo;<kbd>Wayback gsheets capture tracking</kbd>&rdquo; sharing the same tracking URLs linked, and the home page of WBGS after logging
-				in also showing duplicate processes. When having the results in a new sheet and the process duplicates, they won't overwrite each other since each process will create its own sheet.
-			</li>
-		</ul>
-	</li><br>
-	<li>
-		If you run into process duplicating itself and both are done, I would rather have you filter only URLs flagged as &ldquo;success&rdquo; on all save result sheets, have them all formatted as <kbd>Display just entered URLs in the plaintext</kbd>, copy that, open the list cleaner tool (provided here)
-		paste them into the blacklist, and copy all the URLs you entered and paste them into the first textarea (make sure no tabs and one URL per line on both textareas). This will remove any URLs that have been successfully saved at least once of any processes including duplicates. Then re-attempt
-		saving the URLs output from the list cleaner.
-	</li>
-</ol>
-<p>I strongly recommend checking the process and emails to see any anomalies, this include anything strange happening on the process activity log, using the browser inspect element for any http error statuses on the WBGS pages, etc. If you do find one, make sure you contact the IA about it.</p>
+			<div><button onclick="setClipboard(document.getElementById('SampleInput').value)">Copy</button><span></span></div>
+			After the process finishes (you should get an email saying &ldquo;Wayback gsheets capture report&rdquo; if it did), or if a process queues or gets stuck on the remaining few URLs, <abbr title="I experienced a bug with google sheets where the system may copy up to I think 200 rows of data, make sure you copy the entire list!"><s>select columns A-F</s></abbr> select the cells covering columns A-F and copy (CTRL+C). Then on this HTML file, paste (CTRL+V) your list in the following textarea. The data should be converted into
+			<a href="https://en.wikipedia.org/wiki/Tab-separated_values">tab-seperated values</a>.
+		</li><br>
+		<li>
+			This HTML file will now display various stuff (at the bottom), mainly to filter to only show URLs that probably haven't saved. By default, it will get only URLs that are &ldquo;potentially not saved properly&rdquo;: errors, redirects, or strange things like column D being blank, etc..
+			From this point on, you can re-attempt to save these URLs again. An easy-to-copy URLs is provided in an output textarea.<br><br>
+			<ul>
+				<li>
+					If you happen to run into issues with the process (queued mid-process, stuck on last few URLs, and/or you aborting the process), I strongly recommend starting a new google sheet and use that instead because there is a tendency that a problematic process may run again
+					after a queue, and if you have edited the sheet while there's a process on it, could overwrite the save results.
+				</li><br>
+				<li>
+					The reason why I instructed you to have &ldquo;<kbd>Save results in a new Sheet.</kbd>&rdquo; checked is because of a bug I encountered that a process may duplicate, and overwrite any save results by the second and subsequent duplicate processes. This bug usually happens some
+					time after the process have started after it initally-queues, or finished. When this happens, you get 2+ identical emails titled &ldquo;<kbd>Wayback gsheets capture tracking</kbd>&rdquo; sharing the same tracking URLs linked, and the home page of WBGS after logging
+					in also showing duplicate processes. When having the results in a new sheet and the process duplicates, they won't overwrite each other since each process will create its own sheet.
+				</li>
+			</ul>
+		</li><br>
+		<li>
+			If you run into process duplicating itself and both are done, I would rather have you filter only URLs flagged as &ldquo;success&rdquo; on all save result sheets, have them all formatted as <kbd>Display just entered URLs in the plaintext</kbd>, copy that, open the list cleaner tool (provided here)
+			paste them into the blacklist, and copy all the URLs you entered and paste them into the first textarea (make sure no tabs and one URL per line on both textareas). This will remove any URLs that have been successfully saved at least once of any processes including duplicates. Then re-attempt
+			saving the URLs output from the list cleaner.
+		</li>
+	</ol>
+	<p>I strongly recommend checking the process and emails to see any anomalies, this include anything strange happening on the process activity log, using the browser inspect element for any http error statuses on the WBGS pages, etc. If you do find one, make sure you contact the IA about it.</p>
+</details><br>
 
 Paste your google sheet result here:<br><br>
 <input type="checkbox" id="AutoUpdate" checked onchange="AutoUpdate()"><label for="AutoUpdate">Auto update</label><br>
@@ -105,52 +107,54 @@ Preset settings:<br>
 	<li><button onclick="PresetSetting_UnsureSaved(); AutoUpdate()">Filter by unsure saved</button></li>
 	<li><button onclick="PresetSetting_DuplicatedProcess(); AutoUpdate()">Filter by sure-saved and only entered URLs as plaintext</button> &leftarrow; Use this option if your process duplicates, in conjunction of a list cleaner.</li>
 </ul>
-
-<div class="TabbedItems TabbedFiltersGroup">
-Filters: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
-	<div class="TabbedItems TabbedFiltersGroup" id="FilterGroup_SureSaved">Successfully saved: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
-		<div class="TabbedItems"><label style="color: #008000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_SavedBefore" data-status_list_name="Success_SavedBefore">Success (have saved before (green))</label></div>
-		<div class="TabbedItems"><label style="color: #00C000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_FirstArchive" data-status_list_name="Success_FirstArchive">Success (&ldquo;First Archive&rdquo; (light green)) </label></div>
+<details>
+	<summary style="font-weight: bold">Options (click to open)</summary>
+	<div class="TabbedItems TabbedFiltersGroup">
+	Filters: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
+		<div class="TabbedItems TabbedFiltersGroup" id="FilterGroup_SureSaved">Successfully saved: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
+			<div class="TabbedItems"><label style="color: #008000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_SavedBefore" data-status_list_name="Success_SavedBefore">Success (have saved before (green))</label></div>
+			<div class="TabbedItems"><label style="color: #00C000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Success_FirstArchive" data-status_list_name="Success_FirstArchive">Success (&ldquo;First Archive&rdquo; (light green)) </label></div>
+		</div>
+		<div class="TabbedItems TabbedFiltersGroup" id="FilterGroup_Unsures">Unsure: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
+			<div class="TabbedItems"><label style="color: #808080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_NoIAResult" checked data-status_list_name="Unsure_NoIAResult">No results (grey)</label></div>
+			<div class="TabbedItems"><label style="color: #A08080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_BlankColumnD" checked data-status_list_name="Unsure_BlankColumnD">Result but column D is blank (light red)</label></div>
+			<div class="TabbedItems"><label style="color: #808000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Redirected" checked data-status_list_name="Unsure_Redirected">Redirects (yellow)</label></div>
+			<div class="TabbedItems"><label style="color: #800000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Error" checked data-status_list_name="Unsure_Error">Errors (red)</label></div>
+			<div class="TabbedItems"><label style="color: #FFA500;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_SavedANon2XX" checked data-status_list_name="Unsure_SavedANon2XX">Saved but isn't a 2XX (3XX/4XX/5XX) (orange).<sup><abbr title="Sometimes saving a URL may have this situation happen: column D's save result data show the playback URL as if it was saved properly, but column C says error 5XX, and visiting the playback URL will show an error page. You probably should re-attempt to save these URLs.">[note]</abbr></sup></label></div>
+		</div>
+		<div class="TabbedItems TabbedFiltersGroup" id="FilterGroup_CantSaves">Cannot save: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
+			<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_BlockListed" checked data-status_list_name="CantSave_BlockListed">&ldquo;This URL is in the Save Page Now service block list and cannot be captured.&rdquo; (dark red)</label></div>
+			<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error401" checked data-status_list_name="CantSave_Error401">&ldquo;The target server requires authentication for &lt;URL&gt; (HTTP status=401).&rdquo; (dark red)</label></div>
+			<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error404" checked data-status_list_name="CantSave_Error404">&ldquo;The target server cannot find the requested resource &lt;URL&gt; (HTTP status=404).&rdquo; (dark red)</label></div>
+			<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error403" checked data-status_list_name="CantSave_Error403">&ldquo;The capture failed because Save Page Now does not have access rights for &lt;URL&gt; (HTTP status=403).&rdquo; (dark red)</label></div>
+			<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_CantResolve" checked data-status_list_name="CantSave_CantResolve">&ldquo;Cannot resolve host &lt;URL&gt;&rdquo; (dark red)</label></div>
+			Please note that pages flagged as "can't save" can change between being able to be save or not. That's why they're checked by default.
+		</div>
 	</div>
-	<div class="TabbedItems TabbedFiltersGroup" id="FilterGroup_Unsures">Unsure: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
-		<div class="TabbedItems"><label style="color: #808080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_NoIAResult" checked data-status_list_name="Unsure_NoIAResult">No results (grey)</label></div>
-		<div class="TabbedItems"><label style="color: #A08080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_BlankColumnD" checked data-status_list_name="Unsure_BlankColumnD">Result but column D is blank (light red)</label></div>
-		<div class="TabbedItems"><label style="color: #808000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Redirected" checked data-status_list_name="Unsure_Redirected">Redirects (yellow)</label></div>
-		<div class="TabbedItems"><label style="color: #800000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_Error" checked data-status_list_name="Unsure_Error">Errors (red)</label></div>
-		<div class="TabbedItems"><label style="color: #FFA500;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Unsure_SavedANon2XX" checked data-status_list_name="Unsure_SavedANon2XX">Saved but isn't a 2XX (3XX/4XX/5XX) (orange).<sup><abbr title="Sometimes saving a URL may have this situation happen: column D's save result data show the playback URL as if it was saved properly, but column C says error 5XX, and visiting the playback URL will show an error page. You probably should re-attempt to save these URLs.">[note]</abbr></sup></label></div>
+	Sort by <select onchange="CheckShouldReverseSortDisabled(); AutoUpdate()">
+		<option id="Sort_Output_None">None (same order as entered)</option>
+		<option id="Sort_Output_SaveStatusResponse" selected>Status message (Column D)</option>
+		<option id="Sort_Output_SubmittedURLsABC">By URLs entered (Column A)</option>
+		<option id="Sort_Output_SaveStatusType">By status type detected</option>
+		<option id="Sort_Output_HTTPStatus">HTTP status code (Column C)</option>
+		<option id="Sort_Output_OutlinksCount">Outlinks count (Column E)</option>
+	
+	</select><label><input type="checkbox" onchange="AutoUpdate()" id="Sort_Output_Reverse">Reverse</label><br>
+	<div>
+		Plaintext format settings (post-filter):<br>
+				<div class="TabbedItems"><label><input type="radio" name="TextOutputFormat" onchange="AutoUpdate()" id="PlainText_DisplayInfo_EnteredURLsOnly" checked>Display just entered URLs in the plaintext</label></div>
+				<div class="TabbedItems"><label><input type="radio" name="TextOutputFormat" onchange="AutoUpdate()" id="PlainText_DisplayInfo_WBGSInfo">Display entered URLs + WBGS result info in the plaintext</label></div>
+				<div class="TabbedItems"><label><input type="radio" name="TextOutputFormat" onchange="AutoUpdate()" id="PlainText_DisplayInfo_AllAsJson">Display full information as JSON</label></div>
 	</div>
-	<div class="TabbedItems TabbedFiltersGroup" id="FilterGroup_CantSaves">Cannot save: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
-		<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_BlockListed" checked data-status_list_name="CantSave_BlockListed">&ldquo;This URL is in the Save Page Now service block list and cannot be captured.&rdquo; (dark red)</label></div>
-		<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error401" checked data-status_list_name="CantSave_Error401">&ldquo;The target server requires authentication for &lt;URL&gt; (HTTP status=401).&rdquo; (dark red)</label></div>
-		<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error404" checked data-status_list_name="CantSave_Error404">&ldquo;The target server cannot find the requested resource &lt;URL&gt; (HTTP status=404).&rdquo; (dark red)</label></div>
-		<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error403" checked data-status_list_name="CantSave_Error403">&ldquo;The capture failed because Save Page Now does not have access rights for &lt;URL&gt; (HTTP status=403).&rdquo; (dark red)</label></div>
-		<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_CantResolve" checked data-status_list_name="CantSave_CantResolve">&ldquo;Cannot resolve host &lt;URL&gt;&rdquo; (dark red)</label></div>
-		Please note that pages flagged as "can't save" can change between being able to be save or not. That's why they're checked by default.
+	Misc:
+	<p hidden>dev comment: These NEED to call SaveStatusesChanged, which sets IsListOrModeChanged to true, so the system correctly realizes it is in fact a change on treating certain things (http and https for example, have different results depending on the ignore for that) </p>
+	<div>
+		<div class="TabbedItems"><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" class="MiscCheckboxSetting" id="MiscSetting_IgnoreFragment" checked>Ignore </label><a href="https://en.wikipedia.org/wiki/URI_fragment">URI fragment</a><label for="MiscSetting_IgnoreFragment"> (the # and everything after it will be ignored when checking for a match)</label></div>
+		<div class="TabbedItems"><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" class="MiscCheckboxSetting" id="MiscSetting_IgnoreHttpHttpsDifference" checked>Ignore difference between HTTP/HTTPS versions.</label></div>
 	</div>
-</div>
-Sort by <select onchange="CheckShouldReverseSortDisabled(); AutoUpdate()">
-	<option id="Sort_Output_None">None (same order as entered)</option>
-	<option id="Sort_Output_SaveStatusResponse" selected>Status message (Column D)</option>
-	<option id="Sort_Output_SubmittedURLsABC">By URLs entered (Column A)</option>
-	<option id="Sort_Output_SaveStatusType">By status type detected</option>
-	<option id="Sort_Output_HTTPStatus">HTTP status code (Column C)</option>
-	<option id="Sort_Output_OutlinksCount">Outlinks count (Column E)</option>
-
-</select><label><input type="checkbox" onchange="AutoUpdate()" id="Sort_Output_Reverse">Reverse</label><br>
-<div>
-	Plaintext format settings (post-filter):<br>
-			<div class="TabbedItems"><label><input type="radio" name="TextOutputFormat" onchange="AutoUpdate()" id="PlainText_DisplayInfo_EnteredURLsOnly" checked>Display just entered URLs in the plaintext</label></div>
-			<div class="TabbedItems"><label><input type="radio" name="TextOutputFormat" onchange="AutoUpdate()" id="PlainText_DisplayInfo_WBGSInfo">Display entered URLs + WBGS result info in the plaintext</label></div>
-			<div class="TabbedItems"><label><input type="radio" name="TextOutputFormat" onchange="AutoUpdate()" id="PlainText_DisplayInfo_AllAsJson">Display full information as JSON</label></div>
-</div>
-Misc:
-<p hidden>dev comment: These NEED to call SaveStatusesChanged, which sets IsListOrModeChanged to true, so the system correctly realizes it is in fact a change on treating certain things (http and https for example, have different results depending on the ignore for that) </p>
-<div>
-	<div class="TabbedItems"><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" class="MiscCheckboxSetting" id="MiscSetting_IgnoreFragment" checked>Ignore </label><a href="https://en.wikipedia.org/wiki/URI_fragment">URI fragment</a><label for="MiscSetting_IgnoreFragment"> (the # and everything after it will be ignored when checking for a match)</label></div>
-	<div class="TabbedItems"><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" class="MiscCheckboxSetting" id="MiscSetting_IgnoreHttpHttpsDifference" checked>Ignore difference between HTTP/HTTPS versions.</label></div>
-</div>
-<button onclick="CheckURLs()">Submit</button><button onclick="Reset()">Reset</button><br><br>
+</details>
 <hr>
+	<button onclick="CheckURLs()">Submit</button><button onclick="Reset()">Reset</button><br><br>
 <span id="OutputResults_NoError">
 	<span id="AllSavedIndicator" style="color: #00ff00; font-size: 150%;" hidden>All URLs have been saved successfully!</span>
 	<table>
@@ -286,7 +290,8 @@ Misc:
 		if (Setting_PercentagePrecision != 0) {
 			PercentageMinLength++
 		}
-		document.getElementById("GsheetInput").addEventListener("keydown", this.keyHandler_Tab, false)
+		//Add event listener to insert a tab key when tab is pressed
+			document.getElementById("GsheetInput").addEventListener("keydown", this.keyHandler_Tab, false)
 	function AutoUpdate() {
 		if (document.getElementById("AutoUpdate").checked) {
 			CheckURLs()
