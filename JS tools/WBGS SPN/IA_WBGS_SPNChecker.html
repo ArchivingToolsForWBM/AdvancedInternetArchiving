@@ -589,6 +589,7 @@ Preset settings:<br>
 							document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").textContent = BigInt(InputList.length - FilteredListForDisplay.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: InputList.length - FilteredListForDisplay.length, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
 							document.getElementById("StatisticPercentage_NumberOfItems_RemovedAfterFilter").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: InputList.length - FilteredListForDisplay.length, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#0000ff", ColorEmpty: "#000000"})
 						//Each type of save status
+							let GreyIfZeroItems = ["#808080", "#FFFFFF"]
 							Object.entries(SaveStatusTypeList).forEach(Status => {
 								let StatusName = Status[0]
 								let StatusCount = Status[1].Count
@@ -596,6 +597,8 @@ Preset settings:<br>
 								
 								document.getElementById("Statistic_NumberOfItems_" + StatusName).textContent = BigInt(StatusCount).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: StatusCount, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
 								document.getElementById("StatisticPercentage_NumberOfItems_" + StatusName).style.backgroundImage = CSSLinearGradientProgressBar({Quantity: StatusCount, MaxQuantity: InputList.length, Direction: "to right", ColorFull: StatusColor, ColorEmpty: "#000000"})
+								let GreyIfZeroIndex = Number(StatusCount != 0)
+								document.getElementById("StatisticPercentage_NumberOfItems_" + StatusName).style.color = GreyIfZeroItems[GreyIfZeroIndex]
 							})
 						//Total success and unsures
 							document.getElementById("Statistic_NumberOfItems_Success_Total").textContent = BigInt(Count_Success).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Success, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
