@@ -259,21 +259,11 @@ Preset settings:<br>
 
 </body>
 <script>
+//Initalize variables
 	let IsListOrModeChanged = false
 	let SavedList = []
 	
-	let Count_Success_SavedBefore = 0
-	let Count_Success_FirstArchive = 0
-	let Count_Unsure_NoIAResult = 0
-	let Count_Unsure_BlankColumnD = 0
-	let Count_Unsure_Redirected = 0
-	let Count_Unsure_Error = 0
-	let Count_Unsure_SavedANon2XX = 0
-	let Count_CantSave_BlockListed = 0
-	let Count_CantSave_Error401 = 0
-	let Count_CantSave_Error404 = 0
-	let Count_CantSave_Error403 = 0
-	let Count_CantSave_CantResolve = 0
+	let SaveStatusTypeList = {}
 	
 	let Date_Earliest = "?"
 	let Date_Latest = "?"
@@ -292,12 +282,58 @@ Preset settings:<br>
 		}
 		//Add event listener to insert a tab key when tab is pressed
 			document.getElementById("GsheetInput").addEventListener("keydown", this.keyHandler_Tab, false)
+		//Initialize statistics
+			ResetStatisticCounts()
 	function AutoUpdate() {
 		if (document.getElementById("AutoUpdate").checked) {
 			CheckURLs()
 		}
 	}
-	
+	function ResetStatisticCounts() {
+		SaveStatusTypeList = {
+			Success_SavedBefore: {
+				Color: "#008000"
+			},
+			Success_FirstArchive: {
+				Color: "#00C000"
+			},
+			Unsure_NoIAResult: {
+				Color: "#808080"
+			},
+			Unsure_BlankColumnD: {
+				Color: "#A08080"
+			},
+			Unsure_Redirected: {
+				Color: "#808000"
+			},
+			Unsure_Error: {
+				Color: "#800000"
+			},
+			Unsure_SavedANon2XX: {
+				Color: "#FFA500"
+			},
+			CantSave_BlockListed: {
+				Color: "#400000"
+			},
+			CantSave_Error401: {
+				Color: "#400000"
+			},
+			CantSave_Error404: {
+				Color: "#400000"
+			},
+			CantSave_Error403: {
+				Color: "#400000"
+			},
+			CantSave_CantResolve: {
+				Color: "#400000"
+			}
+		}
+		Object.entries(SaveStatusTypeList).forEach(Item => Item[1].Count = 0) //Add a counter on each type
+		SaveStatusDateRange = {
+			Earliest: "?",
+			Latest: "?"
+		}
+	}
 	function SaveStatusesChanged() {
 		IsListOrModeChanged = true //If you edit the textarea, changed the "ignore fragment identifier", those are considered a change to the list.
 	}
@@ -322,21 +358,7 @@ Preset settings:<br>
 		let InvalidRowDetected = false
 		
 		if (IsListOrModeChanged) { //if changed, reset the output.
-			Count_Success_SavedBefore = 0
-			Count_Success_FirstArchive = 0
-			Count_Unsure_NoIAResult = 0
-			Count_Unsure_BlankColumnD = 0
-			Count_Unsure_Redirected = 0
-			Count_Unsure_Error = 0
-			Count_Unsure_SavedANon2XX = 0
-			Count_CantSave_BlockListed = 0
-			Count_CantSave_Error401 = 0
-			Count_CantSave_Error404 = 0
-			Count_CantSave_Error403 = 0
-			Count_CantSave_CantResolve = 0
-			
-			Date_Earliest = "?"
-			Date_Latest = "?"
+			ResetStatisticCounts()
 			
 			//Note to self:
 			//Column[0] = (Google sheets' column A) SentURL (the URLs you entered)
@@ -396,17 +418,15 @@ Preset settings:<br>
 						
 						if (Col_B_YesNo == "" && Col_C_HttpStatus == "" && Col_D_SavedURLOrError == "" && Col_E_OutlinksCount == "" && Col_F_FirstArchive == "") { //If absolutely no results...
 							SaveStatus = "Unsure_NoIAResult"
-							StatusColor = "#808080"
-							Count_Unsure_NoIAResult++
 						} else if (/^https:\/\/web\.archive\.org\/web\/\d+/.test(Col_D_SavedURLOrError)) { //If there's a WBM version of a webpage...
 							//Get timestamp
 								Timestamp = Col_D_SavedURLOrError.replace(/^https:\/\/web\.archive\.org\/web\/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2}).*$/, "$1-$2-$3 $4:$5:$6")
 								
-								if ((Timestamp < Date_Earliest)||(Date_Earliest == "?")) { //If there is an earlier timestamp than the earliest OR we newly found a given timestamp the first time, set it to it
-									Date_Earliest = Timestamp
+								if ((Timestamp < SaveStatusDateRange.Earliest)||(SaveStatusDateRange.Earliest == "?")) { //If there is an earlier timestamp than the earliest OR we newly found a given timestamp the first time, set it to it
+									SaveStatusDateRange.Earliest = Timestamp
 								}
-								if ((Timestamp > Date_Latest)||(Date_Latest == "?")) { //If there is an later timestamp than the timestamp OR we newly found a given timestamp the first time, set it to it
-									Date_Latest = Timestamp
+								if ((Timestamp > SaveStatusDateRange.Latest)||(SaveStatusDateRange.Latest == "?")) { //If there is an later timestamp than the timestamp OR we newly found a given timestamp the first time, set it to it
+									SaveStatusDateRange.Latest = Timestamp
 								}
 							//Handle ignoring HTTP/HTTPS difference
 								let IA_PageURLOnly = Col_D_SavedURLOrError.replace(/^http(s)?\:\/\/web\.archive\.org\/web\/\d+\//, "") //Get page URL from WBM version. NOTE: WBM save results have fragment stripped out automatically
@@ -417,51 +437,29 @@ Preset settings:<br>
 								if (/^(3|4|5)\d\d/.test(Col_C_HttpStatus) == false) { //And not any abnormal HTTP responses
 									if (Col_F_FirstArchive == "First Archive") { //And an indicator saying first archive
 										SaveStatus = "Success_FirstArchive"
-										StatusColor = "#00C000"
-										Count_Success_FirstArchive++
 									} else {
 										SaveStatus = "Success_SavedBefore"
-										StatusColor = "#008000"
-										Count_Success_SavedBefore++
 									}
 								} else {
 									SaveStatus = "Unsure_SavedANon2XX"
-									StatusColor = "#FFA500"
-									Count_Unsure_SavedANon2XX++
 								}
 							} else {
 								SaveStatus = "Unsure_Redirected"
-								StatusColor = "#808000"
-								Count_Unsure_Redirected++
 							}
 						} else if (/^\s*$/.test(Col_D_SavedURLOrError)){ //Otherwise if its blank or just any whitespace character...
 							SaveStatus = "Unsure_BlankColumnD"
-							StatusColor = "#A08080"
-							Count_Unsure_BlankColumnD++
 						} else if (/^This URL is in the Save Page Now service block list and cannot be captured/.test(Col_D_SavedURLOrError)) {
 							SaveStatus = "CantSave_BlockListed"
-							StatusColor = "#400000"
-							Count_CantSave_BlockListed++
 						} else if (/^The target server requires authentication for/.test(Col_D_SavedURLOrError)) {
 							SaveStatus = "CantSave_Error401"
-							StatusColor = "#400000"
-							Count_CantSave_Error401++
 						} else if (/^The target server cannot find the requested resource/.test(Col_D_SavedURLOrError)) {
 							SaveStatus = "CantSave_Error404"
-							StatusColor = "#400000"
-							Count_CantSave_Error404++
 						} else if (/^The capture failed because Save Page Now does not have access rights for/.test(Col_D_SavedURLOrError)) {
 							SaveStatus = "CantSave_Error403"
-							StatusColor = "#400000"
-							Count_CantSave_Error403++
 						} else if (/^Cannot resolve host/.test(Col_D_SavedURLOrError)) {
 							SaveStatus = "CantSave_CantResolve"
-							StatusColor = "#400000"
-							Count_CantSave_CantResolve++
 						} else {
 							SaveStatus = "Unsure_Error"
-							StatusColor = "#800000"
-							Count_Unsure_Error++
 						}
 					//For error results, if the URL in the error message matches the entered URL, replace it with "<Entered_URL>", not only this is potentially shorter string, it makes sorting save results of the response quicker
 						let Col_D_SavedURLOrError_WithoutEnteredURL = Col_D_SavedURLOrError
@@ -489,13 +487,15 @@ Preset settings:<br>
 							WBM_SaveResponse : Col_D_SavedURLOrError_WithoutEnteredURL, //The text on column D either a WBM URL or a message saying it errored or cannot save it at all
 							
 							SaveStatus : SaveStatus, //Unsure_NoIAResult, Unsure_BlankColumnD, Success_SavedBefore, Success_FirstArchive, Unsure_Redirected, Unsure_Error, Unsure_SavedANon2XX, CantSave_BlockListed
-							StatusColor : StatusColor, //Color of the SaveStatus
 							SpreadSheetRowNumber : ArrayElement.SpreadSheetRowNumber, //The row numbers the URL were placed on the spreadsheet
 							OutLinksCountNumber : OutLinksCountNumber, //Outlinks count, bigint for save count > 2^53 (just in case).
 							Timestamp : Timestamp
 						}
 				});
-			
+			//Count the status type
+				if (!InvalidRowDetected) {
+					InputList.forEach(SaveResult => SaveStatusTypeList[SaveResult.SaveStatus].Count++)
+				}
 			//Save it to the list
 				SavedList = InputList
 		} else { //If no change, grab it from the save data, since we already have the data.
@@ -569,10 +569,10 @@ Preset settings:<br>
 			}
 		//Output data
 			if (InputList.length != 0) {
-				//All saved indicator
-					let Count_Success = Count_Success_SavedBefore + Count_Success_FirstArchive
-					let Count_Unsures = Count_Unsure_NoIAResult + Count_Unsure_BlankColumnD + Count_Unsure_Redirected + Count_Unsure_Error + Count_Unsure_SavedANon2XX
-					let Count_CantSaves = Count_CantSave_BlockListed + Count_CantSave_Error401 + Count_CantSave_Error403 + Count_CantSave_Error404 + Count_CantSave_CantResolve
+				//Totals of the 3 group of types
+					let Count_Success = SaveStatusTypeList.Success_SavedBefore.Count + SaveStatusTypeList.Success_FirstArchive.Count
+					let Count_Unsures = SaveStatusTypeList.Unsure_NoIAResult.Count + SaveStatusTypeList.Unsure_BlankColumnD.Count + SaveStatusTypeList.Unsure_Redirected.Count + SaveStatusTypeList.Unsure_Error.Count + SaveStatusTypeList.Unsure_SavedANon2XX.Count
+					let Count_CantSaves = SaveStatusTypeList.CantSave_BlockListed.Count + SaveStatusTypeList.CantSave_Error401.Count + SaveStatusTypeList.CantSave_Error403.Count + SaveStatusTypeList.CantSave_Error404.Count + SaveStatusTypeList.CantSave_CantResolve.Count
 					if (Count_Success == InputList.length && InputList.length != 0) {
 						document.getElementById("AllSavedIndicator").hidden = false
 					} else {	//If the user then enters another list of URLs without resetting or refreshing this must also reset.
@@ -582,48 +582,21 @@ Preset settings:<br>
 					//Show statistics table, I use Bigint to prevent potential E (scientific) notation.
 						//Total
 							document.getElementById("Statistic_NumberOfItems_TotalURLs").textContent = BigInt(InputList.length).toString(10)
-						//Displayed
+						//Display total
 							document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").textContent = BigInt(FilteredListForDisplay.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: FilteredListForDisplay.length, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) +")"
 							document.getElementById("StatisticPercentage_NumberOfItems_RemainingAfterFilter").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: FilteredListForDisplay.length, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#0000ff", ColorEmpty: "#000000"})
-						//How many removed
+						//Removal total
 							document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").textContent = BigInt(InputList.length - FilteredListForDisplay.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: InputList.length - FilteredListForDisplay.length, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
 							document.getElementById("StatisticPercentage_NumberOfItems_RemovedAfterFilter").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: InputList.length - FilteredListForDisplay.length, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#0000ff", ColorEmpty: "#000000"})
-						//Saved before
-							document.getElementById("Statistic_NumberOfItems_Success_SavedBefore").textContent = BigInt(Count_Success_SavedBefore).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Success_SavedBefore, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Success_SavedBefore").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_Success_SavedBefore, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#008000", ColorEmpty: "#000000"})
-						//First archives
-							document.getElementById("Statistic_NumberOfItems_Success_FirstArchive").textContent = BigInt(Count_Success_FirstArchive).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Success_FirstArchive, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Success_FirstArchive").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_Success_FirstArchive, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#00C000", ColorEmpty: "#000000"})
-						//No IA results
-							document.getElementById("Statistic_NumberOfItems_Unsure_NoIAResult").textContent = BigInt(Count_Unsure_NoIAResult).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Unsure_NoIAResult, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_NoIAResult").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_Unsure_NoIAResult, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#808080", ColorEmpty: "#000000"})
-						//Blank column D
-							document.getElementById("Statistic_NumberOfItems_Unsure_BlankColumnD").textContent = BigInt(Count_Unsure_BlankColumnD).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Unsure_BlankColumnD, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_BlankColumnD").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_Unsure_BlankColumnD, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#A08080", ColorEmpty: "#000000"})
-						//Redirected
-							document.getElementById("Statistic_NumberOfItems_Unsure_Redirected").textContent = BigInt(Count_Unsure_Redirected).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Unsure_Redirected, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Redirected").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_Unsure_Redirected, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#808000", ColorEmpty: "#000000"})
-						//Error
-							document.getElementById("Statistic_NumberOfItems_Unsure_Error").textContent = BigInt(Count_Unsure_Error).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Unsure_Error, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Error").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_Unsure_Error, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#800000", ColorEmpty: "#000000"})
-						//Non 2XX
-							document.getElementById("Statistic_NumberOfItems_Unsure_SavedANon2XX").textContent = BigInt(Count_Unsure_SavedANon2XX).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Unsure_SavedANon2XX, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_SavedANon2XX").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_Unsure_SavedANon2XX, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#FFA500", ColorEmpty: "#000000"})
-						//Blocklist
-							document.getElementById("Statistic_NumberOfItems_CantSave_BlockListed").textContent = BigInt(Count_CantSave_BlockListed).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_CantSave_BlockListed, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_BlockListed").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_CantSave_BlockListed, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#400000", ColorEmpty: "#000000"})
-						//Error401
-							document.getElementById("Statistic_NumberOfItems_CantSave_Error401").textContent = BigInt(Count_CantSave_Error401).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_CantSave_Error401, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_Error401").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_CantSave_Error401, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#400000", ColorEmpty: "#000000"})
-						//Error403
-							document.getElementById("Statistic_NumberOfItems_CantSave_Error403").textContent = BigInt(Count_CantSave_Error403).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_CantSave_Error403, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_Error403").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_CantSave_Error403, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#400000", ColorEmpty: "#000000"})
-						//Error404
-							document.getElementById("Statistic_NumberOfItems_CantSave_Error404").textContent = BigInt(Count_CantSave_Error404).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_CantSave_Error404, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_Error404").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_CantSave_Error404, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#400000", ColorEmpty: "#000000"})
-						//Can't resolve
-							document.getElementById("Statistic_NumberOfItems_CantSave_CantResolve").textContent = BigInt(Count_CantSave_CantResolve).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_CantSave_CantResolve, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_CantResolve").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_CantSave_CantResolve, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#400000", ColorEmpty: "#000000"})
+						//Each type of save status
+							Object.entries(SaveStatusTypeList).forEach(Status => {
+								let StatusName = Status[0]
+								let StatusCount = Status[1].Count
+								let StatusColor = Status[1].Color
+								
+								document.getElementById("Statistic_NumberOfItems_" + StatusName).textContent = BigInt(StatusCount).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: StatusCount, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
+								document.getElementById("StatisticPercentage_NumberOfItems_" + StatusName).style.backgroundImage = CSSLinearGradientProgressBar({Quantity: StatusCount, MaxQuantity: InputList.length, Direction: "to right", ColorFull: StatusColor, ColorEmpty: "#000000"})
+							})
 						//Total success and unsures
 							document.getElementById("Statistic_NumberOfItems_Success_Total").textContent = BigInt(Count_Success).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Success, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
 							document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_Success, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#0000ff", ColorEmpty: "#000000"})
@@ -634,8 +607,8 @@ Preset settings:<br>
 							document.getElementById("Statistic_NumberOfItems_CantSave_Total").textContent = BigInt(Count_CantSaves).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_CantSaves, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
 							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_Total").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_CantSaves, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#0000ff", ColorEmpty: "#000000"})
 						//Earliest and latest date
-							document.getElementById("StatisticDate_Earliest").textContent = Date_Earliest
-							document.getElementById("StatisticDate_Latest").textContent = Date_Latest
+							document.getElementById("StatisticDate_Earliest").textContent = SaveStatusDateRange.Earliest
+							document.getElementById("StatisticDate_Latest").textContent = SaveStatusDateRange.Latest
 				//Retry list in plaintext
 					document.getElementById("OutputPlaintextItemCount").textContent = BigInt(FilteredListForDisplay.length).toString(10)
 					Output = ""
@@ -689,50 +662,48 @@ Preset settings:<br>
 							let Cell_ItemNumber = document.createElement("td")
 							Cell_ItemNumber.style.fontFamily = "monospace"
 							Cell_ItemNumber.style.textAlign = "center"
-							//Cell_ItemNumber.style.backgroundColor = Item.StatusColor
 							Cell_ItemNumber.appendChild(document.createTextNode(BigInt(Index+1).toString(10)))
 							RowItem.appendChild(Cell_ItemNumber)
 							
 							let Cell_GSLineNum = document.createElement("td")
 							Cell_GSLineNum.style.fontFamily = "monospace"
 							Cell_GSLineNum.style.textAlign = "center"
-							//Cell_GSLineNum.style.backgroundColor = Item.StatusColor
 							Cell_GSLineNum.appendChild(document.createTextNode(BigInt(Item.SpreadSheetRowNumber).toString(10)))
 							RowItem.appendChild(Cell_GSLineNum)
 							
 							let Cell_URLSent = document.createElement("td")
 							Cell_URLSent.style.fontFamily = "monospace"
-							Cell_URLSent.style.backgroundColor = Item.StatusColor
+							Cell_URLSent.style.backgroundColor = SaveStatusTypeList[Item.SaveStatus].Color
 							Cell_URLSent.appendChild(document.createTextNode(Item.SpreadSheetRowData_Array[0].replace(/^\"/, "").replace(/\"$/, "")))
 							RowItem.appendChild(Cell_URLSent)
 							
 							let Cell_HTTPStatus = document.createElement("td")
 							Cell_HTTPStatus.style.fontFamily = "monospace"
-							Cell_HTTPStatus.style.backgroundColor = Item.StatusColor
+							Cell_HTTPStatus.style.backgroundColor = SaveStatusTypeList[Item.SaveStatus].Color
 							Cell_HTTPStatus.appendChild(document.createTextNode(Item.SpreadSheetRowData_Array[2]))
 							RowItem.appendChild(Cell_HTTPStatus)
 							
 							let Cell_SaveStatus = document.createElement("td")
-							Cell_SaveStatus.style.backgroundColor = Item.StatusColor
+							Cell_SaveStatus.style.backgroundColor = SaveStatusTypeList[Item.SaveStatus].Color
 							Cell_SaveStatus_Pre = document.createElement("pre") //In case of forced line breaks
 							Cell_SaveStatus_Pre.appendChild(document.createTextNode(Item.WBM_SaveResponse.replace(/^\"/, "").replace(/\"$/, "")))
 							Cell_SaveStatus.appendChild(Cell_SaveStatus_Pre)
 							RowItem.appendChild(Cell_SaveStatus)
 							
 							let Cell_Timestamp = document.createElement("td")
-							Cell_Timestamp.style.backgroundColor = Item.StatusColor
+							Cell_Timestamp.style.backgroundColor = SaveStatusTypeList[Item.SaveStatus].Color
 							Cell_Timestamp.style.fontFamily = "monospace"
 							Cell_Timestamp.appendChild(document.createTextNode(Item.Timestamp))
 							RowItem.appendChild(Cell_Timestamp)
 							
 							let Cell_OutLinksCount = document.createElement("td")
-							Cell_OutLinksCount.style.backgroundColor = Item.StatusColor
+							Cell_OutLinksCount.style.backgroundColor = SaveStatusTypeList[Item.SaveStatus].Color
 							Cell_OutLinksCount.style.fontFamily = "monospace"
 							Cell_OutLinksCount.appendChild(document.createTextNode(Item.SpreadSheetRowData_Array[4]))
 							RowItem.appendChild(Cell_OutLinksCount)
 							
 							let Cell_StatusType = document.createElement("td")
-							Cell_StatusType.style.backgroundColor = Item.StatusColor
+							Cell_StatusType.style.backgroundColor = SaveStatusTypeList[Item.SaveStatus].Color
 							Cell_StatusType.style.fontFamily = "monospace"
 							Cell_StatusType.appendChild(document.createTextNode(Item.SaveStatus))
 							RowItem.appendChild(Cell_StatusType)
