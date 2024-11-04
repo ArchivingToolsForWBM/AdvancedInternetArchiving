@@ -268,9 +268,9 @@
 			}
 		//Output shown
 			//Statistics
-				document.getElementById("Statistic_HowManyAfterFilter").textContent = BigInt(DisplayedOutput.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: DisplayedOutput.length, MaxQuantity: SavedOutput.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true})
+				document.getElementById("Statistic_HowManyAfterFilter").textContent = BigInt(DisplayedOutput.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: DisplayedOutput.length, MaxQuantity: SavedOutput.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
 				document.getElementById("Statistic_HowManyAfterFilter").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: DisplayedOutput.length, MaxQuantity: SavedOutput.length, Direction: "to right", ColorFull: "#0000FF", ColorEmpty: "#000000"})
-				document.getElementById("Statistic_HowManyRemoved").textContent = BigInt(SavedOutput.length - DisplayedOutput.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: SavedOutput.length - DisplayedOutput.length, MaxQuantity: SavedOutput.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true})
+				document.getElementById("Statistic_HowManyRemoved").textContent = BigInt(SavedOutput.length - DisplayedOutput.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: SavedOutput.length - DisplayedOutput.length, MaxQuantity: SavedOutput.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
 				document.getElementById("Statistic_HowManyRemoved").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: SavedOutput.length - DisplayedOutput.length, MaxQuantity: SavedOutput.length, Direction: "to right", ColorFull: "#0000FF", ColorEmpty: "#000000"})
 			
 			
