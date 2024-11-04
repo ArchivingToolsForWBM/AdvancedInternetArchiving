@@ -33,7 +33,7 @@
 	</head>
 <body>
 
-<p>This tool will take a given list in text form, and scans for duplicates and blacklists. This is useful if you have unwanted items or if there are anomalies at certain lines when copying and pasting.</p>
+<p>This tool will take a given list in text form, and scans for duplicates and blacklists (line by line). This is useful if you have unwanted items or if there are anomalies at certain lines when copying and pasting.</p>
 <p>This tool can also be used to extract URLs that have failed on all process runs should a WBGS process duplicate, a bug that often happens when job queues occur.</p>
 <label><input type="checkbox" checked id="AutoUpdate">Auto update</label>
 <table>
@@ -49,6 +49,10 @@
 		</td>
 	</tr>
 </table>
+<div>
+	Process option(s):
+		<div class="TabbedItems"><label><input type="checkbox" id="ProcessOption_RemoveLeadingTrailingSpaces" onchange="AnyListUpdated();" checked>Remove leading and trailing whitespace characters on each line (prior checking)</label></div>
+</div>
 <div id="FilterList">
 	Filters: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
 		<div class="TabbedItems"><label style="color: #00FF00;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Original" checked>Original items</label></div>
@@ -129,7 +133,8 @@
 </div>
 <script>
 	let SavedOutput = []
-	let TextAreaUpdated = false
+	let NeedToReprocess = false
+		//^This is to make JS skip the main processing of items if only filtering, sorting, and formatting is performed, since we already have the data that is unchanged.
 	let StatusTypeList = {}
 	//Settings
 		const Setting_PercentagePrecision = 2 //Number of digits after the decimal place, for percentages.
@@ -164,7 +169,7 @@
 		AutoUpdate()
 	}
 	function AnyListUpdated() {
-		TextAreaUpdated = true
+		NeedToReprocess = true
 		AutoUpdate()
 	}
 	function AutoUpdate() {
@@ -181,11 +186,15 @@
 		document.getElementById("Filter_Original").checked = true
 	}
 	function MainCode() {
-		if (TextAreaUpdated) {
+		if (NeedToReprocess) {
 			ResetStatisticCounts()
 			let InputList = document.getElementById("TextInput_InputList").value.split("\n").map((Line, Index) => {
+				let Text = Line
+				if (document.getElementById("ProcessOption_RemoveLeadingTrailingSpaces").checked) {
+					Text = Text.replace(/^\s*/, "").replace(/\s*$/, "")
+				}
 				return {
-					Text: Line,
+					Text: Text,
 					LineNumber: Index+1,
 					IdentifiedType: "Original",
 					DupeListOfLineNumbers: [],
@@ -238,7 +247,7 @@
 			//Save to list
 			SavedOutput = InputList
 		}
-		TextAreaUpdated = false
+		NeedToReprocess = false
 		//Filter
 			let DisplayedOutput = SavedOutput.filter(Item => document.getElementById("Filter_" + Item.IdentifiedType).checked)
 		//Sort
