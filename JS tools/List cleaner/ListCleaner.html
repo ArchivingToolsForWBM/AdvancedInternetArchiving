@@ -113,7 +113,7 @@
 		<td style="font-family: monospace" id="Statistic_Count_Whitespace" class="Stat"></td>
 	</tr>
 	<tr>
-		<td style="font-family: monospace">Blacklisted and original</td>
+		<td style="font-family: monospace">Blacklisted + original</td>
 		<td style="font-family: monospace" id="Statistic_Count_Blacklisted" class="Stat"></td>
 	</tr>
 	<tr>
@@ -268,6 +268,12 @@
 			}
 		//Output shown
 			//Statistics
+				document.getElementById("Statistic_HowManyAfterFilter").textContent = BigInt(DisplayedOutput.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: DisplayedOutput.length, MaxQuantity: SavedOutput.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true})
+				document.getElementById("Statistic_HowManyAfterFilter").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: DisplayedOutput.length, MaxQuantity: SavedOutput.length, Direction: "to right", ColorFull: "#0000FF", ColorEmpty: "#000000"})
+				document.getElementById("Statistic_HowManyRemoved").textContent = BigInt(SavedOutput.length - DisplayedOutput.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: SavedOutput.length - DisplayedOutput.length, MaxQuantity: SavedOutput.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true})
+				document.getElementById("Statistic_HowManyRemoved").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: SavedOutput.length - DisplayedOutput.length, MaxQuantity: SavedOutput.length, Direction: "to right", ColorFull: "#0000FF", ColorEmpty: "#000000"})
+			
+			
 				let GreyIfZeroItems = ["#808080", "#FFFFFF"]
 				Object.entries(StatusTypeList).forEach(Status => {
 					let StatusName = Status[0]
@@ -329,7 +335,9 @@
 					let TableCell_LineText = document.createElement("td")
 					TableCell_LineText.style.fontFamily = "monospace"
 					TableCell_LineText.style.backgroundColor = StatusTypeList[Item.IdentifiedType].Color
-					TableCell_LineText.appendChild(document.createTextNode(Item.Text))
+					let PreformattedText = document.createElement("pre")
+					PreformattedText.appendChild(document.createTextNode(Item.Text))
+					TableCell_LineText.appendChild(PreformattedText)
 					ItemRow.appendChild(TableCell_LineText)
 					
 					let TableCell_Type = document.createElement("td")
