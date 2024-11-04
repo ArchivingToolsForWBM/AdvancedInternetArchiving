@@ -33,7 +33,8 @@
 	</head>
 <body>
 
-<p>Removes duplicates, empty lines, lines with just whitespaces and blacklisted items</p>
+<p>This tool will take a given list in text form, and scans for duplicates and blacklists. This is useful if you have unwanted items or if there are anomalies at certain lines when copying and pasting.</p>
+<p>This tool can also be used to extract URLs that have failed on all process runs should a WBGS process duplicate, a bug that often happens when job queues occur.</p>
 <label><input type="checkbox" checked id="AutoUpdate">Auto update</label>
 <table>
 	<tr>
@@ -51,7 +52,7 @@
 <div id="FilterList">
 	Filters: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
 		<div class="TabbedItems"><label style="color: #00FF00;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Original" checked>Original items</label></div>
-		<div class="TabbedItems"><label style="color: #FF0000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Duplicate">Duplicated, not blacklisted</label></div>
+		<div class="TabbedItems"><label style="color: #FF0000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Duplicate">Duplicates, not blacklisted</label></div>
 		<div class="TabbedItems"><label style="color: #808080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_EmptyLine">Empty lines</label></div>
 		<div class="TabbedItems"><label style="color: #A08080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Whitespace">Lines with only whitespace</label></div>
 		<div class="TabbedItems"><label style="color: #ff6699;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Blacklisted">Blacklisted, not duplicate</label></div>
