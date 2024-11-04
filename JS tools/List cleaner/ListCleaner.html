@@ -51,7 +51,7 @@
 </table>
 <div>
 	Process option(s):
-		<div class="TabbedItems"><label><input type="checkbox" id="ProcessOption_RemoveLeadingTrailingSpaces" onchange="AnyListUpdated();" checked>Remove leading and trailing whitespace characters on each line (prior checking)</label></div>
+		<div class="TabbedItems"><label><input type="checkbox" id="ProcessOption_RemoveLeadingTrailingSpaces" onchange="AnyListUpdated();" checked>Ignore leading and trailing whitespace characters (also removed from output)</label></div>
 </div>
 <div id="FilterList">
 	Filters: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
@@ -202,7 +202,11 @@
 				}
 			})
 			document.getElementById("Statistic_HowManyOriginally").textContent = BigInt(InputList.length).toString(10)
-			let Blacklist = new Set(document.getElementById("TextInput_Blacklist").value.split("\n").filter(Line => !(/^\s*$/.test(Line))))
+			let Blacklist = document.getElementById("TextInput_Blacklist").value.split("\n").filter(Line => !(/^\s*$/.test(Line)))
+			if (document.getElementById("ProcessOption_RemoveLeadingTrailingSpaces").checked) {
+				Blacklist = Blacklist.map(Line => Line.replace(/^\s*/, "").replace(/\s*$/, ""))
+			}
+			Blacklist = new Set(Blacklist)
 			document.getElementById("UniqueBlacklistCount").textContent = BigInt(Blacklist.size).toString(10)
 			
 			let l = InputList.length
