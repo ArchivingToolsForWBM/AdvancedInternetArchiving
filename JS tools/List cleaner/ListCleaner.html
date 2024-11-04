@@ -1,0 +1,560 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: black;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+			input { font-family: monospace;}
+			
+			div.TabbedItems {
+				padding-left: 1rem;
+			}
+			div.TabbedFiltersGroup {
+				padding-top: 1rem;
+				padding-bottom: 1rem;
+				padding-right: 1rem;
+				border: 1px solid white;
+			}
+			td.Stat {
+				min-width: 150px;
+			}
+		</style>
+	</head>
+<body>
+
+<p>Removes duplicates, empty lines, lines with just whitespaces and blacklisted items</p>
+<label><input type="checkbox" checked id="AutoUpdate">Auto update</label>
+<table>
+	<tr>
+		<th>Insert your list here</th>
+		<th>Insert your list of items to remove (blacklist)</th>
+	</tr>
+	<tr>
+		<td><textarea id="TextInput_InputList" cols="100" rows="30" oninput="AnyListUpdated();" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea></td>
+		<td>
+			<textarea id="TextInput_Blacklist" cols="100" rows="30" oninput="AnyListUpdated();" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
+			<kbd>Number of unique blacklisted items: <span id="UniqueBlacklistCount">0</span></kbd>
+		</td>
+	</tr>
+</table>
+<div id="FilterList">
+	Filters: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
+		<div class="TabbedItems"><label style="color: #00FF00;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Original" checked>Original items</label></div>
+		<div class="TabbedItems"><label style="color: #FF0000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Duplicate">Duplicated, not blacklisted</label></div>
+		<div class="TabbedItems"><label style="color: #808080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_EmptyLine">Empty lines</label></div>
+		<div class="TabbedItems"><label style="color: #A08080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Whitespace">Lines with only whitespace</label></div>
+		<div class="TabbedItems"><label style="color: #ff6699;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Blacklisted">Blacklisted, not duplicate</label></div>
+		<div class="TabbedItems"><label style="color: #ff6666;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_BlacklistedDuplicate">Blacklisted, duplicate</label></div>
+</div>
+<div>
+	Sort: <select onchange="AutoUpdate()">
+		<option id="Sort_None">Same order as you entered</option>
+		<option id="Sort_Alphabetically">Alphabetically</option>
+		<option id="Sort_DupeCount">Duplicate count</option>
+		<option id="Sort_Type">Type identified</option>
+	</select><label><input type="checkbox" id="Sort_Reverse" onchange="AutoUpdate()">Reverse</label>
+</div>
+<div>
+	Plaintext options
+	<div class="TabbedItems"><label><input type="radio" name="PlaintextOptions" onchange="AutoUpdate()"id="PlaintextOptions_EnteredText" checked>Just the entered text</label></div>
+	<div class="TabbedItems"><label><input type="radio" name="PlaintextOptions" onchange="AutoUpdate()"id="PlaintextOptions_JSON">JSON</label></div>
+</div>
+<div>
+	<button onclick="MainCode()">Submit</button><button onclick="Reset()">Reset</button>
+</div>
+<hr>
+<table>
+	<tr>
+		<th colspan="2">Statistics</th>
+	</tr>
+	<tr>
+		<td style="font-family: monospace">How many originally</td>
+		<td style="font-family: monospace" id="Statistic_HowManyOriginally" class="Stat"></td>
+	</tr>
+	<tr>
+		<th colspan="2">Displayed</th>
+	</tr>
+	<tr>
+		<td style="font-family: monospace">How many after filter</td>
+		<td style="font-family: monospace" id="Statistic_HowManyAfterFilter" class="Stat"></td>
+	</tr>
+	<tr>
+		<td style="font-family: monospace">Removed</td>
+		<td style="font-family: monospace" id="Statistic_HowManyRemoved" class="Stat"></td>
+	</tr>
+	<tr>
+		<th colspan="2">Classification counts</th>
+	</tr>
+	<tr>
+		<td style="font-family: monospace">Original</td>
+		<td style="font-family: monospace" id="Statistic_Count_Original" class="Stat"></td>
+	</tr>
+	<tr>
+		<td style="font-family: monospace">Duplicate</td>
+		<td style="font-family: monospace" id="Statistic_Count_Duplicate" class="Stat"></td>
+	</tr>
+	<tr>
+		<td style="font-family: monospace">Empty</td>
+		<td style="font-family: monospace" id="Statistic_Count_EmptyLine" class="Stat"></td>
+	</tr>
+	<tr>
+		<td style="font-family: monospace">Just whitespace characters</td>
+		<td style="font-family: monospace" id="Statistic_Count_Whitespace" class="Stat"></td>
+	</tr>
+	<tr>
+		<td style="font-family: monospace">Blacklisted and original</td>
+		<td style="font-family: monospace" id="Statistic_Count_Blacklisted" class="Stat"></td>
+	</tr>
+	<tr>
+		<td style="font-family: monospace">Blacklisted + duplicate</td>
+		<td style="font-family: monospace" id="Statistic_Count_BlacklistedDuplicate" class="Stat"></td>
+	</tr>
+</table>
+<textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
+<div><button onclick="setClipboard(document.getElementById('Output_Plaintext').value)">Copy</button><span></span></div>
+<div style="overflow: scroll; height: 600px;border: solid 1px; resize: both;">
+	<div id="Output_Table" ></div>
+</div>
+<script>
+	let SavedOutput = []
+	let TextAreaUpdated = false
+	let StatusTypeList = {}
+	//Settings
+		const Setting_PercentagePrecision = 2 //Number of digits after the decimal place, for percentages.
+	//Don't touch these
+		//Add event listener to insert a tab key when tab is pressed
+			document.getElementById("TextInput_InputList").addEventListener("keydown", this.keyHandler_Tab, false)
+			document.getElementById("TextInput_Blacklist").addEventListener("keydown", this.keyHandler_Tab, false)
+			
+			
+		//Initialize
+			ResetStatisticCounts()
+	function ResetStatisticCounts() {
+		StatusTypeList = {
+			Original: {Color: "#008000"},
+			Duplicate: {Color: "#FF0000"},
+			EmptyLine: {Color: "#808080"},
+			Whitespace: {Color: "#A08080"},
+			Blacklisted: {Color: "#ff6699"},
+			BlacklistedDuplicate: {Color: "#ff6666"},
+		}
+		Object.entries(StatusTypeList).forEach(Item => Item[1].Count = 0) //Add a counter on each type
+	
+	}
+	function ChangeCheckboxesByChildren(Setting, NodeToGrab) {
+		let Checkboxes = [...NodeToGrab.querySelectorAll("input[type=checkbox]")].forEach(ele => {
+			if (Setting < 2) {
+				ele.checked = Setting
+			} else {
+				ele.checked = !ele.checked
+			}
+		});
+		AutoUpdate()
+	}
+	function AnyListUpdated() {
+		TextAreaUpdated = true
+		AutoUpdate()
+	}
+	function AutoUpdate() {
+		if (document.getElementById("AutoUpdate").checked) {
+			MainCode()
+		}
+	}
+	function Reset() {
+		document.getElementById("TextInput_InputList").value = "";
+		document.getElementById("TextInput_Blacklist").value = "";
+		document.getElementById("UniqueBlacklistCount").textContent = "0";
+		
+		[...document.getElementById("FilterList").querySelectorAll("input[type=checkbox]")].forEach(Ele => Ele.checked = false)
+		document.getElementById("Filter_Original").checked = true
+	}
+	function MainCode() {
+		if (TextAreaUpdated) {
+			ResetStatisticCounts()
+			let InputList = document.getElementById("TextInput_InputList").value.split("\n").map((Line, Index) => {
+				return {
+					Text: Line,
+					LineNumber: Index+1,
+					IdentifiedType: "Original",
+					DupeListOfLineNumbers: [],
+					DupeOfLineNumber: -1
+				}
+			})
+			document.getElementById("Statistic_HowManyOriginally").textContent = BigInt(InputList.length).toString(10)
+			let Blacklist = new Set(document.getElementById("TextInput_Blacklist").value.split("\n").filter(Line => !(/^\s*$/.test(Line))))
+			document.getElementById("UniqueBlacklistCount").textContent = BigInt(Blacklist.size).toString(10)
+			
+			let l = InputList.length
+			for (let i = 0; i < l; i++) {
+				let Item = InputList[i]
+				if (Item.IdentifiedType == "Duplicate" || Item.IdentifiedType == "BlacklistedDuplicate") {
+					continue //If its a duplicate discovered by secondary index, skip and go to next one
+				}
+				if (Item.Text == "") {
+					Item.IdentifiedType = "EmptyLine"
+					continue
+				} else if (/^\s+$/.test(Item.Text)) {
+					Item.IdentifiedType = "Whitespace"
+					continue
+				} else if (Blacklist.has(Item.Text)) {
+					Item.IdentifiedType = "Blacklisted"
+				}
+				
+				for (let i2 = i+1; i2 < l; i2++) {
+					let Item2 = InputList[i2]
+					if (Item2.Text == Item.Text) {
+						if (Blacklist.has(Item2.Text)) {
+							Item2.IdentifiedType = "BlacklistedDuplicate"
+						} else {
+							Item2.IdentifiedType = "Duplicate"
+						}
+						Item2.DupeOfLineNumber = Item.LineNumber
+						Item.DupeListOfLineNumbers.push(Item2.LineNumber)
+						
+					}
+				}
+			}
+			//Duplicates shall have the dupe list as well
+				InputList.forEach((Item, Index, Arr) => {
+					if (Item.IdentifiedType == "Duplicate"||Item.IdentifiedType == "BlacklistedDuplicate") {
+						Item.DupeListOfLineNumbers = Arr[Item.DupeOfLineNumber-1].DupeListOfLineNumbers
+					}
+				})
+			
+			//Count the types
+				InputList.forEach(Item => StatusTypeList[Item.IdentifiedType].Count++)
+			//Save to list
+			SavedOutput = InputList
+		}
+		TextAreaUpdated = false
+		//Filter
+			let DisplayedOutput = SavedOutput.filter(Item => document.getElementById("Filter_" + Item.IdentifiedType).checked)
+		//Sort
+			let SortReverse = 1
+			if (document.getElementById("Sort_Reverse").checked) {
+				SortReverse = -1
+			}
+			if (document.getElementById("Sort_Alphabetically").selected) {
+				DisplayedOutput.sort((a, b) => {
+					if (a.Text === b.Text) {
+						return 0
+					} else {
+						return ((a.Text < b.Text) ? -1 : 1) * SortReverse
+					}
+				})
+			} else if (document.getElementById("Sort_DupeCount").selected) {
+				DisplayedOutput.sort((a, b) => {
+					return (a.DupeListOfLineNumbers.length - b.DupeListOfLineNumbers.length) * SortReverse
+				})
+			} else if (document.getElementById("Sort_Type").selected) {
+				DisplayedOutput.sort((a, b) => {
+					if (a.IdentifiedType === b.IdentifiedType) {
+						return 0
+					} else {
+						return ((a.IdentifiedType < b.IdentifiedType) ? -1 : 1) * SortReverse
+					}
+				})
+			}
+		//Output shown
+			//Statistics
+				let GreyIfZeroItems = ["#808080", "#FFFFFF"]
+				Object.entries(StatusTypeList).forEach(Status => {
+					let StatusName = Status[0]
+					let StatusCount = Status[1].Count
+					let StatusColor = Status[1].Color
+					
+					document.getElementById("Statistic_Count_" + StatusName).textContent = BigInt(StatusCount).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: StatusCount, MaxQuantity: SavedOutput.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
+					document.getElementById("Statistic_Count_" + StatusName).style.backgroundImage = CSSLinearGradientProgressBar({Quantity: StatusCount, MaxQuantity: SavedOutput.length, Direction: "to right", ColorFull: StatusColor, ColorEmpty: "#000000"})
+					let GreyIfZeroIndex = Number(StatusCount != 0)
+					document.getElementById("Statistic_Count_" + StatusName).style.color = GreyIfZeroItems[GreyIfZeroIndex]
+				})
+			//Output textarea
+				let OutputPlaintext = ""
+				if (document.getElementById("PlaintextOptions_EnteredText").checked) {
+					DisplayedOutput.forEach((Item, Index, Arr) => { //Output textarea
+						OutputPlaintext += Item.Text
+						if (Index != Arr.length-1) {
+							OutputPlaintext += "\n"
+						}
+					})
+				} else {
+					OutputPlaintext = JSON.stringify(DisplayedOutput, null, " ")
+				}
+				
+
+				document.getElementById("Output_Plaintext").value = OutputPlaintext
+			//Output html table
+				let OutputTable = document.getElementById("Output_Table")
+				while (OutputTable.lastElementChild) {
+					OutputTable.removeChild(OutputTable.lastElementChild);
+				}
+				let ResultTable = document.createElement("table")
+				
+				let HeaderRow = document.createElement("tr")
+				HeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Line number"))
+				HeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Line number after filtered"))
+				HeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Text"))
+				HeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Type"))
+				HeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Dupe info"))
+				ResultTable.appendChild(HeaderRow)
+				DisplayedOutput.forEach((Item, Index) => {
+					let ItemRow = document.createElement("tr")
+					
+					let ColorOfShifted = ["#000000", "#808000"]
+					let ColorOfShiftedIndex = Number(Index+1 != Item.LineNumber)
+					
+					let TableCell_OrigLineNum = document.createElement("td")
+					TableCell_OrigLineNum.style.fontFamily = "monospace"
+					TableCell_OrigLineNum.style.backgroundColor = ColorOfShifted[ColorOfShiftedIndex]
+					TableCell_OrigLineNum.appendChild(document.createTextNode(Item.LineNumber.toFixed(0)))
+					ItemRow.appendChild(TableCell_OrigLineNum)
+					
+					let TableCell_LineNumPostFilter = document.createElement("td")
+					TableCell_LineNumPostFilter.style.fontFamily = "monospace"
+					TableCell_LineNumPostFilter.style.backgroundColor = ColorOfShifted[ColorOfShiftedIndex]
+					TableCell_LineNumPostFilter.appendChild(document.createTextNode((Index+1).toFixed(0)))
+					ItemRow.appendChild(TableCell_LineNumPostFilter)
+					
+					let TableCell_LineText = document.createElement("td")
+					TableCell_LineText.style.fontFamily = "monospace"
+					TableCell_LineText.style.backgroundColor = StatusTypeList[Item.IdentifiedType].Color
+					TableCell_LineText.appendChild(document.createTextNode(Item.Text))
+					ItemRow.appendChild(TableCell_LineText)
+					
+					let TableCell_Type = document.createElement("td")
+					TableCell_Type.style.fontFamily = "monospace"
+					TableCell_Type.style.backgroundColor = StatusTypeList[Item.IdentifiedType].Color
+					TableCell_Type.appendChild(document.createTextNode(Item.IdentifiedType))
+					ItemRow.appendChild(TableCell_Type)
+					
+					let TableCell_DupeInfo = document.createElement("td")
+					TableCell_DupeInfo.style.fontFamily = "monospace"
+					TableCell_DupeInfo.style.backgroundColor = StatusTypeList[Item.IdentifiedType].Color
+					
+					let TextDupeList = ""
+					//Original will list all following items being duplicates of the original
+					//The duplicates themselves will state the line number of the original that matches.
+					if ((Item.DupeListOfLineNumbers.length != 0) && (Item.IdentifiedType != "Duplicate"&&Item.IdentifiedType != "BlacklistedDuplicate")) {
+						TextDupeList += Item.DupeListOfLineNumbers.length.toFixed(0) + " dupe(s) at line(s): "
+					
+						Item.DupeListOfLineNumbers.forEach((DupeItem, Index2, Arr) => {
+							TextDupeList += DupeItem.toFixed(0)
+							if (Index2 != Arr.length-1) {
+								TextDupeList += ", "
+							}
+						})
+					} else if (Item.IdentifiedType == "Duplicate"||Item.IdentifiedType == "BlacklistedDuplicate") {
+						TextDupeList = "Duplicate of line " + Item.DupeOfLineNumber.toFixed(0)
+					}
+					TableCell_DupeInfo.appendChild(document.createTextNode(TextDupeList))
+					ItemRow.appendChild(TableCell_DupeInfo)
+					
+					ResultTable.appendChild(ItemRow)
+				})
+				OutputTable.appendChild(ResultTable)
+	}
+	//Percentage handlers
+		function DisplayIntOutOfIntAsPercentageText({Quantity, MaxQuantity, NumberOfDigitsAfterDec, Clamped}) {
+			//Quantity = Amount in relation of MaxQuantity
+			//MaxQuantity = Total
+			//Clamped = (boolean): false = allow greater than 100%, true = only 0%-100% will display.
+			//This function calculates a percentage of a value (will be bigint), and returns a
+			//string representing a percentage using fixed-point arithmetic (https://en.wikipedia.org/wiki/Fixed-point_arithmetic ).
+			//Unlike a typical Quantity*100/MaxQuantity (or Quantity / MaxQuantity * 100) in double-precision, which rounds based on binary.
+			//This also reports if rounding to 0 or 100% have occurred.
+			//Note: Don't use negative or decimal numbers for any of the parameters!
+			
+			//Output: A string:
+			//"--" if MaxQuantity is 0 (division by zero in bigint is not handled unlike double-precision floating point)
+			//"<number>%" a percentage. Rounds half-up.
+			//"Greater than <1*(10**(2+NumberOfDigitsAfterDec_BigInt))-1>" if results between 99.99..% and 100% (avoids rounding up towards 100%).
+			//"Less than <1/(10**NumberOfDigitsAfterDec_BigInt)>" is same as above but avoids rounding towards 0%.
+			
+			//100.0 is 1000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 1
+			//100.00 is 10000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 2
+			//100.000 is 100000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 3
+			Quantity = BigInt(Quantity)
+			MaxQuantity = BigInt(MaxQuantity)
+			NumberOfDigitsAfterDec_BigInt = BigInt(NumberOfDigitsAfterDec)
+			if (MaxQuantity == 0n) {
+				return "--"
+			} else {
+				let Percentage = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) / MaxQuantity
+				let Modulo = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) % MaxQuantity
+				//Check if remainder is greater than or equal to half of MaxQuantity, if so, increment
+				//Percentage by 1 unit.
+				
+				//Get halfway point, note: this must be rounded half up as well so that if Modulo is 0.5 greater in the case MaxQuantity is an odd number,
+				//would correctly round upwards. Example: 3/2 is 1.5 (default round to 1), since we are dealing with integers, Remainder being 2 or more should be
+				//consider a round up for percentage
+					let HalfwayPointOfMaxQuantity = MaxQuantity / 2n
+					if ((MaxQuantity % 2n) != 0n) {
+						HalfwayPointOfMaxQuantity++
+					}
+				//Round half-up
+					if (Modulo >= HalfwayPointOfMaxQuantity) { //round upwards
+						Percentage++
+						if (Clamped) {Percentage = BigintClamp(Percentage, 0n, 100n * 10n ** (NumberOfDigitsAfterDec_BigInt))}
+						//We rounded the number up (actually increased the value), but it can potentially be at 100%, lets check it and if it did, override it.
+						if (Percentage == 100n*10n**NumberOfDigitsAfterDec_BigInt) {
+							//Rounded to 100% detected
+							//Note to self:
+							//Should say 99% if NumberOfDigitsAfterDec_BigInt = 0
+							//Should say 99.9% if NumberOfDigitsAfterDec_BigInt = 1
+							//99.99 if NumberOfDigitsAfterDec_BigInt = 2
+							//and so on.
+							//So basically the number of 9s after the decimal
+							//is NumberOfDigitsAfterDec_BigInt.
+								let DecimalPortion = ""
+								if (NumberOfDigitsAfterDec_BigInt != 0n) {
+									DecimalPortion += "."
+									for (let NineCount = 0; NineCount < NumberOfDigitsAfterDec; NineCount++) {
+										DecimalPortion += "9"
+									}
+								}
+							return "Greater than 99" + DecimalPortion + "%"
+						}
+					} else {
+						//Rounded downwards (default)
+						
+						if ((Modulo != 0n)&&(Percentage == 0n)) {
+							//Rounded to 0% detected
+							//Note to self:
+							//Should say 1% if NumberOfDigitsAfterDec_BigInt = 0
+							//Should say 0.1% if NumberOfDigitsAfterDec_BigInt = 1
+							//0.01% if NumberOfDigitsAfterDec_BigInt = 2
+							//and so on.
+							//Basically, if NumberOfDigitsAfterDec_BigInt = 2, the number of zeros
+							//between the decimal point and "1" is NumberOfDigitsAfterDec_BigInt - 1
+								let DecimalPortion = ""
+								if (NumberOfDigitsAfterDec_BigInt != 0n) {
+									DecimalPortion += "."
+									for (let ZeroCount = 0; ZeroCount < NumberOfDigitsAfterDec - 1; ZeroCount++) {
+										DecimalPortion += "0"
+									}
+									return "Less than 0" + DecimalPortion + "1%"
+								} else {
+									return "Less than 1%"
+								}
+						}
+					}
+					//Split the number separated by decimal point.
+						if (Clamped) {Percentage = BigintClamp(Percentage, 0n, 100n * 10n ** (NumberOfDigitsAfterDec_BigInt))}
+						let OutputString = Percentage.toString(10)
+						let WholeNumberPart = OutputString.substring(0, OutputString.length - NumberOfDigitsAfterDec)
+						if (WholeNumberPart == "") {
+							WholeNumberPart = "0"
+						}
+						//This make sure that leading zeros (when less than 1%) exists, should the value in fixed point have fewer digits
+						//so that it can display things like 0.01 (stored internally in fixed point as 1) instead of 0.1 when NumberOfDigitsAfterDec is set to 2.
+						//It is due to the fact that toString(10) removes all leading zeros.
+							if (OutputString.length < NumberOfDigitsAfterDec) {
+								let NumberOfLeadingZeroesNeeded = NumberOfDigitsAfterDec - OutputString.length //example: 34 (length = 2) which is supposed to be 0.00034% when NumberOfDigitsAfterDec = 5, so 5-2 = 3, so 3 0s are needed.
+								let LeadingZeroes = ""
+								for (let Count = 0; Count < NumberOfLeadingZeroesNeeded; Count++) {
+									LeadingZeroes += "0"
+								}
+								OutputString = LeadingZeroes + OutputString
+							}
+						let DecimalPart = OutputString.substring(OutputString.length - NumberOfDigitsAfterDec)
+				return WholeNumberPart + "." + DecimalPart + "%"
+			}
+		}
+		function CSSLinearGradientProgressBar({Quantity = 0, MaxQuantity = 100, Direction = "to right", ColorFull = "#C0C0C0", ColorEmpty = "#000000"}) {
+			//Returns a percentage displayed as a gradient representing a bar graph as CSS. Preferably as a background image.
+			let Percentage = 0
+			if (MaxQuantity != 0) {
+				Percentage = Quantity * 100/MaxQuantity //Multiply first so that it only rounds at the last step, minimizing rounding errors.
+			}
+			Percentage = clamp(Percentage, 0, 100)
+			return "linear-gradient("+Direction+", "+ColorFull+" "+Percentage.toFixed(17)+"%, "+ColorEmpty+" "+Percentage.toFixed(17)+"% 100%)"
+		}
+	//Other
+		function clamp(num, min, max) {
+			//Restrict a number within a specified range.
+				if (isNaN(num) == true) {
+					num = 0
+				}
+				return num <= min ? min : num >= max ? max : num;
+		}
+		function BigintClamp(num, min, max) {
+			//Restrict a number within a specified range, bigInt edition (since NaN cannot be represented in bigint).
+				return num <= min ? min : num >= max ? max : num;
+		}
+	//Tab key to insert tab character
+		function keyHandler_Tab(e) {
+	
+			let target;
+			if (!e) e = window.event;
+			if (e.target) target = e.target;
+			else if (e.srcElement) target = e.srcElement;
+	
+			if(e.keyCode == 9) {
+				if (document.selection) {
+					e.preventDefault()
+					target.focus();
+					sel = document.selection.createRange();
+					sel.text = '\t';
+				} else if (target.selectionStart || target.selectionStart === 0) {
+					e.preventDefault()
+					let startPos = target.selectionStart;
+					let endPos = target.selectionEnd;
+					target.value = target.value.substring(0, startPos) + '\t' + target.value.substring(endPos, target.value.length);
+					target.oninput()	//Fix an issue where if a tab is inserted and results the format being valid, the function to display the address won't update.
+	
+					target.selectionStart = startPos + 1;
+					target.selectionEnd = startPos + 1;
+	
+				} else {
+					e.preventDefault()
+					target.value += '\t';
+				}
+	
+				if(e.preventDefault) {
+					e.preventDefault();
+					target.oninput()	//Fix an issue where if a tab is inserted and results the format being valid, the function to display the address won't update.
+				}
+				return false;
+			}
+		}
+	//Copy text from textarea
+		function DeleteCopyMessage(HTMLElement) {
+			HTMLElement.textContent = ""
+		}
+		
+		function setClipboard(String) {
+			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
+			const type = "text/plain";
+			const blob = new Blob([String], { type });
+			const data = [new ClipboardItem({ [type]: blob })];
+			
+			let EventElement = event.target
+			let CopiedMessage = EventElement.parentNode.querySelector("span")
+		
+			navigator.clipboard.write(data).then(
+				((EventElement) => {
+				/* success */
+					CopiedMessage.textContent = "Copied!"
+					CopiedMessage.style.color = "#00FF00"
+					setTimeout(DeleteCopyMessage.bind(null, CopiedMessage), 1500)
+				}).bind(null, EventElement),
+				((EventElement) => {
+				/* failure */
+					CopiedMessage.textContent = "Failed!"
+					CopiedMessage.style.color = "#FF0000"
+					setTimeout(DeleteCopyMessage.bind(null, CopiedMessage), 1500)
+				}).bind(null, EventElement)
+			);
+		}
+</script>
