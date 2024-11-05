@@ -131,7 +131,7 @@ Preset settings:<br>
 			Please note that pages flagged as "can't save" can change between being able to be save or not. That's why they're checked by default.
 		</div>
 	</div>
-	Sort by <select onchange="CheckShouldReverseSortDisabled(); AutoUpdate()">
+	Sort by <select onchange="CheckShouldReverseSortDisabled();">
 		<option id="Sort_Output_None">None (same order as entered)</option>
 		<option id="Sort_Output_SaveStatusResponse" selected>Status message (Column D)</option>
 		<option id="Sort_Output_SubmittedURLsABC">By URLs entered (Column A)</option>
@@ -350,6 +350,7 @@ Preset settings:<br>
 	}
 	function CheckShouldReverseSortDisabled() {
 		document.getElementById("Sort_Output_Reverse").disabled = document.getElementById("Sort_Output_None").selected
+		AutoUpdate()
 	}
 	function CheckURLs() {
 		

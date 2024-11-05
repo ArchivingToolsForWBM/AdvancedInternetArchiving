@@ -63,12 +63,12 @@
 		<div class="TabbedItems"><label style="color: #ff6666;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_BlacklistedDuplicate">Blacklisted, duplicate</label></div>
 </div>
 <div>
-	Sort: <select onchange="AutoUpdate()">
+	Sort: <select onchange="SortReverseDisabledToggle();">
 		<option id="Sort_None">Same order as you entered</option>
 		<option id="Sort_Alphabetically">Alphabetically</option>
 		<option id="Sort_DupeCount">Duplicate count</option>
 		<option id="Sort_Type">Type identified</option>
-	</select><label><input type="checkbox" id="Sort_Reverse" onchange="AutoUpdate()">Reverse</label>
+	</select><label><input type="checkbox" id="Sort_Reverse" onchange="AutoUpdate()" disabled>Reverse</label>
 </div>
 <div>
 	Plaintext options
@@ -176,6 +176,10 @@
 		if (document.getElementById("AutoUpdate").checked) {
 			MainCode()
 		}
+	}
+	function SortReverseDisabledToggle() {
+		document.getElementById("Sort_Reverse").disabled = document.getElementById("Sort_None").selected
+		AutoUpdate()
 	}
 	function Reset() {
 		document.getElementById("TextInput_InputList").value = "";
