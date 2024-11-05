@@ -387,7 +387,7 @@
 							}
 						});
 					} else if (Item.IdentifiedType == "Duplicate"||Item.IdentifiedType == "BlacklistedDuplicate") {
-						TextDupeInfo = "Duplicate of line " + Item.DupeOfLineNumber.toFixed(0)
+						TextDupeInfo = "Is dupe of line " + Item.DupeOfLineNumber.toFixed(0)
 					}
 					TableCell_DupeInfo.appendChild(document.createTextNode(TextDupeInfo))
 					ItemRow.appendChild(TableCell_DupeInfo)
