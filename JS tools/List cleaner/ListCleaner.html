@@ -322,8 +322,8 @@
 				let ResultTable = document.createElement("table")
 				
 				let HeaderRow = document.createElement("tr")
-				HeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Line number"))
-				HeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Line number after filtered"))
+				HeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Original Line number"))
+				HeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Line number after processing"))
 				HeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Text"))
 				HeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Type"))
 				HeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Dupe info"))
@@ -364,22 +364,32 @@
 					TableCell_DupeInfo.style.fontFamily = "monospace"
 					TableCell_DupeInfo.style.backgroundColor = StatusTypeList[Item.IdentifiedType].Color
 					
-					let TextDupeList = ""
+					let TextDupeInfo = "Have no dupes"
 					//Original will list all following items being duplicates of the original
 					//The duplicates themselves will state the line number of the original that matches.
 					if ((Item.DupeListOfLineNumbers.length != 0) && (Item.IdentifiedType != "Duplicate"&&Item.IdentifiedType != "BlacklistedDuplicate")) {
-						TextDupeList += Item.DupeListOfLineNumbers.length.toFixed(0) + " dupe(s) at line(s): "
-					
+						let Plural = "";
+						if (Item.DupeListOfLineNumbers.length >= 2) {
+							Plural = "s";
+						}
+						TextDupeInfo = "Have " + Item.DupeListOfLineNumbers.length.toFixed(0) + " dupe" + Plural + " at line" + Plural + " "
 						Item.DupeListOfLineNumbers.forEach((DupeItem, Index2, Arr) => {
-							TextDupeList += DupeItem.toFixed(0)
-							if (Index2 != Arr.length-1) {
-								TextDupeList += ", "
+							if (Index2 == Arr.length-1 && Arr.length != 1) {
+								TextDupeInfo += "and "
 							}
-						})
+							TextDupeInfo += DupeItem.toFixed(0)
+							if (Index2 != Arr.length-1) {
+								if (Arr.length != 2) {
+									TextDupeInfo += ", "
+								} else {
+									TextDupeInfo += " "
+								}
+							}
+						});
 					} else if (Item.IdentifiedType == "Duplicate"||Item.IdentifiedType == "BlacklistedDuplicate") {
-						TextDupeList = "Duplicate of line " + Item.DupeOfLineNumber.toFixed(0)
+						TextDupeInfo = "Duplicate of line " + Item.DupeOfLineNumber.toFixed(0)
 					}
-					TableCell_DupeInfo.appendChild(document.createTextNode(TextDupeList))
+					TableCell_DupeInfo.appendChild(document.createTextNode(TextDupeInfo))
 					ItemRow.appendChild(TableCell_DupeInfo)
 					
 					ResultTable.appendChild(ItemRow)
