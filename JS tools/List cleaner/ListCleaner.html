@@ -35,6 +35,8 @@
 
 <p>This tool will take a given list in text form, and scans for duplicates and blacklists (line by line). This is useful if you have unwanted items or if there are anomalies at certain lines when copying and pasting.</p>
 <p>This tool can also be used to extract URLs that have failed on all process runs should a WBGS process duplicate, a bug that often happens when job queues occur.</p>
+
+<p>Note that if there are multiple lines that matches, the second and all later matching lines will be considered as duplicates, not the first.</p>
 <label><input type="checkbox" checked id="AutoUpdate">Auto update</label>
 <table>
 	<tr>
@@ -54,13 +56,20 @@
 		<div class="TabbedItems"><label><input type="checkbox" id="ProcessOption_RemoveLeadingTrailingSpaces" onchange="AnyListUpdated();" checked>Ignore leading and trailing whitespace characters (also removed from output)</label></div>
 </div>
 <div id="FilterList">
-	Filters: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
+	<div>
+		Filters: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
 		<div class="TabbedItems"><label style="color: #00FF00;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Original" checked>Original items</label></div>
 		<div class="TabbedItems"><label style="color: #FF0000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Duplicate">Duplicates, not blacklisted</label></div>
 		<div class="TabbedItems"><label style="color: #808080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_EmptyLine">Empty lines</label></div>
 		<div class="TabbedItems"><label style="color: #A08080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Whitespace">Lines with only whitespace</label></div>
 		<div class="TabbedItems"><label style="color: #ff6699;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Blacklisted">Blacklisted, not duplicate</label></div>
 		<div class="TabbedItems"><label style="color: #ff6666;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_BlacklistedDuplicate">Blacklisted, duplicate</label></div>
+	</div>
+	<div>Filter based on dupe counts: <button onclick="ResetFilterByDupeCount()">Reset</button>
+	<div style="padding-top: 1rem; padding-bottom: 1rem; padding-left: 1rem">This will remove both the original and its duplicates when not meeting the above criteria.</div>
+		<div class="TabbedItems"><label for="Filter_MinDupeCount"><input type="checkbox" onchange="CheckboxApplyMinMaxDupes()" id="Filter_MinDupeCount">Lines that have</label> <input type="number" value="0" id="FilterByNumber_MinDupeCount" oninput="CorrectMinMaxDupeCount();" disabled><label for="Filter_MinDupeCount">dupe(s) or more</label></div>
+		<div class="TabbedItems"><label for="Filter_MaxDupeCount"><input type="checkbox" onchange="CheckboxApplyMinMaxDupes()" id="Filter_MaxDupeCount">Lines that have</label> <input type="number" value="0" id="FilterByNumber_MaxDupeCount" oninput="CorrectMinMaxDupeCount();" disabled><label for="Filter_MaxDupeCount">dupe(s) or less</label></div>
+	</div>
 </div>
 <div>
 	Sort: <select onchange="SortReverseDisabledToggle();">
@@ -168,6 +177,28 @@
 		});
 		AutoUpdate()
 	}
+	function CheckboxApplyMinMaxDupes() {
+		let NumberInputToEnableDisable = event.target.parentNode.parentNode.querySelector("input[type=number]")
+		NumberInputToEnableDisable.disabled = !event.target.checked
+		AutoUpdate()
+	}
+	function CorrectMinMaxDupeCount() {
+		let InputElementCurrentlyUsed = event.target
+		let EnteredNumber = parseInt(InputElementCurrentlyUsed.value)
+		if (isNaN(EnteredNumber)|| EnteredNumber < 0) {
+			EnteredNumber = 0
+		}
+		InputElementCurrentlyUsed.value = EnteredNumber.toFixed(0)
+		AutoUpdate()
+	}
+	function ResetFilterByDupeCount() {
+		ChangeCheckboxesByChildren(0, event.target.parentNode)
+		document.getElementById("FilterByNumber_MinDupeCount").value = "0"
+		document.getElementById("FilterByNumber_MinDupeCount").disabled = true
+		document.getElementById("FilterByNumber_MaxDupeCount").value = "0"
+		document.getElementById("FilterByNumber_MaxDupeCount").disabled = true
+		AutoUpdate()
+	}
 	function AnyListUpdated() {
 		NeedToReprocess = true
 		AutoUpdate()
@@ -257,7 +288,26 @@
 		}
 		NeedToReprocess = false
 		//Filter
-			let DisplayedOutput = SavedOutput.filter(Item => document.getElementById("Filter_" + Item.IdentifiedType).checked)
+			let MinDupe = parseInt(document.getElementById("FilterByNumber_MinDupeCount").value)
+			let MinDupeApplied = document.getElementById("Filter_MinDupeCount").checked
+			let MaxDupe = parseInt(document.getElementById("FilterByNumber_MaxDupeCount").value)
+			let MaxDupeApplied = document.getElementById("Filter_MaxDupeCount").checked
+			let DisplayedOutput = SavedOutput.filter(Item => {
+				if (!(document.getElementById("Filter_" + Item.IdentifiedType).checked)) {
+					return false
+				}
+				if (MinDupeApplied) {
+					if (Item.DupeListOfLineNumbers.length < MinDupe) {
+						return false
+					}
+				}
+				if (MaxDupeApplied) {
+					if (Item.DupeListOfLineNumbers.length > MaxDupe) {
+						return false
+					}
+				}
+				return true
+			});
 		//Sort
 			let SortReverse = 1
 			if (document.getElementById("Sort_Reverse").checked) {
