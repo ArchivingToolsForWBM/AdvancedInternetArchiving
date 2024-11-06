@@ -66,7 +66,7 @@
 		<div class="TabbedItems"><label style="color: #ff6666;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_BlacklistedDuplicate">Blacklisted, duplicate</label></div>
 	</div>
 	<div>Filter based on dupe counts: <button onclick="ResetFilterByDupeCount()">Reset</button>
-	<div style="padding-top: 1rem; padding-bottom: 1rem; padding-left: 1rem">This will remove both the original and its duplicates when not meeting the above criteria.</div>
+	<div style="padding-top: 1rem; padding-bottom: 1rem; padding-left: 1rem">This will remove both the original and its duplicates when not meeting the criteria below.</div>
 		<div class="TabbedItems"><label for="Filter_MinDupeCount"><input type="checkbox" onchange="CheckboxApplyMinMaxDupes()" id="Filter_MinDupeCount">Lines that have</label> <input type="number" value="0" id="FilterByNumber_MinDupeCount" oninput="CorrectMinMaxDupeCount();" disabled><label for="Filter_MinDupeCount">dupe(s) or more</label></div>
 		<div class="TabbedItems"><label for="Filter_MaxDupeCount"><input type="checkbox" onchange="CheckboxApplyMinMaxDupes()" id="Filter_MaxDupeCount">Lines that have</label> <input type="number" value="0" id="FilterByNumber_MaxDupeCount" oninput="CorrectMinMaxDupeCount();" disabled><label for="Filter_MaxDupeCount">dupe(s) or less</label></div>
 	</div>
