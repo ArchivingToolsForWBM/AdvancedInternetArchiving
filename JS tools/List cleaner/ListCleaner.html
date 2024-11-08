@@ -440,8 +440,10 @@
 					TableCell_DupeInfo.style.backgroundColor = StatusTypeList[Item.IdentifiedType].Color
 					
 					let TextDupeInfo = ""
-					if (/(?:EmptyLine|Whitespace)/.test(Item.IdentifiedType)) {
-					} else if ((Item.DupeListOfLineNumbers.length != 0) && (Item.IdentifiedType != "Duplicate"&&Item.IdentifiedType != "BlacklistedDuplicate")) {
+					if (Item.IdentifiedType != "Whitespace" && Item.IdentifiedType != "EmptyLine") {
+						TextDupeInfo = "Have no dupes"
+					}
+					if ((Item.DupeListOfLineNumbers.length != 0) && (Item.IdentifiedType != "Duplicate"&&Item.IdentifiedType != "BlacklistedDuplicate")) {
 					//Original will list all following items being duplicates of the original
 					//The duplicates themselves will state the line number of the original that matches.
 						let Plural = "";
