@@ -219,11 +219,26 @@
 		
 		[...document.getElementById("FilterList").querySelectorAll("input[type=checkbox]")].forEach(Ele => Ele.checked = false)
 		document.getElementById("Filter_Original").checked = true
+		ResetStatisticCounts()
+		ResetOutputs()
+	}
+	function ResetOutputs() {
+		[...document.querySelectorAll("td")].filter(ArrayElement => /^Statistic_/.test(ArrayElement.id))
+		.forEach(ArrayElement => {
+			ArrayElement.textContent = ""
+			ArrayElement.style.backgroundImage = ""
+		})
+		document.getElementById("Output_Plaintext").value = ""
+		let OutputTable = document.getElementById("Output_Table")
+		while (OutputTable.lastElementChild) {
+			OutputTable.removeChild(OutputTable.lastElementChild);
+		}
 	}
 	function MainCode() {
+		let InputList = []
 		if (NeedToReprocess) {
 			ResetStatisticCounts()
-			let InputList = document.getElementById("TextInput_InputList").value.split("\n").map((Line, Index) => {
+			InputList = document.getElementById("TextInput_InputList").value.split("\n").map((Line, Index) => {
 				let Text = Line
 				if (document.getElementById("ProcessOption_RemoveLeadingTrailingSpaces").checked) {
 					Text = Text.replace(/^\s*/, "").replace(/\s*$/, "")
@@ -236,7 +251,6 @@
 					DupeOfLineNumber: -1
 				}
 			})
-			document.getElementById("Statistic_HowManyOriginally").textContent = BigInt(InputList.length).toString(10)
 			let Blacklist = document.getElementById("TextInput_Blacklist").value.split("\n").filter(Line => !(/^\s*$/.test(Line)))
 			if (document.getElementById("ProcessOption_RemoveLeadingTrailingSpaces").checked) {
 				Blacklist = Blacklist.map(Line => Line.replace(/^\s*/, "").replace(/\s*$/, ""))
@@ -335,7 +349,12 @@
 				})
 			}
 		//Output shown
+			if (document.getElementById("TextInput_InputList").value == "") {
+				ResetOutputs()
+				return
+			}
 			//Statistics
+				document.getElementById("Statistic_HowManyOriginally").textContent = BigInt(InputList.length).toString(10)
 				document.getElementById("Statistic_HowManyAfterFilter").textContent = BigInt(DisplayedOutput.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: DisplayedOutput.length, MaxQuantity: SavedOutput.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
 				document.getElementById("Statistic_HowManyAfterFilter").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: DisplayedOutput.length, MaxQuantity: SavedOutput.length, Direction: "to right", ColorFull: "#0000FF", ColorEmpty: "#000000"})
 				document.getElementById("Statistic_HowManyRemoved").textContent = BigInt(SavedOutput.length - DisplayedOutput.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: SavedOutput.length - DisplayedOutput.length, MaxQuantity: SavedOutput.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"

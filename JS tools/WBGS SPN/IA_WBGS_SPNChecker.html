@@ -249,7 +249,7 @@ Preset settings:<br>
 	<textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
 	<div><button onclick="setClipboard(document.getElementById('Output_Plaintext').value)">Copy</button><span></span></div>
 	<div style="overflow: scroll; height: 600px;border: solid 1px; resize: both;">
-	<span id="Output_table"></span>
+	<span id="Output_Table"></span>
 	</div>
 </span>
 <span id="OutputResults_Error" hidden>
@@ -569,158 +569,158 @@ Preset settings:<br>
 				});
 			}
 		//Output data
-			if (InputList.length != 0) {
-				//Totals of the 3 group of types
-					let Count_Success = SaveStatusTypeList.Success_SavedBefore.Count + SaveStatusTypeList.Success_FirstArchive.Count
-					let Count_Unsures = SaveStatusTypeList.Unsure_NoIAResult.Count + SaveStatusTypeList.Unsure_BlankColumnD.Count + SaveStatusTypeList.Unsure_Redirected.Count + SaveStatusTypeList.Unsure_Error.Count + SaveStatusTypeList.Unsure_SavedANon2XX.Count
-					let Count_CantSaves = SaveStatusTypeList.CantSave_BlockListed.Count + SaveStatusTypeList.CantSave_Error401.Count + SaveStatusTypeList.CantSave_Error403.Count + SaveStatusTypeList.CantSave_Error404.Count + SaveStatusTypeList.CantSave_CantResolve.Count
-					if (Count_Success == InputList.length && InputList.length != 0) {
-						document.getElementById("AllSavedIndicator").hidden = false
-					} else {	//If the user then enters another list of URLs without resetting or refreshing this must also reset.
-						document.getElementById("AllSavedIndicator").hidden = true
-					}
-				//statistics
-					//Show statistics table, I use Bigint to prevent potential E (scientific) notation.
-						//Total
-							document.getElementById("Statistic_NumberOfItems_TotalURLs").textContent = BigInt(InputList.length).toString(10)
-						//Display total
-							document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").textContent = BigInt(FilteredListForDisplay.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: FilteredListForDisplay.length, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) +")"
-							document.getElementById("StatisticPercentage_NumberOfItems_RemainingAfterFilter").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: FilteredListForDisplay.length, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#0000ff", ColorEmpty: "#000000"})
-						//Removal total
-							document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").textContent = BigInt(InputList.length - FilteredListForDisplay.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: InputList.length - FilteredListForDisplay.length, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_RemovedAfterFilter").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: InputList.length - FilteredListForDisplay.length, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#0000ff", ColorEmpty: "#000000"})
-						//Each type of save status
-							let GreyIfZeroItems = ["#808080", "#FFFFFF"]
-							Object.entries(SaveStatusTypeList).forEach(Status => {
-								let StatusName = Status[0]
-								let StatusCount = Status[1].Count
-								let StatusColor = Status[1].Color
-								
-								document.getElementById("Statistic_NumberOfItems_" + StatusName).textContent = BigInt(StatusCount).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: StatusCount, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
-								document.getElementById("StatisticPercentage_NumberOfItems_" + StatusName).style.backgroundImage = CSSLinearGradientProgressBar({Quantity: StatusCount, MaxQuantity: InputList.length, Direction: "to right", ColorFull: StatusColor, ColorEmpty: "#000000"})
-								let GreyIfZeroIndex = Number(StatusCount != 0)
-								document.getElementById("StatisticPercentage_NumberOfItems_" + StatusName).style.color = GreyIfZeroItems[GreyIfZeroIndex]
-							})
-						//Total success and unsures
-							document.getElementById("Statistic_NumberOfItems_Success_Total").textContent = BigInt(Count_Success).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Success, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_Success, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#0000ff", ColorEmpty: "#000000"})
-
-							document.getElementById("Statistic_NumberOfItems_Unsure_Total").textContent = BigInt(Count_Unsures).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Unsures, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_Unsures, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#0000ff", ColorEmpty: "#000000"})
-							
-							document.getElementById("Statistic_NumberOfItems_CantSave_Total").textContent = BigInt(Count_CantSaves).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_CantSaves, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
-							document.getElementById("StatisticPercentage_NumberOfItems_CantSave_Total").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_CantSaves, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#0000ff", ColorEmpty: "#000000"})
-						//Earliest and latest date
-							document.getElementById("StatisticDate_Earliest").textContent = SaveStatusDateRange.Earliest
-							document.getElementById("StatisticDate_Latest").textContent = SaveStatusDateRange.Latest
-				//Retry list in plaintext
-					document.getElementById("OutputPlaintextItemCount").textContent = BigInt(FilteredListForDisplay.length).toString(10)
-					Output = ""
-					if (FilteredListForDisplay.length != 0) {
-						if (document.getElementById("PlainText_DisplayInfo_EnteredURLsOnly").checked) { //For better performance on the text mode to display, have the if statement OUTSIDE the loop so it doesn't get repeatedly executed
-							for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
-								Output += FilteredListForDisplay[Index].SentURL
-								if (Index != FilteredListForDisplay.length - 1) {
-									Output += "\n"
-								}
-							}
-						} else if (document.getElementById("PlainText_DisplayInfo_WBGSInfo").checked) {
-							for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
-								Output += FilteredListForDisplay[Index].SpreadSheetRowData_Array[0] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[1] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[2] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[3] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[4] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[5]
-								if (Index != FilteredListForDisplay.length - 1) {
-									Output += "\n"
-								}
-							}
-						} else if (document.getElementById("PlainText_DisplayInfo_AllAsJson").checked) {
-							Output = JSON.stringify(FilteredListForDisplay , null, " ")
-						}
-						
-					} else {
-						Output = "No results."
-					}
-					document.getElementById("Output_Plaintext").value = Output
-				//Display filtered list using HTML table. Shows the URLs, the color indicator, and the WBM response.
-					let OutputTable = document.getElementById("Output_table")
-					while (OutputTable.lastElementChild) {
-						OutputTable.removeChild(OutputTable.lastElementChild);
-					}
-					if (FilteredListForDisplay.length != 0) {
-						let DocumentFrag = new DocumentFragment()
-						let ResultTable = document.createElement("table")
-						DocumentFrag.appendChild(ResultTable)
-						let TableHeaderRow = document.createElement("tr")
-						TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Item number"))
-						TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("GS line number"))
-						TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("URLs you sent"))
-						TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("HTTP status"))
-						TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Save status/Error statement"))
-						TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Timestamp"))
-						TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Outlinks count"))
-						TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Status type"))
-						
-						ResultTable.appendChild(TableHeaderRow)
-						
-						for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
-							let Item = FilteredListForDisplay[Index]
-							let RowItem = document.createElement("tr")
-							let Cell_ItemNumber = document.createElement("td")
-							Cell_ItemNumber.style.fontFamily = "monospace"
-							Cell_ItemNumber.style.textAlign = "center"
-							Cell_ItemNumber.appendChild(document.createTextNode(BigInt(Index+1).toString(10)))
-							RowItem.appendChild(Cell_ItemNumber)
-							
-							let Cell_GSLineNum = document.createElement("td")
-							Cell_GSLineNum.style.fontFamily = "monospace"
-							Cell_GSLineNum.style.textAlign = "center"
-							Cell_GSLineNum.appendChild(document.createTextNode(BigInt(Item.SpreadSheetRowNumber).toString(10)))
-							RowItem.appendChild(Cell_GSLineNum)
-							
-							let Cell_URLSent = document.createElement("td")
-							Cell_URLSent.style.fontFamily = "monospace"
-							Cell_URLSent.style.backgroundColor = SaveStatusTypeList[Item.SaveStatus].Color
-							Cell_URLSent.appendChild(document.createTextNode(Item.SpreadSheetRowData_Array[0].replace(/^\"/, "").replace(/\"$/, "")))
-							RowItem.appendChild(Cell_URLSent)
-							
-							let Cell_HTTPStatus = document.createElement("td")
-							Cell_HTTPStatus.style.fontFamily = "monospace"
-							Cell_HTTPStatus.style.backgroundColor = SaveStatusTypeList[Item.SaveStatus].Color
-							Cell_HTTPStatus.appendChild(document.createTextNode(Item.SpreadSheetRowData_Array[2]))
-							RowItem.appendChild(Cell_HTTPStatus)
-							
-							let Cell_SaveStatus = document.createElement("td")
-							Cell_SaveStatus.style.backgroundColor = SaveStatusTypeList[Item.SaveStatus].Color
-							Cell_SaveStatus_Pre = document.createElement("pre") //In case of forced line breaks
-							Cell_SaveStatus_Pre.appendChild(document.createTextNode(Item.WBM_SaveResponse.replace(/^\"/, "").replace(/\"$/, "")))
-							Cell_SaveStatus.appendChild(Cell_SaveStatus_Pre)
-							RowItem.appendChild(Cell_SaveStatus)
-							
-							let Cell_Timestamp = document.createElement("td")
-							Cell_Timestamp.style.backgroundColor = SaveStatusTypeList[Item.SaveStatus].Color
-							Cell_Timestamp.style.fontFamily = "monospace"
-							Cell_Timestamp.appendChild(document.createTextNode(Item.Timestamp))
-							RowItem.appendChild(Cell_Timestamp)
-							
-							let Cell_OutLinksCount = document.createElement("td")
-							Cell_OutLinksCount.style.backgroundColor = SaveStatusTypeList[Item.SaveStatus].Color
-							Cell_OutLinksCount.style.fontFamily = "monospace"
-							Cell_OutLinksCount.appendChild(document.createTextNode(Item.SpreadSheetRowData_Array[4]))
-							RowItem.appendChild(Cell_OutLinksCount)
-							
-							let Cell_StatusType = document.createElement("td")
-							Cell_StatusType.style.backgroundColor = SaveStatusTypeList[Item.SaveStatus].Color
-							Cell_StatusType.style.fontFamily = "monospace"
-							Cell_StatusType.appendChild(document.createTextNode(Item.SaveStatus))
-							RowItem.appendChild(Cell_StatusType)
-							
-							ResultTable.appendChild(RowItem)
-						}
-						OutputTable.appendChild(DocumentFrag)
-					} else {
-						OutputTable.appendChild(document.createElement("div")).appendChild(document.createTextNode("No results"))
-					}
-			} else {
+			if (InputList.length == 0) {
 				ClearOutputs()
+				return
 			}
+			//Totals of the 3 group of types
+				let Count_Success = SaveStatusTypeList.Success_SavedBefore.Count + SaveStatusTypeList.Success_FirstArchive.Count
+				let Count_Unsures = SaveStatusTypeList.Unsure_NoIAResult.Count + SaveStatusTypeList.Unsure_BlankColumnD.Count + SaveStatusTypeList.Unsure_Redirected.Count + SaveStatusTypeList.Unsure_Error.Count + SaveStatusTypeList.Unsure_SavedANon2XX.Count
+				let Count_CantSaves = SaveStatusTypeList.CantSave_BlockListed.Count + SaveStatusTypeList.CantSave_Error401.Count + SaveStatusTypeList.CantSave_Error403.Count + SaveStatusTypeList.CantSave_Error404.Count + SaveStatusTypeList.CantSave_CantResolve.Count
+				if (Count_Success == InputList.length && InputList.length != 0) {
+					document.getElementById("AllSavedIndicator").hidden = false
+				} else {	//If the user then enters another list of URLs without resetting or refreshing this must also reset.
+					document.getElementById("AllSavedIndicator").hidden = true
+				}
+			//statistics
+				//Show statistics table, I use Bigint to prevent potential E (scientific) notation.
+					//Total
+						document.getElementById("Statistic_NumberOfItems_TotalURLs").textContent = BigInt(InputList.length).toString(10)
+					//Display total
+						document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").textContent = BigInt(FilteredListForDisplay.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: FilteredListForDisplay.length, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) +")"
+						document.getElementById("StatisticPercentage_NumberOfItems_RemainingAfterFilter").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: FilteredListForDisplay.length, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#0000ff", ColorEmpty: "#000000"})
+					//Removal total
+						document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").textContent = BigInt(InputList.length - FilteredListForDisplay.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: InputList.length - FilteredListForDisplay.length, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
+						document.getElementById("StatisticPercentage_NumberOfItems_RemovedAfterFilter").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: InputList.length - FilteredListForDisplay.length, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#0000ff", ColorEmpty: "#000000"})
+					//Each type of save status
+						let GreyIfZeroItems = ["#808080", "#FFFFFF"]
+						Object.entries(SaveStatusTypeList).forEach(Status => {
+							let StatusName = Status[0]
+							let StatusCount = Status[1].Count
+							let StatusColor = Status[1].Color
+							
+							document.getElementById("Statistic_NumberOfItems_" + StatusName).textContent = BigInt(StatusCount).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: StatusCount, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
+							document.getElementById("StatisticPercentage_NumberOfItems_" + StatusName).style.backgroundImage = CSSLinearGradientProgressBar({Quantity: StatusCount, MaxQuantity: InputList.length, Direction: "to right", ColorFull: StatusColor, ColorEmpty: "#000000"})
+							let GreyIfZeroIndex = Number(StatusCount != 0)
+							document.getElementById("StatisticPercentage_NumberOfItems_" + StatusName).style.color = GreyIfZeroItems[GreyIfZeroIndex]
+						})
+					//Total success and unsures
+						document.getElementById("Statistic_NumberOfItems_Success_Total").textContent = BigInt(Count_Success).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Success, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
+						document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_Success, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#0000ff", ColorEmpty: "#000000"})
+
+						document.getElementById("Statistic_NumberOfItems_Unsure_Total").textContent = BigInt(Count_Unsures).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Unsures, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
+						document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_Unsures, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#0000ff", ColorEmpty: "#000000"})
+						
+						document.getElementById("Statistic_NumberOfItems_CantSave_Total").textContent = BigInt(Count_CantSaves).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_CantSaves, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
+						document.getElementById("StatisticPercentage_NumberOfItems_CantSave_Total").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_CantSaves, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#0000ff", ColorEmpty: "#000000"})
+					//Earliest and latest date
+						document.getElementById("StatisticDate_Earliest").textContent = SaveStatusDateRange.Earliest
+						document.getElementById("StatisticDate_Latest").textContent = SaveStatusDateRange.Latest
+			//Retry list in plaintext
+				document.getElementById("OutputPlaintextItemCount").textContent = BigInt(FilteredListForDisplay.length).toString(10)
+				Output = ""
+				if (FilteredListForDisplay.length != 0) {
+					if (document.getElementById("PlainText_DisplayInfo_EnteredURLsOnly").checked) { //For better performance on the text mode to display, have the if statement OUTSIDE the loop so it doesn't get repeatedly executed
+						for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
+							Output += FilteredListForDisplay[Index].SentURL
+							if (Index != FilteredListForDisplay.length - 1) {
+								Output += "\n"
+							}
+						}
+					} else if (document.getElementById("PlainText_DisplayInfo_WBGSInfo").checked) {
+						for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
+							Output += FilteredListForDisplay[Index].SpreadSheetRowData_Array[0] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[1] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[2] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[3] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[4] + "\t" + FilteredListForDisplay[Index].SpreadSheetRowData_Array[5]
+							if (Index != FilteredListForDisplay.length - 1) {
+								Output += "\n"
+							}
+						}
+					} else if (document.getElementById("PlainText_DisplayInfo_AllAsJson").checked) {
+						Output = JSON.stringify(FilteredListForDisplay , null, " ")
+					}
+					
+				} else {
+					Output = "No results."
+				}
+				document.getElementById("Output_Plaintext").value = Output
+			//Display filtered list using HTML table. Shows the URLs, the color indicator, and the WBM response.
+				let OutputTable = document.getElementById("Output_Table")
+				while (OutputTable.lastElementChild) {
+					OutputTable.removeChild(OutputTable.lastElementChild);
+				}
+				if (FilteredListForDisplay.length != 0) {
+					let DocumentFrag = new DocumentFragment()
+					let ResultTable = document.createElement("table")
+					DocumentFrag.appendChild(ResultTable)
+					let TableHeaderRow = document.createElement("tr")
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Item number"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("GS line number"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("URLs you sent"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("HTTP status"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Save status/Error statement"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Timestamp"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Outlinks count"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Status type"))
+					
+					ResultTable.appendChild(TableHeaderRow)
+					
+					for (let Index = 0; Index < FilteredListForDisplay.length; Index++) {
+						let Item = FilteredListForDisplay[Index]
+						let RowItem = document.createElement("tr")
+						let Cell_ItemNumber = document.createElement("td")
+						Cell_ItemNumber.style.fontFamily = "monospace"
+						Cell_ItemNumber.style.textAlign = "center"
+						Cell_ItemNumber.appendChild(document.createTextNode(BigInt(Index+1).toString(10)))
+						RowItem.appendChild(Cell_ItemNumber)
+						
+						let Cell_GSLineNum = document.createElement("td")
+						Cell_GSLineNum.style.fontFamily = "monospace"
+						Cell_GSLineNum.style.textAlign = "center"
+						Cell_GSLineNum.appendChild(document.createTextNode(BigInt(Item.SpreadSheetRowNumber).toString(10)))
+						RowItem.appendChild(Cell_GSLineNum)
+						
+						let Cell_URLSent = document.createElement("td")
+						Cell_URLSent.style.fontFamily = "monospace"
+						Cell_URLSent.style.backgroundColor = SaveStatusTypeList[Item.SaveStatus].Color
+						Cell_URLSent.appendChild(document.createTextNode(Item.SpreadSheetRowData_Array[0].replace(/^\"/, "").replace(/\"$/, "")))
+						RowItem.appendChild(Cell_URLSent)
+						
+						let Cell_HTTPStatus = document.createElement("td")
+						Cell_HTTPStatus.style.fontFamily = "monospace"
+						Cell_HTTPStatus.style.backgroundColor = SaveStatusTypeList[Item.SaveStatus].Color
+						Cell_HTTPStatus.appendChild(document.createTextNode(Item.SpreadSheetRowData_Array[2]))
+						RowItem.appendChild(Cell_HTTPStatus)
+						
+						let Cell_SaveStatus = document.createElement("td")
+						Cell_SaveStatus.style.backgroundColor = SaveStatusTypeList[Item.SaveStatus].Color
+						Cell_SaveStatus_Pre = document.createElement("pre") //In case of forced line breaks
+						Cell_SaveStatus_Pre.appendChild(document.createTextNode(Item.WBM_SaveResponse.replace(/^\"/, "").replace(/\"$/, "")))
+						Cell_SaveStatus.appendChild(Cell_SaveStatus_Pre)
+						RowItem.appendChild(Cell_SaveStatus)
+						
+						let Cell_Timestamp = document.createElement("td")
+						Cell_Timestamp.style.backgroundColor = SaveStatusTypeList[Item.SaveStatus].Color
+						Cell_Timestamp.style.fontFamily = "monospace"
+						Cell_Timestamp.appendChild(document.createTextNode(Item.Timestamp))
+						RowItem.appendChild(Cell_Timestamp)
+						
+						let Cell_OutLinksCount = document.createElement("td")
+						Cell_OutLinksCount.style.backgroundColor = SaveStatusTypeList[Item.SaveStatus].Color
+						Cell_OutLinksCount.style.fontFamily = "monospace"
+						Cell_OutLinksCount.appendChild(document.createTextNode(Item.SpreadSheetRowData_Array[4]))
+						RowItem.appendChild(Cell_OutLinksCount)
+						
+						let Cell_StatusType = document.createElement("td")
+						Cell_StatusType.style.backgroundColor = SaveStatusTypeList[Item.SaveStatus].Color
+						Cell_StatusType.style.fontFamily = "monospace"
+						Cell_StatusType.appendChild(document.createTextNode(Item.SaveStatus))
+						RowItem.appendChild(Cell_StatusType)
+						
+						ResultTable.appendChild(RowItem)
+					}
+					OutputTable.appendChild(DocumentFrag)
+				} else {
+					OutputTable.appendChild(document.createElement("div")).appendChild(document.createTextNode("No results"))
+				}
 	}
 	function Reset() {
 		document.getElementById("GsheetInput").value = ""
@@ -747,9 +747,8 @@ Preset settings:<br>
 		document.getElementById("PlainText_DisplayInfo_EnteredURLsOnly").checked = true
 	}
 	function ClearOutputs() {
-		Array.from(document.getElementsByTagName("span")).filter((ArrayElement) => { //Clear Statistic table
-			return /^Statistic_/.test(ArrayElement.id)
-		}).forEach(ArrayElement => {
+		[...document.querySelectorAll("span")].filter(ArrayElement => /^Statistic_/.test(ArrayElement.id))//Clear Statistic table
+		.forEach(ArrayElement => {
 			ArrayElement.textContent = ""
 			ArrayElement.parentElement.parentElement.style = ""
 		})
@@ -759,7 +758,7 @@ Preset settings:<br>
 			document.getElementById("StatisticDate_Latest").textContent = "?"
 		document.getElementById("OutputPlaintextItemCount").textContent = "0"
 		document.getElementById("Output_Plaintext").value = ""
-		let OutputTable = document.getElementById("Output_table")
+		let OutputTable = document.getElementById("Output_Table")
 		while (OutputTable.lastElementChild) {
 			OutputTable.removeChild(OutputTable.lastElementChild);
 		}
