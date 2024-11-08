@@ -241,7 +241,9 @@
 			InputList = document.getElementById("TextInput_InputList").value.split("\n").map((Line, Index) => {
 				let Text = Line
 				if (document.getElementById("ProcessOption_RemoveLeadingTrailingSpaces").checked) {
-					Text = Text.replace(/^\s*/, "").replace(/\s*$/, "")
+					if (!/^\s*$/.test(Text)) {
+						Text = Text.replace(/^\s*/, "").replace(/\s*$/, "")
+					}
 				}
 				return {
 					Text: Text,
@@ -437,10 +439,11 @@
 					TableCell_DupeInfo.style.fontFamily = "monospace"
 					TableCell_DupeInfo.style.backgroundColor = StatusTypeList[Item.IdentifiedType].Color
 					
-					let TextDupeInfo = "Have no dupes"
+					let TextDupeInfo = ""
+					if (/(?:EmptyLine|Whitespace)/.test(Item.IdentifiedType)) {
+					} else if ((Item.DupeListOfLineNumbers.length != 0) && (Item.IdentifiedType != "Duplicate"&&Item.IdentifiedType != "BlacklistedDuplicate")) {
 					//Original will list all following items being duplicates of the original
 					//The duplicates themselves will state the line number of the original that matches.
-					if ((Item.DupeListOfLineNumbers.length != 0) && (Item.IdentifiedType != "Duplicate"&&Item.IdentifiedType != "BlacklistedDuplicate")) {
 						let Plural = "";
 						if (Item.DupeListOfLineNumbers.length >= 2) {
 							Plural = "s";
