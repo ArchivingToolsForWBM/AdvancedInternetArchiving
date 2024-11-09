@@ -55,29 +55,35 @@
 	Process option(s):
 		<div class="TabbedItems"><label><input type="checkbox" id="ProcessOption_RemoveLeadingTrailingSpaces" onchange="AnyListUpdated();" checked>Ignore leading and trailing whitespace characters (also removed from output)</label></div>
 </div>
-<div id="FilterList">
-	<div>
-		Filters: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
-		<div class="TabbedItems"><label style="color: #00FF00;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Original" checked>Original items</label></div>
-		<div class="TabbedItems"><label style="color: #FF0000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Duplicate">Duplicates, not blacklisted</label></div>
-		<div class="TabbedItems"><label style="color: #808080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_EmptyLine">Empty lines</label></div>
-		<div class="TabbedItems"><label style="color: #A08080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Whitespace">Lines with only whitespace</label></div>
-		<div class="TabbedItems"><label style="color: #ff6699;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Blacklisted">Blacklisted, not duplicate</label></div>
-		<div class="TabbedItems"><label style="color: #ff6666;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_BlacklistedDuplicate">Blacklisted, duplicate</label></div>
-	</div>
-	<div>Filter based on dupe counts: <button onclick="ResetFilterByDupeCount()">Reset</button>
-	<div style="padding-top: 1rem; padding-bottom: 1rem; padding-left: 1rem">This will remove both the original and its duplicates when not meeting the criteria below.</div>
-		<div class="TabbedItems"><label for="Filter_MinDupeCount"><input type="checkbox" onchange="CheckboxApplyMinMaxDupes()" id="Filter_MinDupeCount">Lines that have</label> <input type="number" value="0" id="FilterByNumber_MinDupeCount" oninput="CorrectMinMaxDupeCount();" disabled><label for="Filter_MinDupeCount">dupe(s) or more</label></div>
-		<div class="TabbedItems"><label for="Filter_MaxDupeCount"><input type="checkbox" onchange="CheckboxApplyMinMaxDupes()" id="Filter_MaxDupeCount">Lines that have</label> <input type="number" value="0" id="FilterByNumber_MaxDupeCount" oninput="CorrectMinMaxDupeCount();" disabled><label for="Filter_MaxDupeCount">dupe(s) or less</label></div>
-	</div>
+<div style="border: 1px solid white;">Preset settings:
+	<div class="TabbedItems"><button onclick='PresetFilterSortSettings({Filter_Original: true})'>Remove dupes and blacklisted, keep order</button></div>
+
 </div>
-<div>
-	Sort: <select onchange="SortReverseDisabledToggle();">
-		<option id="Sort_None">Same order as you entered</option>
-		<option id="Sort_Alphabetically">Alphabetically</option>
-		<option id="Sort_DupeCount">Duplicate count</option>
-		<option id="Sort_Type">Type identified</option>
-	</select><label><input type="checkbox" id="Sort_Reverse" onchange="AutoUpdate()" disabled>Reverse</label>
+<div id="OutputOptions">
+	<div id="FilterList">
+		<div>
+			Filters: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
+			<div class="TabbedItems"><label style="color: #00FF00;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Original" checked>Original items</label></div>
+			<div class="TabbedItems"><label style="color: #FF0000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Duplicate">Duplicates, not blacklisted</label></div>
+			<div class="TabbedItems"><label style="color: #808080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_EmptyLine">Empty lines</label></div>
+			<div class="TabbedItems"><label style="color: #A08080;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Whitespace">Lines with only whitespace</label></div>
+			<div class="TabbedItems"><label style="color: #ff6699;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_Blacklisted">Blacklisted, not duplicate</label></div>
+			<div class="TabbedItems"><label style="color: #ff6666;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_BlacklistedDuplicate">Blacklisted, duplicate</label></div>
+		</div>
+		<div>Filter based on dupe counts: <button onclick="ResetFilterByDupeCount()">Reset</button>
+		<div style="padding-top: 1rem; padding-bottom: 1rem; padding-left: 1rem">This will remove both the original and its duplicates when not meeting the criteria below.</div>
+			<div class="TabbedItems"><label for="Filter_MinDupeCount"><input type="checkbox" onchange="CheckboxApplyMinMaxDupes()" id="Filter_MinDupeCount">Lines that have</label> <input type="number" value="0" id="FilterByNumber_MinDupeCount" oninput="CorrectMinMaxDupeCount();" disabled><label for="Filter_MinDupeCount">dupe(s) or more</label></div>
+			<div class="TabbedItems"><label for="Filter_MaxDupeCount"><input type="checkbox" onchange="CheckboxApplyMinMaxDupes()" id="Filter_MaxDupeCount">Lines that have</label> <input type="number" value="0" id="FilterByNumber_MaxDupeCount" oninput="CorrectMinMaxDupeCount();" disabled><label for="Filter_MaxDupeCount">dupe(s) or less</label></div>
+		</div>
+	</div>
+	<div>
+		Sort: <select id="Sort_ParentElement" onchange="SortReverseDisabledToggle();">
+			<option id="Sort_None">Same order as you entered</option>
+			<option id="Sort_Alphabetically">Alphabetically</option>
+			<option id="Sort_DupeCount">Duplicate count</option>
+			<option id="Sort_Type">Type identified</option>
+		</select><label><input type="checkbox" id="Sort_Reverse" onchange="AutoUpdate()" disabled>Reverse</label>
+	</div>
 </div>
 <div>
 	Plaintext options
@@ -218,6 +224,14 @@
 		document.getElementById("UniqueBlacklistCount").textContent = "0";
 		
 		[...document.getElementById("FilterList").querySelectorAll("input[type=checkbox]")].forEach(Ele => Ele.checked = false)
+		document.getElementById("FilterByNumber_MinDupeCount").value = "0"
+		document.getElementById("FilterByNumber_MinDupeCount").disabled = true
+		document.getElementById("FilterByNumber_MaxDupeCount").value = "0"
+		document.getElementById("FilterByNumber_MaxDupeCount").disabled = true
+		document.getElementById("Sort_None").selected = true
+		document.getElementById("Sort_Reverse").checked = false
+		document.getElementById("Sort_Reverse").disabled = true
+		document.getElementById("PlaintextOptions_EnteredText").checked = true
 		document.getElementById("Filter_Original").checked = true
 		ResetStatisticCounts()
 		ResetOutputs()
@@ -233,6 +247,26 @@
 		while (OutputTable.lastElementChild) {
 			OutputTable.removeChild(OutputTable.lastElementChild);
 		}
+	}
+	function PresetFilterSortSettings(Settings) {
+		//Revert to default options
+			[...document.getElementById("OutputOptions").querySelectorAll("input[type=checkbox]")].forEach(HTMLElement => {
+				if (HTMLElement.tagName == "INPUT" && HTMLElement.type == "checkbox") {
+					HTMLElement.checked = false
+				}
+			})
+			document.getElementById("Filter_Original").selected = true
+			document.getElementById("Sort_None").selected = true
+		//Change setting based on input of this function
+			Object.entries(Settings).forEach(Setting => {
+				let HTMLElement = document.getElementById(Setting[0])
+				if (HTMLElement.tagName == "INPUT" && HTMLElement.type == "checkbox" ) {
+					HTMLElement.checked = Setting[1]
+				} else if (HTMLElement.tagName == "OPTION") {
+					HTMLElement.selected = Setting[1]
+				}
+			})
+		AutoUpdate()
 	}
 	function MainCode() {
 		let InputList = []
