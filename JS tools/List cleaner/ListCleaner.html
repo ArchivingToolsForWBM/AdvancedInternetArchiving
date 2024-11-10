@@ -513,7 +513,7 @@
 				OutputTable.appendChild(ResultTable)
 	}
 	//Percentage handlers
-		function DisplayIntOutOfIntAsPercentageText({Quantity, MaxQuantity, NumberOfDigitsAfterDec, Clamped}) {
+		function DisplayIntOutOfIntAsPercentageText({Quantity = 0, MaxQuantity = 100, NumberOfDigitsAfterDec = 2, Clamped = true}) {
 			//Quantity = Amount in relation of MaxQuantity
 			//MaxQuantity = Total
 			//Clamped = (boolean): false = allow greater than 100%, true = only 0%-100% will display.

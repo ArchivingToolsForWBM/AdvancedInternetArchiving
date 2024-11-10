@@ -138,13 +138,16 @@ Filters: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)
 </div>
 Sort by <select onchange="CheckShouldReverseSortDisabled();">
 	<option id="Sort_Output_None">None (same order as entered)</option>
-	<option id="Sort_Output_SaveStatusResponse" selected>Status message (Column D)</option>
+	<option id="Sort_Output_SaveStatus" selected>Save status message (Column D)</option>
 	<option id="Sort_Output_SubmittedURLsABC">By URLs entered (Column A)</option>
 	<option id="Sort_Output_SaveStatusType">By status type detected</option>
 	<option id="Sort_Output_HTTPStatus">HTTP status code (Column C)</option>
 	<option id="Sort_Output_OutlinksCount">Outlinks count (Column E)</option>
 
-</select><label><input type="checkbox" onchange="AutoUpdate()" id="Sort_Output_Reverse">Reverse</label><br>
+</select>
+<label><input type="checkbox" onchange="AutoUpdate()" id="Sort_Output_Reverse">Reverse</label>
+<div class="TabbedItems">Note: When sorted by save status message, this will also sort successfully saved and redirected URLs chronologically. This is because the WBM saved page URL format starts with <kbd>https://web.archive.org/web/YYYYMMDDhhmmss/&lt;Original_URL&gt;</kbd> and the <kbd>YYYYMMDDhhmmss</kbd>
+is the timestamp in <a href="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601 format</a>.</div><br>
 <div>
 	Plaintext format settings (post-filter):<br>
 			<div class="TabbedItems"><label><input type="radio" name="TextOutputFormat" onchange="AutoUpdate()" id="PlainText_DisplayInfo_EnteredURLsOnly" checked>Display just entered URLs in the plaintext</label></div>
@@ -533,7 +536,7 @@ Misc:
 			if (document.getElementById("Sort_Output_Reverse").checked) {
 				ReverseSetting = -1
 			}
-			if (document.getElementById("Sort_Output_SaveStatusResponse").selected) {
+			if (document.getElementById("Sort_Output_SaveStatus").selected) {
 				FilteredListForDisplay.sort((a, b) => {
 					if (a.WBM_SaveResponse === b.WBM_SaveResponse) {
 						return 0;
@@ -730,7 +733,7 @@ Misc:
 		document.getElementById("GsheetInput").value = ""
 		
 		document.getElementById("PlainText_DisplayInfo_WBGSInfo").checked = true
-		document.getElementById("Sort_Output_SaveStatusResponse").checked = true
+		document.getElementById("Sort_Output_SaveStatus").checked = true
 		{
 			let MiscSettings = Array.from(document.getElementsByClassName("MiscCheckboxSetting"))
 			MiscSettings.forEach((Element) => {
@@ -767,7 +770,7 @@ Misc:
 			OutputTable.removeChild(OutputTable.lastElementChild);
 		}
 	}
-	function DisplayIntOutOfIntAsPercentageText({Quantity, MaxQuantity, NumberOfDigitsAfterDec, Clamped}) {
+	function DisplayIntOutOfIntAsPercentageText({Quantity = 0, MaxQuantity = 100, NumberOfDigitsAfterDec = 2, Clamped = true}) {
 		//Quantity = Amount in relation of MaxQuantity
 		//MaxQuantity = Total
 		//Clamped = (boolean): false = allow greater than 100%, true = only 0%-100% will display.
