@@ -338,14 +338,21 @@
 					//"UserPostArea" will now contain "boxes" that may either be a horizontal line, containing 1 or 2 posts (2 if it has replies, with a vertical line between 2 avatars)
 					UserPostArea.forEach((Box, BoxIndex) => { // Loop each box
 						//[profile page]
-						//
-						let SuggestedForYou = ""
+						let RecommendationBoxes = ""
 						try {
-							SuggestedForYou = Box.childNodes[0].childNodes[0].childNodes[0].textContent
+							RecommendationBoxes = Box.childNodes[0].childNodes[0].childNodes[0].textContent
 						} catch {}
-						if (SuggestedForYou == "Suggested for you") {
+						if (/(?:Suggested for you|Similar accounts)/.test(RecommendationBoxes)) {
 							return
 						}
+						let EndOfFeed = ""
+						try {
+							EndOfFeed = Box.childNodes[0].childNodes[0].textContent
+						} catch {}
+						if (EndOfFeed == "End of feed") {
+							return
+						}
+						
 						if (typeof Box.childNodes != "undefined") {
 							let BoxListingPosts = [...Box.childNodes]
 							let BoxListingPostsLengthCache = BoxListingPosts.length
@@ -395,114 +402,93 @@
 									
 									//Link to post
 									{
-										let AHrefElement = DescendNode(Post, [0, 0, 1, 1, 0, 2])
-										if (AHrefElement.IsSuccessful) {
-											if (AHrefElement.OutputNode.href != "") {
-												PostURL = AHrefElement.OutputNode.href
-											}
+										try {
+											PostURL = Post.childNodes[0].childNodes[0].childNodes[2].childNodes[1].childNodes[0].childNodes[2].href
+										} catch (e) {
+											alert("Failed to extract link (" + e + ")")
 										}
 									}
 									//Reply downwards line
 									{
-										let LineElement = DescendNode(Post, [0, 0, 1, 0, 1])
-										if (LineElement.IsSuccessful) {
-											PostHasRepliesLineBelow = true
-										}
+										try {
+											let DownwardPostLine = Post.childNodes[0].childNodes[0].childNodes[2].childNodes[0].childNodes[1]
+											if (typeof DownwardPostLine != "undefined") {
+												PostHasRepliesLineBelow = true
+											}
+										} catch {}
 									}
 									//Reply upwards line
 									{
-										let LineElement = DescendNode(Post, [0, 0, 0, 0, 0])
-										if (LineElement.IsSuccessful) {
-											PostIsAReplyLineToAbove = true
-										}
+										try {
+											let UpwardPostLine = Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0]
+											if (typeof UpwardPostLine != "undefined") {
+												PostIsAReplyLineToAbove = true
+											}
+										} catch {}
 									}
 									//User title
 									{
-										let UserTitleElement = DescendNode(Post, [0, 0, 1, 1, 0, 0, 0, 0, 0])
-										if (UserTitleElement.IsSuccessful) {
-											UserTitle = CleanString(UserTitleElement.OutputNode.textContent)
+										try {
+											UserTitle = Post.childNodes[0].childNodes[0].childNodes[2].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
+										} catch (e) {
+											alert("Failed to extract user title")
 										}
 									}
 									//User handle
 									{
-										//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/\s/, "")
-										let UserHandleElement = DescendNode(Post, [0,0,1,1,0,0,0,0,1])
-										if (UserHandleElement.IsSuccessful) {
-											UserHandle = CleanString(UserHandleElement.OutputNode.textContent)
+										try {
+											UserHandle = CleanString(Post.childNodes[0].childNodes[0].childNodes[2].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].textContent)
+										} catch (e) {
+											alert("Failed to extract user handle")
 										}
 									}
 									//User Avatar
 									{
-										//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-										let AvatarImgElement = DescendNode(Post, [0,0,1,0,0,0,0,0,0,1])
-										if (AvatarImgElement.IsSuccessful) {
-											if (typeof AvatarImgElement.OutputNode.src != "undefined") {
-												UserAvatar = ConvertAvatarImgToFullRes(AvatarImgElement.OutputNode.src)
-											}
+										try {
+											UserAvatar = ConvertAvatarImgToFullRes(Post.childNodes[0].childNodes[0].childNodes[2].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src)
+										} catch (e) {
+											alert("Failed to extract avatar")
 										}
 									}
 									//Post time stamp
 									{
-										let PostTimeStampElement = DescendNode(Post, [0, 0, 1, 1, 0, 2])
-										if (PostTimeStampElement.IsSuccessful) {
-											if (typeof PostTimeStampElement.OutputNode.dataset.tooltip != "undefined") {
-												PostTimeStamp = PostDateInfo(PostTimeStampElement.OutputNode.dataset.tooltip)
-											}
+										try {
+											PostTimeStamp = PostDateInfo(Post.childNodes[0].childNodes[0].childNodes[2].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip)
+										} catch (e) {
+											alert("Failed to extract timestamp")
 										}
 									}
-									//Thankfully, unlike being at the post page, the text content and embeds are in a INNER node, meaning
-									//the header (user title, handle, timestamp) and footer (comments, repost, and likes) are not in the
-									//same hierarchy as in between, and it also doesn't matter how many stuff in between, since it won't
-									//affect the header and footer index locations.
-									
-									//Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1]
-									
-									//Post content format:
-									// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[0] - User title, handle, timestamp
-									// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1] - content
-									// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[2] - Footer of post containing the counters
-									
-									//If it contains "Reply to <user title>"
-									//https://bsky.app/profile/dumjaveln.bsky.social
-									// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[0] - User title, handle, timestamp
-									// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1] - reply to <UserTitle>
-									// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[2] - content
-									// Post.childNodes[0].childNodes[1].childNodes[1].childNodes[3] - Footer of post containing the counters
-									
-									//Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[1]
-									
-									
-									let ReplyToOffset = 0
-									let NodeOfReplyTo = DescendNode(Post, [0,0,1,1,1,1])
-									if (NodeOfReplyTo.IsSuccessful) {
-										if (/^Reply to/.test(NodeOfReplyTo.OutputNode.textContent)) {
-												ReplyToOffset++
+									//Post content
+										try {
+											PostContent = GetPostContent(Post.childNodes[0].childNodes[0].childNodes[2].childNodes[1].childNodes[1], "Post_UserFontPage")
+										} catch (e) {
+											alert("Failed to extract post content")
 										}
-									}
-									
-									
-									let NodeOfPostContent = DescendNode(Post, [0,0,1,1,1+ReplyToOffset])
-									if (NodeOfPostContent.IsSuccessful) {
-										PostContent = GetPostContent(NodeOfPostContent.OutputNode, "Post_UserFontPage")
-									}
 									
 									
 									//Reply, repost, and likes
 									{
-										let NodeOfReplyRepostLikes_Array = []
-										//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[N]
-										//where N is the last element because sometimes a post have duplicate counts between the date and timestamp at the bottom
-										let NodeOfFoooter = DescendNode(Post, [0,0,1,1])
-										if (NodeOfFoooter.IsSuccessful) {
-											let LastNode = [...NodeOfFoooter.OutputNode.childNodes].at(-1)
-											NodeOfReplyRepostLikes_Array = [...LastNode.childNodes]
+										//let NodeOfReplyRepostLikes_Array = []
+										////Post.childNodes[0].childNodes[0].childNodes[1].childNodes[N]
+										////where N is the last element because sometimes a post have duplicate counts between the date and timestamp at the bottom
+										//let NodeOfFoooter = DescendNode(Post, [0,0,1,1])
+										//if (NodeOfFoooter.IsSuccessful) {
+										//	let LastNode = [...NodeOfFoooter.OutputNode.childNodes].at(-1)
+										//	NodeOfReplyRepostLikes_Array = [...LastNode.childNodes]
+										//}
+										//if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
+										//	ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
+										//	RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
+										//	LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
+										//}
+										try {
+											let ReplyRepostLikesBar = [...Post.childNodes[0].childNodes[0].childNodes[2].childNodes[1].childNodes].at(-1)
+											ReplyCount = ReplyRepostLikesBar.childNodes[0].textContent
+											RepostCount = ReplyRepostLikesBar.childNodes[1].textContent
+											LikesCount = ReplyRepostLikesBar.childNodes[2].textContent
+										} catch (e) {
+											alert("Failed to extract reply repost and likes bar")
 										}
-										if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
-											ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
-											RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
-											LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
-										}
-										
 									}
 									if ((PostURL != "")&&(UserTitle != "")&&(UserHandle != "")) {
 										PostGroup.push({
@@ -1405,269 +1391,114 @@
 			}
 			
 			PostContent.Segments = []
-			PostSegments.forEach((PostSegment, PostSegmentIndex) => { //Each post segments
-				let PostSegmentType = IdentifyPostSegmentType(PostSegment, PostSegmentIndex)
-				if (PostSegmentType == "PlainText") {
-					if (!/^\s*$/.test(PostSegment.textContent)) {
-						let PlainTextContent = {
-							Type: "Text",
-							UserPostedText: PostSegment.textContent
-						}
-						let ListOfLinks = GetLinksURLs(PostSegment)
-						if (ListOfLinks.length != 0) {
-							PlainTextContent.Links = ListOfLinks
-						}
-						PostContent.Segments.push(PlainTextContent)
+			PostSegments.forEach((PostSegment, PostSegmentIndex) => {
+				//one or two segments, if there are 2, the second may contain many sub-compartments
+				if (PostSegmentIndex == 0 && [...PostSegment.querySelectorAll("img, video, button")].length == 0 && (!/^\s*$/.test(PostSegment.textContent))) {
+					//Plaintext at the top of the post
+					let Output = {
+						Type: "Text",
+						UserPostedText: PostSegment.textContent
 					}
-				} else if (PostSegmentType == "ImageGallery") {
-					let MediaContent = {
-						Type: "Media"
+					let ListOfLinks = GetLinksURLs(PostSegment)
+					if (ListOfLinks.length != 0) {
+						Output.Links = ListOfLinks
 					}
-					let MediaURLs = GetMediaURLs(PostSegment)
-					if (MediaURLs.length != 0) { //If no images, don't even push
-						MediaContent.MediaURLs = MediaURLs
-						PostContent.Segments.push(MediaContent)
+					PostContent.Segments.push(Output)
+				} else {
+					//This must be the attachments, often below the text
+					let Attachments = [...PostSegment.childNodes[0].childNodes]
+					let Output = {
+						Type: "Attachments",
+						Attachments: []
 					}
-				} else if (PostSegmentType == "Attachments") { //Attachments (div under post text containing a mixture of images, embeds, and links to another page)
-					let AttachmentListNode = DescendNode(PostSegment, [0])
-					if (AttachmentListNode.IsSuccessful) {
-						let AttachmentOutput = {
-							Type: "Attachment",
-							AttachmentContents: []
-						}
-						let AttachmentList = []
-						if (/https:\/\/bsky\.app\/profile\//.test(window.location.href)) {
-							AttachmentList = [...AttachmentListNode.OutputNode.childNodes]
-						}
-						if (/https:\/\/bsky\.app\/search/.test(window.location.href)) {
-							AttachmentList = [...PostSegment.childNodes]
-						}
-						AttachmentList.forEach((Node) => {
-							AttachmentPostType = IdentifyPostSegmentType(Node)
-							if (AttachmentPostType == "ImageGallery") {
-								let MediaContent = {
-									Type: "Media"
-								}
-								let MediaURLs = GetMediaURLs(Node)
-								if (MediaURLs.length != 0) { //If no images, don't even push
-									MediaContent.MediaURLs = MediaURLs
-									AttachmentOutput.AttachmentContents.push(MediaContent)
-								}
-							} else if (AttachmentPostType == "Attachments") {
-								let SubAttachmentType = (function () {
-									let EmbeddedPost = [...Node.querySelectorAll("a")].find((HTMLElement) => {
-										return /^https:\/\/bsky\.app\/profile\//.test(HTMLElement.href)
-									})
-									if (typeof EmbeddedPost != "undefined") {
-										return "EmbeddedPost"
-									}
-									let ExernalLinkPost = [...Node.querySelectorAll("a")].find((ExternalLink) => {
-										return !(/^https:\/\/bsky\.app\/profile\//.test(ExternalLink.href))
-										
-									})
-									if (typeof ExernalLinkPost != "undefined") {
-										return "ExternalLink"
-									}
-									let Video = Node.querySelector("video")
-									if (Video != null) {
-										return "Video"
-									}
-								})(Node);
-								
-								if (SubAttachmentType == "EmbeddedPost") {
-									//The levels where the node of embedded posts resides varies depending on the post layout type
-									let EmbeddedPost = null
-									let DateDomTest = 0
-									try {
-										let DateInfoData = Node.childNodes[0].childNodes[3].dataset.tooltip //Test if it can get the tooltip
-										EmbeddedPost = GetEmbeddedPost(Node.parentNode)
-									} catch {}
-									if (EmbeddedPost == null) {
-										try {
-											let DateInfoData = Node.childNodes[0].childNodes[0].childNodes[3].dataset.tooltip //Test if it can get the tooltip (search page with only text and embedded post, no images in the main post)
-											EmbeddedPost = GetEmbeddedPost(Node)
-										} catch {}
-									}
-									if (EmbeddedPost == null) {
-										try {
-											let DateInfoData = Node.childNodes[0].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
-											EmbeddedPost = GetEmbeddedPost(Node.childNodes[0])
-										} catch {}
-									}
-									
-									if (DateDomTest == 0) {
-										
-									} else {
-										EmbeddedPost = GetEmbeddedPost(Node.childNodes[0])
-									}
-									AttachmentOutput.AttachmentContents.push(EmbeddedPost)
-								} else if (SubAttachmentType == "ExternalLink") {
-									let ExternalLinkObject = GetExternalLinkPreview(Node.childNodes[0])
-									
-									AttachmentOutput.AttachmentContents.push(ExternalLinkObject)
-								} else if (SubAttachmentType == "Video") {
-									let MediaURLs = GetMediaURLs(Node)
-									AttachmentOutput.AttachmentContents.push({
-										Type: "Media",
-										MediaURLs: MediaURLs
-									})
-								}
-							} else if (AttachmentPostType == "LinkPreview") {
-								let NodeOfLink = null
+					Attachments.forEach(Attachment => {
+						//Test for embedded posts
+							let EmbeddedPostTest_CheckForPostDate = null
+							let EmbeddedNode = null
+							try {
+								//This format occurs if there is only one attachment after the top text.
+								EmbeddedPostTest_CheckForPostDate = PostDateInfo(Attachment.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip)
+								EmbeddedNode = Attachment.childNodes[0].childNodes[1]
+							} catch {}
+							if (EmbeddedPostTest_CheckForPostDate == null) {
 								try {
-									NodeOfLink = Node.childNodes[0].childNodes[0]
-								} catch (error) {
-									window.alert(error)
-								}
-								let Link = GetExternalLinkPreview(NodeOfLink)
-								AttachmentOutput.AttachmentContents.push(Link)
-							} else if (AttachmentPostType == "Deleted") {
-								AttachmentOutput.AttachmentContents.push({
-									Type: "DeletedContent"
-								})
+									EmbeddedPostTest_CheckForPostDate = PostDateInfo(Attachment.childNodes[1].childNodes[0].childNodes[0].childNodes[3].dataset.tooltip)
+									EmbeddedNode = Attachment.childNodes[1]
+								} catch {}
 							}
-						})
-						PostContent.Segments.push(AttachmentOutput)
-					}
-				} else if (PostSegmentType == "LinkPreview") {
-					try {
-						let Link = null
-						if (typeof PostSegment.childNodes[0].childNodes[0].childNodes[0].href == "string") {
-							Link = GetExternalLinkPreview(PostSegment.childNodes[0].childNodes[0].childNodes[0])
-						} else if (typeof PostSegment.childNodes[0].childNodes[0].href == "string") {
-							Link = GetExternalLinkPreview(PostSegment.childNodes[0].childNodes[0])
+						//test for link previews
+							let LinkPreviewNode = null
+							try {
+								if (Attachment.tagName == "A") {
+									if (!(/^https:\/\/bsky\.app\/profile\//.test(Attachment.href))) {
+										LinkPreviewNode = Attachment
+									}
+								}
+							} catch {}
+							
+						if ([...Attachment.querySelectorAll("img, video, a")].length != 0 && /^(?:ALT)*$/.test(Attachment.textContent)) {
+							//Media
+							let MediaList = GetMediaURLs(Attachment)
+							Output.Attachments.push({
+								Type: "Media",
+								Media: MediaList
+							})
+						} else if (EmbeddedPostTest_CheckForPostDate != null) {
+							//Embedded posts
+							let EmbeddedPostObject = GetEmbeddedPost(EmbeddedNode)
+							Output.Attachments.push(EmbeddedPostObject)
+						} else if (LinkPreviewNode != null) {
+							//Link preview
+							let LinkPreview = GetExternalLinkPreview(LinkPreviewNode)
+							Output.Attachments.push(LinkPreview)
 						}
-						
-						PostContent.Segments.push(Link)
-					} catch (error) {
-						window.alert(error + " Failure at getting link preview")
-					}
-				} else if (PostSegmentType == "FlaggedNotification") {
-					let OutputObject = {
-						Type: "FlaggedNotification",
-						FlagType: PostSegment.textContent
-					}
-					let MediaURLs = GetMediaURLs(PostSegment)
-					if (MediaURLs.length != 0) {
-						OutputObject.MediaURLs = MediaURLs
-					}
-					PostContent.Segments.push(OutputObject)
-				} else if (PostSegmentType == "Deleted") {
-					PostContent.Segments.push({Type: "Deleted"})
+					})
+					PostContent.Segments.push(Output)
 				}
 			})
-			return PostContent
-		}
-		function IdentifyPostSegmentType(ElementContainingPostSegments, PostSegmentIndex) {
-			//Tests:
-			// https://bsky.app/profile/mobute.bsky.social/post/3kqtldm7r6h27 -> A post quoting another post, no images besides avatar images.
-			// https://bsky.app/profile/dumjaveln.bsky.social/post/3klkgthv63q2z - > A post with plain text, image, and a embed that contains text and image
-			//
-			let HasImages = false
-			let HasPostImages = false
-			let HasVideo = false
-			let HasTimestamp = false
-			let HasAHref = false
-			let HasLinkToExternalSite = false
-			let IsLinkToAnotherPost = false
-			let IsLinkPreview = false
-			let HasSVG = false
-			let ListOfButtons = [...ElementContainingPostSegments.querySelectorAll("button")]
-			if (ElementContainingPostSegments.textContent == "Deleted") {
-				return "Deleted"
-			}
-			if (ListOfButtons.length != 0) {
-				let ListOfSVG = [...ElementContainingPostSegments.querySelectorAll("svg")]
-				let AHrefLink = ElementContainingPostSegments.querySelector("a")
-				let FlaggedNotificationButton = ListOfButtons.find(Btn => { //FlaggedNotification elements are always buttons with text on it.
-					let Text = Btn.textContent
-					if (/Sexually Suggestive/.test(Text)) {
-						return true
-					}
-				})
-				if (ListOfSVG.length != 0 && AHrefLink == null && (typeof FlaggedNotificationButton != "undefined")) {
-					return "FlaggedNotification"
-				}
-				if (ElementContainingPostSegments.querySelector("video") != null) {
-					HasVideo = true
-				}
-			}
-			
-			if (ElementContainingPostSegments.tagName != "A" && (!/https:\/\/bsky\.app\/profile\//.test(ElementContainingPostSegments.href))) {
-				[...ElementContainingPostSegments.getElementsByTagName("*")].forEach((HTMLElementThing) => { //Loop through all children elements to determine type
-					if (HTMLElementThing.tagName == "IMG") {
-						HasImages = true
-						if (/https:\/\/cdn\.bsky\.app\/img\/feed_thumbnail\//.test(HTMLElementThing.src)) {
-							HasPostImages = true
-						}
-					} else if (HTMLElementThing.tagName == "VIDEO") {
-						HasVideo = true
-					} else if (HTMLElementThing.tagName == "A") {
-						HasAHref = true
-						if (/https:\/\/bsky\.app\/profile\/.*\/post\//.test(HTMLElementThing.href)) {
-							IsLinkToAnotherPost = true
-						}
-						if (HTMLElementThing.querySelector("div") != null) {
-							IsLinkPreview = true
-						}
-						if (typeof HTMLElementThing.dataset.tooltip != "undefined") {
-							let TestDate = PostDateInfo(HTMLElementThing.dataset.tooltip)
-							if (typeof TestDate == "object") {
-								HasTimestamp = true
-							}
-						}
-					} else if (HTMLElementThing.tagName == "svg") {
-						HasSVG = true
-					}
-				})
-			} else {
-				return "ExternalLink"
-			}
-			if ((!HasImages)&&(!HasTimestamp)&&(!HasVideo)&&(!IsLinkPreview)&&(!HasSVG)) {
-				return "PlainText"
-			}
-			if ((HasPostImages||HasVideo) && (!HasAHref)) {
-				return "ImageGallery"
-			}
-			if (IsLinkPreview&&(!HasTimestamp)&&(!HasSVG)) {
-				return "LinkPreview"
-			}
-			return "Attachments"
+			return PostContent //Done.
 		}
 		function GetExternalLinkPreview(Node) {
 			let OutputLinkPreview = {
 				Type: "LinkPreview",
 				Content: []
 			}
-			
-			if (Node.tagName != "A") {
-				return null
-			}
-			if (/https:\/\/bsky\.app\/profile\//.test(Node.href)) {
-				return null
-			}
 			OutputLinkPreview.Link = Node.href
-			let ImageAndTextPreview = [...Node.childNodes]
+			let ImageAndTextPreview = []
+			try {
+				ImageAndTextPreview = [...Node.childNodes[0].childNodes]
+			} catch {}
 			ImageAndTextPreview.forEach((Part) => {
-				let NodeOfImage = DescendNode(Part, [0,0])
-				if (NodeOfImage.IsSuccessful) {
-					if ((typeof NodeOfImage.OutputNode.src != "undefined") &&(NodeOfImage.OutputNode.src != "")) {
-						let Image = NodeOfImage.OutputNode.src
-						if (Setting_PostImageFullRes) {
-							Image = Image.replace(/https?:\/\/cdn\.bsky\.app\/img\/feed_thumbnail/, "https://cdn.bsky.app/img/feed_fullsize")
-						}
-						OutputLinkPreview.Content.push({
-							ExternalLinkImage: Image
-						})
+				let Image = ""
+				try {
+					Image = Part.childNodes[0].childNodes[0].src
+					if (Setting_PostImageFullRes) {
+						Image = Image.replace(/https?:\/\/cdn\.bsky\.app\/img\/feed_thumbnail/, "https://cdn.bsky.app/img/feed_fullsize")
 					}
-				}
-				if (Part.textContent != "") {
-					let TextSegments = [...Part.childNodes]
-					let OutputText = {ExternalLinkTexts: []}
-					TextSegments.forEach((TextSegment) => {
-						OutputText.ExternalLinkTexts.push(TextSegment.textContent)
+					OutputLinkPreview.Content.push({
+						Type: "PreviewImage",
+						Image: Image
 					})
-					OutputLinkPreview.Content.push(OutputText)
+				} catch {}
+				if (!/^\s*$/.test(Part.textContent)) {
+					let TextPartDivs = [...Part.querySelectorAll("div")]
+					TextPartDivs= TextPartDivs.filter(Ele => {
+						if (/^\s*$/.test(Ele.textContent)) {
+							return false
+						}
+						if (Ele.childNodes.length != 1) {
+							return false
+						}
+						if (typeof Ele.childNodes[0].tagName != "undefined") {
+							return false
+						}
+						return true
+					})
+					TextPartDivs = TextPartDivs.map(Text => Text.textContent)
+					OutputLinkPreview.Content.push({
+						Type: "PreviewText",
+						Text: TextPartDivs
+					})
 				}
 			})
 			return OutputLinkPreview
@@ -1690,69 +1521,31 @@
 					}
 				}
 			}
-			
-			//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[3].href - for "Post_CurrentlyViewed_AtTop"
-			//Node.childNodes[0].childNodes[0].childNodes[3].href - for "Post_NotCurrentlyViewed"
-			//Node.childNodes[0].childNodes[0].childNodes[3].href
-			//Can't use "Type" because it is scoped only to "GetPostContent", thus inner functions cannot access it.
-			let NodeOfPostURL = DescendNode(Node, [0,0,3])
-			if (NodeOfPostURL.IsSuccessful) {
-				EmbeddedContent.Contents.PostURL = NodeOfPostURL.OutputNode.href
+			try {
+				EmbeddedContent.Contents.PostURL = Node.childNodes[0].childNodes[0].childNodes[3].href
+				EmbeddedContent.Contents.UserTitle = Node.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
+				EmbeddedContent.Contents.UserHandle = CleanString(Node.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[1].childNodes[0].textContent)
+				EmbeddedContent.Contents.UserAvatar = ConvertAvatarImgToFullRes(Node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src)
+				EmbeddedContent.Contents.PostTimeStamp = PostDateInfo(Node.childNodes[0].childNodes[0].childNodes[3].dataset.tooltip)
+				
+			} catch (e) {
+				alert("Failed to extract embedded post")
 			}
-			
-			//Node.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].textContent
-			let NodeOfUserTitle = DescendNode(Node, [0,0,1,0,0,0])
-			if (NodeOfUserTitle.IsSuccessful) {
-				EmbeddedContent.Contents.UserTitle = CleanString(NodeOfUserTitle.OutputNode.textContent)
-			}
-			//Node.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[1].textContent.replace(/\s/, "")
-			//Node.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0]
-			let NodeOfUserHandle = DescendNode(Node, [0,0,1,0,0,1])
-			if (NodeOfUserHandle.IsSuccessful) {
-				EmbeddedContent.Contents.UserHandle = CleanString(NodeOfUserHandle.OutputNode.textContent)
-			}
-			//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-			//Node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1]
-			let NodeOfUserAvatar = DescendNode(Node, [0,0,0,0,0,0,0,0,1])
-			if (NodeOfUserAvatar.IsSuccessful) {
-				EmbeddedContent.Contents.UserAvatar = ConvertAvatarImgToFullRes(NodeOfUserAvatar.OutputNode.src)
-			}
-			//Node.childNodes[0].childNodes[0].childNodes[3].dataset.tooltip
-			let NodeOfPostTimeStamp = DescendNode(Node, [0,0,3])
-			if (NodeOfPostTimeStamp.IsSuccessful) {
-				EmbeddedContent.Contents.PostTimeStamp = PostDateInfo(NodeOfPostTimeStamp.OutputNode.dataset.tooltip)
-			}
-			//Node.childNodes[0].childNodes
-			//Get embedded post content
-			let ArrayOfPostSegments = [...Node.childNodes]
-			
-			ArrayOfPostSegments.shift() //Remove the header showing the avatar, name, handle, etc. All stuff beyond that are content
-			ArrayOfPostSegments.forEach((EmbeddedPostSegment) => {
-				let ExternalLink = ""
-				//EmbeddedPostSegment.childNodes[0].childNodes[0].href
-				let NodeOfExternalLink = DescendNode(EmbeddedPostSegment, [0,0])
-				if (NodeOfExternalLink.IsSuccessful) {
-					if (!/^https:\/\/bsky\.app\/profile/.test(NodeOfExternalLink.OutputNode.href)) {
-						if (typeof NodeOfExternalLink.OutputNode.href != "undefined") {
-							ExternalLink = NodeOfExternalLink.OutputNode.href
-						}
-					}
+			let EmbedPostContentCompartments = [...Node.childNodes]
+			EmbedPostContentCompartments.shift()
+			EmbedPostContentCompartments.forEach((EmbedPart, Index) => {
+				let OutputObject = {}
+				if (!(/^\s$/.test(EmbedPart)) && ([...EmbedPart.querySelectorAll("img, video")].length == 0)) {
+					OutputObject.Type = "Text"
+					OutputObject.Text = EmbedPart.textContent
+				} else if ([...Node.querySelectorAll("img, video")].length != 0) {
+					OutputObject.Type = "Media"
+					OutputObject.Content = GetMediaURLs(EmbedPart)
 				}
-				if (!/^(\s|ALT)*$/.test(EmbeddedPostSegment.textContent)&&(ExternalLink == "")) {
-					EmbeddedContent.Contents.PostContent.Segments.push({
-						Type: "Text",
-						UserPostedText: EmbeddedPostSegment.textContent
-					})
-				} else if (ExternalLink != "") {
-					let ExternalLinkObject = GetExternalLinkPreview(EmbeddedPostSegment.childNodes[0].childNodes[0])
-					EmbeddedContent.Contents.PostContent.Segments.push(ExternalLinkObject)
-				} else {
-					let MediaList = GetMediaURLs(EmbeddedPostSegment) //has image or video
-					if (MediaList.length != 0) {
-						EmbeddedContent.Contents.PostContent.Segments.push(MediaList)
-					}
-				}
+				let a = 0
+				EmbeddedContent.Contents.PostContent.Segments.push(OutputObject)
 			})
+			
 			return EmbeddedContent
 		}
 		async function UpdateSavedValues() {
