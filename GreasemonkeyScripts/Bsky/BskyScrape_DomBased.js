@@ -372,6 +372,7 @@
 								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[2] - Replies, reposts, and likes.
 								
 								let RepostedByUserTitle = ""
+								let ReplyToUserTitle = ""
 								let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
 								
 								let PostHasRepliesLineBelow = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
@@ -392,14 +393,6 @@
 								let Post = BoxListingPosts[i]
 								
 								if (Post.textContent != "View full thread") {
-									//RepostedByUser
-									{
-										let RepostElement = DescendNode(Post, [0, 0, 0, 1, 0, 1, 1])
-										if (RepostElement.IsSuccessful) {
-											RepostedByUserTitle = RepostElement.OutputNode.textContent
-										}
-									}
-									
 									//Link to post
 									{
 										try {
@@ -408,6 +401,26 @@
 											alert("Failed to extract link (" + e + ")")
 										}
 									}
+									if (PostURL == "https://bsky.app/profile/summerchill14.bsky.social/post/3l7kgtjibcq2u") {
+										let bp = 0
+									}
+									//RepostedByUser
+									try {
+										let RepostedText = Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[1].textContent
+										if (RepostedText != "") {
+											RepostedByUserTitle = RepostedText
+										}
+									} catch {}
+									//ReplyToUser
+									let ReplyOffset = 0
+									try {
+										let ReplyToText = Post.childNodes[0].childNodes[0].childNodes[2].childNodes[1].childNodes[1].childNodes[1].textContent
+										if (ReplyToText != "") {
+											ReplyToUserTitle = ReplyToText
+											ReplyOffset = 1
+										}
+										
+									} catch {}
 									//Reply downwards line
 									{
 										try {
@@ -460,7 +473,7 @@
 									}
 									//Post content
 										try {
-											PostContent = GetPostContent(Post.childNodes[0].childNodes[0].childNodes[2].childNodes[1].childNodes[1], "Post_UserFontPage")
+											PostContent = GetPostContent(Post.childNodes[0].childNodes[0].childNodes[2].childNodes[1].childNodes[1+ReplyOffset], "Post_UserFontPage")
 										} catch (e) {
 											alert("Failed to extract post content")
 										}
@@ -493,6 +506,7 @@
 									if ((PostURL != "")&&(UserTitle != "")&&(UserHandle != "")) {
 										PostGroup.push({
 											RepostedByUserTitle: RepostedByUserTitle,
+											ReplyToUserTitle: ReplyToUserTitle,
 											PostURL: PostURL,
 											ReplyConnections: {
 												PostHasRepliesLineBelow: PostHasRepliesLineBelow,
@@ -943,6 +957,7 @@
 				let ListOfPosts_Clean = ListOfPosts.map((ArrayElement) => { //Have a version without ReplyConnections attribute since we do not need it if we are just looking at posts
 					return {
 						RepostedByUserTitle: ArrayElement.RepostedByUserTitle,
+						ReplyToUserTitle: ArrayElement.ReplyToUserTitle,
 						PostURL: ArrayElement.PostURL,
 						ReplyToURL: ArrayElement.ReplyToURL,
 						RepliesURLs: ArrayElement.RepliesURLs,
