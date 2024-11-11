@@ -890,88 +890,80 @@
 					UserPostArea = GetPostBoxesByLink(9)
 
 					UserPostArea.forEach((Post) => {
-						if (Post.textContent != "") {
-							let RepostedByUserTitle = ""
-							let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
-
-							let ReplyToURL = "" //Reply to post above
-							let RepliesURLs = [] //Replies of the current post
-							let UserTitle = ""
-							let UserHandle = ""
-							let UserAvatar = ""
-							let PostTimeStamp = {}
-							let PostContent = {}
-							let ReplyCount = ""
-							let RepostCount = ""
-							let LikesCount = ""
-							
-							FullyLoaded = true
-							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].href
-							PostURL = DescendNode(Post, [0,0,1,0,2]).OutputNode.href
-
-							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
-							UserTitle = CleanString(DescendNode(Post, [0,0,1,0,0,0,0,0]).OutputNode.textContent)
-
-							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/^\s/, "")
-							UserHandle = CleanString(DescendNode(Post, [0,0,1,0,0,0,0,1]).OutputNode.textContent)
-
-							//Post.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-							//Post.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-							let NodeOfAvatar = DescendNode(Post, [0,0,0,0,0,0,0,0,1])
-							if (NodeOfAvatar.IsSuccessful) {
-								UserAvatar = ConvertAvatarImgToFullRes(NodeOfAvatar.OutputNode.src)
-							}
-
-							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
-							PostTimeStamp = PostDateInfo(DescendNode(Post, [0,0,1,0,2]).OutputNode.dataset.tooltip)
-
-							let ReplyToOffset = 0
-							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].textContent
-							let NodeOfReplyTo = DescendNode(Post, [0,0,1,1,1])
-							if (NodeOfReplyTo.IsSuccessful) {
-								if (/^Reply to/.test(NodeOfReplyTo.OutputNode.textContent)) {
-									ReplyToOffset++
-								}
-							}
-
-							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1]
-							PostContent = GetPostContent(DescendNode(Post, [0,0,1,1+ReplyToOffset]).OutputNode, "SearchPage")
-
-							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes
-							let NodeOfReplyRepostLikes_Array = []
-							let NodeOfFoooter = DescendNode(Post, [0,0,1])
-							if (NodeOfFoooter.IsSuccessful) {
-								let LastNode = [...NodeOfFoooter.OutputNode.childNodes].at(-1)
-								let NodeOfFooterDeepest = LastNode
-								NodeOfReplyRepostLikes_Array = [...NodeOfFooterDeepest.childNodes]
-
-							}
-							if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
-								ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
-								RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
-								LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
-							}
-							if ((PostURL != "")&&(UserTitle != "")&&(UserHandle != "")&&(PostContent.Segments.length != 0)) {
-								ListOfPosts.push({
-									RepostedByUserTitle: RepostedByUserTitle,
-									PostURL: PostURL,
-									MiscInfo: {
-										PostFullyLoaded: FullyLoaded
-									},
-									ReplyToURL: ReplyToURL,
-									RepliesURLs: RepliesURLs,
-									UserTitle: UserTitle,
-									UserHandle: UserHandle,
-									UserAvatar: UserAvatar,
-									PostTimeStamp: PostTimeStamp,
-									PostContent: PostContent,
-									ReplyCount: ReplyCount,
-									RepostCount: RepostCount,
-									LikesCount: LikesCount
-								})
-							}
+						if (Post.textContent == "") {
+							return
 						}
+						let ReplyToUserTitle = ""
+						let RepostedByUserTitle = ""
+						let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
 
+						let ReplyToURL = "" //Reply to post above
+						let RepliesURLs = [] //Replies of the current post
+						let UserTitle = ""
+						let UserHandle = ""
+						let UserAvatar = ""
+						let PostTimeStamp = {}
+						let PostContent = {}
+						let ReplyCount = ""
+						let RepostCount = ""
+						let LikesCount = ""
+						
+						FullyLoaded = true
+						try {
+							PostURL = Post.childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].href
+						} catch {}
+						try {
+							UserTitle = CleanString(Post.childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent)
+						} catch {}
+						try {
+							UserHandle = CleanString(Post.childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].textContent)
+						} catch {}
+						try {
+							UserAvatar = ConvertAvatarImgToFullRes(Post.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src)
+						} catch {}
+						try {
+							PostTimeStamp = PostDateInfo(Post.childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip)
+						} catch {}
+						let ReplyToOffset = 0
+						try {
+							let ReplyToText = Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[1].textContent
+							if (/^Reply to/.test(ReplyToText)) {
+								ReplyToUserTitle = ReplyToText
+								ReplyToOffset = 1
+							}
+						} catch {}
+						try {
+							PostContent = GetPostContent(Post.childNodes[0].childNodes[1].childNodes[1].childNodes[1+ReplyToOffset], "SearchPage")
+						} catch {}
+						try {
+							let Footer = [...Post.childNodes[0].childNodes[1].childNodes[1].childNodes].at(-1)
+							ReplyRepostLikes = [...Footer.childNodes]
+							ReplyCount = ReplyRepostLikes[0].textContent
+							RepostCount = ReplyRepostLikes[1].textContent
+							LikesCount = ReplyRepostLikes[2].textContent
+						} catch {
+							alert("Failed to extract search page post footer")
+						}
+						if ((PostURL != "")&&(UserTitle != "")&&(UserHandle != "")&&(PostContent.Segments.length != 0)) {
+							ListOfPosts.push({
+								RepostedByUserTitle: RepostedByUserTitle,
+								ReplyToUserTitle: ReplyToUserTitle,
+								PostURL: PostURL,
+								MiscInfo: {
+									PostFullyLoaded: FullyLoaded
+								},
+								ReplyToURL: ReplyToURL,
+								RepliesURLs: RepliesURLs,
+								UserTitle: UserTitle,
+								UserHandle: UserHandle,
+								UserAvatar: UserAvatar,
+								PostTimeStamp: PostTimeStamp,
+								PostContent: PostContent,
+								ReplyCount: ReplyCount,
+								RepostCount: RepostCount,
+								LikesCount: LikesCount
+							})
+						}
 					})
 				} else {
 					if (!HaveAlertedUnreconizedURL) {
@@ -1364,6 +1356,7 @@
 			return ISOString.replace("T", " ").replace(/\.\d{3}Z$/, "") + " UTC"
 		}
 		function GetPostContent(Node, Type) {
+			let PageType = Type //Needed so we can access this variable in inner functions below
 			//Node should be the outermost div tag that covers only the post and not the header/footer
 			let PostContent = {}
 
@@ -1395,7 +1388,12 @@
 					PostContent.Segments.push(Output)
 				} else {
 					//This must be the attachments, often below the text
-					let Attachments = [...PostSegment.childNodes[0].childNodes]
+					let Attachments = []
+					if (PageType != "SearchPage") {
+						Attachments = [...PostSegment.childNodes[0].childNodes]
+					} else {
+						Attachments = [...PostSegment.childNodes]
+					}
 					let Output = {
 						Type: "Attachments",
 						Attachments: []
@@ -1430,13 +1428,13 @@
 							let MediaList = GetMediaURLs(Attachment)
 							Output.Attachments.push({
 								Type: "Media",
-								Media: MediaList
+								Contents: MediaList
 							})
 						} else if ([...Attachment.querySelectorAll("video")].length == 1) {
 							let MediaList = GetMediaURLs(Attachment)
 							Output.Attachments.push({
 								Type: "Media",
-								Media: MediaList
+								Contents: MediaList
 							})
 						} else if (EmbeddedPostTest_CheckForPostDate != null) {
 							//Embedded posts
