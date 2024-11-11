@@ -401,7 +401,7 @@
 											alert("Failed to extract link (" + e + ")")
 										}
 									}
-									if (PostURL == "https://bsky.app/profile/waddledurrr.bsky.social/post/3l7vchojje724") {
+									if (PostURL == "https://bsky.app/profile/waddledurrr.bsky.social/post/3l6rlxgq3ud2z") {
 										let bp = 0
 									}
 									//RepostedByUser
