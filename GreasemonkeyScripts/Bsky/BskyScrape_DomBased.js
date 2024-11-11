@@ -508,7 +508,7 @@
 											alert("Failed to extract reply repost and likes bar")
 										}
 									}
-									if ((PostURL != "")&&(UserTitle != "")&&(UserHandle != "")&&(FullyLoaded)) {
+									if ((PostURL != "")&&(UserTitle != "")&&(UserHandle != "")) {
 										PostGroup.push({
 											RepostedByUserTitle: RepostedByUserTitle,
 											ReplyToUserTitle: ReplyToUserTitle,
@@ -816,7 +816,7 @@
 								LikesCount = ReplyRepostLikes[2].textContent
 							} catch {}
 						}
-						if (/^Post_/.test(Type)&&(PostURL != "")&&(UserTitle != "")&&(UserHandle != "")&&(FullyLoaded)) {
+						if (/^Post_/.test(Type)&&(PostURL != "")&&(UserTitle != "")&&(UserHandle != "")) {
 							PostGroup.push({
 								RepostedByUserTitle: RepostedByUserTitle,
 								PostURL: PostURL,
