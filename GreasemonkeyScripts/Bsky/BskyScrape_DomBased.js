@@ -442,7 +442,7 @@
 									//User title
 									{
 										try {
-											UserTitle = Post.childNodes[0].childNodes[0].childNodes[2].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
+											UserTitle = CleanString(Post.childNodes[0].childNodes[0].childNodes[2].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent)
 										} catch (e) {
 											alert("Failed to extract user title")
 										}
