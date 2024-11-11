@@ -78,9 +78,9 @@
 			let Saved_Setting_ScanFrequency = 1000
 			let Saved_Extracted_Posts = []
 			let Saved_Extracted_Profiles = []
-			
+
 			UpdateSavedValues()
-			
+
 			let ID_TimeoutScrapeContent = 0
 		//Run code
 			//Code that spawns the UI on the bottom right
@@ -89,7 +89,7 @@
 				if (Saved_Setting_StartStop) {
 					ID_TimeoutScrapeContent = setTimeout(CheckForHiddenContent, 2000)
 				}
-			
+
 		//Copy to clipboard
 			let CopiedListOfPosts = ""
 			let CopiedListOfProfiles = ""
@@ -99,8 +99,8 @@
 			let Button_StopStart = {}
 			let Input_ScanFrequency = {}
 			let Span_ScanFrequencySecCount = {}
-			
-			
+
+
 		//Counters for display
 			let Counter_Profile_Saved = 0
 			let Counter_Post_Saved = 0
@@ -117,12 +117,12 @@
 			BoxOfUI.style.color = "#ffffff"
 			BoxOfUI.style.borderRadius = "30px"
 			BoxOfUI.style.padding = "15px"
-			
+
 			let Title = document.createElement("h2")
 			Title.appendChild(document.createTextNode("Blue sky scraper"))
 			Title.setAttribute("style", "text-align: center;")
 			BoxOfUI.appendChild(Title)
-			
+
 			//Start/stop button
 			Button_StopStart = document.createElement("button")
 			Button_StopStart.setAttribute("style", "width: 50px;")
@@ -136,7 +136,7 @@
 				"click",
 				async function () {
 					BskyScrape_StartStopFlag = !BskyScrape_StartStopFlag
-					
+
 					if (BskyScrape_StartStopFlag) {
 						this.textContent = "Stop"
 						CheckForHiddenContent()
@@ -146,12 +146,12 @@
 							clearTimeout(ID_TimeoutScrapeContent);
 						}
 					}
-					
+
 					await GM.setValue("BskyScrape_StartStopFlag", BskyScrape_StartStopFlag)
 				}
 			)
 			BoxOfUI.appendChild(Button_StopStart)
-			
+
 			//Copy data into clipboard button (readable)
 			let CopyToClipboardButton = document.createElement("button")
 			CopyToClipboardButton.appendChild(document.createTextNode("Copy to clipboard"))
@@ -160,7 +160,7 @@
 				function() {CopyExtractedContent(" ")}
 			)
 			BoxOfUI.appendChild(CopyToClipboardButton)
-			
+
 			//Copy data into clipboard button (compressed)
 			let CopyToClipboardButtonCompressed = document.createElement("button")
 			CopyToClipboardButtonCompressed.appendChild(document.createTextNode("Copy to clipboard (compressed)"))
@@ -169,7 +169,7 @@
 				function() {CopyExtractedContent()}
 			)
 			BoxOfUI.appendChild(CopyToClipboardButtonCompressed)
-			
+
 			//Reset button
 			let ResetButton = document.createElement("button")
 			ResetButton.appendChild(document.createTextNode("Reset"))
@@ -184,16 +184,16 @@
 						if (typeof ID_TimeoutScrapeContent != "undefined") {
 							clearTimeout(ID_TimeoutScrapeContent);
 						}
-						
+
 						Saved_Extracted_Posts = []
 						Saved_Extracted_Profiles = []
 						await GM.setValue("BSkyScrape_PostList", "[]")
 						await GM.setValue("BSkyScrape_ProfileList", "[]")
-						
+
 						if (Div_ProfileSaveCount != null) {
 							Div_ProfileSaveCount.textContent = "0"
 						}
-						
+
 						if (Div_PostSaveCount != null) {
 							Div_PostSaveCount.textContent = "0"
 						}
@@ -202,20 +202,20 @@
 				}
 			)
 			BoxOfUI.appendChild(ResetButton)
-			
+
 			//table
 			let TableUI = document.createElement("table")
-			
+
 			//Row - scan frequency
-			
+
 			let TableRow0 = document.createElement("tr")
 			TableUI.appendChild(TableRow0)
-			
+
 			let TableCell_0_0 = document.createElement("td")
 			TableCell_0_0.setAttribute("title", "The amount of time between each scanning for scraping.")
 			TableCell_0_0.appendChild(document.createTextNode("Scan frequency "))
 			TableRow0.appendChild(TableCell_0_0)
-			
+
 			let TableCell_0_1 = document.createElement("td")
 			Input_ScanFrequency = document.createElement("input")
 			Input_ScanFrequency.setAttribute("type", "range")
@@ -232,28 +232,28 @@
 			TableCell_0_1.appendChild(Input_ScanFrequency)
 			TableCell_0_1.appendChild(document.createElement("br"))
 			TableCell_0_1.setAttribute("style", "text-align: center;")
-			
+
 			Span_ScanFrequencySecCount = document.createElement("span")
 			Span_ScanFrequencySecCount.appendChild(document.createTextNode((Saved_Setting_ScanFrequency/1000).toFixed(1)))
 			TableCell_0_1.appendChild(Span_ScanFrequencySecCount)
 			TableCell_0_1.appendChild(document.createTextNode(" sec"))
 			TableRow0.appendChild(TableCell_0_1)
-			
+
 			//Row - "Number of posts saved: "
 			let TableRow1 = document.createElement("tr")
 			TableUI.appendChild(TableRow1)
-			
+
 			let TableCell_1_0 = document.createElement("td")
 			TableCell_1_0.appendChild(document.createTextNode("Number of posts saved: "))
 			TableRow1.appendChild(TableCell_1_0)
-			
+
 			let TableCell_1_1 = document.createElement("td")
 			Div_PostSaveCount = document.createElement("span")
 			Div_PostSaveCount.appendChild(document.createTextNode(Saved_Extracted_Posts.length.toFixed(0)))
 			TableCell_1_1.appendChild(Div_PostSaveCount)
 			TableRow1.appendChild(TableCell_1_1)
-			
-			
+
+
 			//Row - Number of profiles
 			let TableRow2 = document.createElement("tr")
 			TableUI.appendChild(TableRow2
@@ -261,16 +261,16 @@
 			let TableCell_2_0 = document.createElement("td")
 			TableCell_2_0.appendChild(document.createTextNode("Number of profiles saved: "))
 			TableRow2.appendChild(TableCell_2_0)
-			
+
 			let TableCell_2_1 = document.createElement("td")
 			Div_ProfileSaveCount = document.createElement("span")
 			Div_ProfileSaveCount.appendChild(document.createTextNode(Saved_Extracted_Profiles.length.toFixed(0)))
 			TableCell_2_1.appendChild(Div_ProfileSaveCount)
 			TableRow2.appendChild(TableCell_2_1)
-			
+
 			BoxOfUI.appendChild(TableUI)
-			
-			
+
+
 			//Add the box to the HTML
 			let HTMLBody = [...document.getElementsByTagName("BODY")].find((Element) => {return true})
 			let InnerNodeOfHTMLBody = DescendNode(HTMLBody, [0])
@@ -305,7 +305,7 @@
 			} else {
 				ScrapeContent()
 				//Otherwise all is shown, scrape it immediately (not just because its unnecessary to delay it, its to avoid a situation that IsThereHiddenContent==false,
-				//then a change on the HTML (like you clicking "hide" after it is shown) is made that IS hidden, and then scrapes that) 
+				//then a change on the HTML (like you clicking "hide" after it is shown) is made that IS hidden, and then scrapes that)
 				ID_TimeoutScrapeContent = setTimeout(CheckForHiddenContent, Saved_Setting_ScanFrequency)
 			}
 		}
@@ -318,7 +318,7 @@
 			RaceConditionLock = true
 			//Code here
 				let DateTimeOfScrape = ISOString_to_YYYY_MM_DD_HH_MM_SS(new Date(Date.now()).toISOString())
-				
+
 				let isLoggedIn = false
 				{
 					let SignUpButton = [...document.getElementsByTagName("BUTTON")].find((Button) => {
@@ -334,7 +334,7 @@
 				if (/https:\/\/bsky\.app\/(?:profile\/(?:[a-zA-Z\d\-]+\.)+(?:[a-zA-Z\d\-]+)\/?)?$/.test(window.location.href)) { //profile/front page
 					//First, find an a href link to a profile as a reference. We get the lowest node that at least has all the posts on the page
 					UserPostArea = GetPostBoxesByLink(11)
-					
+
 					//"UserPostArea" will now contain "boxes" that may either be a horizontal line, containing 1 or 2 posts (2 if it has replies, with a vertical line between 2 avatars)
 					UserPostArea.forEach((Box, BoxIndex) => { // Loop each box
 						//[profile page]
@@ -352,7 +352,7 @@
 						if (EndOfFeed == "End of feed") {
 							return
 						}
-						
+
 						if (typeof Box.childNodes != "undefined") {
 							let BoxListingPosts = [...Box.childNodes]
 							let BoxListingPostsLengthCache = BoxListingPosts.length
@@ -370,15 +370,15 @@
 								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[1] - Post content (text, media, and embedded posts)
 								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[X] - each segment of above
 								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[2] - Replies, reposts, and likes.
-								
+
 								let RepostedByUserTitle = ""
 								let ReplyToUserTitle = ""
 								let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
-								
+
 								let PostHasRepliesLineBelow = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
 								let PostIsAReplyLineToAbove = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
 								let IsCurrentPostURL = false //Used to determine the post that doesn't have a href link to determine the post below it is a reply to it
-								
+
 								let ReplyToURL = "" //Reply to post above
 								let RepliesURLs = [] //Replies of the current post
 								let UserTitle = ""
@@ -389,9 +389,9 @@
 								let ReplyCount = ""
 								let RepostCount = ""
 								let LikesCount = ""
-								
+
 								let Post = BoxListingPosts[i]
-								
+
 								if (Post.textContent != "View full thread") {
 									//Link to post
 									{
@@ -401,7 +401,7 @@
 											alert("Failed to extract link (" + e + ")")
 										}
 									}
-									if (PostURL == "https://bsky.app/profile/summerchill14.bsky.social/post/3l7kgtjibcq2u") {
+									if (PostURL == "https://bsky.app/profile/waddledurrr.bsky.social/post/3l7vchojje724") {
 										let bp = 0
 									}
 									//RepostedByUser
@@ -415,11 +415,11 @@
 									let ReplyOffset = 0
 									try {
 										let ReplyToText = Post.childNodes[0].childNodes[0].childNodes[2].childNodes[1].childNodes[1].childNodes[1].textContent
-										if (ReplyToText != "") {
+										if (/^Reply to/.test(ReplyToText)) {
 											ReplyToUserTitle = ReplyToText
 											ReplyOffset = 1
 										}
-										
+
 									} catch {}
 									//Reply downwards line
 									{
@@ -477,8 +477,8 @@
 										} catch (e) {
 											alert("Failed to extract post content")
 										}
-									
-									
+
+
 									//Reply, repost, and likes
 									{
 										//let NodeOfReplyRepostLikes_Array = []
@@ -562,7 +562,7 @@
 					})
 					//Obtain user profile
 						let ProfileNode = {}
-						
+
 						let UserProfileHandle = [...document.getElementsByTagName("DIV")].find((DivElement) => {
 							if (isAncestorsStyleDisplayNone(DivElement)) {
 								return false
@@ -581,33 +581,33 @@
 							return true
 						})
 						if (typeof UserProfileHandle != "undefined") {
-							
+
 							let ProfileURL = window.location.href
-							
+
 							let Profile_UserTitle = ""
 							let Node_Profile_UserTitle = DescendNode(ProfileNode, [1,1,0])
 							if (Node_Profile_UserTitle.IsSuccessful) {
 								Profile_UserTitle = CleanString(Node_Profile_UserTitle.OutputNode.textContent)
 							}
-							
+
 							let Profile_UserHandle = ""
 							let Node_Profile_UserHandle = DescendNode(ProfileNode, [1,1,1])
 							if (Node_Profile_UserHandle.IsSuccessful) {
 								Profile_UserHandle = CleanString(Node_Profile_UserHandle.OutputNode.textContent)
 							}
-							
+
 							let Profile_Avatar = ""
 							let Node_Profile_Avatar = DescendNode(ProfileNode, [3,0,0,1])
 							if (Node_Profile_Avatar.IsSuccessful) {
 								Profile_Avatar = Node_Profile_Avatar.OutputNode.src
 							}
-							
+
 							let Profile_BackgroundImg = ""
 							let Node_Profile_BackgroundImg = DescendNode(ProfileNode, [0,0,0,0])
 							if (Node_Profile_BackgroundImg.IsSuccessful) {
 								Profile_BackgroundImg = Node_Profile_BackgroundImg.OutputNode.src
 							}
-							
+
 							let Profile_TextContent = {
 								Text: ""
 							}
@@ -619,7 +619,7 @@
 									Profile_TextContent.Links = ListOfLinks
 								}
 							}
-							
+
 							//ProfileNode.childNodes[1].childNodes[3]
 							let Profile_FollowCount = ""
 							let Profile_FollowingCount = ""
@@ -627,12 +627,12 @@
 							let NodeOfFollowFollowingPost = DescendNode(ProfileNode, [1,2])
 							if (NodeOfFollowFollowingPost.IsSuccessful) {
 								let ArrayOf_FollowFollowingPost = [...NodeOfFollowFollowingPost.OutputNode.childNodes]
-								
+
 								Profile_FollowCount = ArrayOf_FollowFollowingPost[0].textContent.replace(/^([\d\.A-Za-z]+).*$/, "$1")
 								Profile_FollowingCount = ArrayOf_FollowFollowingPost[1].textContent.replace(/^([\d\.A-Za-z]+).*$/, "$1")
 								Profile_PostCount = ArrayOf_FollowFollowingPost[2].textContent.replace(/^([\d\.A-Za-z]+).*$/, "$1")
 							}
-							
+
 							Profile = {
 								Type: "UserProfile",
 								ProfileURL: ProfileURL,
@@ -655,27 +655,27 @@
 					//Reason not to get a "a href" link to post is because if there is only 1 post on the page and it is the post you are directly viewing, then
 					//there is no a href link we can use as a reference to jump a fixed number of hierarchy levels without being in the wrong node.
 					UserPostArea = GetNodeByFooterTimestamp(6)
-					
-					
+
+
 					//"UserPostArea" will now contain "boxes" that contains 0 or 1 posts:
 					//0 posts if it is a placeholder area or a blank box at the bottom of the page, as well as "Write your Reply"
-					
-					
+
+
 					let PostsSeperator = ""
 					//^Now, in some time in the future, bsky may be updated to include recommended posts that aren't necessarily a reply to posts above,
 					// so this text here serves as a placeholder as the following forEach determine that the adjacent posts are something like "for you"
 					// (if such a separator exists, PostsSeperator will update and future boxes in this array will reflect on it (anthing after "for you"))
-					
+
 					let PostGroup = []
 					UserPostArea.forEach((Box, BoxIndex) => { //Loop each box
 						let RepostedByUserTitle = ""
 						let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
-						
+
 						let PostHasRepliesLineBelow = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
 						let PostIsAReplyLineToAbove = false //Used to determine if it has a reply or a reply to above (based on the vertical line between avatars).
 						let IsCurrentPostURL = false //Used to determine the post that doesn't have a href link to determine the post below it is a reply to it
 						let Type = IdentifyPostLayoutType(Box) //Stuff in the column could be a post, a non-post like "Write your Reply"
-						
+
 						let ReplyToURL = "" //Reply to post above
 						let RepliesURLs = [] //Replies of the current post
 						let UserTitle = ""
@@ -686,7 +686,7 @@
 						let ReplyCount = ""
 						let RepostCount = ""
 						let LikesCount = ""
-						
+
 						if (Type == "Post_CurrentlyViewed_AtTop") {
 							PostURL = window.location.href
 							if (/https:\/\/bsky\.app\/profile\/did:plc/.test(PostURL)) { //"View full thread" button is clicked, goes to a handle-less version of a post URL
@@ -694,7 +694,7 @@
 								let UserHandleNoAt = UserHandle.replace(/^@/, "")
 								PostURL = PostURL.replace(/(https:\/\/bsky\.app\/profile\/)[a-zA-Z\d\-\.:]+(\/post\/[a-zA-Z\d\-]+\/?)/, "$1" + UserHandleNoAt + "$2")
 							}
-							
+
 							try {
 								UserTitle = Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].textContent
 							} catch {}
@@ -709,7 +709,7 @@
 								let PostAndFooter = [...Box.childNodes[0].childNodes[0].childNodes[1].childNodes]
 								let Footer = PostAndFooter.slice(1)
 								let ReplyRepostLikes = [...Footer.at(-1).childNodes[0].childNodes]
-								
+
 								PostTimeStamp = PostDateInfo(Footer[0].childNodes[0].textContent)
 								ReplyCount = ReplyRepostLikes[0].textContent
 								RepostCount = ReplyRepostLikes[1].textContent
@@ -730,7 +730,7 @@
 							try {
 								UserTitle = Box.childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[0].childNodes[0].textContent
 							} catch {}
-							
+
 							try {
 								UserHandle = Box.childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[1].childNodes[0].textContent
 							} catch {}
@@ -763,7 +763,7 @@
 							if (NodeOfPostContent.IsSuccessful) {
 								PostContent = GetPostContent(NodeOfPostContent.OutputNode, Type)
 							}
-							
+
 						} else if (Type == "Post_NotCurrentlyViewed") {
 							try {
 								PostURL = Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].childNodes[2].href
@@ -780,28 +780,28 @@
 									PostIsAReplyLineToAbove = true
 								}
 							} catch {}
-							
+
 							try {
 								UserTitle = CleanString(Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent)
 							} catch {}
-							
+
 							try {
 								UserHandle = CleanString(Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].textContent)
 							} catch {}
-							
+
 							try {
 								UserAvatar = ConvertAvatarImgToFullRes(Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src)
 							} catch {}
-							
+
 							try {
 								PostTimeStamp = PostDateInfo(Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip)
-								
+
 							} catch {}
-							
+
 							try {
 								PostContent = GetPostContent(Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1], Type)
 							} catch {}
-							
+
 							try {
 								let Footer = [...Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes].at(-1)
 								let ReplyRepostLikes = [...Footer.childNodes]
@@ -845,7 +845,7 @@
 						}
 						if ((!PostGroup[i].ReplyConnections.PostIsAReplyLineToAbove) && (i > IndexOfPostCurrentlyViewed) && (IndexOfPostCurrentlyViewed >= 0)) {
 							if (!PostGroup[IndexOfPostCurrentlyViewed].RepliesURLs.includes(PostGroup[i].PostURL)) {
-								PostGroup[IndexOfPostCurrentlyViewed].RepliesURLs.push(PostGroup[i].PostURL) //Add a reply (without the line pointing upwards) to currently viewed post 
+								PostGroup[IndexOfPostCurrentlyViewed].RepliesURLs.push(PostGroup[i].PostURL) //Add a reply (without the line pointing upwards) to currently viewed post
 							}
 							if (PostGroup[i].ReplyToURL == "") {
 								PostGroup[i].ReplyToURL = PostGroup[IndexOfPostCurrentlyViewed].PostURL //In reply to a post above
@@ -867,12 +867,12 @@
 					ListOfPosts.push(...PostGroup)
 				} else if (/https:\/\/bsky\.app\/search/.test(window.location.href)) { //Search page
 					UserPostArea = GetPostBoxesByLink(9)
-					
+
 					UserPostArea.forEach((Post) => {
 						if (Post.textContent != "") {
 							let RepostedByUserTitle = ""
 							let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
-							
+
 							let ReplyToURL = "" //Reply to post above
 							let RepliesURLs = [] //Replies of the current post
 							let UserTitle = ""
@@ -883,26 +883,26 @@
 							let ReplyCount = ""
 							let RepostCount = ""
 							let LikesCount = ""
-							
+
 							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].href
 							PostURL = DescendNode(Post, [0,0,1,0,2]).OutputNode.href
-							
+
 							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
 							UserTitle = CleanString(DescendNode(Post, [0,0,1,0,0,0,0,0]).OutputNode.textContent)
-							
+
 							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/^\s/, "")
 							UserHandle = CleanString(DescendNode(Post, [0,0,1,0,0,0,0,1]).OutputNode.textContent)
-							
+
 							//Post.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
 							//Post.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
 							let NodeOfAvatar = DescendNode(Post, [0,0,0,0,0,0,0,0,1])
 							if (NodeOfAvatar.IsSuccessful) {
 								UserAvatar = ConvertAvatarImgToFullRes(NodeOfAvatar.OutputNode.src)
 							}
-							
+
 							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
 							PostTimeStamp = PostDateInfo(DescendNode(Post, [0,0,1,0,2]).OutputNode.dataset.tooltip)
-							
+
 							let ReplyToOffset = 0
 							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].textContent
 							let NodeOfReplyTo = DescendNode(Post, [0,0,1,1,1])
@@ -911,10 +911,10 @@
 									ReplyToOffset++
 								}
 							}
-							
+
 							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[1]
 							PostContent = GetPostContent(DescendNode(Post, [0,0,1,1+ReplyToOffset]).OutputNode, "SearchPage")
-							
+
 							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes
 							let NodeOfReplyRepostLikes_Array = []
 							let NodeOfFoooter = DescendNode(Post, [0,0,1])
@@ -922,7 +922,7 @@
 								let LastNode = [...NodeOfFoooter.OutputNode.childNodes].at(-1)
 								let NodeOfFooterDeepest = LastNode
 								NodeOfReplyRepostLikes_Array = [...NodeOfFooterDeepest.childNodes]
-								
+
 							}
 							if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
 								ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
@@ -946,7 +946,7 @@
 								})
 							}
 						}
-						
+
 					})
 				} else {
 					if (!HaveAlertedUnreconizedURL) {
@@ -995,7 +995,7 @@
 							//Match occurred, replace it (but keep the list of reply URLs and what's replying to)
 							let SavedList_WhatToReplace = SavedBskyPostList[MatchedPostIndex]
 							let ExtractList_ReplaceWith = ExtractedPost
-							
+
 							let Set_ListOfURLsSaved = new Set(SavedList_WhatToReplace.RepliesURLs) //Start what we have that is saved
 							ExtractList_ReplaceWith.RepliesURLs.forEach((Extracted_Replies) => {
 								//Loop each reply URLs from what we newly extracted, and add them to the saved version's list of reply URLs,
@@ -1003,7 +1003,7 @@
 								Set_ListOfURLsSaved.add(Extracted_Replies)
 							})
 							SavedList_WhatToReplace.RepliesURLs = [...Set_ListOfURLsSaved]
-							
+
 							if ((SavedList_WhatToReplace.ReplyToURL == "") && (ExtractList_ReplaceWith.ReplyToURL != "")) { //If discovered that the post has a reply, add a URL to it.
 								SavedList_WhatToReplace.ReplyToURL = ExtractList_ReplaceWith.ReplyToURL
 							}
@@ -1012,7 +1012,7 @@
 					await GM.setValue("BSkyScrape_PostList", JSON.stringify(SavedBskyPostList)).then(() => {
 						CopiedListOfPosts = JSON.stringify(SavedBskyPostList, null, " ")
 						//console.log("Bsky-scrape: extracted post count: " + SavedBskyPostList.length.toFixed(0))
-						
+
 						if (Div_PostSaveCount != null) {
 							Div_PostSaveCount.textContent = SavedBskyPostList.length.toFixed(0)
 						}
@@ -1020,8 +1020,8 @@
 					() => {
 						window.alert("Bsky-scrape: saving post failed!")
 					});
-					
-					
+
+
 					//Save profile data
 					let SavedBskyProfileList = Saved_Extracted_Profiles
 					if ((Object.keys(Profile).length != 0) && (Profile.ProfileURL != "")) {
@@ -1031,7 +1031,7 @@
 							}
 							return false
 						})
-						
+
 						if (IndexOfSavedMatching == -1) {
 							//If haven't add it
 							if (Setting_MaxNumberOfProfiles < 0) {
@@ -1043,7 +1043,7 @@
 									console.log("Bsky-scrape: profile page count limit reached.")
 								}
 							}
-							
+
 						} else {
 							//if gotten already, replace it
 							SavedBskyProfileList[IndexOfSavedMatching] = Profile
@@ -1062,7 +1062,7 @@
 				} else {
 					console.log("Bsky-scrape: Paused")
 				}
-			
+
 			//Set a breakpoint here after everything loads to test the results stored in "ListOfPosts".
 			RaceConditionLock = false
 		}
@@ -1146,7 +1146,7 @@
 					LevelsPassed: -1,
 					IsSuccessful: false
 				}
-				
+
 			}
 		}
 		function DescendNode(Node, LevelsArray) {
@@ -1180,7 +1180,7 @@
 			if (Node.childNodes.length != 0) {
 				Output = [...Node.querySelectorAll("img, video")].map((HTMLTag) => {
 					//WIP, once bsky allows other media types besides images, this is to be updated to accept multiple tags (img, video, etc.)
-					
+
 					let MediaOutput = {
 						Type: HTMLTag.tagName,
 						URL: ""
@@ -1197,7 +1197,7 @@
 							MediaOutput.poster = HTMLTag.poster
 						}
 					}
-					
+
 					return MediaOutput
 				}).filter((ArrayElement) => {
 					return (ArrayElement != "")
@@ -1295,32 +1295,32 @@
 			if (typeof StringTimestamp == "undefined") {
 				return "Invalid date"
 			}
-			
+
 			//Info got from: https://stackoverflow.com/questions/78018427/how-do-i-convert-the-local-date-and-time-e-g-est-to-utc
 			//
 			//One post mentions "It appears this post was in whole or in part created with AI tools. " (got deleted)
 			//If anyone spots an error that certain local timezone displays a different UTC time on a post, please report/fork to fix this.
 			let DateObjectReadbleString = StringTimestamp.replace(/ at /, " ")
 			let TimestampObject = new Date(DateObjectReadbleString)
-			
+
 			let TimeZoneString = TimestampObject.toString().match(/\(.+\)/)
 			if (TimeZoneString != null) {
 				TimeZoneString = TimeZoneString[0]
 			} else {
 				TimeZoneString = "(unknown timezone)"
 			}
-			
+
 			if (TimestampObject.toString() != "Invalid Date") {
 				let TimestampMillisecondsEpoch = TimestampObject.getTime()
 				let UTCString = TimestampObject.toISOString()
-				
+
 				let ReturnObject = new Object()
 				if (Setting_ShowLocalTimeInTimestamp) {
 					ReturnObject.LocalTimeDisplayedOnPage = StringTimestamp + " " + TimeZoneString
 				}
 				ReturnObject.Date_UTC = UTCString.replace("T", " ").replace(/:\d+\.\d{3}Z$/, "")
 				ReturnObject.TimestampMillisecondsEpoch = TimestampMillisecondsEpoch
-				
+
 				return ReturnObject
 			} else {
 				return "Invalid date"
@@ -1333,22 +1333,22 @@
 		function GetPostContent(Node, Type) {
 			//Node should be the outermost div tag that covers only the post and not the header/footer
 			let PostContent = {}
-			
+
 			let PostSegments = [...Node.childNodes].filter((ArrayElement) => {
 				return (ArrayElement.tagName == "DIV")
 			})
-			
+
 			if (Type == "Post_NotCurrentlyViewed") {
 				PostSegments = PostSegments.slice(1, PostSegments.length-1)
 			} else if (Type == "Post_UserFontPage_InReplyTo") {
 				let StartOfContent = 2 //0 would be the UserTitle/Handle/Timestamp
 				PostSegments = PostSegments.slice(StartOfContent, PostSegments.length-1)
 			}
-			
+
 			PostContent.Segments = []
 			PostSegments.forEach((PostSegment, PostSegmentIndex) => {
 				//one or two segments, if there are 2, the second may contain many sub-compartments
-				
+
 				if (PostSegmentIndex == 0 && [...PostSegment.querySelectorAll("img, video")].length == 0 && (!/^\s*$/.test(PostSegment.textContent))) {
 					//Plaintext at the top of the post
 					let Output = {
@@ -1391,9 +1391,15 @@
 									}
 								}
 							} catch {}
-							
+
 						if ([...Attachment.querySelectorAll("img, video, a")].length != 0 && /^(?:ALT)*$/.test(Attachment.textContent)) {
 							//Media
+							let MediaList = GetMediaURLs(Attachment)
+							Output.Attachments.push({
+								Type: "Media",
+								Media: MediaList
+							})
+						} else if ([...Attachment.querySelectorAll("video")].length == 1) {
 							let MediaList = GetMediaURLs(Attachment)
 							Output.Attachments.push({
 								Type: "Media",
@@ -1407,6 +1413,13 @@
 							//Link preview
 							let LinkPreview = GetExternalLinkPreview(LinkPreviewNode)
 							Output.Attachments.push(LinkPreview)
+						} else if (Attachment.tagName == "BUTTON") {
+							if (/^Sexually Suggestive \(Cartoon\)/.test(Attachment.textContent)) {
+								Output.Attachments.push({
+									Type: "Flagged post",
+									FlaggedText: Attachment.textContent
+								})
+							}
 						}
 					})
 					PostContent.Segments.push(Output)
@@ -1483,7 +1496,7 @@
 				EmbeddedContent.Contents.UserHandle = CleanString(Node.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[1].childNodes[0].textContent)
 				EmbeddedContent.Contents.UserAvatar = ConvertAvatarImgToFullRes(Node.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src)
 				EmbeddedContent.Contents.PostTimeStamp = PostDateInfo(Node.childNodes[0].childNodes[0].childNodes[3].dataset.tooltip)
-				
+
 			} catch (e) {
 				alert("Failed to extract embedded post")
 			}
@@ -1500,7 +1513,7 @@
 				}
 				EmbeddedContent.Contents.PostContent.Segments.push(OutputObject)
 			})
-			
+
 			return EmbeddedContent
 		}
 		async function UpdateSavedValues() {
