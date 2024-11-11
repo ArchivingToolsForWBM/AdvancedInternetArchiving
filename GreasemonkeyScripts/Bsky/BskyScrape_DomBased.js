@@ -633,7 +633,7 @@
 								DateTimeOfScrape: DateTimeOfScrape
 							}
 						}
-				} else if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-\.:]+\/post\/[a-zA-Z\d\-]+\/?/.test(window.location.href)) { //Post page
+				} else if (/https:\/\/bsky\.app\/profile\/[a-zA-Z\d\-\.:]+\/post\/[a-zA-Z\d\-]+\/?/.test(window.location.href)) { //Post page or thread page
 					//https://bsky.app/profile/<UserHandle>/post/<base64_string>
 					//https://bsky.app/profile/did:plc:<base64_string>/post/<base64_string> when "View full thread" is clicked.
 					//[post page]
@@ -675,87 +675,74 @@
 						
 						if (Type == "Post_CurrentlyViewed_AtTop") {
 							PostURL = window.location.href
-							
-							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0]
-							UserTitle = CleanString(DescendNode(Box, [0,0,0,1,0,0,0]).OutputNode.textContent)
-							
-							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0]
-							UserHandle = CleanString(DescendNode(Box, [0,0,0,1,1,0,0]).OutputNode.textContent)
-							
 							if (/https:\/\/bsky\.app\/profile\/did:plc/.test(PostURL)) { //"View full thread" button is clicked, goes to a handle-less version of a post URL
 								//Replace the "did:plc:<base64_string>" with the handle.
 								let UserHandleNoAt = UserHandle.replace(/^@/, "")
 								PostURL = PostURL.replace(/(https:\/\/bsky\.app\/profile\/)[a-zA-Z\d\-\.:]+(\/post\/[a-zA-Z\d\-]+\/?)/, "$1" + UserHandleNoAt + "$2")
 							}
 							
-							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1]
-							let NodeOfAvatarImg = DescendNode(Box, [0,0,0,0,0,0,0,0,0,1])
-							if (NodeOfAvatarImg.IsSuccessful) {
-								UserAvatar = NodeOfAvatarImg.OutputNode.src
+							try {
+								UserTitle = Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].textContent
+							} catch {}
+							try {
+								UserHandle = CleanString(Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].textContent)
+							} catch {}
+							try {
+								UserAvatar = ConvertAvatarImgToFullRes(Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src)
+							} catch {}
+							PostHasRepliesLineBelow = true
+							try {
+								let PostAndFooter = [...Box.childNodes[0].childNodes[0].childNodes[1].childNodes]
+								let Footer = PostAndFooter.slice(1)
+								let ReplyRepostLikes = [...Footer.at(-1).childNodes[0].childNodes]
+								
+								PostTimeStamp = PostDateInfo(Footer[0].childNodes[0].textContent)
+								ReplyCount = ReplyRepostLikes[0].textContent
+								RepostCount = ReplyRepostLikes[1].textContent
+								LikesCount = ReplyRepostLikes[2].textContent
+							} catch (e) {
+								alert("Unable to extract footer")
 							}
-							
-							//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0]
-							PostTimeStamp = PostDateInfo(DescendNode(Box, [0,0,1,1,0]).OutputNode.textContent)
-							
-							let NodeOfPostContent = DescendNode(Box, [0,0,1,0])
-							if (NodeOfPostContent.IsSuccessful) {
-								PostContent = GetPostContent(NodeOfPostContent.OutputNode)
-							}
-							
-							
-							let NodeOfReplyRepostLikes_Array = []
-							//Box.childNodes[0].childNodes[0].childNodes[1].childNodes[N]
-							//where N is the last element because sometimes a post have duplicate counts between the date and timestamp at the bottom
-							let NodeOfFoooter = DescendNode(Box, [0,0,1])
-							if (NodeOfFoooter.IsSuccessful) {
-								let LastNode = [...NodeOfFoooter.OutputNode.childNodes].at(-1)
-								let NodeOfFooterDeepest = DescendNode(LastNode, [0])
-								if (NodeOfFooterDeepest.IsSuccessful) {
-									NodeOfReplyRepostLikes_Array = [...NodeOfFooterDeepest.OutputNode.childNodes]
-								}
-							}
-							if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
-								ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
-								RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
-								LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
-							}
-							
-							
+							try {
+								PostContent = GetPostContent(Box.childNodes[0].childNodes[0].childNodes[1].childNodes[0])
+							} catch {}
 						} else if (Type == "Post_CurrentlyViewed_NotAtTop") {
 							PostURL = window.location.href
-							
-							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0]
-							let ReplyLineUpNode = DescendNode(Box, [0,0,0,0])
-							if (ReplyLineUpNode.IsSuccessful) {
-								if (typeof ReplyLineUpNode.OutputNode.style != "undefined") {
-									if (ReplyLineUpNode.OutputNode.style.length > 1) {
-										PostIsAReplyLineToAbove = true
-									}
-								}
-							}
-							
-							//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].textContent
-							UserTitle = CleanString(DescendNode(Box, [0,1,0,1,0,0,0]).OutputNode.textContent)
-							
-							//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].textContent
-							UserHandle = CleanString(DescendNode(Box, [0,1,0,1,1,0,0]).OutputNode.textContent)
-							
 							if (/https:\/\/bsky\.app\/profile\/did:plc/.test(PostURL)) { //"View full thread" button is clicked, goes to a handle-less version of a post URL
 								//Replace the "did:plc:<base64_string>" with the handle.
 								let UserHandleNoAt = UserHandle.replace(/^@/, "")
 								PostURL = PostURL.replace(/(https:\/\/bsky\.app\/profile\/)[a-zA-Z\d\-\.:]+(\/post\/[a-zA-Z\d\-]+\/?)/, "$1" + UserHandleNoAt + "$2")
 							}
+							try {
+								UserTitle = Box.childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[0].childNodes[0].textContent
+							} catch {}
 							
-							//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-							//Box.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-							let NodeOfAvatarImg = DescendNode(Box, [0,1,0,0,0,0,0,0,0,1])
-							if (NodeOfAvatarImg.IsSuccessful) {
-								UserAvatar = ConvertAvatarImgToFullRes(NodeOfAvatarImg.OutputNode.src)
-							}
-							
-							//Box.childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].textContent
-							PostTimeStamp = PostDateInfo(DescendNode(Box, [0,1,1,1,0]).OutputNode.textContent)
-							
+							try {
+								UserHandle = Box.childNodes[0].childNodes[1].childNodes[0].childNodes[1].childNodes[1].childNodes[0].textContent
+							} catch {}
+							try {
+								UserAvatar = ConvertAvatarImgToFullRes(Box.childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src)
+							} catch{}
+							PostHasRepliesLineBelow = true
+							try {
+								let UpwardPostLine = Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0]
+								if (typeof UpwardPostLine != "undefined") {
+									PostIsAReplyLineToAbove = true
+								}
+							} catch {}
+							try {
+								let PostAndFooter = [...Box.childNodes[0].childNodes[1].childNodes[1].childNodes]
+								let Footer = PostAndFooter.slice(1)
+								let ReplyRepostLikes = [...Footer.at(-1).childNodes[0].childNodes]
+								let a = 0
+								PostTimeStamp = PostDateInfo(Footer[0].childNodes[0].textContent)
+								ReplyCount = ReplyRepostLikes[0].textContent
+								RepostCount = ReplyRepostLikes[1].textContent
+								LikesCount = ReplyRepostLikes[2].textContent
+							} catch {}
+							try {
+								PostContent = GetPostContent(Box.childNodes[0].childNodes[1].childNodes[1].childNodes[0], Type)
+							} catch {}
 
 							//Box.childNodes[0].childNodes[1].childNodes[1].childNodes[0]
 							let NodeOfPostContent = DescendNode(Box, [0,1,1,0])
@@ -763,75 +750,51 @@
 								PostContent = GetPostContent(NodeOfPostContent.OutputNode, Type)
 							}
 							
-							//Box.childNodes[0].childNodes[1].childNodes[1] - get the footer (position varies)
-							let PostFooter = [...DescendNode(Box, [0,1,1]).OutputNode.childNodes]
-							PostFooter = PostFooter.at(-1)
-							NodeOfReplyRepostLikes_Array = [...DescendNode(PostFooter, [0]).OutputNode.childNodes]
-							
-							if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
-								ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
-								RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
-								LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
-							}
 						} else if (Type == "Post_NotCurrentlyViewed") {
-							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].href
-							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2]
-							PostURL = DescendNode(Box, [0,0,0,1,1,0,2]).OutputNode.href
-							
-							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[1].style
-							let ReplyLineDownNode = DescendNode(Box, [0,0,0,1,0,1])
-							if (ReplyLineDownNode.IsSuccessful) {
-								if (typeof ReplyLineDownNode.OutputNode.style != "undefined") {
+							try {
+								PostURL = Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].childNodes[2].href
+							} catch {}
+							try {
+								let DownwardPostLine = Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[1]
+								if (typeof DownwardPostLine != "undefined") {
 									PostHasRepliesLineBelow = true
 								}
-							}
-							
-							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].style
-							let ReplyLineUpNode = DescendNode(Box, [0,0,0,0,0,0])
-							if (ReplyLineUpNode.IsSuccessful) {
-								if (typeof ReplyLineUpNode.OutputNode.style != "undefined") {
-									if (ReplyLineUpNode.OutputNode.style.length > 1) {
-										PostIsAReplyLineToAbove = true
-									}
+							} catch {}
+							try {
+								let UpwardPostLine = Box.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0]
+								if (typeof UpwardPostLine != "undefined") {
+									PostIsAReplyLineToAbove = true
 								}
-							}
-							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent
-							UserTitle = CleanString(DescendNode(Box, [0,0,0,1,1,0,0,0,0,0]).OutputNode.textContent)
+							} catch {}
 							
-							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[1].textContent.replace(/^\s/, "")
-							UserHandle = CleanString(DescendNode(Box, [0,0,0,1,1,0,0,0,0,1]).OutputNode.textContent)
+							try {
+								UserTitle = CleanString(Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].textContent)
+							} catch {}
 							
-							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src
-							let NodeOfAvatarImg = DescendNode(Box, [0,0,0,1,0,0,0,0,0,0,1])
-							if (NodeOfAvatarImg.IsSuccessful) {
-								UserAvatar = ConvertAvatarImgToFullRes(NodeOfAvatarImg.OutputNode.src)
-							}
+							try {
+								UserHandle = CleanString(Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].textContent)
+							} catch {}
 							
-							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
-							PostTimeStamp = PostDateInfo(DescendNode(Box, [0,0,0,1,1,0,2]).OutputNode.dataset.tooltip)
+							try {
+								UserAvatar = ConvertAvatarImgToFullRes(Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src)
+							} catch {}
 							
-							
-							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1] - This also contains the header and footer...
-							let NodeOfPostContent = DescendNode(Box, [0,0,0,1,1])
-							if (NodeOfPostContent.IsSuccessful) {
-								PostContent = GetPostContent(NodeOfPostContent.OutputNode, Type)
-							}
-							
-							//Box.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[N]
-							let NodeOfReplyRepostLikes_Array = []
-							let NodeOfFoooter = DescendNode(Box, [0,0,0,1,1])
-							if (NodeOfFoooter.IsSuccessful) {
-								let LastNode = [...NodeOfFoooter.OutputNode.childNodes].at(-1)
-								let NodeOfFooterDeepest = LastNode
-								NodeOfReplyRepostLikes_Array = [...NodeOfFooterDeepest.childNodes]
+							try {
+								PostTimeStamp = PostDateInfo(Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip)
 								
-							}
-							if (typeof NodeOfReplyRepostLikes_Array[2] != "undefined") { //role="progressbar" - posts not fully loaded
-								ReplyCount = NodeOfReplyRepostLikes_Array[0].textContent //prone to errors
-								RepostCount = NodeOfReplyRepostLikes_Array[1].textContent
-								LikesCount = NodeOfReplyRepostLikes_Array[2].textContent
-							}
+							} catch {}
 							
+							try {
+								PostContent = GetPostContent(Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1], Type)
+							} catch {}
+							
+							try {
+								let Footer = [...Box.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes].at(-1)
+								let ReplyRepostLikes = [...Footer.childNodes]
+								ReplyCount = ReplyRepostLikes[0].textContent
+								RepostCount = ReplyRepostLikes[1].textContent
+								LikesCount = ReplyRepostLikes[2].textContent
+							} catch {}
 						}
 						if (/^Post_/.test(Type)&&(PostURL != "")&&(UserTitle != "")&&(UserHandle != "")) {
 							PostGroup.push({
@@ -1286,55 +1249,32 @@
 			let BoxChildrenNodes = [...PostBox.childNodes] //As far as my testing, these boxes either have no child nodes or one child nodes.
 			if (BoxChildrenNodes.length == 0) {
 				return "NonPost_BlankZone"
-			} else if (BoxChildrenNodes.length == 1) {
-				//Figure out the node tree type of each posts on the post page
-				let NodeToLookAt_ReplyButton = DescendNode(PostBox, [0, 0])
-				let NodeToLookAt_BlankBottom = DescendNode(PostBox, [0])
-				let NodeToLookAt_TimeStampCurrentlyViewedPostTop = DescendNode(PostBox, [0,0,0,1,0,0])
-				let NodeToLookAt_TimeStampCurrentlyViewedPostNotTop = DescendNode(PostBox, [0,1,0,1,0,0,1])
-				let NodeToLookAt_TimeStampOtherThanCurrentPost = DescendNode(PostBox, [0,0,0,1,1,0,2])
-				let IdentifiedType = ""
-				if (PostBox.textContent == "Deleted post.") {
-					return "DeletedPost"
-				}
-				if (NodeToLookAt_ReplyButton.LevelsPassed == 2) {
-					if (NodeToLookAt_ReplyButton.OutputNode.tagName == "BUTTON") {
-						return "NonPost_ReplyButton"
-					}
-				}
-				if (NodeToLookAt_BlankBottom.LevelsPassed == 1) {
-					if (NodeToLookAt_BlankBottom.OutputNode.innerHTML == "") {
-						return "NonPost_BlankBottom"
-					}
-				}
-				if ((NodeToLookAt_TimeStampCurrentlyViewedPostTop.LevelsPassed == 6)&&(!NodeToLookAt_TimeStampOtherThanCurrentPost.IsSuccessful)) {
-					if (typeof NodeToLookAt_TimeStampCurrentlyViewedPostTop.OutputNode.dataset != "undefined") {
-						let IsPotentialAhref = [...NodeToLookAt_TimeStampCurrentlyViewedPostTop.OutputNode.getElementsByTagName("a")].find((ArrayElement) => {
-							return ArrayElement.hasAttribute("href")
-						})
-						if (typeof IsPotentialAhref == "undefined"){
-							return "Post_CurrentlyViewed_AtTop"
-						}
-					}
-				}
-				if (NodeToLookAt_TimeStampCurrentlyViewedPostNotTop.LevelsPassed == 7) {
-					let IsPotentialAhref = [...NodeToLookAt_TimeStampCurrentlyViewedPostNotTop.OutputNode.getElementsByTagName("a")].find((ArrayElement) => {
-						return ArrayElement.hasAttribute("href")
-					})
-					if (typeof IsPotentialAhref == "undefined"){
-						return "Post_CurrentlyViewed_NotAtTop"
-					}
-				}
-				if (NodeToLookAt_TimeStampOtherThanCurrentPost.IsSuccessful) {
-					if (typeof NodeToLookAt_TimeStampOtherThanCurrentPost.OutputNode.href != "undefined") {
-						return "Post_NotCurrentlyViewed"
-					}
-				}
-				return "Post_CurrentlyViewed_NotAtTop"
-			} else if (BoxChildrenNodes.length == 2) {
-				return "Post_NotCurrentlyViewed"
 			}
-			return ""
+			let OutputText = ""
+			let DateString = ""
+			try {
+				DateString = PostBox.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[0].textContent
+				if (DateString != "") {
+					OutputText = "Post_CurrentlyViewed_AtTop"
+				}
+			} catch {}
+			if (DateString == "") {
+				try {
+					DateString = PostBox.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
+					if (DateString != "") {
+						OutputText = "Post_NotCurrentlyViewed"
+					}
+				} catch {}
+			}
+			if (DateString == "") {
+				try {
+					DateString = PostBox.childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[0].textContent
+					if (DateString != "") {
+						OutputText = "Post_CurrentlyViewed_NotAtTop"
+					}
+				} catch {}
+			}
+			return OutputText
 		}
 		function PostDateInfo(StringTimestamp) {
 			if (typeof StringTimestamp == "undefined") {
@@ -1393,7 +1333,8 @@
 			PostContent.Segments = []
 			PostSegments.forEach((PostSegment, PostSegmentIndex) => {
 				//one or two segments, if there are 2, the second may contain many sub-compartments
-				if (PostSegmentIndex == 0 && [...PostSegment.querySelectorAll("img, video, button")].length == 0 && (!/^\s*$/.test(PostSegment.textContent))) {
+				
+				if (PostSegmentIndex == 0 && [...PostSegment.querySelectorAll("img, video")].length == 0 && (!/^\s*$/.test(PostSegment.textContent))) {
 					//Plaintext at the top of the post
 					let Output = {
 						Type: "Text",
@@ -1542,7 +1483,6 @@
 					OutputObject.Type = "Media"
 					OutputObject.Content = GetMediaURLs(EmbedPart)
 				}
-				let a = 0
 				EmbeddedContent.Contents.PostContent.Segments.push(OutputObject)
 			})
 			
