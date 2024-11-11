@@ -394,10 +394,19 @@
 								let RepostCount = ""
 								let LikesCount = ""
 
-								let Post = BoxListingPosts[i]
+								let Post = BoxListingPosts[i] //Post reference
 								FullyLoaded = true
 
-								if (Post.textContent != "View full thread") {
+								let IsViewFullThreadSeperator = false
+								try {
+									Post.childNodes[0].childNodes[0].childNodes[2].childNodes[1].childNodes[0].childNodes[2].dataset.tooltip
+								} catch {
+									if (Post.textContent == "View full thread") {
+										IsViewFullThreadSeperator = true
+									}
+								}
+
+								if (!IsViewFullThreadSeperator) {
 									//Link to post
 									{
 										try {
@@ -519,6 +528,9 @@
 												IsCurrentPostURL: IsCurrentPostURL,
 												IsViewFullThread: false
 											},
+											MiscInfo: {
+												PostFullyLoaded: FullyLoaded
+											},
 											ReplyToURL: ReplyToURL,
 											RepliesURLs: RepliesURLs,
 											UserTitle: UserTitle,
@@ -543,7 +555,7 @@
 									})
 								}
 							}
-							//Now fill out the reply to and from that are inside a box (connect them)
+							//Now fill out the reply to and from that are inside a box (Connect replies)
 							let PostGroupLengthCache = PostGroup.length
 							for (let i = 0; i < PostGroupLengthCache; i++) {
 								if (PostGroup[i].ReplyConnections.PostHasRepliesLineBelow && (!PostGroup[i].ReplyConnections.IsViewFullThread)) {
@@ -826,6 +838,9 @@
 									IsCurrentPostURL: IsCurrentPostURL,
 									Type: Type
 								},
+								MiscInfo: {
+									PostFullyLoaded: FullyLoaded
+								},
 								ReplyToURL: ReplyToURL,
 								RepliesURLs: RepliesURLs,
 								UserTitle: UserTitle,
@@ -841,35 +856,35 @@
 						}
 					})
 					//Connect replies
-					let PostGroupLengthCache = PostGroup.length
-					let IndexOfPostCurrentlyViewed = -1
-					//^Will be an index value representing the currently viewd post (the one without the a href that you just clicked on)
-					// Any posts below it lacking a line pointing upwards are replies to that post
-					for (let i = 0; i < PostGroupLengthCache; i++) {
-						if (/^Post_CurrentlyViewed/.test(PostGroup[i].ReplyConnections.Type)) {
-							IndexOfPostCurrentlyViewed = i
-						}
-						if ((!PostGroup[i].ReplyConnections.PostIsAReplyLineToAbove) && (i > IndexOfPostCurrentlyViewed) && (IndexOfPostCurrentlyViewed >= 0)) {
-							if (!PostGroup[IndexOfPostCurrentlyViewed].RepliesURLs.includes(PostGroup[i].PostURL)) {
-								PostGroup[IndexOfPostCurrentlyViewed].RepliesURLs.push(PostGroup[i].PostURL) //Add a reply (without the line pointing upwards) to currently viewed post
+						let PostGroupLengthCache = PostGroup.length
+						let IndexOfPostCurrentlyViewed = -1
+						//^Will be an index value representing the currently viewd post (the one without the a href that you just clicked on)
+						// Any posts below it lacking a line pointing upwards are replies to that post
+						for (let i = 0; i < PostGroupLengthCache; i++) {
+							if (/^Post_CurrentlyViewed/.test(PostGroup[i].ReplyConnections.Type)) {
+								IndexOfPostCurrentlyViewed = i
 							}
-							if (PostGroup[i].ReplyToURL == "") {
-								PostGroup[i].ReplyToURL = PostGroup[IndexOfPostCurrentlyViewed].PostURL //In reply to a post above
+							if ((!PostGroup[i].ReplyConnections.PostIsAReplyLineToAbove) && (i > IndexOfPostCurrentlyViewed) && (IndexOfPostCurrentlyViewed >= 0)) {
+								if (!PostGroup[IndexOfPostCurrentlyViewed].RepliesURLs.includes(PostGroup[i].PostURL)) {
+									PostGroup[IndexOfPostCurrentlyViewed].RepliesURLs.push(PostGroup[i].PostURL) //Add a reply (without the line pointing upwards) to currently viewed post
+								}
+								if (PostGroup[i].ReplyToURL == "") {
+									PostGroup[i].ReplyToURL = PostGroup[IndexOfPostCurrentlyViewed].PostURL //In reply to a post above
+								}
 							}
-						}
-						if (PostGroup[i].ReplyConnections.PostHasRepliesLineBelow) {
-							if (i+1 < PostGroupLengthCache) {
-								if (PostGroup[i+1].ReplyConnections.PostIsAReplyLineToAbove) {
-									if (!PostGroup[i].RepliesURLs.includes(PostGroup[i+1].PostURL)) {
-										PostGroup[i].RepliesURLs.push(PostGroup[i+1].PostURL) //Current post has reply
-									}
-									if (PostGroup[i+1].ReplyToURL == "") {
-										PostGroup[i+1].ReplyToURL = PostGroup[i].PostURL //In reply to a post above
+							if (PostGroup[i].ReplyConnections.PostHasRepliesLineBelow) {
+								if (i+1 < PostGroupLengthCache) {
+									if (PostGroup[i+1].ReplyConnections.PostIsAReplyLineToAbove) {
+										if (!PostGroup[i].RepliesURLs.includes(PostGroup[i+1].PostURL)) {
+											PostGroup[i].RepliesURLs.push(PostGroup[i+1].PostURL) //Current post has reply
+										}
+										if (PostGroup[i+1].ReplyToURL == "") {
+											PostGroup[i+1].ReplyToURL = PostGroup[i].PostURL //In reply to a post above
+										}
 									}
 								}
 							}
 						}
-					}
 					ListOfPosts.push(...PostGroup)
 				} else if (/https:\/\/bsky\.app\/search/.test(window.location.href)) { //Search page
 					UserPostArea = GetPostBoxesByLink(9)
@@ -940,6 +955,9 @@
 								ListOfPosts.push({
 									RepostedByUserTitle: RepostedByUserTitle,
 									PostURL: PostURL,
+									MiscInfo: {
+										PostFullyLoaded: FullyLoaded
+									},
 									ReplyToURL: ReplyToURL,
 									RepliesURLs: RepliesURLs,
 									UserTitle: UserTitle,
@@ -961,7 +979,15 @@
 						HaveAlertedUnreconizedURL = true
 					}
 				}
-				let ListOfPosts_Clean = ListOfPosts.map((ArrayElement) => { //Have a version without ReplyConnections attribute since we do not need it if we are just looking at posts
+				ListOfPosts = ListOfPosts.filter(ArrayElement => ArrayElement.MiscInfo.PostFullyLoaded)
+					//^Remove any posts not fully loaded (i.e videos that disappeared when scrolled offscreen)
+					// Reason for the exclusion of posts happening here rather than anywhere before connecting replies
+					// is to prevent reply connections from erroneously connecting to posts that aren't adjacent when there is a post
+					// containing a video in between. For example: Post A is posted, then post B as a reply to A, then C as a reply to B.
+					// Post B contains a video, if we exclude B before connecting replies, we end up connecting C to A, incorrectly stating
+					// that C is a reply to A.
+				let ListOfPosts_Clean = ListOfPosts.map(ArrayElement => {
+					//Have a version without ReplyConnections attribute and the misc informationsince we do not need it if we are just looking at posts
 					return {
 						RepostedByUserTitle: ArrayElement.RepostedByUserTitle,
 						ReplyToUserTitle: ArrayElement.ReplyToUserTitle,
