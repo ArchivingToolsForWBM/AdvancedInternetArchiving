@@ -82,6 +82,10 @@
 			UpdateSavedValues()
 
 			let ID_TimeoutScrapeContent = 0
+		//Misc
+			let FullyLoaded = false
+			//Bsky videos will be removed off the DOM when scrolled offscreen, this is to prevent
+			//this script from overwriting a post in the array with a lesser-loaded data.
 		//Run code
 			//Code that spawns the UI on the bottom right
 				setTimeout(LoadScrapeUI, 1500)
@@ -391,6 +395,7 @@
 								let LikesCount = ""
 
 								let Post = BoxListingPosts[i]
+								FullyLoaded = true
 
 								if (Post.textContent != "View full thread") {
 									//Link to post
@@ -503,7 +508,7 @@
 											alert("Failed to extract reply repost and likes bar")
 										}
 									}
-									if ((PostURL != "")&&(UserTitle != "")&&(UserHandle != "")) {
+									if ((PostURL != "")&&(UserTitle != "")&&(UserHandle != "")&&(FullyLoaded)) {
 										PostGroup.push({
 											RepostedByUserTitle: RepostedByUserTitle,
 											ReplyToUserTitle: ReplyToUserTitle,
@@ -686,7 +691,8 @@
 						let ReplyCount = ""
 						let RepostCount = ""
 						let LikesCount = ""
-
+						
+						FullyLoaded = true
 						if (Type == "Post_CurrentlyViewed_AtTop") {
 							PostURL = window.location.href
 							if (/https:\/\/bsky\.app\/profile\/did:plc/.test(PostURL)) { //"View full thread" button is clicked, goes to a handle-less version of a post URL
@@ -810,7 +816,7 @@
 								LikesCount = ReplyRepostLikes[2].textContent
 							} catch {}
 						}
-						if (/^Post_/.test(Type)&&(PostURL != "")&&(UserTitle != "")&&(UserHandle != "")) {
+						if (/^Post_/.test(Type)&&(PostURL != "")&&(UserTitle != "")&&(UserHandle != "")&&(FullyLoaded)) {
 							PostGroup.push({
 								RepostedByUserTitle: RepostedByUserTitle,
 								PostURL: PostURL,
@@ -883,7 +889,8 @@
 							let ReplyCount = ""
 							let RepostCount = ""
 							let LikesCount = ""
-
+							
+							FullyLoaded = true
 							//Post.childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[2].href
 							PostURL = DescendNode(Post, [0,0,1,0,2]).OutputNode.href
 
@@ -1420,6 +1427,9 @@
 									FlaggedText: Attachment.textContent
 								})
 							}
+						} else {
+							//Failsafe - videos completely removed off the dom when scrolled far enough offscreen
+							FullyLoaded = false
 						}
 					})
 					PostContent.Segments.push(Output)
