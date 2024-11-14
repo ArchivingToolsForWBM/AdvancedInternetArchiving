@@ -337,7 +337,7 @@
 				let ListOfPosts = [] //List of each individual posts
 				if (/https:\/\/bsky\.app\/(?:profile\/(?:[a-zA-Z\d\-]+\.)+(?:[a-zA-Z\d\-]+)\/?)?$/.test(window.location.href)) { //profile/front page
 					//First, find an a href link to a profile as a reference. We get the lowest node that at least has all the posts on the page
-					UserPostArea = GetPostBoxesByLink(11)
+					UserPostArea = GetPostBoxesByProfile()
 
 					//"UserPostArea" will now contain "boxes" that may either be a horizontal line, containing 1 or 2 posts (2 if it has replies, with a vertical line between 2 avatars)
 					UserPostArea.forEach((Box, BoxIndex) => { // Loop each box
@@ -1120,6 +1120,24 @@
 				return true
 			});
 			return BoxList
+		}
+		function GetPostBoxesByProfile() {
+			let ProfileTabs = document.querySelector('div[data-testid="profilePager"]')
+			ProfileTabs = [...ProfileTabs.childNodes[0].childNodes[0].childNodes]
+			SelectedTab = ProfileTabs.findIndex(SelectedTab => {
+				let BorderBottomText = getComputedStyle(SelectedTab.childNodes[0]).borderBottom
+				return (!/^3px solid rgba\(0, 0, 0, 0\)/.test(BorderBottomText))
+			})
+			if (SelectedTab == -1) {
+				alert("Profile tab layout must have been changed")
+			}
+			let TabToIndex = {
+				Posts: 0,
+				Replies: 1,
+				Media: 2
+			}
+			let CurrentTabHighlighted = [...document.querySelectorAll('div[data-testid="postsFeed-flatlist"]')][SelectedTab]
+			return [...CurrentTabHighlighted.childNodes[1].childNodes]
 		}
 		function GetNodeByFooterTimestamp(Levels) {
 			let ListOfElements = [...document.getElementsByTagName("DIV")]
