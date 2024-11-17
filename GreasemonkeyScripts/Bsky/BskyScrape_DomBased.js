@@ -1440,6 +1440,14 @@
 									}
 								}
 							} catch {}
+							if (LinkPreviewNode == null) {
+								try {
+									let Link = Attachment.querySelector("a")
+									if (!(/^https:\/\/bsky\.app\/profile\//.test(Link.href))) {
+										LinkPreviewNode = Link
+									}
+								} catch {}
+							}
 
 						if ([...Attachment.querySelectorAll("img, video, a")].length != 0 && /^(?:ALT)*$/.test(Attachment.textContent)) {
 							//Media
@@ -1494,7 +1502,7 @@
 				try {
 					Image = Part.childNodes[0].childNodes[0].src
 					if (Setting_PostImageFullRes) {
-						Image = Image.replace(/https?:\/\/cdn\.bsky\.app\/img\/feed_thumbnail/, "https://cdn.bsky.app/img/feed_fullsize")
+						Image = FullResConvert(Image)
 					}
 					OutputLinkPreview.Content.push({
 						Type: "PreviewImage",
@@ -1503,7 +1511,7 @@
 				} catch {}
 				if (!/^\s*$/.test(Part.textContent)) {
 					let TextPartDivs = [...Part.querySelectorAll("div")]
-					TextPartDivs= TextPartDivs.filter(Ele => {
+					TextPartDivs = TextPartDivs.filter(Ele => {
 						if (/^\s*$/.test(Ele.textContent)) {
 							return false
 						}
