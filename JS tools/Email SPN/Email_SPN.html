@@ -73,54 +73,54 @@
 			<hr>
 			<table>
 				<tr><th colspan="2">Statistics</th></tr>
-				<tr>
+				<tr style="font-family: monospace">
 					<td>Total URLs found:</td>
-					<td><kbd><span id="Statistic_NumberOfItems_TotalURLs">0</span></kbd></td>
+					<td id="Statistic_NumberOfItems_TotalURLs" class="Stat"></td>
 				</tr>
-				<tr>
+				<tr style="font-family: monospace">
 					<td>How many displayed after filtered:</td>
-					<td id="StatisticPercentage_NumberOfItems_RemainingAfterFilter" class="Stat"><kbd><span id="Statistic_NumberOfItems_RemainingAfterFilter">0</span></kbd></td>
+					<td id="Statistic_NumberOfItems_RemainingAfterFilter" class="Stat"></td>
 				</tr>
-				<tr>
+				<tr style="font-family: monospace">
 					<td>How many were removed from filter:</td>
-					<td id="StatisticPercentage_NumberOfItems_RemovedAfterFilter" class="Stat"><kbd><span id="Statistic_NumberOfItems_RemovedAfterFilter">0</span></kbd></td>
+					<td id="Statistic_NumberOfItems_RemovedAfterFilter" class="Stat"></td>
 				</tr>
 				<tr><th colspan="2">Classification stats</th></tr>
-				<tr>
-					<td><kbd>Success_SavedBefore</kbd></td>
-					<td id="StatisticPercentage_NumberOfItems_Success_SavedBefore" class="Stat"><kbd><span id="Statistic_NumberOfItems_Success_SavedBefore">0</span></kbd></td>
+				<tr style="font-family: monospace">
+					<td>Success_SavedBefore</td>
+					<td id="Statistic_NumberOfItems_Success_SavedBefore" class="Stat"></td>
 				</tr>
-				<tr>
-					<td><kbd>Success_FirstArchive</kbd></td>
-					<td id="StatisticPercentage_NumberOfItems_Success_FirstArchive" class="Stat"><kbd><span id="Statistic_NumberOfItems_Success_FirstArchive">0</span></kbd></td>
+				<tr style="font-family: monospace">
+					<td>Success_FirstArchive</td>
+					<td id="Statistic_NumberOfItems_Success_FirstArchive" class="Stat"></td>
 				</tr>
-				<tr>
-					<td><kbd>Unsure_Error</kbd></td>
-					<td id="StatisticPercentage_NumberOfItems_Unsure_Error" class="Stat"><kbd><span id="Statistic_NumberOfItems_Unsure_Error">0</span></kbd></td>
+				<tr style="font-family: monospace">
+					<td>Unsure_Error</td>
+					<td id="Statistic_NumberOfItems_Unsure_Error" class="Stat"></td>
 				</tr>
-				<tr>
-					<td><kbd>Unsure_NoMatch</kbd></td>
-					<td id="StatisticPercentage_NumberOfItems_Unsure_NoMatch" class="Stat"><kbd><span id="Statistic_NumberOfItems_Unsure_NoMatch">0</span></kbd></td>
+				<tr style="font-family: monospace">
+					<td>Unsure_NoMatch</td>
+					<td id="Statistic_NumberOfItems_Unsure_NoMatch" class="Stat"></td>
 				</tr>
 					<tr><th colspan="2">Classification totals</th></tr>
-				<tr>
-					<td><kbd>Success</kbd></td>
-					<td id="StatisticPercentage_NumberOfItems_Success_Total" class="Stat"><kbd><span id="Statistic_NumberOfItems_Success_Total">0</span></kbd></td>
+				<tr style="font-family: monospace">
+					<td>Success</td>
+					<td id="Statistic_NumberOfItems_Success_Total" class="Stat"></td>
 				</tr>
-				<tr>
-					<td><kbd>Unsure</kbd></td>
-					<td id="StatisticPercentage_NumberOfItems_Unsure_Total" class="Stat"><kbd><span id="Statistic_NumberOfItems_Unsure_Total">0</span></kbd></td>
+				<tr style="font-family: monospace">
+					<td>Unsure</td>
+					<td id="Statistic_NumberOfItems_Unsure_Total" class="Stat"></td>
 				</tr>
 				<tr>
 					<th colspan="2">Date range</th>
 				</tr>
-				<tr>
+				<tr style="font-family: monospace">
 					<td>Earliest archive date:</td>
-					<td style="text-align: center;"><kbd id="StatisticDate_Earliest">?</kbd></td>
+					<td id="StatisticDate_Earliest" style="text-align: center;"></td>
 				</tr>
-				<tr>
+				<tr style="font-family: monospace">
 					<td>Latest archive date:</td>
-					<td style="text-align: center;"><kbd id="StatisticDate_Latest">?</kbd></td>
+					<td id="StatisticDate_Latest" style="text-align: center;"></td>
 				</tr>
 			</table><br>
 			<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="Textarea_EnteredURLResult" cols="100" rows="30" readonly></textarea><br>
@@ -139,15 +139,40 @@
 </table>
 
 <script>
+//Settings
+	const Setting_PercentagePrecision = 2
+//Don't touch
 	let InputChanged = false
 	
-	let Count_Success_SavedBefore = 0
-	let Count_Success_FirstArchive = 0
-	let Count_Unsure_Error = 0
-	let Count_Unsure_NoMatch = 0
+	let SaveStatusTypeList = {}
+	let SaveStatusDateRange = {}
 	
-	let Date_Earliest = "?"
-	let Date_Latest = "?"
+	let ListOfURLs = []
+	let ListOfWBMResult = []
+	
+	ResetStatisticCounts()
+	
+	
+	function ResetStatisticCounts() {
+		SaveStatusTypeList = {
+			Success_SavedBefore: {Color: "#008000"},
+			Success_FirstArchive: {Color: "#00C000"},
+			Unsure_Error: {Color: "#800000"},
+			Unsure_NoMatch: {Color: "#808000"},
+		}
+		Object.entries(SaveStatusTypeList).forEach(Item => Item[1].Count = 0) //Add a counter on each type
+		SaveStatusDateRange = {
+			Earliest: "?",
+			Latest: "?"
+		};
+		//Clear displayed info;
+		[...document.querySelectorAll("td")].filter(TableCell => /^Statistic_NumberOfItems_/.test(TableCell.id)).forEach(TableCell => {
+			TableCell.textContent = ""
+			TableCell.style.backgroundImage = ""
+		})
+		document.getElementById("StatisticDate_Earliest").textContent = ""
+		document.getElementById("StatisticDate_Latest").textContent = ""
+	}
 	
 	function NotifyInputChanged() {
 		InputChanged = true
@@ -177,18 +202,9 @@
 			WBMResultList:[]
 		}
 		function MainFunction() {
-			let ListOfURLs = []
-			let ListOfWBMResult = []
 			document.getElementById("URLsToWBMResultRatioMismatchWarning").textContent = ""
 			if (InputChanged) {
-				Count_Success_SavedBefore = 0
-				Count_Success_FirstArchive = 0
-				Count_Unsure_Error = 0
-				Count_Unsure_NoMatch = 0
-				
-				Date_Earliest = "?"
-				Date_Latest = "?"
-				
+				ResetStatisticCounts()
 				OutputList.InputURLList = []
 				OutputList.WBMResultList = []
 				
@@ -213,11 +229,11 @@
 					let Timestamp = "?"
 					if (/^https:\/\/web\.archive\.org\/web\/\d{14}/.test(ArrayElement)) {
 						Timestamp = ArrayElement.replace(/^https:\/\/web\.archive\.org\/web\/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2}).*$/, "$1-$2-$3 $4:$5:$6")
-						if ((Timestamp < Date_Earliest)||(Date_Earliest == "?")) { //If there is an earlier timestamp than the earliest OR we newly found a given timestamp the first time, set it to it
-							Date_Earliest = Timestamp
+						if ((Timestamp < SaveStatusDateRange.Earliest)||(SaveStatusDateRange.Earliest == "?")) { //If there is an earlier timestamp than the earliest OR we newly found a given timestamp the first time, set it to it
+							SaveStatusDateRange.Earliest = Timestamp
 						}
-						if ((Timestamp > Date_Latest)||(Date_Latest == "?")) { //If there is an later timestamp than the timestamp OR we newly found a given timestamp the first time, set it to it
-							Date_Latest = Timestamp
+						if ((Timestamp > SaveStatusDateRange.Latest)||(SaveStatusDateRange.Latest == "?")) { //If there is an later timestamp than the timestamp OR we newly found a given timestamp the first time, set it to it
+							SaveStatusDateRange.Latest = Timestamp
 						}
 					}
 					
@@ -249,7 +265,7 @@
 						return false
 					})
 					if (MatchedWBMResultIndex == -1) { //If it finds none that matches, count how many failed to match
-						Count_Unsure_NoMatch++
+						return
 					} else {
 						MatchedWBMResultItem = ListOfWBMResult[MatchedWBMResultIndex]
 
@@ -262,21 +278,16 @@
 						EnteredURL.StatusMessage = MatchedWBMResultItem.Result
 						if (HasErrored&&(HasWBMSubstring==false)) { //If error, it should not have the WBM part of the URL and have the "Error!".
 							EnteredURL.StatusType = "Unsure_Error"
-							EnteredURL.StatusColor = "#800000"
-							Count_Unsure_Error++
 						} else if (/.*First Archive.*/.test(EnteredURL.StatusMessage)&&HasWBMSubstring&&(HasErrored==false)){ //If success, it must have the WBM part of the URL AND not have an "Error!" as a failsafe.
 							EnteredURL.StatusType = "Success_FirstArchive"
-							EnteredURL.StatusColor = "#00C000"
-							Count_Success_FirstArchive++
 						} else if (HasWBMSubstring&&(HasErrored==false)){
 							EnteredURL.StatusType = "Success_SavedBefore"
-							EnteredURL.StatusColor = "#008000"
-							Count_Success_SavedBefore++
 						}
-					
 					}
 				
 				})
+				//Count the stats
+				ListOfURLs.forEach(EnteredURLs => SaveStatusTypeList[EnteredURLs.StatusType].Count++)
 
 				//Finished processing, save them to a list for optimization purposes
 				OutputList.InputURLList = ListOfURLs
@@ -288,7 +299,13 @@
 				ListOfWBMResult = OutputList.WBMResultList
 			}
 			//Display
-			let Count_Success_Total = Count_Success_FirstArchive + Count_Success_SavedBefore
+			
+			if (ListOfURLs.length == 0) {
+				ClearOutput()
+				return
+			}
+			
+			let Count_Success_Total = SaveStatusTypeList.Success_FirstArchive.Count + SaveStatusTypeList.Success_SavedBefore.Count
 			if (Count_Success_Total == ListOfURLs.length && (ListOfURLs.length != 0)) {
 				document.getElementById("AllSavedIndicator").hidden = false
 			} else {
@@ -301,32 +318,34 @@
 
 			document.getElementById("Statistic_NumberOfItems_TotalURLs").textContent = BigInt(ListOfURLs.length).toString(10)
 			
-			document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").textContent  = BigInt(Filtered_ListOfURLs.length).toString(10) + " (" + BetterPercentageUsingInts(Filtered_ListOfURLs.length, ListOfURLs.length, 2, true) +")"
-			document.getElementById("StatisticPercentage_NumberOfItems_RemainingAfterFilter").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Filtered_ListOfURLs.length, ListOfURLs.length, "to right", "#0000ff", "#000000")
+			document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").textContent  = BigInt(Filtered_ListOfURLs.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Filtered_ListOfURLs.length, MaxQuantity: ListOfURLs.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision}) + ")"
+			document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Filtered_ListOfURLs.length, MaxQuantity: ListOfURLs.length, Direction: "to right", ColorFull: "#0000ff"})
 			
-			document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").textContent  = BigInt(ListOfURLs.length - Filtered_ListOfURLs.length).toString(10) + " (" + BetterPercentageUsingInts(ListOfURLs.length - Filtered_ListOfURLs.length, ListOfURLs.length, 2, true) +")"
-			document.getElementById("StatisticPercentage_NumberOfItems_RemovedAfterFilter").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(ListOfURLs.length - Filtered_ListOfURLs.length, ListOfURLs.length, "to right", "#0000ff", "#000000")
+			document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").textContent  = BigInt(ListOfURLs.length - Filtered_ListOfURLs.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: ListOfURLs.length - Filtered_ListOfURLs.length, MaxQuantity: ListOfURLs.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision}) +")"
+			document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: ListOfURLs.length - Filtered_ListOfURLs.length, MaxQuantity: ListOfURLs.length, Direction: "to right", ColorFull: "#0000ff"})
 
-			document.getElementById("Statistic_NumberOfItems_Success_SavedBefore").textContent  = BigInt(Count_Success_SavedBefore).toString(10) + " (" + BetterPercentageUsingInts(Count_Success_SavedBefore, ListOfURLs.length, 2, true) +")"
-			document.getElementById("StatisticPercentage_NumberOfItems_Success_SavedBefore").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_SavedBefore, ListOfURLs.length, "to right", "#008000", "#000000")
+			let GreyIfZeroItems = ["#808080", "#FFFFFF"]
+			Object.entries(SaveStatusTypeList).forEach(Status => {
+				let StatusName = Status[0]
+				let StatusCount = Status[1].Count
+				let StatusColor = Status[1].Color
+				
+				document.getElementById("Statistic_NumberOfItems_" + StatusName).textContent = BigInt(StatusCount).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: StatusCount, MaxQuantity: ListOfURLs.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
+				document.getElementById("Statistic_NumberOfItems_" + StatusName).style.backgroundImage = CSSLinearGradientProgressBar({Quantity: StatusCount, MaxQuantity: ListOfURLs.length, Direction: "to right", ColorFull: StatusColor, ColorEmpty: "#000000"})
+				let GreyIfZeroIndex = Number(StatusCount != 0)
+				document.getElementById("Statistic_NumberOfItems_" + StatusName).style.color = GreyIfZeroItems[GreyIfZeroIndex]
+			})
 
-			document.getElementById("Statistic_NumberOfItems_Success_FirstArchive").textContent  = BigInt(Count_Success_FirstArchive).toString(10) + " (" + BetterPercentageUsingInts(Count_Success_FirstArchive, ListOfURLs.length, 2, true) +")"
-			document.getElementById("StatisticPercentage_NumberOfItems_Success_FirstArchive").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_FirstArchive, ListOfURLs.length, "to right", "#00C000", "#000000")
+			document.getElementById("Statistic_NumberOfItems_Success_Total").textContent  = BigInt(Count_Success_Total).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Success_Total, MaxQuantity: ListOfURLs.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision}) +")"
+			document.getElementById("Statistic_NumberOfItems_Success_Total").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_Success_Total, MaxQuantity: ListOfURLs.length, Direction: "to right", ColorFull: "#0000ff"})
 
-			document.getElementById("Statistic_NumberOfItems_Unsure_Error").textContent  = BigInt(Count_Unsure_Error).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Error, ListOfURLs.length, 2, true) +")"
-			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Error").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Error, ListOfURLs.length, "to right", "#800000", "#000000")
-
-			document.getElementById("Statistic_NumberOfItems_Unsure_NoMatch").textContent  = BigInt(Count_Unsure_NoMatch).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_NoMatch, ListOfURLs.length, 2, true) +")"
-			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_NoMatch").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_NoMatch, ListOfURLs.length, "to right", "#808000", "#000000")
-
-			document.getElementById("Statistic_NumberOfItems_Success_Total").textContent  = BigInt(Count_Success_Total).toString(10) + " (" + BetterPercentageUsingInts(Count_Success_Total, ListOfURLs.length, 2, true) +")"
-			document.getElementById("StatisticPercentage_NumberOfItems_Success_Total").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Success_Total, ListOfURLs.length, "to right", "#0000ff", "#000000")
-
-			document.getElementById("Statistic_NumberOfItems_Unsure_Total").textContent  = BigInt(Count_Unsure_Error + Count_Unsure_NoMatch).toString(10) + " (" + BetterPercentageUsingInts(Count_Unsure_Error + Count_Unsure_NoMatch, ListOfURLs.length, 2, true) +")"
-			document.getElementById("StatisticPercentage_NumberOfItems_Unsure_Total").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Unsure_Error + Count_Unsure_NoMatch, ListOfURLs.length, "to right", "#0000ff", "#000000")
+			//Unsure totals
+			let Count_Unsure_Total = SaveStatusTypeList.Unsure_Error.Count + SaveStatusTypeList.Unsure_NoMatch.Count
+			document.getElementById("Statistic_NumberOfItems_Unsure_Total").textContent  = BigInt(Count_Unsure_Total).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Unsure_Total, MaxQuantity: ListOfURLs.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision}) +")"
+			document.getElementById("Statistic_NumberOfItems_Unsure_Total").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_Unsure_Total, MaxQuantity: ListOfURLs.length, Direction: "to right", ColorFull: "#0000ff"})
 			
-			document.getElementById("StatisticDate_Earliest").textContent  = Date_Earliest
-			document.getElementById("StatisticDate_Latest").textContent  = Date_Latest
+			document.getElementById("StatisticDate_Earliest").textContent  = SaveStatusDateRange.Earliest
+			document.getElementById("StatisticDate_Latest").textContent  = SaveStatusDateRange.Latest
 			let SortDirection = 1
 			if (document.getElementById("Sort_Output_Reverse").checked) {
 				SortDirection = -1
@@ -444,13 +463,21 @@
 			}
 		}
 	}
-	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec, Clamped) {
+	function ClearOutput() {
+		ResetStatisticCounts()
+		let OutputTable = document.getElementById("Output_table")
+		while (OutputTable.lastElementChild) {
+			OutputTable.removeChild(OutputTable.lastElementChild);
+		}
+		document.getElementById("Textarea_EnteredURLResult").value = ""
+	}
+	function DisplayIntOutOfIntAsPercentageText({Quantity = 0, MaxQuantity = 100, NumberOfDigitsAfterDec = 2, Clamped = true}) {
 		//Quantity = Amount in relation of MaxQuantity
 		//MaxQuantity = Total
 		//Clamped = (boolean): false = allow greater than 100%, true = only 0%-100% will display.
-		//This function calculates a percentage of a value (must be bigint), and returns a
+		//This function calculates a percentage of a value (will be bigint), and returns a
 		//string representing a percentage using fixed-point arithmetic (https://en.wikipedia.org/wiki/Fixed-point_arithmetic ).
-		//Unlike a typical Quantity*100/MaxQuantity (or Quantity / MaxQuantity * 100)
+		//Unlike a typical Quantity*100/MaxQuantity (or Quantity / MaxQuantity * 100) in double-precision, which rounds based on binary.
 		//This also reports if rounding to 0 or 100% have occurred.
 		//Note: Don't use negative or decimal numbers for any of the parameters!
 		
@@ -550,14 +577,14 @@
 			return WholeNumberPart + "." + DecimalPart + "%"
 		}
 	}
-	function CSSBackgroundImageLinearGradiantPercentageBarGraph(Quantity, MaxQuantity, Direction, Color_Full, Color_Empty) {
+	function CSSLinearGradientProgressBar({Quantity = 0, MaxQuantity = 100, Direction = "to right", ColorFull = "#C0C0C0", ColorEmpty = "#000000"}) {
 		//Returns a percentage displayed as a gradient representing a bar graph as CSS. Preferably as a background image.
 		let Percentage = 0
 		if (MaxQuantity != 0) {
 			Percentage = Quantity * 100/MaxQuantity //Multiply first so that it only rounds at the last step, minimizing rounding errors.
 		}
 		Percentage = clamp(Percentage, 0, 100)
-		return "linear-gradient("+Direction+", "+Color_Full+" "+Percentage+"%, "+Color_Empty+" "+Percentage+"% 100%)"
+		return "linear-gradient("+Direction+", "+ColorFull+" "+Percentage.toFixed(17)+"%, "+ColorEmpty+" "+Percentage.toFixed(17)+"% 100%)"
 	}
 	function clamp(num, min, max) {
 		//Restrict a number within a specified range.
