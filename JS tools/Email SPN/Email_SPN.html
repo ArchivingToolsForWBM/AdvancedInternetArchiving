@@ -218,7 +218,6 @@
 						MatchWith:-1, //Will be -1 if no match is found.
 						StatusMessage:"",
 						StatusType:"Unsure_NoMatch",
-						StatusColor:"#808000",
 						Position:Index,
 						Timestamp:"?"
 					}
@@ -409,32 +408,32 @@
 					let Cell_Position = document.createElement("td")
 					Cell_Position.style.fontFamily = "monospace"
 					Cell_Position.style.textAlign = "center"
-					Cell_Position.style.backgroundColor = ArrayElement.StatusColor
+					Cell_Position.style.backgroundColor = SaveStatusTypeList[ArrayElement.StatusType].Color
 					Cell_Position.appendChild(document.createTextNode(BigInt(ArrayElement.Position+1).toString(10)))
 					RowItem.appendChild(Cell_Position)
 					
 					let Cell_URL = document.createElement("td")
 					Cell_URL.style.fontFamily = "monospace"
-					Cell_URL.style.backgroundColor = ArrayElement.StatusColor
+					Cell_URL.style.backgroundColor = SaveStatusTypeList[ArrayElement.StatusType].Color
 					Cell_URL.appendChild(document.createTextNode(ArrayElement.GivenURL))
 					RowItem.appendChild(Cell_URL)
 					
 					let Cell_SaveResult = document.createElement("td")
 					Cell_SaveResult.style.fontFamily = "monospace"
-					Cell_SaveResult.style.backgroundColor = ArrayElement.StatusColor
+					Cell_SaveResult.style.backgroundColor = SaveStatusTypeList[ArrayElement.StatusType].Color
 					Cell_SaveResult.appendChild(document.createTextNode(ArrayElement.StatusMessage))
 					RowItem.appendChild(Cell_SaveResult)
 					
 					let Cell_Timestamp = document.createElement("td")
 					Cell_Timestamp.style.fontFamily = "monospace"
 					Cell_Timestamp.style.whiteSpace = "nowrap"
-					Cell_Timestamp.style.backgroundColor = ArrayElement.StatusColor
+					Cell_Timestamp.style.backgroundColor = SaveStatusTypeList[ArrayElement.StatusType].Color
 					Cell_Timestamp.appendChild(document.createTextNode(ArrayElement.Timestamp))
 					RowItem.appendChild(Cell_Timestamp)
 					
 					let Cell_StatusType = document.createElement("td")
 					Cell_StatusType.style.fontFamily = "monospace"
-					Cell_StatusType.style.backgroundColor = ArrayElement.StatusColor
+					Cell_StatusType.style.backgroundColor = SaveStatusTypeList[ArrayElement.StatusType].Color
 					Cell_StatusType.appendChild(document.createTextNode(ArrayElement.StatusType))
 					RowItem.appendChild(Cell_StatusType)
 					
