@@ -42,14 +42,14 @@
 				Fill the first box with the same list of URLs you sent, and then the second box with the results you received
 				(must be in a similar format as the URLs you sent with one item per line), like so:<br><br>
 				URLs you sent:<br>
-<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="Textarea_Demo_SentURLs">
+<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="Textarea_Demo_SentURLs" readonly>
 https://example.com
 https://exampleFirstArchive.com
 https://exampleRedirectedFromOrMissing.com
 https://exampleError.com</textarea>
 <div><button onclick="setClipboard(document.getElementById('Textarea_Demo_SentURLs').value)">Copy</button><span></span></div><br>
 				Save results you received:<br>
-<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="Textarea_Demo_SaveResults">
+<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="Textarea_Demo_SaveResults" readonly>
 https://web.archive.org/web/20210101000000/https://example.com Seed URL
 https://web.archive.org/web/20210101000000/https://exampleFirstArchive.com First Archive Seed URL
 https://web.archive.org/web/20210101000000/https://exampleRedirectTo.com Seed URL
