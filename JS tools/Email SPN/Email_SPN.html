@@ -31,7 +31,37 @@
 		</style>
 	</head>
 <body>
-
+<details>
+	<summary style="font-weight: bold">How to use</summary>
+	<p>How to use:
+		<ol>
+			<li>Have a text consists of a list of URLs in a way that they have one URL on each line (so each URL is separated by a <a href="https://en.wikipedia.org/wiki/Newline">newline</a> character)</li>
+			<li>Email that list to <kbd>spn.archive.org</kbd> or <kbd>savepagenow@archive.org</kbd> with that text. And wait.</li>
+			<li>
+				Once you got an email back listing the save results, copy the list of URLs you sent and the list of the results onto here.
+				Fill the first box with the same list of URLs you sent, and then the second box with the results you received
+				(must be in a similar format as the URLs you sent with one item per line), like so:<br><br>
+				URLs you sent:<br>
+<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="Textarea_Demo_SentURLs">
+https://example.com
+https://exampleFirstArchive.com
+https://exampleRedirectedFromOrMissing.com
+https://exampleError.com</textarea>
+<div><button onclick="setClipboard(document.getElementById('Textarea_Demo_SentURLs').value)">Copy</button><span></span></div><br>
+				Save results you received:<br>
+<textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="Textarea_Demo_SaveResults">
+https://web.archive.org/web/20210101000000/https://example.com Seed URL
+https://web.archive.org/web/20210101000000/https://exampleFirstArchive.com First Archive Seed URL
+https://web.archive.org/web/20210101000000/https://exampleRedirectTo.com Seed URL
+https://exampleError.com Error! Cannot fetch the target URL due to system overload.</textarea>
+<div><button onclick="setClipboard(document.getElementById('Textarea_Demo_SaveResults').value)">Copy</button><span></span></div><br>
+			
+			</li>
+			<li>You should now have the data extracted from here. By default it removes successfully-saved links and leaves you with failed/redirected links to try again.</li>
+		</ol>
+	
+	</p>
+</details><br>
 
 <label><input type="checkbox" checked id="Option_AutoUpdate" onchange="AutoUpdate()">Auto update</label>
 <table>
@@ -67,9 +97,7 @@
 				<option id="Sort_Output_URLs_Status">By URLs save status flagged</option>
 			</select> <label><input type="checkbox" onchange="AutoUpdate()" disabled id="Sort_Output_Reverse">Reverse</label><br>
 			Other:
-			<ul>
-				<li><label><input type="checkbox" onchange="AutoUpdate()" id="Option_IncludeStatusAsPlaintext">Include save result and status in plaintext</label></li>
-			</ul>
+				<div class="TabbedFilters"><label><input type="checkbox" onchange="AutoUpdate()" id="Option_IncludeStatusAsPlaintext">Include save result and status in plaintext</label></div>
 			<hr>
 			<table>
 				<tr><th colspan="2">Statistics</th></tr>
