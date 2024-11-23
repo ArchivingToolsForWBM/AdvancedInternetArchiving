@@ -671,7 +671,7 @@
 					//First, find an a div containing a timestamp as a reference. We then ascend the nodes to get the lowest node that at least has all the posts.
 					//Reason not to get a "a href" link to post is because if there is only 1 post on the page and it is the post you are directly viewing, then
 					//there is no a href link we can use as a reference to jump a fixed number of hierarchy levels without being in the wrong node.
-					UserPostArea = GetNodeByFooterTimestamp(6)
+					UserPostArea = GetNodeByFooterTimestamp(7)
 
 
 					//"UserPostArea" will now contain "boxes" that contains 0 or 1 posts:
