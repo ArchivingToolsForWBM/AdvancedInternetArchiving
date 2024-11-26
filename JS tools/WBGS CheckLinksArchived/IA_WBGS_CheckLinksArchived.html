@@ -40,6 +40,15 @@
 <table><tr><td><pre>OriginalURL	YES/NO	WBMURL
 OriginalURL	YES/NO	WBMURL
 OriginalURL	YES/NO	WBMURL</pre></td></tr></table>
+
+Example:<br>
+<div>
+<textarea id="SampleInput" readonly style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;">https://example.com	YES	https://web.archive.org/web/20200101000000/https://example.com
+https://exampleNotSaved.com	NO	
+https://exampleRedirected.com	YES	https://web.archive.org/web/20200101000000/https://exampleRedirectedDest.com</textarea><br>
+<button onclick="setClipboard(document.getElementById('SampleInput').value)">Copy</button><span></span>
+</div>
+
 </p>
 <input type="checkbox" onchange="AutoUpdate()" id="AutoUpdate" checked><label for="AutoUpdate">Auto update (note: may be laggy on large number of URLs!)</label><br>
 
