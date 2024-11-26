@@ -16,6 +16,18 @@
 				white-space: nowrap;
 			}
 			input { font-family: monospace;}
+			div.TabbedItems {
+				padding-left: 1rem;
+			}
+			div.TabbedFiltersGroup {
+				padding-top: 1rem;
+				padding-bottom: 1rem;
+				padding-right: 1rem;
+				border: 1px solid white;
+			}
+			td.Stat {
+				min-width: 150px;
+			}
 		</style>
 	</head>
 <body>
@@ -29,117 +41,125 @@
 OriginalURL	YES/NO	WBMURL
 OriginalURL	YES/NO	WBMURL</pre></td></tr></table>
 </p>
-<input type="checkbox" onchange="AutoUpdateCode()" id="AutoUpdate" checked><label for="AutoUpdate">Auto update (note: may be laggy on large number of URLs!)</label><br>
+<input type="checkbox" onchange="AutoUpdate()" id="AutoUpdate" checked><label for="AutoUpdate">Auto update (note: may be laggy on large number of URLs!)</label><br>
 
-<textarea id="InputList" cols="100" rows="30" oninput="SaveStatusesChanged(); AutoUpdateCode()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
+<textarea id="InputList" cols="100" rows="30" oninput="SaveStatusesChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
 Filter:<br>
-<ul>
-	<li>Availability: <button onclick="ChangeFilterSettings('FilterSettings', 1); AutoUpdateCode()">Check All</button><button onclick="ChangeFilterSettings('FilterSettings', 0); AutoUpdateCode()">Uncheck all</button><button onclick="ChangeFilterSettings('FilterSettings', 2); AutoUpdateCode()">Invert</button> <button onclick="FilterByNonSaved(); AutoUpdateCode()">Get only non-archived</button><br>
-		<ul>
-			<li><label><input type="checkbox" onchange="AutoUpdateCode()" class="FilterSettings" checked id="FilterList_Saved" data-savedlist_status_name="Saved">Include URLs that have been saved</label></li>
-			<li><label><input type="checkbox" onchange="AutoUpdateCode()" class="FilterSettings" checked id="FilterList_SavedRedirected" data-savedlist_status_name="SavedRedirected">Include URLs that have been saved and got a different URL.</label></li>
-			<li><label><input type="checkbox" onchange="AutoUpdateCode()" class="FilterSettings" checked id="FilterList_NotSaved" data-savedlist_status_name="NotSaved">Include URLs that haven't been saved</label></li>
-		</ul>
-	</li>
-	<li>Is within a given date range:
-		<ul>
-			<li><abbr title="Inclusive, URLs before this date will be excluded.">Start</abbr>: <input type="date" oninput="AutoUpdateCode()" id="DateRangeStart" onchange="ValidateDateRange()"> <span id="MinDateAppliedState" hidden style="color: #00FF00">Applied</span></li>
-			<li><abbr title="Exclusive, URLs on or after this date will be excluded">End</abbr>: <input type="date" oninput="AutoUpdateCode()" id="DateRangeEnd" onchange="ValidateDateRange()"> <span id="MaxDateAppliedState" hidden style="color: #00FF00">Applied</span></li>
-		</ul>
-	*Any date that is not valid (such as missing year, month and/or day) will not apply its exclusion (example: having just the end date would mean ALL URLs before it will be shown in the output). If you entered a date and wish to invalidate it, use BACKSPACE, when editing the text string (in Google Chrome, make sure the <a href="https://en.wikipedia.org/wiki/Date_picker">date picker</a> isn't present).
-	</li>
-</ul>
+<div class="TabbedFiltersGroup">Availability: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button> <button onclick="FilterByNonSaved()">Not saved</button>
+	<div class="TabbedItems"><label><input type="checkbox" onchange="AutoUpdate()" class="FilterSettings" checked id="FilterList_Saved" data-savedlist_status_name="Saved">Include URLs that have been saved</label></div>
+	<div class="TabbedItems"><label><input type="checkbox" onchange="AutoUpdate()" class="FilterSettings" checked id="FilterList_SavedRedirected" data-savedlist_status_name="SavedRedirected">Include URLs that have been saved and got a different URL.</label></div>
+	<div class="TabbedItems"><label><input type="checkbox" onchange="AutoUpdate()" class="FilterSettings" checked id="FilterList_NotSaved" data-savedlist_status_name="NotSaved">Include URLs that haven't been saved</label></div>
+</div>
+<div class="TabbedFiltersGroup">Is within a given date range:
+	<div class="TabbedItems"><abbr title="Inclusive, URLs before this date will be excluded.">Start</abbr>: <input type="date" oninput="AutoUpdate()" id="DateRangeStart" onchange="ValidateDateRange()"> <span id="MinDateAppliedState" hidden style="color: #00FF00">Applied</span></div>
+	<div class="TabbedItems"><abbr title="Exclusive, URLs on or after this date will be excluded">End</abbr>: <input type="date" oninput="AutoUpdate()" id="DateRangeEnd" onchange="ValidateDateRange()"> <span id="MaxDateAppliedState" hidden style="color: #00FF00">Applied</span></div>
+	
+	<p>*Any date that is not valid (such as missing year, month and/or day) will not apply its exclusion (example: having just the end date would mean ALL URLs before it will be shown in the output). If you entered a date and wish to invalidate it, use BACKSPACE, when editing the text string (in Google Chrome, make sure the <a href="https://en.wikipedia.org/wiki/Date_picker">date picker</a> isn't present).</p>
+</div>
 Misc:
 <p hidden>dev comment: These NEED to call SaveStatusesChanged, which sets IsListOrModeChanged to true, so the system correctly realizes it is in fact a change on treating certain things (http and https for example, have different results depending on the ignore for that) </p>
-<ul>
-	<li><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdateCode()" id="MiscSetting_IgnoreFragment" checked>Ignore </label><a href="https://en.wikipedia.org/wiki/URI_fragment">URI fragment</a><label for="MiscSetting_IgnoreFragment"> (the # and everything after it will be ignored when checking for a match)</label></li>
-	<li><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdateCode()" id="MiscSetting_IgnoreHttpHttpsDifference" checked>Ignore difference between HTTP/HTTPS versions.</label></li>
-</ul>
-Sort:<br>
-<ul>
-<li><label><input type="radio" onchange="AutoUpdateCode()" id="Sort_None" name="SortURLs" checked>Keep the same order you sent</label></li>
-<li><label><input type="radio" onchange="AutoUpdateCode()" id="Sort_Date" name="SortURLs">Sort by date (non-saved URLs are treated as the latest/highest position).</label><label><input type="radio" onchange="AutoUpdateCode()" id="Sort_Date_Reverse" name="SortURLs">Reverse</label></li>
-</ul>
+<div>
+	<div class="TabbedItems"><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" id="MiscSetting_IgnoreFragment" checked>Ignore </label><a href="https://en.wikipedia.org/wiki/URI_fragment">URI fragment</a><label for="MiscSetting_IgnoreFragment"> (the # and everything after it will be ignored when checking for a match)</label></div>
+	<div class="TabbedItems"><label><input type="checkbox" onchange="SaveStatusesChanged(); AutoUpdate()" id="MiscSetting_IgnoreHttpHttpsDifference" checked>Ignore difference between HTTP/HTTPS versions.</label></div>
+</div>
+<div>
+	Sort:<select onchange="DisableReverseOnNoSort()">
+		<option id="Sort_None">None</option>
+		<option id="Sort_Date">Date</option>
+		<option id="Sort_EnteredURLs">Entered URLs</option>
+	</select><label><input type="checkbox" id="Sort_Reverse" onchange="AutoUpdate()" disabled>Reverse</label>
+	<p>Note: when sorting by date, non-saved URLs are treated as the "latest".</p>
+</div>
+
+
+
 <button onclick="Submit()" id="SubmitButton">Submit</button> <span id="InvalidDateMessage" hidden><kbd style='color: #ff0000'>End date is before the start!</kbd></span>
 <hr>
-<span id="Output_Statistics"></span><br>
-<table>
-	<tr><th colspan="2">Statistics</th></tr>
-	<tr>
-		<td>Total URLs:</td>
-		<td><kbd><span id="Statistic_NumberOfItems_TotalURLs">0</span></kbd></td>
-	</tr>
-	<tr>
-		<td>How many displayed after filtered:</td>
-		<td id="StatisticPercentage_NumberOfItems_FilteredRemaining"><kbd><span id="Statistic_NumberOfItems_FilteredRemaining">0</span></kbd></td>
-	</tr>
-	<tr>
-		<td>How many were removed from filter:	</td>
-		<td id="StatisticPercentage_NumberOfItems_FilteredRemoved"><kbd><span id="Statistic_NumberOfItems_FilteredRemoved">0</span></kbd></td>
-	</tr>
-	<tr><th colspan="2">Classification stats</th></tr>
-	<tr>
-		<td><kbd>Saved</kbd></td>
-		<td id="StatisticPercentage_NumberOfItems_Saved"><kbd><span id="Statistic_NumberOfItems_Saved">0</span></kbd></td>
-	</tr>
-	<tr>
-		<td><kbd>SavedRedirected</kbd></td>
-		<td id="StatisticPercentage_NumberOfItems_SavedRedirected"><kbd><span id="Statistic_NumberOfItems_SavedRedirected">0</span></kbd></td>
-	</tr>
-	<tr>
-		<td><kbd>NotSaved</kbd></td>
-		<td id="StatisticPercentage_NumberOfItems_NotSaved"><kbd><span id="Statistic_NumberOfItems_NotSaved">0</span></kbd></td>
-	</tr>
-	<tr><th colspan="2">Timestamp range</th></tr>
-	<tr>
-		<td>Earliest timestamp</td>
-		<td><kbd id="StatisticTimestamp_Earliest">?</kbd></td>
-	</tr>
-	<tr>
-		<td>Latest timestamp</td>
-		<td><kbd id="StatisticTimestamp_Latest">?</kbd></td>
-	</tr>
-</table><br>
-<kbd><span id="TextareaCount">0</span> result(s)</kbd><br>
-<textarea readonly id="Output_List" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
-<div><button onclick="setClipboard(document.getElementById('Output_List').value)">Copy</button><span></span></div>
-<div style="overflow: scroll; height: 600px;border: solid 1px; resize: both;">
-	<span id="Output_table"></span>
+<div id="Output_Valid">
+	<span id="Output_Statistics"></span><br>
+	<table>
+		<tr><th colspan="2">Statistics</th></tr>
+		<tr style="font-family: monospace">
+			<td>Total URLs:</td>
+			<td id="Statistic_NumberOfItems_TotalURLs" class="Stat"></td>
+		</tr>
+		<tr style="font-family: monospace">
+			<td>How many displayed after filtered:</td>
+			<td id="Statistic_NumberOfItems_FilteredRemaining" class="Stat"></td>
+		</tr>
+		<tr style="font-family: monospace">
+			<td>How many were removed from filter:	</td>
+			<td id="Statistic_NumberOfItems_FilteredRemoved" class="Stat"></td>
+		</tr>
+		<tr><th colspan="2">Classification stats</th></tr>
+		<tr style="font-family: monospace">
+			<td><kbd>Saved</kbd></td>
+			<td id="Statistic_NumberOfItems_Saved"></td>
+		</tr>
+		<tr style="font-family: monospace">
+			<td><kbd>SavedRedirected</kbd></td>
+			<td id="Statistic_NumberOfItems_SavedRedirected"></td>
+		</tr>
+		<tr style="font-family: monospace">
+			<td><kbd>NotSaved</kbd></td>
+			<td id="Statistic_NumberOfItems_NotSaved"></td>
+		</tr>
+		<tr><th colspan="2">Timestamp range</th></tr>
+		<tr style="font-family: monospace">
+			<td>Earliest timestamp</td>
+			<td id="StatisticTimestamp_Earliest" style="text-align: center;"></td>
+		</tr>
+		<tr style="font-family: monospace">
+			<td>Latest timestamp</td>
+			<td id="StatisticTimestamp_Latest" style="text-align: center;"></td>
+		</tr>
+	</table><br>
+	<kbd><span id="OutputPlaintextCount">0</span> result(s)</kbd><br>
+	<textarea readonly id="Output_List" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
+	<div><button onclick="setClipboard(document.getElementById('Output_List').value)">Copy</button><span></span></div>
+	<div style="overflow: scroll; height: 600px;border: solid 1px; resize: both;">
+		<span id="Output_table"></span>
+	</div>
+</div>
+<div id="Output_Invalid" hidden>
+	<p style="color: red; font-family: monospace">Error! Following contains <span id="ErrorRowCount">0</span> of the google sheet rows are invalid:</p>
+	<textarea readonly id="Output_Plaintext_Error" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea>
 </div>
 </body>
 <script>
-	let IsListOrModeChanged = false
-	let SavedList = []
-	
-	let Count_TotalUrls = 0
-	let Count_Saved = 0
-	let Count_Redirected = 0
-	let Count_NotSaved = 0
 
-	let Date_Earliest = "?"
-	let Date_Latest = "?"
+	//Settings
+		const Setting_PercentagePrecision = 2
+	//Don't touch
+		let IsListOrModeChanged = false
+		let SavedList = []
+		
+		let SaveStatusTypeList = {}
+		let SaveStatusDateRange = {}
+	
+		let Date_Earliest = "?"
+		let Date_Latest = "?"
+		document.getElementById("InputList").addEventListener("keydown", this.keyHandler_Tab, false)
+	
+	ResetStatisticCounts()
 	
 	const String2Regex_IA_URLPartBeforeTimestamp = "https:\\/\\/web\\.archive\\.org\\/web\\/"
-	function ChangeFilterSettings(ElementClass, Setting) {
-		//ElementClass: the element class to be affected by this function
-		//Setting:
-		//0 = uncheck
-		//1 = check
-		//2+ = invert
-		if (Setting < 2) {
-			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
-				document.getElementsByClassName(ElementClass)[i].checked = Setting
+	function ChangeCheckboxesByChildren(Setting, NodeToGrab) {
+		let Checkboxes = [...NodeToGrab.querySelectorAll("input[type=checkbox]")].forEach(ele => {
+			if (Setting < 2) {
+				ele.checked = Setting
+			} else {
+				ele.checked = !ele.checked
 			}
-		} else {
-			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
-				document.getElementsByClassName(ElementClass)[i].checked = document.getElementsByClassName(ElementClass)[i].checked ^ 1
-			}
-		}
+		});
+		AutoUpdate()
 	}
 	function FilterByNonSaved() {
 		document.getElementById("FilterList_Saved").checked = false
 		document.getElementById("FilterList_SavedRedirected").checked = false
 		document.getElementById("FilterList_NotSaved").checked = true
+		
+		AutoUpdate()
 	}
 	function ValidateDateRange() {
 		let DateEarliestString = document.getElementById("DateRangeStart").value
@@ -163,9 +183,31 @@ Sort:<br>
 			document.getElementById("InvalidDateMessage").hidden = true
 		}
 	}
-	function AutoUpdateCode() {
+	function AutoUpdate() {
 		if (document.getElementById("AutoUpdate").checked) {
 			Submit()
+		}
+	}
+	function DisableReverseOnNoSort() {
+		document.getElementById("Sort_Reverse").disabled = document.getElementById("Sort_None").selected
+		AutoUpdate()
+	}
+	function ResetStatisticCounts() {
+		SaveStatusTypeList = {
+			Saved: {
+				Color: "#008000"
+			},
+			SavedRedirected: {
+				Color: "#808000"
+			},
+			NotSaved: {
+				Color: "#800000"
+			}
+		}
+		Object.entries(SaveStatusTypeList).forEach(Item => Item[1].Count = 0) //Add a counter on each type
+		SaveStatusDateRange = {
+			Earliest: "?",
+			Latest: "?"
 		}
 	}
 	function SaveStatusesChanged() {
@@ -175,26 +217,35 @@ Sort:<br>
 		let Output = ""
 		
 		let InputList = []
+		let InvalidRowDetected = false
 		if (IsListOrModeChanged) { //if changed, reset the output.
+			ResetStatisticCounts()
 			InputList = document.getElementById("InputList").value.split(/(?:\n)(?=(?:[^"]|"[^"]*")*$)/) //Gets every line
+			if (document.getElementById("InputList").value == "") {
+				InputList = []
+			}
 			//Credit goes to MarkusQ : https://stackoverflow.com/questions/632475/regex-to-pick-characters-outside-of-pair-of-quotes
 			//If you have spreadsheet reserved characters such as newline in a cell (ALT+ENTER), they're escaped by wrapping the entire string in quotes
 			//when converted to plaintext, much line windows command prompt when dealing with file path containing spaces.
 			//
 			//I use that instead of '\n' because of a rare chance in the future should the WBGS ever enters data in a cell that uses newline.
-			
-			Count_TotalUrls = 0
-			Count_Saved = 0
-			Count_Redirected = 0
-			Count_NotSaved = 0
-			
-			Date_Earliest = "?"
-			Date_Latest = "?"
-			
-			InputList = InputList.filter((ArrayElement) => {return /^[^\t]+?(\t[^\t]*?){2}$/.test(ArrayElement)}); //rid out invalid entries
-			
+			InputList = InputList.map((ArrayElement, Index) => ({Text: ArrayElement, LineNumber: Index+1})) //Obtain line numbers prior to the removal of blank lines
+			InputList = InputList.filter(ArrayElement => ArrayElement.Text != "\t\t") //Remove blank default cells
 			InputList = InputList.map((ArrayElement) => {
-				let SpreadSheetData = ArrayElement.split("\t") //[URL, YesNo, WBMVersion]
+				if (!/^[^\t]+?(\t[^\t]*?){2}$/.test(ArrayElement.Text)) {
+					InvalidRowDetected = true
+					return {
+						Text: ArrayElement.Text,
+						Status: "InvalidGsheetRow",
+						LineNumber: ArrayElement.LineNumber
+					}
+				}
+				if (/^\t{2}$/.test(ArrayElement.Text)) {
+					return {
+						Status: "BlankLine"
+					}
+				}
+				let SpreadSheetData = ArrayElement.Text.split("\t") //[URL, YesNo, WBMVersion]
 				//Get Timestamp
 					let Timestamp = ""
 					let Date = ""
@@ -237,43 +288,46 @@ Sort:<br>
 					if (Timestamp != "Error") {
 						if (ComparedEnteredUrl == IA_PageURLOnly) {
 							Status = "Saved"
-							StatusColor = "#008000"
-							Count_Saved++
 						} else {
 							Status = "SavedRedirected"
-							StatusColor = "#808000"
-							Count_Redirected++
 						}
 					} else {
 						Status = "NotSaved"
-						StatusColor = "#800000"
-						Count_NotSaved++
 					}
-				//return [[SpreadSheetData[0], SpreadSheetData[1], SpreadSheetData[2]], [Timestamp, Status]]
-				//InputList[i][0]: Contains GS data:
-				//InputList[i][0][0]: Your entered URLs
-				//InputList[i][0][1]: Yes/No
-				//InputList[i][0][2]: WBM version of page (if saved)
-				//InputList[i][1]: Contains extracted info:
-				//InputList[i][1][0]: Timestamp (YYYY-MM-DD hh:mm:ss)
-				//InputList[i][1][1]: Status ("Saved"/"SavedRedirected"/"NotSaved")
-				
 				return {
 					SpreadSheetData : SpreadSheetData, //recite what was on google sheets
 					SubmittedURL : SpreadSheetData[0], //URL you entered
 					WBMPageVersion : SpreadSheetData[2], //the wayback machine version of a webpage URL
 					Timestamp : Timestamp, //YYYY-MM-DD hh:mm:ss or Error if not saved
-					Status : Status, //flagged status
-					StatusColor : StatusColor //color based on flagged status
-				
+					Status : Status //flagged status
 				}
 			});
+			//Count status types
+				if (!InvalidRowDetected) {
+					InputList.forEach(SaveResult => SaveStatusTypeList[SaveResult.Status].Count++)
+				}
 			//Save it to the list
 				SavedList = InputList
 		} else { //If no change, grab it from the save data, since we already have the data.
 			InputList = SavedList
 		}
-		Count_TotalUrls = InputList.length //get the total number entries, without any invalid entries, that is prior to filtering.
+		//Error mode
+			document.getElementById("Output_Invalid").hidden = !InvalidRowDetected
+			document.getElementById("Output_Valid").hidden = InvalidRowDetected
+			if (InvalidRowDetected) {
+				let ListOfBadRows = InputList.filter(ArrayElement => ArrayElement.Status == "InvalidGsheetRow")
+				document.getElementById("ErrorRowCount").textContent = BigInt(ListOfBadRows.length).toString(10)
+				let ErrorText = ""
+				ListOfBadRows.forEach((ArrayElement, Index, Arr) => {
+					ErrorText += "Row " + ArrayElement.LineNumber.toString(10) + " [" + ArrayElement.Text + "]"
+					if (Index != Arr.length-1) {
+						ErrorText += "\n"
+					}
+				})
+				document.getElementById("Output_Plaintext_Error").value = ErrorText
+				return
+			}
+		let Count_TotalUrls = InputList.length //get the total number entries, without any invalid entries, that is prior to filtering.
 		IsListOrModeChanged = false //Set it back to false so that if the user updates the list again, and sort, does not rerun the code above.
 		//Filter
 			InputList = InputList.filter((ArrayElement) => {
@@ -306,47 +360,58 @@ Sort:<br>
 					return IsStatusIncluded&&(IsBeforeTheEarliestDateFilter == false)&&(IsAfterTheLatestDateFilter == false)
 			});
 		//Sort
-			if (document.getElementById("Sort_Date").checked) {
+			let ReverseMode = 1
+			if (document.getElementById("Sort_Reverse").checked) {
+				ReverseMode = -1
+			}
+			if (document.getElementById("Sort_Date").selected) {
 				InputList.sort((a, b) => {
 					if (a.Timestamp === b.Timestamp) {
 						return 0;
 					} else {
-						return (a.Timestamp < b.Timestamp) ? -1 : 1;
+						return ((a.Timestamp < b.Timestamp) ? -1 : 1)*ReverseMode;
 					}
 				});
-			} else if (document.getElementById("Sort_Date_Reverse").checked) {
+			} else if (document.getElementById("Sort_EnteredURLs").selected) {
 				InputList.sort((a, b) => {
-					if (a.Timestamp === b.Timestamp) {
+					if (a.SubmittedURL === b.SubmittedURL) {
 						return 0;
 					} else {
-						return (a.Timestamp < b.Timestamp) ? 1 : -1;
+						return ((a.SubmittedURL < b.SubmittedURL) ? -1 : 1)*ReverseMode;
 					}
 				});
 			}
 		//Output
 			//Statistics
+				if (InputList.length == 0) {
+					ClearOutputs()
+					return
+				}
 				//Total
 					document.getElementById("Statistic_NumberOfItems_TotalURLs").textContent = BigInt(Count_TotalUrls).toString(10)
-				//How many saved
-					document.getElementById("Statistic_NumberOfItems_Saved").textContent = BigInt(Count_Saved).toString(10) + " (" + BetterPercentageUsingInts(Count_Saved, Count_TotalUrls, 2, true) + ")"
-					document.getElementById("StatisticPercentage_NumberOfItems_Saved").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Saved, Count_TotalUrls, "to right", "#008000", "#000000")
-				//How many redirects
-					document.getElementById("Statistic_NumberOfItems_SavedRedirected").textContent = BigInt(Count_Redirected).toString(10) + " (" + BetterPercentageUsingInts(Count_Redirected, Count_TotalUrls, 2, true) + ")"
-					document.getElementById("StatisticPercentage_NumberOfItems_SavedRedirected").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_Redirected, Count_TotalUrls, "to right", "#808000", "#000000")
-				//How many not saved
-					document.getElementById("Statistic_NumberOfItems_NotSaved").textContent = BigInt(Count_NotSaved).toString(10) + " (" + BetterPercentageUsingInts(Count_NotSaved, Count_TotalUrls, 2, true) + ")"
-					document.getElementById("StatisticPercentage_NumberOfItems_NotSaved").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_NotSaved, Count_TotalUrls, "to right", "#800000", "#000000")
+				//How many shown and removed
+					document.getElementById("Statistic_NumberOfItems_FilteredRemaining").textContent = BigInt(InputList.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: InputList.length, MaxQuantity: Count_TotalUrls, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
+					document.getElementById("Statistic_NumberOfItems_FilteredRemaining").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: InputList.length, MaxQuantity: Count_TotalUrls, Direction: "to right", ColorFull: "#0000ff"})
+					document.getElementById("OutputPlaintextCount").textContent = BigInt(InputList.length).toString(10)
+					document.getElementById("Statistic_NumberOfItems_FilteredRemoved").textContent = BigInt(Count_TotalUrls - InputList.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_TotalUrls-InputList.length, MaxQuantity: Count_TotalUrls, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
+					document.getElementById("Statistic_NumberOfItems_FilteredRemoved").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_TotalUrls-InputList.length, MaxQuantity: Count_TotalUrls, Direction: "to right", ColorFull: "#0000ff"})
+				
+				//Each type of statuses
+					let GreyIfZeroItems = ["#808080", "#FFFFFF"]
+					Object.entries(SaveStatusTypeList).forEach(Status => {
+						let StatusName = Status[0]
+						let StatusCount = Status[1].Count
+						let StatusColor = Status[1].Color
+						
+						document.getElementById("Statistic_NumberOfItems_" + StatusName).textContent = BigInt(StatusCount).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: StatusCount, MaxQuantity: Count_TotalUrls, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
+						document.getElementById("Statistic_NumberOfItems_" + StatusName).style.backgroundImage = CSSLinearGradientProgressBar({Quantity: StatusCount, MaxQuantity: Count_TotalUrls, Direction: "to right", ColorFull: StatusColor, ColorEmpty: "#000000"})
+						let GreyIfZeroIndex = Number(StatusCount != 0)
+						document.getElementById("Statistic_NumberOfItems_" + StatusName).style.color = GreyIfZeroItems[GreyIfZeroIndex]
+					})
+
 				//Earliest and latest date found
 					document.getElementById("StatisticTimestamp_Earliest").textContent = Date_Earliest
 					document.getElementById("StatisticTimestamp_Latest").textContent = Date_Latest
-				//How many in the output (post-filtering)
-					document.getElementById("Statistic_NumberOfItems_FilteredRemaining").textContent = BigInt(InputList.length).toString(10) + " (" + BetterPercentageUsingInts(InputList.length, Count_TotalUrls, 2, true) + ")"
-					document.getElementById("StatisticPercentage_NumberOfItems_FilteredRemaining").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(InputList.length, Count_TotalUrls, "to right", "#0000ff", "#000000")
-					
-					document.getElementById("Statistic_NumberOfItems_FilteredRemoved").textContent = BigInt(Count_TotalUrls-InputList.length).toString(10) + " (" + BetterPercentageUsingInts(Count_TotalUrls-InputList.length, Count_TotalUrls, 2, true) + ")"
-					document.getElementById("StatisticPercentage_NumberOfItems_FilteredRemoved").style.backgroundImage = CSSBackgroundImageLinearGradiantPercentageBarGraph(Count_TotalUrls-InputList.length, Count_TotalUrls, "to right", "#0000ff", "#000000")
-					
-					document.getElementById("TextareaCount").textContent = BigInt(InputList.length).toString(10)
 			//Display output
 				document.getElementById("Output_List").value = ""
 				let OutputTable = document.getElementById("Output_table")
@@ -379,25 +444,25 @@ Sort:<br>
 						
 							let Cell_EnteredURLs = document.createElement("td")
 							Cell_EnteredURLs.style.fontFamily = "monospace"
-							Cell_EnteredURLs.style.backgroundColor = Item.StatusColor
+							Cell_EnteredURLs.style.backgroundColor = SaveStatusTypeList[Item.Status].Color
 							Cell_EnteredURLs.appendChild(document.createTextNode(Item.SubmittedURL))
 							RowItem.appendChild(Cell_EnteredURLs)
 							
 							let Cell_YesNo = document.createElement("td")
 							Cell_YesNo.style.fontFamily = "monospace"
-							Cell_YesNo.style.backgroundColor = Item.StatusColor
+							Cell_YesNo.style.backgroundColor = SaveStatusTypeList[Item.Status].Color
 							Cell_YesNo.appendChild(document.createTextNode(Item.SpreadSheetData[1]))
 							RowItem.appendChild(Cell_YesNo)
 							
 							let Cell_WBMVersion = document.createElement("td")
 							Cell_WBMVersion.style.fontFamily = "monospace"
-							Cell_WBMVersion.style.backgroundColor = Item.StatusColor
+							Cell_WBMVersion.style.backgroundColor = SaveStatusTypeList[Item.Status].Color
 							Cell_WBMVersion.appendChild(document.createTextNode(Item.WBMPageVersion))
 							RowItem.appendChild(Cell_WBMVersion)
 							
 							let Cell_TimeStamp = document.createElement("td")
 							Cell_TimeStamp.style.fontFamily = "monospace"
-							Cell_TimeStamp.style.backgroundColor = Item.StatusColor
+							Cell_TimeStamp.style.backgroundColor = SaveStatusTypeList[Item.Status].Color
 							Cell_TimeStamp.appendChild(document.createTextNode(Item.Timestamp))
 							RowItem.appendChild(Cell_TimeStamp)
 							
@@ -407,13 +472,28 @@ Sort:<br>
 					OutputTable.appendChild(DocumentFrag)
 				}
 	}
-	function BetterPercentageUsingInts(Quantity, MaxQuantity, NumberOfDigitsAfterDec, Clamped) {
+	function ClearOutputs() {
+		[...document.querySelectorAll("td")]
+		.filter(Ele => /^(?:Statistic_NumberOfItems_|StatisticTimestamp_)/.test(Ele.id))
+		.forEach(Ele => {
+			Ele.textContent = ""
+			Ele.style.backgroundImage = ""
+		})
+		document.getElementById("Output_List").value = ""
+		let OutputTable = document.getElementById("Output_table")
+		while (OutputTable.lastElementChild) {
+			OutputTable.removeChild(OutputTable.lastElementChild);
+		}
+		document.getElementById("OutputPlaintextCount").textContent = "0"
+		
+	}
+	function DisplayIntOutOfIntAsPercentageText({Quantity = 0, MaxQuantity = 100, NumberOfDigitsAfterDec = 2, Clamped = true}) {
 		//Quantity = Amount in relation of MaxQuantity
 		//MaxQuantity = Total
 		//Clamped = (boolean): false = allow greater than 100%, true = only 0%-100% will display.
-		//This function calculates a percentage of a value (must be bigint), and returns a
+		//This function calculates a percentage of a value (will be bigint), and returns a
 		//string representing a percentage using fixed-point arithmetic (https://en.wikipedia.org/wiki/Fixed-point_arithmetic ).
-		//Unlike a typical Quantity*100/MaxQuantity (or Quantity / MaxQuantity * 100)
+		//Unlike a typical Quantity*100/MaxQuantity (or Quantity / MaxQuantity * 100) in double-precision, which rounds based on binary.
 		//This also reports if rounding to 0 or 100% have occurred.
 		//Note: Don't use negative or decimal numbers for any of the parameters!
 		
@@ -513,14 +593,14 @@ Sort:<br>
 			return WholeNumberPart + "." + DecimalPart + "%"
 		}
 	}
-	function CSSBackgroundImageLinearGradiantPercentageBarGraph(Quantity, MaxQuantity, Direction, Color_Full, Color_Empty) {
+	function CSSLinearGradientProgressBar({Quantity = 0, MaxQuantity = 100, Direction = "to right", ColorFull = "#C0C0C0", ColorEmpty = "#000000"}) {
 		//Returns a percentage displayed as a gradient representing a bar graph as CSS. Preferably as a background image.
 		let Percentage = 0
 		if (MaxQuantity != 0) {
 			Percentage = Quantity * 100/MaxQuantity //Multiply first so that it only rounds at the last step, minimizing rounding errors.
 		}
 		Percentage = clamp(Percentage, 0, 100)
-		return "linear-gradient("+Direction+", "+Color_Full+" "+Percentage+"%, "+Color_Empty+" "+Percentage+"% 100%)"
+		return "linear-gradient("+Direction+", "+ColorFull+" "+Percentage.toFixed(17)+"%, "+ColorEmpty+" "+Percentage.toFixed(17)+"% 100%)"
 	}
 	function clamp(num, min, max) {
 		//Restrict a number within a specified range.
@@ -561,5 +641,41 @@ Sort:<br>
 					setTimeout(DeleteCopyMessage.bind(null, CopiedMessage), 1500)
 				}).bind(null, EventElement)
 			);
+		}
+	//Tab key to insert tab character
+		function keyHandler_Tab(e) {
+	
+			let target;
+			if (!e) e = window.event;
+			if (e.target) target = e.target;
+			else if (e.srcElement) target = e.srcElement;
+	
+			if(e.keyCode == 9) {
+				if (document.selection) {
+					e.preventDefault()
+					target.focus();
+					sel = document.selection.createRange();
+					sel.text = '\t';
+				} else if (target.selectionStart || target.selectionStart === 0) {
+					e.preventDefault()
+					let startPos = target.selectionStart;
+					let endPos = target.selectionEnd;
+					target.value = target.value.substring(0, startPos) + '\t' + target.value.substring(endPos, target.value.length);
+					target.oninput()	//Fix an issue where if a tab is inserted and results the format being valid, the function to display the address won't update.
+	
+					target.selectionStart = startPos + 1;
+					target.selectionEnd = startPos + 1;
+	
+				} else {
+					e.preventDefault()
+					target.value += '\t';
+				}
+	
+				if(e.preventDefault) {
+					e.preventDefault();
+					target.oninput()	//Fix an issue where if a tab is inserted and results the format being valid, the function to display the address won't update.
+				}
+				return false;
+			}
 		}
 </script>

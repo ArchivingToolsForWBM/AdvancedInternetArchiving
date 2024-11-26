@@ -388,7 +388,7 @@ Misc:
 				if ((InputList.length == 1) && InputList[0] == "") {
 					InputList = []
 				}
-				InputList = InputList.map((ArrayElement, Index) => {
+				InputList = InputList.map((ArrayElement, Index) => { //Get original row number positions
 					return {
 						SpreadSheetRowData : ArrayElement,
 						SpreadSheetRowNumber : Index+1
