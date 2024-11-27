@@ -55,14 +55,14 @@ https://exampleRedirected.com	YES	https://web.archive.org/web/20200101000000/htt
 <textarea id="InputList" cols="100" rows="30" oninput="SaveStatusesChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
 Filter:<br>
 <div class="TabbedFiltersGroup">Availability: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button> <button onclick="FilterByNonSaved()">Not saved</button>
-	<div class="TabbedItems"><label><input type="checkbox" onchange="AutoUpdate()" class="FilterSettings" checked id="FilterList_Saved" data-savedlist_status_name="Saved">Include URLs that have been saved</label></div>
-	<div class="TabbedItems"><label><input type="checkbox" onchange="AutoUpdate()" class="FilterSettings" checked id="FilterList_SavedRedirected" data-savedlist_status_name="SavedRedirected">Include URLs that have been saved and got a different URL.</label></div>
-	<div class="TabbedItems"><label><input type="checkbox" onchange="AutoUpdate()" class="FilterSettings" checked id="FilterList_NotSaved" data-savedlist_status_name="NotSaved">Include URLs that haven't been saved</label></div>
+	<div class="TabbedItems" style="color: #00c000"><label><input type="checkbox" onchange="AutoUpdate()" class="FilterSettings" checked id="FilterList_Saved" data-savedlist_status_name="Saved">Saved</label></div>
+	<div class="TabbedItems" style="color: #c0c000"><label><input type="checkbox" onchange="AutoUpdate()" class="FilterSettings" checked id="FilterList_SavedRedirected" data-savedlist_status_name="SavedRedirected">Saved, but redirected (Column C having a different URL on the website part).</label></div>
+	<div class="TabbedItems" style="color: #c00000"><label><input type="checkbox" onchange="AutoUpdate()" class="FilterSettings" checked id="FilterList_NotSaved" data-savedlist_status_name="NotSaved">Not saved</label></div>
 </div>
 <div class="TabbedFiltersGroup">Is within a given date range:
 	<div class="TabbedItems"><abbr title="Inclusive, URLs before this date will be excluded.">Start</abbr>: <input type="date" oninput="AutoUpdate()" id="DateRangeStart" onchange="ValidateDateRange()"> <span id="MinDateAppliedState" hidden style="color: #00FF00">Applied</span></div>
 	<div class="TabbedItems"><abbr title="Exclusive, URLs on or after this date will be excluded">End</abbr>: <input type="date" oninput="AutoUpdate()" id="DateRangeEnd" onchange="ValidateDateRange()"> <span id="MaxDateAppliedState" hidden style="color: #00FF00">Applied</span></div>
-	
+	<span id="InvalidDateMessage" hidden><kbd style='color: #ff0000'>End date is before the start!</kbd></span>
 	<p>*Any date that is not valid (such as missing year, month and/or day) will not apply its exclusion (example: having just the end date would mean ALL URLs before it will be shown in the output). If you entered a date and wish to invalidate it, use BACKSPACE, when editing the text string (in Google Chrome, make sure the <a href="https://en.wikipedia.org/wiki/Date_picker">date picker</a> isn't present).</p>
 </div>
 Misc:
@@ -82,7 +82,7 @@ Misc:
 
 
 
-<button onclick="Submit()" id="SubmitButton">Submit</button> <span id="InvalidDateMessage" hidden><kbd style='color: #ff0000'>End date is before the start!</kbd></span>
+<button onclick="Submit()" id="SubmitButton">Submit</button> <span id="InvalidDateMessage2" hidden><kbd style='color: #ff0000'>End date is before the start!</kbd></span>
 <hr>
 <div id="Output_Valid">
 	<span id="Output_Statistics"></span><br>
@@ -140,6 +140,7 @@ Misc:
 	//Settings
 		const Setting_PercentagePrecision = 2
 	//Don't touch
+		const RegExp_ValidDate = /^\d{4}-\d{2}-\d{2}$/
 		let IsListOrModeChanged = false
 		let SavedList = []
 		
@@ -173,23 +174,26 @@ Misc:
 	function ValidateDateRange() {
 		let DateEarliestString = document.getElementById("DateRangeStart").value
 		let DateLatestString = document.getElementById("DateRangeEnd").value
-		if (DateEarliestString != "") {
+		if (RegExp_ValidDate.test(DateEarliestString)) {
 			document.getElementById("MinDateAppliedState").hidden = false
 		} else {
 			document.getElementById("MinDateAppliedState").hidden = true
 		}
-		if (DateLatestString != "") {
+		if (RegExp_ValidDate.test(DateLatestString)) {
 			document.getElementById("MaxDateAppliedState").hidden = false
 		} else {
 			document.getElementById("MaxDateAppliedState").hidden = true
 		}
 
-		if ((DateEarliestString != "")&&(DateLatestString != "")&&(DateLatestString < DateEarliestString)) {
+		if ((RegExp_ValidDate.test(DateEarliestString))&&(RegExp_ValidDate.test(DateLatestString))&&(DateLatestString < DateEarliestString)) {
+			//End date before start
 			document.getElementById("SubmitButton").disabled = true
 			document.getElementById("InvalidDateMessage").hidden = false
+			document.getElementById("InvalidDateMessage2").hidden = false
 		} else {
 			document.getElementById("SubmitButton").disabled = false
 			document.getElementById("InvalidDateMessage").hidden = true
+			document.getElementById("InvalidDateMessage2").hidden = true
 		}
 	}
 	function AutoUpdate() {
