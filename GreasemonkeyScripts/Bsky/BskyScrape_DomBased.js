@@ -1410,6 +1410,12 @@
 					if (PageType != "SearchPage") {
 						Attachments = [...PostSegment.childNodes[0].childNodes]
 					} else {
+						if (PostSegment.textContent == "Deleted") {
+							PostContent.Segments.push({
+								Type: "DeletedEmbeddedPost"
+							})
+							return
+						}
 						Attachments = [...PostSegment.childNodes]
 					}
 					let Output = {
