@@ -2,9 +2,18 @@
 	<head>
 		<style>
 			html {
-			background-color: black;
-			color: white;
+			background-color: rgb(29, 30, 38);
+			color: rgb(221, 221, 221);
 			font-family: sans-serif;
+			}
+			
+			ul {
+			line-height: 150%;
+			}
+			
+			textarea {
+			color: #202020;
+			background-color: #B0B0B0;
 			}
 			
 			table, th, td {
@@ -31,7 +40,7 @@
 			}
 		</style>
 	</head>
-<body>
+<body style="max-width: 1000px; margin: auto; padding: 15px">
 
 <p>This tool will take a given <a href="https://en.wikipedia.org/wiki/Tab-separated_values">tab-seperated values (TSV)</a> table from google sheets of the archive results  (&ldquo;Archive URLs&rdquo;), and searches for any potential issues or anomalies.
 Note: this tool only judges based on the output data of the table, not the actual web-page content.</p>

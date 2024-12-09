@@ -2,9 +2,18 @@
 	<head>
 		<style>
 			html {
-			background-color: black;
-			color: white;
+			background-color: rgb(29, 30, 38);
+			color: rgb(221, 221, 221);
 			font-family: sans-serif;
+			}
+			
+			ul {
+			line-height: 150%;
+			}
+			
+			textarea {
+			color: #202020;
+			background-color: #B0B0B0;
 			}
 			
 			table, th, td {
@@ -31,7 +40,7 @@
 			}
 		</style>
 	</head>
-<body>
+<body style="max-width: 1000px; margin: auto; padding: 15px">
 
 <p>This tool will take a given list in text form, and scans for duplicates and blacklists (line by line). This is useful if you have unwanted items or if there are anomalies at certain lines when copying and pasting.</p>
 <p>This tool can also be used to extract URLs that have failed on all process runs should a WBGS process duplicate, a bug that often happens when job queues occur.</p>
@@ -44,9 +53,9 @@
 		<th>Insert your list of items to remove (blacklist)</th>
 	</tr>
 	<tr>
-		<td><textarea id="TextInput_InputList" cols="100" rows="30" oninput="AnyListUpdated();" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea></td>
+		<td><textarea id="TextInput_InputList" cols="50" rows="30" oninput="AnyListUpdated();" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea></td>
 		<td>
-			<textarea id="TextInput_Blacklist" cols="100" rows="30" oninput="AnyListUpdated();" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
+			<textarea id="TextInput_Blacklist" cols="50" rows="30" oninput="AnyListUpdated();" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
 			<kbd>Number of unique blacklisted items: <span id="UniqueBlacklistCount">0</span></kbd>
 		</td>
 	</tr>
