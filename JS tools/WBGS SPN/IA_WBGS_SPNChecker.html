@@ -12,12 +12,12 @@
 			}
 			
 			textarea {
-			color: #202020;
-			background-color: #B0B0B0;
+			color: rgb(221, 221, 221);
+			background-color: rgb(15, 15, 19);
 			}
 			
 			table, th, td {
-			border: 1px solid white;
+			border: 1px solid rgb(221, 221, 221);
 			border-collapse: collapse;
 			}
 			
@@ -33,7 +33,7 @@
 				padding-top: 1rem;
 				padding-bottom: 1rem;
 				padding-right: 1rem;
-				border: 1px solid white;
+				border: 1px solid rgb(221, 221, 221);
 			}
 			td.Stat {
 				min-width: 150px;
@@ -79,7 +79,7 @@ SentURL2	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	Fir
 SentURL3	SaveBeforeStatus	HTTPStatus	ArchiveURL/Error	Outlinks_Capture_Count	FirstArchive
 ...</pre></td></tr></table>
 			Here's an example testing each type of save status:<br>
-			<textarea id="SampleInput" readonly style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;">https://example.com	Already captured	-	https://web.archive.org/web/20210101000000/https://example.com	0	
+			<textarea id="SampleInput" readonly style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;">https://example.com	Already captured	-	https://web.archive.org/web/20210101000000/https://example.com	0	
 https://exampleFirstArchive.com	New capture	-	https://web.archive.org/web/20210101000000/https://exampleFirstArchive.com	0	First Archive
 https://exampleRedirectFrom.com	Already captured	-	https://web.archive.org/web/20210101000000/https://exampleRedirectTo.com	0	
 https://exampleError.com	Already captured	-	Service Unavailable for https://exampleError.com (HTTP status=503)	0	
@@ -262,7 +262,7 @@ Misc:
 		</tr>
 	</table><br>
 	<kbd><span id="OutputPlaintextItemCount">0</span> result(s)</kbd><br>
-	<textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea><br>
+	<textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
 	<div><button onclick="setClipboard(document.getElementById('Output_Plaintext').value)">Copy</button><span></span></div>
 	<div style="overflow: scroll; height: 600px;border: solid 1px; resize: both;">
 	<span id="Output_Table"></span>
@@ -270,7 +270,7 @@ Misc:
 </span>
 <span id="OutputResults_Error" hidden>
 	<p style="color: red; font-family: monospace">Error! Following contains <span id="ErrorRowCount">0</span> of the google sheet rows are invalid:</p>
-	<textarea readonly id="Output_Plaintext_Error" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;"></textarea>
+	<textarea readonly id="Output_Plaintext_Error" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea>
 </span>
 
 </body>
@@ -610,7 +610,7 @@ Misc:
 						document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").textContent = BigInt(InputList.length - FilteredListForDisplay.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: InputList.length - FilteredListForDisplay.length, MaxQuantity: InputList.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
 						document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: InputList.length - FilteredListForDisplay.length, MaxQuantity: InputList.length, Direction: "to right", ColorFull: "#0000ff", ColorEmpty: "#000000"})
 					//Each type of save status
-						let GreyIfZeroItems = ["#808080", "#FFFFFF"]
+						let GreyIfZeroItems = ["#808080", "rgb(221, 221, 221)"]
 						Object.entries(SaveStatusTypeList).forEach(Status => {
 							let StatusName = Status[0]
 							let StatusCount = Status[1].Count

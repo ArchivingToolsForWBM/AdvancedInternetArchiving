@@ -12,8 +12,8 @@
 			}
 			
 			textarea {
-			color: #202020;
-			background-color: #B0B0B0;
+			color: rgb(221, 221, 221);
+			background-color: rgb(15, 15, 19);
 			}
 			
 			table, th, td {
@@ -410,7 +410,7 @@
 				document.getElementById("Statistic_HowManyRemoved").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: SavedOutput.length - DisplayedOutput.length, MaxQuantity: SavedOutput.length, Direction: "to right", ColorFull: "#0000FF", ColorEmpty: "#000000"})
 			
 			
-				let GreyIfZeroItems = ["#808080", "#FFFFFF"]
+				let GreyIfZeroItems = ["#808080", "rgb(221, 221, 221)"]
 				Object.entries(StatusTypeList).forEach(Status => {
 					let StatusName = Status[0]
 					let StatusCount = Status[1].Count
