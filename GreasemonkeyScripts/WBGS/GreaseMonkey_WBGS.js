@@ -920,6 +920,7 @@
 						LinkToProcessTracking.rel = "noopener noreferrer"
 						LinkToProcessTracking.style.fontFamily = "monospace"
 						LinkToProcessTracking.style.textWrap = "nowrap"
+						LinkToProcessTracking.title = DisplayTimeDuration(Date.now() - new Date(Process.TimestampOfInitalProcess).valueOf()) + " ago"
 						LinkToProcessTracking.appendChild(document.createTextNode(Process.TimestampOfInitalProcess))
 						ProcessCell_TimestampAndLinkToProcess.appendChild(LinkToProcessTracking)
 						ProcessRow.appendChild(ProcessCell_TimestampAndLinkToProcess)
