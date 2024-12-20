@@ -1121,8 +1121,8 @@
 			let ProfileTabs = document.querySelector('div[data-testid="profilePager"]')
 			ProfileTabs = [...ProfileTabs.childNodes[0].childNodes[0].childNodes]
 			SelectedTab = ProfileTabs.findIndex(SelectedTab => {
-				let BorderBottomText = getComputedStyle(SelectedTab.childNodes[0]).borderBottom
-				return (!/^3px solid rgba\(0, 0, 0, 0\)/.test(BorderBottomText))
+				let HighlightedTabIndicator = SelectedTab.childNodes[0].childNodes[0].childNodes[1]
+				return getComputedStyle(HighlightedTabIndicator).backgroundColor != "rgba(0, 0, 0, 0)"
 			})
 			if (SelectedTab == -1) {
 				alert("Profile tab layout must have been changed")
