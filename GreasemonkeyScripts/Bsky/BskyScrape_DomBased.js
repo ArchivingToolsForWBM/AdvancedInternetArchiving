@@ -614,41 +614,37 @@
 							}
 
 							let Profile_Avatar = ""
-							let Node_Profile_Avatar = DescendNode(ProfileNode, [3,0,0,1])
-							if (Node_Profile_Avatar.IsSuccessful) {
-								Profile_Avatar = Node_Profile_Avatar.OutputNode.src
-							}
+							try {
+								Profile_Avatar = ConvertAvatarImgToFullRes(ProfileNode.childNodes[3].childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[1].src)
+							} catch {}
 
 							let Profile_BackgroundImg = ""
-							let Node_Profile_BackgroundImg = DescendNode(ProfileNode, [0,0,0,0])
-							if (Node_Profile_BackgroundImg.IsSuccessful) {
-								Profile_BackgroundImg = Node_Profile_BackgroundImg.OutputNode.src
-							}
+							try {
+								Profile_BackgroundImg = ProfileNode.childNodes[0].childNodes[0].childNodes[0].childNodes[0].childNodes[0].src
+							} catch {}
 
 							let Profile_TextContent = {
 								Text: ""
 							}
-							let Node_TextContent = DescendNode(ProfileNode, [1,3])
-							if (Node_TextContent.IsSuccessful) {
-								Profile_TextContent.Text = Node_TextContent.OutputNode.textContent
-								let ListOfLinks = GetLinksURLs(Node_TextContent.OutputNode)
+							try {
+								let ProfileContent = ProfileNode.childNodes[1].childNodes[2].childNodes[1]
+								Profile_TextContent.Text = ProfileContent.textContent
+								let ListOfLinks = GetLinksURLs(ProfileContent)
 								if (ListOfLinks.length != 0) {
 									Profile_TextContent.Links = ListOfLinks
 								}
-							}
+							} catch {}
+							
 
-							//ProfileNode.childNodes[1].childNodes[3]
-							let Profile_FollowCount = ""
-							let Profile_FollowingCount = ""
-							let Profile_PostCount = ""
-							let NodeOfFollowFollowingPost = DescendNode(ProfileNode, [1,2])
-							if (NodeOfFollowFollowingPost.IsSuccessful) {
-								let ArrayOf_FollowFollowingPost = [...NodeOfFollowFollowingPost.OutputNode.childNodes]
-
-								Profile_FollowCount = ArrayOf_FollowFollowingPost[0].textContent.replace(/^([\d\.A-Za-z]+).*$/, "$1")
-								Profile_FollowingCount = ArrayOf_FollowFollowingPost[1].textContent.replace(/^([\d\.A-Za-z]+).*$/, "$1")
-								Profile_PostCount = ArrayOf_FollowFollowingPost[2].textContent.replace(/^([\d\.A-Za-z]+).*$/, "$1")
-							}
+							let Profile_FollowCount = "";
+							let Profile_FollowingCount = "";
+							let Profile_PostCount = "";
+							try {
+								let FollowsAndPostsNumberString = [...ProfileNode.childNodes[1].childNodes[2].childNodes[0].childNodes]
+								.map(FollowsAndPosts => FollowsAndPosts.textContent.replace(/\s.*$/, ""));
+								
+								[Profile_FollowCount, Profile_FollowingCount, Profile_PostCount] = FollowsAndPostsNumberString
+							} catch {}
 
 							Profile = {
 								Type: "UserProfile",
@@ -1137,7 +1133,7 @@
 				Media: 2
 			}
 			let CurrentTabHighlighted = [...document.querySelectorAll('div[data-testid="postsFeed-flatlist"]')][SelectedTab]
-			return [...CurrentTabHighlighted.childNodes[1].childNodes]
+			return [...CurrentTabHighlighted.childNodes[1].childNodes[0].childNodes]
 		}
 		function GetNodeByFooterTimestamp(Levels) {
 			let ListOfElements = [...document.getElementsByTagName("DIV")]
