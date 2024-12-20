@@ -707,7 +707,7 @@
 								let Footer = PostAndFooter.slice(1)
 								let ReplyRepostLikes = [...Footer.at(-1).childNodes[0].childNodes]
 
-								PostTimeStamp = PostDateInfo(Footer[0].childNodes[0].textContent)
+								PostTimeStamp = PostDateInfo(Footer[0].childNodes[0].childNodes[0].textContent)
 								ReplyCount = ReplyRepostLikes[0].textContent
 								RepostCount = ReplyRepostLikes[1].textContent
 								LikesCount = ReplyRepostLikes[2].textContent
@@ -1323,7 +1323,8 @@
 		}
 		function PostDateInfo(StringTimestamp) {
 			if (typeof StringTimestamp == "undefined") {
-				return "Invalid date"
+				window.alert("Failed to extract date")
+				return {Error: "Invalid date"}
 			}
 
 			//Info got from: https://stackoverflow.com/questions/78018427/how-do-i-convert-the-local-date-and-time-e-g-est-to-utc
