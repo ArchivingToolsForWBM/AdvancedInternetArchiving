@@ -360,21 +360,7 @@
 						if (typeof Box.childNodes != "undefined") {
 							let BoxListingPosts = [...Box.childNodes]
 							let BoxListingPostsLengthCache = BoxListingPosts.length
-							let PostGroup = []
 							for (let i = 0; i < BoxListingPostsLengthCache; i++) { //Loop each posts (BoxListingPosts[i] should return a post), within a box
-								//
-								//Box - the whole box, if there are multiple posts as a reply, it encompasses all
-								//Box.childNodes[X] - each post within a box
-								//Box.childNodes[X].childNodes[0].childNodes[0] - The space above the posts, a spot for reply line to above
-								//Box.childNodes[X].childNodes[0].childNodes[0].childNodes[1] - Re-posted message (0x12 dimension if not a repost)
-								//Box.childNodes[X].childNodes[0].childNodes[1] - Post area
-								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[0] - Avatar image and reply line below
-								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1] - post content
-								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[0] - User title, handle and timestamp
-								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[1] - Post content (text, media, and embedded posts)
-								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[1].childNodes[X] - each segment of above
-								//Box.childNodes[X].childNodes[0].childNodes[1].childNodes[1].childNodes[2] - Replies, reposts, and likes.
-
 								let RepostedByUserTitle = ""
 								let ReplyToUserTitle = ""
 								let PostURL = "" //URL of post (if viewing its URL directly, then it is the browser's [window.location.href])
@@ -414,9 +400,6 @@
 										} catch (e) {
 											alert("Failed to extract link (" + e + ")")
 										}
-									}
-									if (PostURL == "https://bsky.app/profile/waddledurrr.bsky.social/post/3l6rlxgq3ud2z") {
-										let bp = 0
 									}
 									//RepostedByUser
 									try {
@@ -491,8 +474,6 @@
 										} catch (e) {
 											alert("Failed to extract post content")
 										}
-
-
 									//Reply, repost, and likes
 									{
 										//let NodeOfReplyRepostLikes_Array = []
@@ -518,7 +499,7 @@
 										}
 									}
 									if ((PostURL != "")&&(UserTitle != "")&&(UserHandle != "")) {
-										PostGroup.push({
+										ListOfPosts.push({
 											RepostedByUserTitle: RepostedByUserTitle,
 											ReplyToUserTitle: ReplyToUserTitle,
 											PostURL: PostURL,
@@ -548,34 +529,36 @@
 									//Post ommitted in between (a non-post array element saying "View full thread")
 									//We need this object in the array, then reply-connect-detect,
 									//then filter out the non-posts
-									PostGroup.push({
+									ListOfPosts.push({
 										ReplyConnections: {
 											IsViewFullThread: true
 										}
 									})
 								}
 							}
-							//Now fill out the reply to and from that are inside a box (Connect replies)
-							let PostGroupLengthCache = PostGroup.length
-							for (let i = 0; i < PostGroupLengthCache; i++) {
-								if (PostGroup[i].ReplyConnections.PostHasRepliesLineBelow && (!PostGroup[i].ReplyConnections.IsViewFullThread)) {
-									if (i+1 < PostGroupLengthCache) {
-										if (PostGroup[i+1].ReplyConnections.PostIsAReplyLineToAbove && (!PostGroup[i+1].ReplyConnections.IsViewFullThread)) {
-											if (!PostGroup[i].RepliesURLs.includes(PostGroup[i+1].PostURL)) {
-												PostGroup[i].RepliesURLs.push(PostGroup[i+1].PostURL) //Current post has reply
-											}
-											if (PostGroup[i+1].ReplyToURL == "") {
-												PostGroup[i+1].ReplyToURL = PostGroup[i].PostURL //In reply to a post above
-											}
+						}
+						//Now fill out the reply to and from that are inside a box (Connect replies)
+						let PostToLoopThroughAndConnectReplies = ListOfPosts
+						let PostToLoopThroughAndConnectRepliesLengthCache = PostToLoopThroughAndConnectReplies.length
+						for (let i = 0; i < PostToLoopThroughAndConnectRepliesLengthCache; i++) {
+							let CurrentPost = PostToLoopThroughAndConnectReplies[i]
+							if (CurrentPost.ReplyConnections.PostHasRepliesLineBelow && (!CurrentPost.ReplyConnections.IsViewFullThread)) {
+								if (i+1 < PostToLoopThroughAndConnectRepliesLengthCache) {
+									let NextPost = PostToLoopThroughAndConnectReplies[i+1]
+									if (NextPost.ReplyConnections.PostIsAReplyLineToAbove && (!NextPost.ReplyConnections.IsViewFullThread)) {
+										if (!CurrentPost.RepliesURLs.includes(NextPost.PostURL)) {
+											CurrentPost.RepliesURLs.push(NextPost.PostURL) //Current post has reply
+										}
+										if (NextPost.ReplyToURL == "") {
+											NextPost.ReplyToURL = CurrentPost.PostURL //In reply to a post above
 										}
 									}
 								}
 							}
-							PostGroup = PostGroup.filter((Post) => {
-								return (!Post.ReplyConnections.IsViewFullThread)
-							})
-							ListOfPosts.push(...PostGroup)
 						}
+						PostToLoopThroughAndConnectReplies = PostToLoopThroughAndConnectReplies.filter((Post) => { //Remove view full thread so-called "posts"
+							return (!Post.ReplyConnections.IsViewFullThread)
+						})
 					})
 					//Obtain user profile
 						let ProfileNode = {}
@@ -967,7 +950,15 @@
 						HaveAlertedUnreconizedURL = true
 					}
 				}
-				ListOfPosts = ListOfPosts.filter(ArrayElement => ArrayElement.MiscInfo.PostFullyLoaded)
+				ListOfPosts = ListOfPosts.filter(ArrayElement => {
+						let ShouldBeIncluded = true
+						try {
+							Loaded = ArrayElement.MiscInfo.PostFullyLoaded
+						} catch {
+							ShouldBeIncluded = false //If it's a "View Full Thread", filter that out.
+						}
+						return Loaded && ShouldBeIncluded
+				})
 					//^Remove any posts not fully loaded (i.e videos that disappeared when scrolled offscreen)
 					// Reason for the exclusion of posts happening here rather than anywhere before connecting replies
 					// is to prevent reply connections from erroneously connecting to posts that aren't adjacent when there is a post
