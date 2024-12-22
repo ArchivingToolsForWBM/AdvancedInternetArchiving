@@ -1558,12 +1558,24 @@
 			EmbedPostContentCompartments.shift()
 			EmbedPostContentCompartments.forEach((EmbedPart, Index) => {
 				let OutputObject = {}
+				let ExternalLink = null
+				//Test if the object is an external link
+				try {
+					let ExternalLinkTest = [...EmbedPart.querySelectorAll("a")].filter(Link => (!/^https?:\/\/bsky\.app/.test(Link.href)))
+					if (ExternalLinkTest.length != 0) {
+						ExternalLink = ExternalLinkTest[0]
+					}
+				} catch {}
+				
 				if (!(/^\s$/.test(EmbedPart)) && ([...EmbedPart.querySelectorAll("img, video")].length == 0)) {
 					OutputObject.Type = "Text"
 					OutputObject.Text = EmbedPart.textContent
-				} else if ([...Node.querySelectorAll("img, video")].length != 0) {
+				} else if (([...EmbedPart.querySelectorAll("img, video")].length != 0) && (ExternalLink == null)) {
 					OutputObject.Type = "Media"
 					OutputObject.Content = GetMediaURLs(EmbedPart)
+				} else if (ExternalLink != null) {
+					OutputObject.Type = "ExternalLink"
+					OutputObject.Content = GetExternalLinkPreview(ExternalLink)
 				}
 				EmbeddedContent.Contents.PostContent.Segments.push(OutputObject)
 			})
