@@ -22,7 +22,9 @@
 				display: block;
 				text-align: center;
 			}
-			
+			div.TabbedItems {
+				padding-left: 1rem;
+			}
 		</style>
 	</head>
 <body style="max-width: 1000px; margin: auto; padding: 15px">
@@ -36,31 +38,32 @@ converted from, such as randomly generated hashes, image URLs having an entirely
 <label><input type="checkbox" id="AutoUpdate" onchange="Auto_update()" checked>Auto update</label><br>
 <textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;" id="Input_EnteredURLs" cols="100" rows="30" oninput="NotifyInputChanged(); Auto_update()"></textarea><br>
 Pre-processing options:
-<ul>
-	<li><label><input type="checkbox" checked id="Checkbox_HTTPS" onchange="NotifyInputChanged(); Auto_update()">Force http &rarr; https</label></li>
-</ul><br>
-
+<div>
+	<div class="TabbedItems"><label><input type="checkbox" checked id="Checkbox_HTTPS" onchange="NotifyInputChanged(); Auto_update()">Force http &rarr; https</label></div>
+</div><br>
+<div>
 Filter:
-<button onclick="ChangeFilterSettings('CheckboxFilters', 1); Auto_update()">Check all</button><button onclick="ChangeFilterSettings('CheckboxFilters', 0); Auto_update()">Uncheck all</button><button onclick="ChangeFilterSettings('CheckboxFilters', 2); Auto_update()">Invert</button>
-<ul>
-	<li><label><input type="checkbox" class="CheckboxFilters" checked onchange="Auto_update()" id="FilterSetting_converted">Converted URLs (replaced substrings)</label></li>
-	<li><label><input type="checkbox" class="CheckboxFilters" checked onchange="Auto_update()" id="FilterSetting_pagination">pagination (have page number in URL)</label></li>
-	<li><label><input type="checkbox" class="CheckboxFilters" onchange="Auto_update()" id="FilterSetting_blacklisted">Blacklisted (remove unwanted URLs such as ads, various google URLs, etc.)</label></li>
-	<li><label><input type="checkbox" class="CheckboxFilters" checked onchange="Auto_update()" id="FilterSetting_other">other (URL not matching any of the listed patterns)</label></li>
-</ul>
-Keynames to filter:<button onclick="ChangeFilterSettings('CheckboxFiltersKeyName', 1); Auto_update()">Check all</button><button onclick="ChangeFilterSettings('CheckboxFiltersKeyName', 0); Auto_update()">Uncheck all</button><button onclick="ChangeFilterSettings('CheckboxFiltersKeyName', 2); Auto_update()">Invert</button>
+<button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
+
+	<div class="TabbedItems"><label><input type="checkbox" class="CheckboxFilters" checked onchange="Auto_update()" id="FilterSetting_converted">Converted URLs (replaced substrings)</label></div>
+	<div class="TabbedItems"><label><input type="checkbox" class="CheckboxFilters" checked onchange="Auto_update()" id="FilterSetting_pagination">pagination (have page number in URL)</label></div>
+	<div class="TabbedItems"><label><input type="checkbox" class="CheckboxFilters" onchange="Auto_update()" id="FilterSetting_blacklisted">Blacklisted (remove unwanted URLs such as ads, various google URLs, etc.)</label></div>
+	<div class="TabbedItems"><label><input type="checkbox" class="CheckboxFilters" checked onchange="Auto_update()" id="FilterSetting_other">other (URL not matching any of the listed patterns)</label></div>
+</div>
+<div>
+Keynames to filter: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
 <div style="overflow: auto; height: 300px; width: 300px; border: solid 1px; resize: both; white-space: nowrap;">
 	<span id="Parent_ToggleableCustomFilters">
 		<span id="ToggleableCustomFilters"></span>
 	</span>
 </div>
-Sort:
-<ul>
-	<li><label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_None">None (be in the same order as the input, and also based on the converters)</label></li>
-	<li><label><input type="radio" name="SortSetting" checked onchange="Auto_update()" id="SortSetting_ABC">Alphabetically</label> (<label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_ABC_Reverse">Reverse</label>)</li>
-	<li><label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_IdentifiedType">By Identified type</label> (<label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_IdentifiedType_Reverse">Reverse</label>)</li>
-	<li><label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_KeyName">By KeyName</label> (<label><input type="radio" name="SortSetting" onchange="Auto_update()" id="SortSetting_KeyName_Reverse">Reverse</label>)</li>
-</ul>
+</div>
+Sort by: <select onchange="SortSettingChanged()">
+	<option id="SortSetting_None">None</option>
+	<option id="SortSetting_ABC" selected>Alphabetically</option>
+	<option id="SortSetting_IdentifiedType">Identified Type</option>
+	<option id="SortSetting_KeyName">KeyName</option>
+</select> <label><input type="checkbox" id="SortSetting_Reverse" onchange="Auto_update()">Reverse</label>
 <hr>
 <kbd><span id="Output_URL_Count">0</span> URLs generated.</kbd><br>
 <textarea style="white-space: pre; overflow-wrap: normal; overflow-x: scroll; background-color : #000000; color : #ffffff;" id="Textarea_OutputList" cols="100" rows="30" readonly></textarea><br>
@@ -487,7 +490,8 @@ Sort:
 		
 		let UnorderedListOfKeynameFilters = document.createElement("ul")
 		ListOfKeyNames.forEach((ArrayElement) => {
-			let Element_li = document.createElement("li")
+			let Element_DivItem = document.createElement("div")
+			//Element_DivItem.className = "TabbedItems"
 			let Element_label = document.createElement("label")
 			let Element_input = document.createElement("input")
 			Element_input.setAttribute("type", "checkbox")
@@ -497,12 +501,12 @@ Sort:
 			Element_input.setAttribute("class", "CheckboxFiltersKeyName")
 			let Element_kbd = document.createElement("kbd")
 			
-			Element_li.appendChild(Element_label) //<li><label></label></li>
+			Element_DivItem.appendChild(Element_label) //<li><label></label></li>
 			Element_label.appendChild(Element_input) //<li><label><input type="checkbox"></label></li>
 			Element_label.appendChild(Element_kbd) //<li><label><input type="checkbox"><kbd></kbd></label></li>
 			Element_kbd.appendChild(document.createTextNode(ArrayElement)) //<li><label><input type="checkbox"><kbd>KeyName</kbd></label></li>
 			
-			UnorderedListOfKeynameFilters.appendChild(Element_li)
+			UnorderedListOfKeynameFilters.appendChild(Element_DivItem)
 		});
 		document.getElementById("Parent_ToggleableCustomFilters").insertBefore(UnorderedListOfKeynameFilters, document.getElementById("ToggleableCustomFilters"));
 	}
@@ -515,21 +519,20 @@ Sort:
 			MainFunction()
 		}
 	}
-	function ChangeFilterSettings(ElementClass, Setting) {
-		//ElementClass: the element class to be affected by this function
-		//Setting:
-		//0 = uncheck
-		//1 = check
-		//2+ = invert
-		if (Setting < 2) {
-			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
-				document.getElementsByClassName(ElementClass)[i].checked = Setting
+	function ChangeCheckboxesByChildren(Setting, NodeToGrab) {
+		let Checkboxes = [...NodeToGrab.querySelectorAll("input[type=checkbox]")].forEach(ele => {
+			if (Setting < 2) {
+				ele.checked = Setting
+			} else {
+				ele.checked = !ele.checked
 			}
-		} else {
-			for (let i = 0; i < document.getElementsByClassName(ElementClass).length; i++) {
-				document.getElementsByClassName(ElementClass)[i].checked = document.getElementsByClassName(ElementClass)[i].checked ^ 1
-			}
-		}
+		});
+		Auto_update()
+	}
+	function SortSettingChanged() {
+		let Element_ReverseSortSetting = document.getElementById("SortSetting_Reverse")
+		Element_ReverseSortSetting.disabled = document.getElementById("SortSetting_None").selected
+		Auto_update()
 	}
 	//Copy text from textarea
 		function DeleteCopyMessage(HTMLElement) {
@@ -670,52 +673,33 @@ Sort:
 			
 			document.getElementById("Output_URL_Count").textContent = BigInt(Filtered_OutputURLObjects.length).toString(10)
 			
-			if (document.getElementById("SortSetting_ABC").checked) {
+			let ReverseSetting = 1
+			if (document.getElementById("SortSetting_Reverse").checked) {
+				ReverseSetting = -1
+			}
+			
+			if (document.getElementById("SortSetting_ABC").selected) {
 				Filtered_OutputURLObjects.sort((a, b) => {
 					if (a.URL === b.URL) {
 						return 0;
 					} else {
-						return (a.URL < b.URL) ? -1 : 1;
+						return ((a.URL < b.URL) ? -1 : 1) * ReverseSetting;
 					}
 				});
-			} else if (document.getElementById("SortSetting_ABC_Reverse").checked) {
-				Filtered_OutputURLObjects.sort((a, b) => {
-					if (a.URL === b.URL) {
-						return 0;
-					} else {
-						return (a.URL < b.URL) ? 1 : -1;
-					}
-				});
-			} else if (document.getElementById("SortSetting_IdentifiedType").checked) {
+			} else if (document.getElementById("SortSetting_IdentifiedType").selected) {
 				Filtered_OutputURLObjects.sort((a, b) => {
 					if (a.IdentifiedType === b.IdentifiedType) {
 						return 0;
 					} else {
-						return (a.IdentifiedType < b.IdentifiedType) ? -1 : 1;
+						return ((a.IdentifiedType < b.IdentifiedType) ? -1 : 1) * ReverseSetting;
 					}
 				});
-			} else if (document.getElementById("SortSetting_IdentifiedType_Reverse").checked) {
-				Filtered_OutputURLObjects.sort((a, b) => {
-					if (a.IdentifiedType === b.IdentifiedType) {
-						return 0;
-					} else {
-						return (a.IdentifiedType < b.IdentifiedType) ? 1 : -1;
-					}
-				});
-			} else if (document.getElementById("SortSetting_KeyName").checked) {
+			} else if (document.getElementById("SortSetting_KeyName").selected) {
 				Filtered_OutputURLObjects.sort((a, b) => {
 					if (a.KeyName === b.KeyName) {
 						return 0;
 					} else {
-						return (a.KeyName < b.KeyName) ? -1 : 1;
-					}
-				});
-			} else if (document.getElementById("SortSetting_KeyName_Reverse").checked) {
-				Filtered_OutputURLObjects.sort((a, b) => {
-					if (a.KeyName === b.KeyName) {
-						return 0;
-					} else {
-						return (a.KeyName < b.KeyName) ? 1 : -1;
+						return ((a.KeyName < b.KeyName) ? -1 : 1) * ReverseSetting;
 					}
 				});
 			}
