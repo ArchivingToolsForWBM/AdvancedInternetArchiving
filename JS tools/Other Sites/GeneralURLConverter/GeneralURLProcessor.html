@@ -600,60 +600,63 @@ Sort by: <select onchange="SortSettingChanged()">
 				//-We check every possible combinations, so there are two index numbers with the second one starting at FirstIndex+1 instead of 0.
 				for (let i = 0; i < ListOfURLs.length; i++) { //Loop through every entered URL by the user
 					let UrlMatchedAnyConverter = false
-					if (ListOfURLs[i].HaveBeenChecked == false) { //Skip pagination URLs that have been checked by inner loop (optimization purposes)
-						ListOfConverters.forEach(Converter => { //For each URL the user entered, loop through converters
-							if (Converter.FindWhat.test(ListOfURLs[i].URL)) { //If URL matches one or more of the converters (a URL gets to loop through multiple converters)
-								UrlMatchedAnyConverter = true
-								if (Converter.Type == "normal") {
-									if (Converter.hasOwnProperty("ReplaceWith")) {
-										Converter.ReplaceWith.forEach(ReplaceWithText => {
-											let SetKeyName = ""
-											if (ReplaceWithText.hasOwnProperty("KeyName")) {
-												SetKeyName = ReplaceWithText.KeyName
-											}
-											//OutputSet.add(ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText))
-											AddToOutput({
-												URL:ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText.Replacement),
-												IdentifiedType:"converted",
-												KeyName:SetKeyName
-											});
-										});
-									};
-								} else if (Converter.Type == "pagination") {
+					if (ListOfURLs[i].HaveBeenChecked) { //Skip pagination URLs that have been checked by inner loop (optimization purposes)
+						continue
+					}
+					ListOfConverters.forEach(Converter => { //For each URL the user entered, loop through converters
+						if (!Converter.FindWhat.test(ListOfURLs[i].URL)) { //If URL matches one or more of the converters (a URL gets to loop through multiple converters)
+							return
+						}
+						UrlMatchedAnyConverter = true
+						if (Converter.Type == "normal") {
+							if (Converter.hasOwnProperty("ReplaceWith")) {
+								Converter.ReplaceWith.forEach(ReplaceWithText => {
 									let SetKeyName = ""
-									if (Converter.hasOwnProperty("KeyName")) {
-										SetKeyName = Converter.KeyName
+									if (ReplaceWithText.hasOwnProperty("KeyName")) {
+										SetKeyName = ReplaceWithText.KeyName
 									}
-									let HighestPageNumberSoFar = parseInt(ListOfURLs[i].URL.match(Converter.FindWhat)[0], 10) //Track highest page number starting with the number we first processed
-									let PartsOfURLSame = ListOfURLs[i].URL.split(Converter.FindWhat) //Get substrings before and after the page number (must be: ["string before number", "string after number"], a length of 2)
-									for (let i2 = i+1; i2 < ListOfURLs.length; i2++) { //Loop to find a potential same URL but with higher page number
-										PartsOfURLSame2 = ListOfURLs[i2].URL.split(Converter.FindWhat)
-										if (Converter.FindWhat.test(ListOfURLs[i2].URL) && (PartsOfURLSame[0] == PartsOfURLSame2[0]) && (PartsOfURLSame[1] == PartsOfURLSame2[1])) { //if regex and all parts of the URL the same ignoring page number, compare the page number
-											HighestPageNumberSoFar = Math.max(HighestPageNumberSoFar, parseInt(ListOfURLs[i2].URL.match(Converter.FindWhat)[0], 10)) //Update highest page number
-											ListOfURLs[i2].HaveBeenChecked = true //Don't check this again when the outer loop advances
-										}
-									}
-									//We now have the maximum number based on the user input
-									for (let i2 = Converter.PageNumberStartsAt; i2 <= HighestPageNumberSoFar; i2++) { //Generate a URL of each page number
-										//OutputSet.add(PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1])
-										AddToOutput({
-											URL:PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1], //Insert each page number URL
-											IdentifiedType:"pagination",
-											KeyName:SetKeyName
-										});
-									}
-								} else if (Converter.Type == "blacklisted") {
-									ListOfURLs[i].IdentifiedType = "blacklisted"
-									AddToOutput(ListOfURLs[i])
+									//OutputSet.add(ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText))
+									AddToOutput({
+										URL:ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText.Replacement),
+										IdentifiedType:"converted",
+										KeyName:SetKeyName
+									});
+								});
+							};
+						} else if (Converter.Type == "pagination") {
+							let SetKeyName = ""
+							if (Converter.hasOwnProperty("KeyName")) {
+								SetKeyName = Converter.KeyName
+							}
+							let HighestPageNumberSoFar = parseInt(ListOfURLs[i].URL.match(Converter.FindWhat)[0], 10) //Track highest page number starting with the number we first processed
+							let PartsOfURLSame = ListOfURLs[i].URL.split(Converter.FindWhat) //Get substrings before and after the page number (must be: ["string before number", "string after number"], a length of 2)
+							for (let i2 = i+1; i2 < ListOfURLs.length; i2++) { //Loop to find a potential same URL but with higher page number
+								PartsOfURLSame2 = ListOfURLs[i2].URL.split(Converter.FindWhat)
+								if (Converter.FindWhat.test(ListOfURLs[i2].URL) && (PartsOfURLSame[0] == PartsOfURLSame2[0]) && (PartsOfURLSame[1] == PartsOfURLSame2[1])) { //if regex and all parts of the URL the same ignoring page number, compare the page number
+									HighestPageNumberSoFar = Math.max(HighestPageNumberSoFar, parseInt(ListOfURLs[i2].URL.match(Converter.FindWhat)[0], 10)) //Update highest page number
+									ListOfURLs[i2].HaveBeenChecked = true //Don't check this again when the outer loop advances
 								}
 							}
-						});
-						if ((UrlMatchedAnyConverter == false)&&document.getElementById("FilterSetting_other").checked) {
-							//OutputSet.add(ListOfURLs[i].URL)
-							ListOfURLs[i].IdentifiedType = "other"
+							//We now have the maximum number based on the user input
+							for (let i2 = Converter.PageNumberStartsAt; i2 <= HighestPageNumberSoFar; i2++) { //Generate a URL of each page number
+								//OutputSet.add(PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1])
+								AddToOutput({
+									URL:PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1], //Insert each page number URL
+									IdentifiedType:"pagination",
+									KeyName:SetKeyName
+								});
+							}
+						} else if (Converter.Type == "blacklisted") {
+							ListOfURLs[i].IdentifiedType = "blacklisted"
 							AddToOutput(ListOfURLs[i])
 						}
+					});
+					if ((UrlMatchedAnyConverter == false)&&document.getElementById("FilterSetting_other").checked) {
+						//OutputSet.add(ListOfURLs[i].URL)
+						ListOfURLs[i].IdentifiedType = "other"
+						AddToOutput(ListOfURLs[i])
 					}
+					
 				}
 				//Save finished output array into storage
 				SavedOutput = OutputURLObjects
