@@ -578,7 +578,7 @@ Sort by: <select onchange="SortSettingChanged()">
 				})
 				
 				ListOfURLs = ListOfURLs.map(ArrayElement => {
-					let ConvertedURL = ArrayElement.replace(/^ttp(s)?/, "http$1").replace(/https?:\/\/web\.archive\.org\/(?:web\/(?:\d+\*?(im_)?|\*|sitemap|changes|collections\/\d*\*)\/|details\/)/, "").replace(/#.*$/, "").replace(/\.$/, "")
+					let ConvertedURL = ArrayElement.replace(/^ttp(s)?/, "http$1").replace(/https?:\/\/web\.archive\.org\/(?:web\/(?:\d+\*?(?:im|if)*_?|\*|sitemap|changes|collections\/\d*\*)\/|details\/)/, "").replace(/#.*$/, "").replace(/\.$/, "")
 					if (document.getElementById("Checkbox_HTTPS").checked) {
 						ConvertedURL = ConvertedURL.replace(/^http:\/\//, "https://")
 					}
