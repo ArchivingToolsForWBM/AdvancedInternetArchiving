@@ -348,6 +348,8 @@
 				InputList.forEach(Item => StatusTypeList[Item.IdentifiedType].Count++)
 			//Save to list
 			SavedOutput = InputList
+		} else {
+			InputList = SavedOutput
 		}
 		NeedToReprocess = false
 		//Filter
