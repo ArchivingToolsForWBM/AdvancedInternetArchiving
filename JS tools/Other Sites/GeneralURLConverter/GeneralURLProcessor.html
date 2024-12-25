@@ -123,8 +123,8 @@ Sort by: <select onchange="SortSettingChanged()">
 		//On notepad++ to convert, use ReplaceAll on:
 		//- "\|" with "\n" to convert the vertical-bar-separated words into a list
 		//- "[\r\n]" with "|" to convert it into  vertical-bar-separated words.
-		//It must be "(?:(?!(?:" + <vertical-bar-separated words> + "))[A-Za-z0-9\\-]+)" to ensure no capturing groups.
-		const Github_UsernamePart = "(?:(?!(?:about|apps|codespaces|collections|contact|customer\\-stories|enterprise|features|git\\-guides|images|login|mobile|organizations|orgs|premium-support|pricing|readme|search|security|signup|sitemap|solutions|sponsors|team|topics|trending|users))[A-Za-z0-9\\-]+)"
+		//It must be "(?:(?!(?:" + <vertical-bar-separated words> + "))[A-Za-z\d\\-]+)" to ensure no capturing groups.
+		const Github_UsernamePart = "(?:(?!(?:about|apps|codespaces|collections|contact|customer\\-stories|enterprise|features|git\\-guides|images|login|mobile|organizations|orgs|premium-support|pricing|readme|search|security|signup|sitemap|solutions|sponsors|team|topics|trending|users))[A-Za-z\d\\-]+)"
 	//Bluesky stuff
 		//Bluesky instances (URL format as far as I know:
 		//https://bsky.app/profile/Username.bsky.social )
@@ -190,33 +190,39 @@ Sort by: <select onchange="SortSettingChanged()">
 //				//Example 1: Twitter image URLs
 //				//https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig (converts modern to modern, so if you entered a modern, can be filtered)
 //				Type:"normal",
-//				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+\?format=[a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
+//				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+\?format=[a-zA-Z\d]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
 //				ReplaceWith:[{Replacement:"https://pbs.twimg.com/media/$1&name=orig", KeyName:"Twitter_Images_Modern_Orig"}, {Replacement:"https://pbs.twimg.com/media/$1&name=thumb", KeyName:"Twitter_Images_Modern_thumb"}]
 //			},
 //			{
 //				//Example 1.1 Same as above but also converts old to modern (https://pbs.twimg.com/media/CBAoaU1UwAIUPIc.jpg -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig)
 //				Type:"normal",
-//				FindWhat:/https:\/\/pbs\.twimg.com\/media\/([^\s\?]+)\.\.([a-zA-Z0-9]+)/,
+//				FindWhat:/https:\/\/pbs\.twimg.com\/media\/([^\s\?]+)\.\.([a-zA-Z\d]+)/,
 //				ReplaceWith:[{Replacement:"https://pbs.twimg.com/media/$1.$2:orig", KeyName:"Twitter_Images_Modern_Orig"}, {Replacement:"https://pbs.twimg.com/media/$1.$2:thumb", KeyName:"Twitter_Images_Modern_thumb"}],
 //			},
 //			{
 //				//Example 1.2: Opposite of example 1
 //				//Example test: https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc.jpg:orig (converts old to old, so if you entered a modern, can be filtered)
 //				Type:"normal",
-//				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+)\.([a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
+//				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+)\.([a-zA-Z\d]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
 //				ReplaceWith:[{Replacement:"https://pbs.twimg.com/media/$1.$2:orig", KeyName:"Twitter_Images_Old_Orig"}, {Replacement:"https://pbs.twimg.com/media/$1.$2:thumb", KeyName:"Twitter_Images_Old_Thumb"}]
 //			},
 //			{
 //				//Example 1.3: Opposite of example 1.1, converts modern to old
 //				//Example test: https://pbs.twimg.com/media/CBAoaU1UwAIUPIc?format=jpg&name=orig -> https://pbs.twimg.com/media/CBAoaU1UwAIUPIc.jpg:orig
 //				Type:"normal",
-//				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+)\?format=([a-zA-Z0-9]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
+//				FindWhat:/^https:\/\/pbs\.twimg\.com\/media\/([^\s\?]+)\?format=([a-zA-Z\d]+).*$/, //If this doesn't match the entire string, the substring that is not matched will be included, making the URL invalid
 //				ReplaceWith:[{Replacement:"https://pbs.twimg.com/media/$1.$2:orig", KeyName:"Twitter_Images_Old_Orig"}, {Replacement:"https://pbs.twimg.com/media/$1.$2:thumb", KeyName:"Twitter_Images_Old_Thumb"}]
 //			},
+			//Twitter images -> Nitter (if pbs.twimg 404s, check with this one)
+			{
+				Type:"normal",
+				FindWhat:/https:\/\/pbs\.twimg\.com\/media\/([a-zA-Z\d]+)\?format=([a-zA-Z\d]+).*$/,
+				ReplaceWith:[{Replacement: Nitter_Instance_ConvertTo + "/pic/orig/media/$1.$2", KeyName:"Nitter_Images"}]
+			},
 			{
 				//Example 2: Pagination test (made-up example)
 				Type:"pagination",
-				FindWhat:/(?:(?<=^https:\/\/example\.com\/[a-zA-Z0-9_]+\?page=))\d+(?:(?=.*$))/,
+				FindWhat:/(?:(?<=^https:\/\/example\.com\/[a-zA-Z\d_]+\?page=))\d+(?:(?=.*$))/,
 				PageNumberStartsAt:1,
 				KeyName:"Example_Pagination"
 			},
@@ -243,7 +249,7 @@ Sort by: <select onchange="SortSettingChanged()">
 			//https://nitter.ktachibana.party
 			{
 				Type:"blacklisted",
-				FindWhat:RegExp("(" + (AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertTo) + "|" + AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom)) + ")\\/(pic\\/media.*name%3Dsmall|search|[a-zA-Z0-9\\-_]+\\/status\\/\\d+\\/(favoriters|retweeters)|about$|logo\\.png$|search$|settings)")
+				FindWhat:RegExp("(" + (AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertTo) + "|" + AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom)) + ")\\/(pic\\/media.*name%3Dsmall|search|[a-zA-Z\d\\-_]+\\/status\\/\\d+\\/(favoriters|retweeters)|about$|logo\\.png$|search$|settings)")
 			},
 			{
 				//We don't want the home page consisting just a search bar.
@@ -258,7 +264,7 @@ Sort by: <select onchange="SortSettingChanged()">
 			{
 				//Profile pages
 				Type:"normal",
-				FindWhat:RegExp("(?:" + AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "|https:\\/\\/twitter\\.com|https?:\\/\\/(?:www\\.)?x\\.com)" + "\\/((?!(about|intent|logo\\.png|search|settings|pic))[a-zA-Z0-9\\-_]+).*$"),
+				FindWhat:RegExp("(?:" + AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "|https:\\/\\/twitter\\.com|https?:\\/\\/(?:www\\.)?x\\.com)" + "\\/((?!(about|intent|logo\\.png|search|settings|pic))[a-zA-Z\d\\-_]+).*$"),
 				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "/$1", KeyName:"Nitter_UserProfile_Front"}, {Replacement:Nitter_Instance_ConvertTo + "/$1/with_replies", KeyName:"Nitter_UserProfile_Replies"}, {Replacement:Nitter_Instance_ConvertTo + "/$1/media", KeyName:"Nitter_UserProfile_Media"}]
 			},
 			{
@@ -270,13 +276,13 @@ Sort by: <select onchange="SortSettingChanged()">
 			{
 				//Tweets
 				Type:"normal",
-				FindWhat:RegExp("(?:" + AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "|https:\\/\\/twitter\\.com|https?:\\/\\/(?:www\\.)?x\\.com)" + "(\\/((?!(about|logo\\.png|search|pic))[a-zA-Z0-9\\-_]+)\\/status\\/\\d+).*$"),
+				FindWhat:RegExp("(?:" + AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "|https:\\/\\/twitter\\.com|https?:\\/\\/(?:www\\.)?x\\.com)" + "(\\/((?!(about|logo\\.png|search|pic))[a-zA-Z\d\\-_]+)\\/status\\/\\d+).*$"),
 				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "$1", KeyName:"Nitter_Tweet"}]
 			},
 			{
 				//Images (convert nitter images to twitter modern images)
 				Type:"normal",
-				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/orig\\/media(?:%2F|\/)([a-zA-Z0-9\\-_]+)\\.([a-zA-Z0-9]+)$"),
+				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/orig\\/media(?:%2F|\/)([a-zA-Z\d\\-_]+)\\.([a-zA-Z\d]+)$"),
 				ReplaceWith:[{Replacement:"https://pbs.twimg.com/media/$1?format=$2&name=orig", KeyName:"Twitter_Images_Modern_Orig"},{Replacement:"https://pbs.twimg.com/media/$1?format=$2&name=thumb", KeyName:"Twitter_Images_Modern_thumb"}]
 			},
 			{
@@ -285,7 +291,7 @@ Sort by: <select onchange="SortSettingChanged()">
 				
 				//Nitter images (from a tweet that has pictures)
 				Type:"normal",
-				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "(\\/pic\\/orig\\/media(?:%2F|\/)[a-zA-Z0-9\\-_]+\\.[a-zA-Z0-9]+)$"),
+				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "(\\/pic\\/orig\\/media(?:%2F|\/)[a-zA-Z\d\\-_]+\\.[a-zA-Z\d]+)$"),
 				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "$1", KeyName:"Nitter_Images"}]
 			},
 			{
@@ -298,20 +304,20 @@ Sort by: <select onchange="SortSettingChanged()">
 				//Thumbnails on profile pages, converted to nitter images.
 				//https://nitter.x86-64-unknown-linux-gnu.zip/pic/media%2FF4gd6gjakAAFhsD.jpg%3Athumb
 				Type:"normal",
-				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/media%2F([a-zA-Z0-9\\-_]+)\\.([a-zA-Z0-9]+).*$"),
+				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/media%2F([a-zA-Z\d\\-_]+)\\.([a-zA-Z\d]+).*$"),
 				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "/pic/orig/media%2F$1.$2", KeyName:"Nitter_Images"}]
 			},
 			//Rid out links from nitter linking to non-savable twitter pages and https://liberapay.com/zedeus
 			{
 				Type:"blacklisted",
-				FindWhat:/^(https?:\/\/twitter\.com\/[a-zA-Z0-9\-_]+\/(media|with_replies)|https:\/\/liberapay\.com\/zedeus\/?$)/
+				FindWhat:/^(https?:\/\/twitter\.com\/[a-zA-Z\d\-_]+\/(media|with_replies)|https:\/\/liberapay\.com\/zedeus\/?$)/
 			},
 			{
 				Type:"blacklisted",
 				FindWhat:/^https:\/\/twitter\.com\/search.*$/
 			},
 			//github pages
-			//valid repository name: [A-Za-z0-9_.\-]+
+			//valid repository name: [A-Za-z\d_.\-]+
 			//https://github.com/Username
 			//https://github.com/Username/RepositoryName
 			//https://github.com/Username/RepositoryName/archive/refs/heads/master.zip
@@ -325,13 +331,13 @@ Sort by: <select onchange="SortSettingChanged()">
 			{
 				//Repository download links
 				Type:"normal",
-				FindWhat:/(^https?:\/\/github\.com\/([A-Za-z0-9\-]+)\/([A-Za-z0-9_.\-]+)\/archive\/refs\/(?:(heads|tags))\/[^\/]+).*$/,
+				FindWhat:/(^https?:\/\/github\.com\/([A-Za-z\d\-]+)\/([A-Za-z\d_.\-]+)\/archive\/refs\/(?:(heads|tags))\/[^\/]+).*$/,
 				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Repository_Download"}, {Replacement:"https://github.com/$2", KeyName:"Github_Profile"}, {Replacement:"https://github.com/$2/$3", KeyName:"Github_Repository"}]
 			},
 			{
 				//Github releases
 				Type:"normal",
-				FindWhat:/(https?:\/\/github\.com\/[A-Za-z0-9\-]+\/[A-Za-z0-9_.\-]+\/releases\/download\/.+$)/,
+				FindWhat:/(https?:\/\/github\.com\/[A-Za-z\d\-]+\/[A-Za-z\d_.\-]+\/releases\/download\/.+$)/,
 				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Releases_Download"}]
 			},
 			{
@@ -345,7 +351,7 @@ Sort by: <select onchange="SortSettingChanged()">
 				//removing empty repositories using WBGS's "Check if URLs are available in the Live Web" feature, and filter out URLs with 401s (or
 				//potentially any 4XX errors).
 				Type:"normal",
-				FindWhat: RegExp("^(((https?:\\/\\/github\\.com\\/" + Github_UsernamePart + ")\\/[A-Za-z0-9_.\\-]+).*$)"),
+				FindWhat: RegExp("^(((https?:\\/\\/github\\.com\\/" + Github_UsernamePart + ")\\/[A-Za-z\d_.\\-]+).*$)"),
 				ReplaceWith:[{Replacement:"$2", KeyName:"Github_Repository"}, {Replacement:"$2/releases", KeyName:"Github_Releases"}, {Replacement:"$2", KeyName:"Github_Profile"}, {Replacement:"$2/archive/refs/heads/master.zip", KeyName:"Github_Repository_Download"}]
 			},
 			{
@@ -358,7 +364,7 @@ Sort by: <select onchange="SortSettingChanged()">
 				//Github releases tag
 				//https://github.com/UserName/RepositoryName/releases/tag/VersionName -> https://github.com/UserName/RepositoryName/releases/expanded_assets/VersionName
 				Type:"normal",
-				FindWhat: RegExp("^(https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z0-9_.\\-]+\\/releases)\\/tag\\/([A-Za-z0-9_.\\-]+)"),
+				FindWhat: RegExp("^(https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z\d_.\\-]+\\/releases)\\/tag\\/([A-Za-z\d_.\\-]+)"),
 				ReplaceWith:[{Replacement:"$1/expanded_assets/$2", KeyName:"Github_ReleasesTag_DownloadPage"}]
 			},
 			{
@@ -366,7 +372,7 @@ Sort by: <select onchange="SortSettingChanged()">
 				//https://github.com/UserName/RepositoryName/issues?page=6&q=
 				//https://github.com/UserName/RepositoryName/issues?page=2&q=is%3Aissue+is%3Aopen
 				Type:"pagination",
-				FindWhat: RegExp("(?:(?<=(?:^https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z0-9_.\\-]+\\/issues\\?page=)))\\d+(.*$)"),
+				FindWhat: RegExp("(?:(?<=(?:^https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z\d_.\\-]+\\/issues\\?page=)))\\d+(.*$)"),
 				PageNumberStartsAt:1,
 				KeyName:"Github_Repository_IssueForum"
 			},
@@ -375,7 +381,7 @@ Sort by: <select onchange="SortSettingChanged()">
 				//https://github.com/UserName/RepositoryName/issues/12345
 				//https://github.com/UserName/RepositoryName/issues/12
 				Type:"normal",
-				FindWhat: RegExp("^(https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z0-9_.\\-]+\\/issues\\/\\d+).*$"),
+				FindWhat: RegExp("^(https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z\d_.\\-]+\\/issues\\/\\d+).*$"),
 				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Repository_IssueThread"}]
 			},
 			{
@@ -399,7 +405,7 @@ Sort by: <select onchange="SortSettingChanged()">
 			{
 				//https://github.com/adam-p/markdown-here/releases?page=2
 				Type:"pagination",
-				FindWhat: RegExp("(?:(?<=(?:https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z0-9_.\-]+\\/releases\\?page=)))\\d+(?:$)"),
+				FindWhat: RegExp("(?:(?<=(?:https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z\d_.\-]+\\/releases\\?page=)))\\d+(?:$)"),
 				PageNumberStartsAt:1,
 				KeyName:"Github_Repository_ReleasesList"
 			},
@@ -458,13 +464,13 @@ Sort by: <select onchange="SortSettingChanged()">
 			{
 				//Notion images (page URLs uses base64 code, seemingly obfuscated.)
 				Type:"normal",
-				//FindWhat:/^(https:\/\/[a-zA-Z0-9_\-]+\.notion\.site\/image\/https%3A%2F%2F(s3-us-west-2\.amazonaws\.com|prod-files-secure\.s3\.us-west-2\.amazonaws\.com)%2F(?:(?!&width=\d+).)*).*$/, //thank you https://stackoverflow.com/a/3850095/11030779 , match all string, up to but not including "&width=<number>"
-				FindWhat:/^(https:\/\/[a-zA-Z0-9_\-]+\.notion\.site\/image\/.*%2F(?:(?!&width=\d+).)*).*$/,
+				//FindWhat:/^(https:\/\/[a-zA-Z\d_\-]+\.notion\.site\/image\/https%3A%2F%2F(s3-us-west-2\.amazonaws\.com|prod-files-secure\.s3\.us-west-2\.amazonaws\.com)%2F(?:(?!&width=\d+).)*).*$/, //thank you https://stackoverflow.com/a/3850095/11030779 , match all string, up to but not including "&width=<number>"
+				FindWhat:/^(https:\/\/[a-zA-Z\d_\-]+\.notion\.site\/image\/.*%2F(?:(?!&width=\d+).)*).*$/,
 				ReplaceWith:[{Replacement:"$1", KeyName:"Notion_Image_Full"}]
 			},
 			{
 				Type:"normal",
-				FindWhat:/^(https:\/\/[a-zA-Z0-9_\-]+\.notion\.site\/(?!image\/)[a-zA-Z0-9]+).*$/,
+				FindWhat:/^(https:\/\/[a-zA-Z\d_\-]+\.notion\.site\/(?!image\/)[a-zA-Z\d]+).*$/,
 				ReplaceWith:[{Replacement:"$1", KeyName:"Notion_Page_Content"}]
 			}
 		]
