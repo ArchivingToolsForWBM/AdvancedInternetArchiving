@@ -216,7 +216,7 @@ Sort by: <select onchange="SortSettingChanged()">
 			//Twitter images -> Nitter (if pbs.twimg 404s, check with this one)
 			{
 				Type:"normal",
-				FindWhat:/https:\/\/pbs\.twimg\.com\/media\/([a-zA-Z\d]+)\?format=([a-zA-Z\d]+).*$/,
+				FindWhat:/https:\/\/pbs\.twimg\.com\/media\/([a-zA-Z\d]+)\?format=([a-zA-Z\d\-]+).*$/,
 				ReplaceWith:[{Replacement: Nitter_Instance_ConvertTo + "/pic/orig/media/$1.$2", KeyName:"Nitter_Images"}]
 			},
 			{
@@ -282,7 +282,7 @@ Sort by: <select onchange="SortSettingChanged()">
 			{
 				//Images (convert nitter images to twitter modern images)
 				Type:"normal",
-				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/orig\\/media(?:%2F|\/)([a-zA-Z\d\\-_]+)\\.([a-zA-Z\d]+)$"),
+				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/orig\\/media(?:%2F|\\/)([a-zA-Z\\d\\-_]+)\\.([a-zA-Z\d\\-]+)$"),
 				ReplaceWith:[{Replacement:"https://pbs.twimg.com/media/$1?format=$2&name=orig", KeyName:"Twitter_Images_Modern_Orig"},{Replacement:"https://pbs.twimg.com/media/$1?format=$2&name=thumb", KeyName:"Twitter_Images_Modern_thumb"}]
 			},
 			{
@@ -291,7 +291,7 @@ Sort by: <select onchange="SortSettingChanged()">
 				
 				//Nitter images (from a tweet that has pictures)
 				Type:"normal",
-				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "(\\/pic\\/orig\\/media(?:%2F|\/)[a-zA-Z\d\\-_]+\\.[a-zA-Z\d]+)$"),
+				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "(\\/pic\\/orig\\/media(?:%2F|\/)[a-zA-Z\\d\\-_]+\\.[a-zA-Z\\d]+)$"),
 				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "$1", KeyName:"Nitter_Images"}]
 			},
 			{
@@ -304,7 +304,7 @@ Sort by: <select onchange="SortSettingChanged()">
 				//Thumbnails on profile pages, converted to nitter images.
 				//https://nitter.x86-64-unknown-linux-gnu.zip/pic/media%2FF4gd6gjakAAFhsD.jpg%3Athumb
 				Type:"normal",
-				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/media%2F([a-zA-Z\d\\-_]+)\\.([a-zA-Z\d]+).*$"),
+				FindWhat:RegExp(AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "\\/pic\\/media%2F([a-zA-Z\\d\\-_]+)\\.([a-zA-Z\\d]+).*$"),
 				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "/pic/orig/media%2F$1.$2", KeyName:"Nitter_Images"}]
 			},
 			//Rid out links from nitter linking to non-savable twitter pages and https://liberapay.com/zedeus
