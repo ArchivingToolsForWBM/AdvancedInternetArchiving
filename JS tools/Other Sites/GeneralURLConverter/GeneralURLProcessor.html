@@ -264,7 +264,7 @@ Sort by: <select onchange="SortSettingChanged()">
 			{
 				//Profile pages
 				Type:"normal",
-				FindWhat:RegExp("(?:" + AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "|https:\\/\\/twitter\\.com|https?:\\/\\/(?:www\\.)?x\\.com)" + "\\/((?!(about|intent|logo\\.png|search|settings|pic))[a-zA-Z\d\\-_]+).*$"),
+				FindWhat:RegExp("(?:" + AlternativeFrontendInstance_StringToRegex(Nitter_Instance_ConvertFrom) + "|https:\\/\\/twitter\\.com|https?:\\/\\/(?:www\\.)?x\\.com)" + "\\/((?!(about|intent|logo\\.png|search|settings|pic))[a-zA-Z\\d\\-_]+).*$"),
 				ReplaceWith:[{Replacement:Nitter_Instance_ConvertTo + "/$1", KeyName:"Nitter_UserProfile_Front"}, {Replacement:Nitter_Instance_ConvertTo + "/$1/with_replies", KeyName:"Nitter_UserProfile_Replies"}, {Replacement:Nitter_Instance_ConvertTo + "/$1/media", KeyName:"Nitter_UserProfile_Media"}]
 			},
 			{
