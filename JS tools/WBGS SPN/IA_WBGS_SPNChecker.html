@@ -471,7 +471,7 @@ Misc:
 							SaveStatus = "CantSave_BlockListed"
 						} else if (/^The target server requires authentication for/.test(Col_D_SavedURLOrError)) {
 							SaveStatus = "CantSave_Error401"
-						} else if (/^The target server cannot find the requested resource/.test(Col_D_SavedURLOrError)) {
+						} else if (/^(The target server cannot find the requested resource|The target server cannot find)/.test(Col_D_SavedURLOrError)) {
 							SaveStatus = "CantSave_Error404"
 						} else if (/^The capture failed because Save Page Now does not have access rights for/.test(Col_D_SavedURLOrError)) {
 							SaveStatus = "CantSave_Error403"
