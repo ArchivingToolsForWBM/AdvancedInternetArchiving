@@ -460,18 +460,36 @@ Sort by: <select onchange="SortSettingChanged()">
 				FindWhat:/https:\/\/imgur\.com\/([^\/\.]+)/,
 				ReplaceWith:[{Replacement: Setting_Imgur_AlternativeFrontendInstance.replace(/\/$/, "") + "/$1", KeyName:"Imgur_AFE_PageImage"}]
 			},
-			//Notion pages
+			//Nanos
 			{
-				//Notion images (page URLs uses base64 code, seemingly obfuscated.)
 				Type:"normal",
-				//FindWhat:/^(https:\/\/[a-zA-Z\d_\-]+\.notion\.site\/image\/https%3A%2F%2F(s3-us-west-2\.amazonaws\.com|prod-files-secure\.s3\.us-west-2\.amazonaws\.com)%2F(?:(?!&width=\d+).)*).*$/, //thank you https://stackoverflow.com/a/3850095/11030779 , match all string, up to but not including "&width=<number>"
-				FindWhat:/^(https:\/\/[a-zA-Z\d_\-]+\.notion\.site\/image\/.*%2F(?:(?!&width=\d+).)*).*$/,
-				ReplaceWith:[{Replacement:"$1", KeyName:"Notion_Image_Full"}]
+				FindWhat:/^(https:\/\/nanos\.jp\/[^\/]+).*$/,
+				ReplaceWith:[{Replacement:"$1",KeyName:"NanosBlogFrontPage"}]
+			},
+			{
+				Type:"pagination",
+				FindWhat:/(?:(?<=^https:\/\/nanos\.jp\/[^\/]+\/[^\/]+\/))\d+(?:.*$)/,
+				PageNumberStartsAt:1,
+				KeyName:"NanosBlog_Page"
+			},
+			{
+				Type:"pagination",
+				FindWhat:/(?:(?<=^https:\/\/nanos\.jp\/[^\/]+\/[^\/]+\/\d+\/))\d+(?:$)/,
+				PageNumberStartsAt:1,
+				KeyName:"NanosBlog_Page"
+			},
+			{
+				Type:"pagination",
+				FindWhat:/(?:(?<=^https:\/\/nanos\.jp\/[^\/]+\/[^\/]+\/\d+\/\?p=))\d+(?:$)/,
+				PageNumberStartsAt:1,
+				KeyName:"NanosBlog_Page"
 			},
 			{
 				Type:"normal",
-				FindWhat:/^(https:\/\/[a-zA-Z\d_\-]+\.notion\.site\/(?!image\/)[a-zA-Z\d]+).*$/,
-				ReplaceWith:[{Replacement:"$1", KeyName:"Notion_Page_Content"}]
+				FindWhat:/^(https:\/\/static\.nanos\.jp\/upload\/.*)_th(\.[a-zA-Z]+$)/,
+				ReplaceWith:[
+					{Replacement:"$1$2",KeyName:"NanosBlogUploadsFull"}
+				]
 			}
 		]
 	window.onload = LoadCustomToggableFilters
@@ -607,9 +625,11 @@ Sort by: <select onchange="SortSettingChanged()">
 				//-We check every possible combinations, so there are two index numbers with the second one starting at FirstIndex+1 instead of 0.
 				for (let i = 0; i < ListOfURLs.length; i++) { //Loop through every entered URL by the user
 					let UrlMatchedAnyConverter = false
-					if (ListOfURLs[i].HaveBeenChecked) { //Skip pagination URLs that have been checked by inner loop (optimization purposes)
-						continue
-					}
+					//if (ListOfURLs[i].HaveBeenChecked) { //Skip pagination URLs that have been checked by inner loop (optimization purposes)
+					//	continue
+					//}
+					// ^Uhh, this is bad, causes issues with paginated URLs that have multiple page counters in the string with 2 URL processors handling each part
+					//  of the URL which suppresses a similar variations of a URL depending on the relative orders of the URL entered.
 					ListOfConverters.forEach(Converter => { //For each URL the user entered, loop through converters
 						if (!Converter.FindWhat.test(ListOfURLs[i].URL)) { //If URL matches one or more of the converters (a URL gets to loop through multiple converters)
 							return
