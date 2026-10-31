@@ -490,6 +490,13 @@ Sort by: <select onchange="SortSettingChanged()">
 				ReplaceWith:[
 					{Replacement:"$1$2",KeyName:"NanosBlogUploadsFull"}
 				]
+			},
+			{
+				Type:"normal",
+				FindWhat:/^(https:\/\/static\.nanos\.jp\/upload\/.*_th\.[a-zA-Z]+$)/,
+				ReplaceWith:[
+					{Replacement:"$1",KeyName:"NanosBlogUploadsThumbnail"}
+				]
 			}
 		]
 	window.onload = LoadCustomToggableFilters
@@ -613,7 +620,6 @@ Sort by: <select onchange="SortSettingChanged()">
 							// -When extracting links on WBM version of pages, obtain the original version of URLs (ideal for saving outlinks from a volatile page).
 							// -remove fragment identifier
 							// -remove the erroneous dot at the end from the error message
-						HaveBeenChecked:false, //This is used to check for duplicate or 2 URLs being similar (same URL but different page number)
 						IdentifiedType:"",
 						KeyName:"" //Failsafe - for blacklisted or IdentifiedType being "other", should have its KeyName be blank instead of "undefined"
 					}
@@ -625,11 +631,6 @@ Sort by: <select onchange="SortSettingChanged()">
 				//-We check every possible combinations, so there are two index numbers with the second one starting at FirstIndex+1 instead of 0.
 				for (let i = 0; i < ListOfURLs.length; i++) { //Loop through every entered URL by the user
 					let UrlMatchedAnyConverter = false
-					//if (ListOfURLs[i].HaveBeenChecked) { //Skip pagination URLs that have been checked by inner loop (optimization purposes)
-					//	continue
-					//}
-					// ^Uhh, this is bad, causes issues with paginated URLs that have multiple page counters in the string with 2 URL processors handling each part
-					//  of the URL which suppresses a similar variations of a URL depending on the relative orders of the URL entered.
 					ListOfConverters.forEach(Converter => { //For each URL the user entered, loop through converters
 						if (!Converter.FindWhat.test(ListOfURLs[i].URL)) { //If URL matches one or more of the converters (a URL gets to loop through multiple converters)
 							return
@@ -661,7 +662,6 @@ Sort by: <select onchange="SortSettingChanged()">
 								PartsOfURLSame2 = ListOfURLs[i2].URL.split(Converter.FindWhat)
 								if (Converter.FindWhat.test(ListOfURLs[i2].URL) && (PartsOfURLSame[0] == PartsOfURLSame2[0]) && (PartsOfURLSame[1] == PartsOfURLSame2[1])) { //if regex and all parts of the URL the same ignoring page number, compare the page number
 									HighestPageNumberSoFar = Math.max(HighestPageNumberSoFar, parseInt(ListOfURLs[i2].URL.match(Converter.FindWhat)[0], 10)) //Update highest page number
-									ListOfURLs[i2].HaveBeenChecked = true //Don't check this again when the outer loop advances
 								}
 							}
 							//We now have the maximum number based on the user input
