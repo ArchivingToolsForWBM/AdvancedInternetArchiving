@@ -42,6 +42,7 @@
 		//^"all" is a set that is used to avoid or mitigate duplicate items in the console log. You'll still get duplicates
 		// if this gets reset via pagereload/load-to-another-page. Does not reset if only subwindows are refreshed/new-page-load.
 	function ExtractLinksFromPage(PageDocument) {
+		AddLinksToSetAndConsoleLog(location.href, "page URL")
 		Array.from(PageDocument.getElementsByTagName('a')).forEach(link=>{ //"a href" links
 			//let URLString = FormatURL(link.href)
 			//if(!all.has(URLString[0])&&URLString[1]) {
