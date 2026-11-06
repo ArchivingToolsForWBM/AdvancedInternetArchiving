@@ -56,13 +56,13 @@ Extraction modes:
 		<td>
 			Filter:
 			<div class="Indent">
-				<div class="ListedItem"><label><input type="checkbox" id="Option_RemoveDup" onchange="AutoUpdate()" checked>Remove duplicates</label></div>
 				<div class="ListedItem" style="max-width: 400px;"><label><input type="checkbox" id="Option_RemoveFirefoxTruncation" onchange="AutoUpdate()" checked>Remove URLs that were truncated (ellepses chacater &ldquo;…&rdquo;). Does not apply to error URLs.</label></div>
 			</div>
 			Sort:
 			<select id="ExtractedURLs_SortSettings" onchange="AutoUpdate()">
 				<option>None</option>
-				<option selected>Alphabetically</option>
+				<option>Alphabetically</option>
+				<option selected>Alphabetically (domain name TLD, label 1, 2...)</option>
 			</select> <label><input type="checkbox" id="ExtractedURLs_SortSettings_Reverse" onchange="AutoUpdate()">Reverse</label><br><br>
 			Misc:
 			<div class="Indent">
@@ -84,6 +84,7 @@ Extraction modes:
 			<select id="ErrorURLs_SortSettings" onchange="AutoUpdate()">
 				<option>None</option>
 				<option>Alphabetically</option>
+				<option>Alphabetically (domain name TLD, label 1, 2...)</option>
 				<option selected>Error status</option>
 			</select> <label><input type="checkbox" id="ErrorURLs_SortSettings_Reverse" onchange="AutoUpdate()">Reverse</label><br><br>
 			Misc:
@@ -112,6 +113,7 @@ Extraction modes:
 		if (ListOfURLs == null) {
 			ListOfURLs = [] //failsafe, prevents Array.map from performing a null which on the browser, would do nothing (if user enters a string with no valid URL).
 		}
+		ListOfURLs = [...new Set(ListOfURLs)]
 		let ListOfErrorURLs = document.getElementById("TextInput").value.match(/GEThttp(s)?\:\/\/(?!data:)[^\s\"\']+\/?\n\[HTTP\/\d (4|5)\d\d.+\]/g)
 			//currently (2022-08-20) firefox is the only browser as far as I know have a "browser console" and has the option to have huge log limit sizes.
 			if (ListOfErrorURLs==null) {
@@ -120,9 +122,11 @@ Extraction modes:
 			ListOfErrorURLs = ListOfErrorURLs.map((ArrayElement) => {
 				let URL = ArrayElement.replace(/^GET/, "").replace(/\n.+/, "")
 				let ErrorStatus = ArrayElement.replace(/GEThttp(s)?\:\/\/(?!data:)[^\s\"\']+\/?\n\[HTTP\/\d /, "").replace(/(?<=(4|5)\d\d) .+\]/, "")
+				let DomainNameTLDLabelOrder = ReverseURLLabel("h" + ArrayElement)
 				return {
 					URL: URL,
 					ErrorStatus: ErrorStatus,
+					URLReverseLabel: DomainNameTLDLabelOrder,
 					IsDuplicate: false,
 				}
 			})
@@ -131,12 +135,13 @@ Extraction modes:
 				if (document.getElementById("Option_IgnoreFragment").checked) {
 					ProcessedURL = ProcessedURL.replace(/#.*$/, "")
 				};
-				if (document.getElementById("Option_ForceHTTPS").checked &&document.getElementById("Option_HarMode").checked == false) {
+				if (document.getElementById("Option_ForceHTTPS").checked && document.getElementById("Option_HarMode").checked == false) {
 					ProcessedURL = ProcessedURL.replace(/^ttp:\/\//, "ttps://")
 				};
+				let DomainNameTLDLabelOrder = ReverseURLLabel("h" + ProcessedURL)
 				return {
 					URL: ProcessedURL,
-					IsDuplicate: false
+					URLReverseLabel: DomainNameTLDLabelOrder
 				}
 		});
 		//Correct the URL string (console log may quote a string with a period added at the end, for example)
@@ -148,23 +153,6 @@ Extraction modes:
 		//Remove the URL that have been truncated (ellepses ("…")) on long URLs.
 			if (document.getElementById("Option_RemoveFirefoxTruncation").checked) {
 				ListOfURLs = ListOfURLs.filter((ArrayElement) => (!(/^.+….+$/.test(ArrayElement.URL))))
-			}
-		//Remove duplicates
-			if (document.getElementById("Option_RemoveDup").checked) {
-				for (let Index = 0; Index < ListOfURLs.length; Index++) {
-					let URLItem = ListOfURLs[Index]
-					if (!URLItem.IsDuplicate) {
-						for (let Index2 = Index+1; Index2 < ListOfURLs.length; Index2++) {
-							let URLItem2 = ListOfURLs[Index2]
-							if (!URLItem2.IsDuplicate) {
-								if (URLItem.URL == URLItem2.URL) {
-									URLItem2.IsDuplicate = true
-								}
-							}
-						}
-					}
-				}
-				ListOfURLs = ListOfURLs.filter((ArrayElement) => (!ArrayElement.IsDuplicate))
 			}
 			if (document.getElementById("Option_RemoveDup_ErrorURLs").checked) {
 				for (let Index = 0; Index < ListOfErrorURLs.length; Index++) {
@@ -200,13 +188,21 @@ Extraction modes:
 					SortReverseSetting = -1
 				}
 				if (document.getElementById("ExtractedURLs_SortSettings").selectedIndex == 1) {
-					ListOfURLs.sort(function CompareURLs(a, b) {
+					ListOfURLs.sort((a, b) => {
 						if (a.URL === b.URL) {
 							return 0;
 						} else {
 							return ((a.URL < b.URL) ? -1 : 1) * SortReverseSetting;
 						}
-					})
+					});
+				} else if (document.getElementById("ExtractedURLs_SortSettings").selectedIndex == 2) {
+					ListOfURLs.sort((a, b) => {
+						if (a.URLReverseLabel === b.URLReverseLabel) {
+							return 0;
+						} else {
+							return ((a.URLReverseLabel < b.URLReverseLabel) ? -1 : 1) * SortReverseSetting;
+						}
+					});
 				}
 			//Sort error URLs
 				let SortErrorsReverseSetting = 1
@@ -214,7 +210,7 @@ Extraction modes:
 					SortErrorsReverseSetting = -1
 				}
 				if (document.getElementById("ErrorURLs_SortSettings").selectedIndex == 1) {
-					ListOfErrorURLs.sort(function CompareErrorURLs(a, b) {
+					ListOfErrorURLs.sort((a, b) => {
 						if (a.URL === b.URL) {
 							return 0;
 						} else {
@@ -222,7 +218,15 @@ Extraction modes:
 						}
 					})
 				} else if (document.getElementById("ErrorURLs_SortSettings").selectedIndex == 2) {
-					ListOfErrorURLs.sort(function CompareErrorURLsReverse(a, b) {
+					ListOfErrorURLs.sort((a, b) => {
+						if (a.URLReverseLabel === b.URLReverseLabel) {
+							return 0;
+						} else {
+							return ((a.URLReverseLabel < b.URLReverseLabel) ? 1 : -1) * SortErrorsReverseSetting;
+						}
+					})
+				} else if (document.getElementById("ErrorURLs_SortSettings").selectedIndex == 3) {
+					ListOfErrorURLs.sort((a, b) => {
 						if (a.ErrorStatus === b.ErrorStatus) {
 							return 0;
 						} else {
@@ -281,4 +285,22 @@ Extraction modes:
 			document.getElementById(CopyMessageID).textContent = ""
 			document.getElementById(CopyMessageID).style.color = ""
 		}
+	function ReverseURLLabel(String) {
+		let URLObj = {}
+		try {
+			URLObj = new URL(String)
+			let Scheme = URLObj.protocol + "//"
+			let DomainName = URLObj.hostname.split(".")
+			let TLD = DomainName.at(-1)
+			let Path = URLObj.pathname
+			if (Path == "/") {
+				Path = ""
+			}
+			let DomainNameLabelsReverse = DomainName.slice(0, -1).reverse().join(".")
+			
+			return Scheme + DomainNameLabelsReverse + "." + TLD + Path
+		} catch {
+			return ""
+		}
+	}
 </script>

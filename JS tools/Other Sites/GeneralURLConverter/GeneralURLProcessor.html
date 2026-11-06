@@ -60,7 +60,8 @@ Keynames to filter: <button onclick="ChangeCheckboxesByChildren(1, event.target.
 </div>
 Sort by: <select onchange="SortSettingChanged()">
 	<option id="SortSetting_None">None</option>
-	<option id="SortSetting_ABC" selected>Alphabetically</option>
+	<option id="SortSetting_ABC">Alphabetically</option>
+	<option id="SortSetting_ABCRevLabel" selected>Alphabetically (TLD labels reversed)</option>
 	<option id="SortSetting_IdentifiedType">Identified Type</option>
 	<option id="SortSetting_KeyName">KeyName</option>
 </select> <label><input type="checkbox" id="SortSetting_Reverse" onchange="Auto_update()">Reverse</label>
@@ -615,13 +616,14 @@ Sort by: <select onchange="SortSettingChanged()">
 						ConvertedURL = ConvertedURL.replace(/^http:\/\//, "https://")
 					}
 					let URLObject = {
-						URL:ConvertedURL,
+						URL: ConvertedURL,
 							//^-Revert the URL to have the "h" of the http/https
 							// -When extracting links on WBM version of pages, obtain the original version of URLs (ideal for saving outlinks from a volatile page).
 							// -remove fragment identifier
 							// -remove the erroneous dot at the end from the error message
-						IdentifiedType:"",
-						KeyName:"" //Failsafe - for blacklisted or IdentifiedType being "other", should have its KeyName be blank instead of "undefined"
+						URLReverseLabel: ReverseURLLabel(ConvertedURL),
+						IdentifiedType: "",
+						KeyName: "" //Failsafe - for blacklisted or IdentifiedType being "other", should have its KeyName be blank instead of "undefined"
 					}
 					return URLObject
 				});
@@ -630,9 +632,12 @@ Sort by: <select onchange="SortSettingChanged()">
 				//-Not recommended for concurrent modification since we are checking for potential same/similar URL
 				//-We check every possible combinations, so there are two index numbers with the second one starting at FirstIndex+1 instead of 0.
 				for (let i = 0; i < ListOfURLs.length; i++) { //Loop through every entered URL by the user
+					let URLProcessed = ListOfURLs[i]
+					let URLDomainReversedLabels = ReverseURLLabel(URLProcessed.URL)
 					let UrlMatchedAnyConverter = false
+					
 					ListOfConverters.forEach(Converter => { //For each URL the user entered, loop through converters
-						if (!Converter.FindWhat.test(ListOfURLs[i].URL)) { //If URL matches one or more of the converters (a URL gets to loop through multiple converters)
+						if (!Converter.FindWhat.test(URLProcessed.URL)) { //If URL matches one or more of the converters (a URL gets to loop through multiple converters)
 							return
 						}
 						UrlMatchedAnyConverter = true
@@ -643,11 +648,11 @@ Sort by: <select onchange="SortSettingChanged()">
 									if (ReplaceWithText.hasOwnProperty("KeyName")) {
 										SetKeyName = ReplaceWithText.KeyName
 									}
-									//OutputSet.add(ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText))
 									AddToOutput({
-										URL:ListOfURLs[i].URL.replace(Converter.FindWhat, ReplaceWithText.Replacement),
-										IdentifiedType:"converted",
-										KeyName:SetKeyName
+										URL: URLProcessed.URL.replace(Converter.FindWhat, ReplaceWithText.Replacement),
+										URLReverseLabel: URLDomainReversedLabels.replace(Converter.FindWhat, ReplaceWithText.Replacement),
+										IdentifiedType: "converted",
+										KeyName: SetKeyName
 									});
 								});
 							};
@@ -656,32 +661,32 @@ Sort by: <select onchange="SortSettingChanged()">
 							if (Converter.hasOwnProperty("KeyName")) {
 								SetKeyName = Converter.KeyName
 							}
-							let HighestPageNumberSoFar = parseInt(ListOfURLs[i].URL.match(Converter.FindWhat)[0], 10) //Track highest page number starting with the number we first processed
-							let PartsOfURLSame = ListOfURLs[i].URL.split(Converter.FindWhat) //Get substrings before and after the page number (must be: ["string before number", "string after number"], a length of 2)
+							let HighestPageNumberSoFar = parseInt(URLProcessed.URL.match(Converter.FindWhat)[0], 10) //Track highest page number starting with the number we first processed
+							let PartsOfURLSame = URLProcessed.URL.split(Converter.FindWhat) //Get substrings before and after the page number (must be: ["string before number", "string after number"], a length of 2)
 							for (let i2 = i+1; i2 < ListOfURLs.length; i2++) { //Loop to find a potential same URL but with higher page number
-								PartsOfURLSame2 = ListOfURLs[i2].URL.split(Converter.FindWhat)
-								if (Converter.FindWhat.test(ListOfURLs[i2].URL) && (PartsOfURLSame[0] == PartsOfURLSame2[0]) && (PartsOfURLSame[1] == PartsOfURLSame2[1])) { //if regex and all parts of the URL the same ignoring page number, compare the page number
-									HighestPageNumberSoFar = Math.max(HighestPageNumberSoFar, parseInt(ListOfURLs[i2].URL.match(Converter.FindWhat)[0], 10)) //Update highest page number
+								let URLProcessed2 = ListOfURLs[i2]
+								let PartsOfURLSame2 = URLProcessed2.URL.split(Converter.FindWhat)
+								if (Converter.FindWhat.test(URLProcessed2.URL) && (PartsOfURLSame[0] == PartsOfURLSame2[0]) && (PartsOfURLSame[1] == PartsOfURLSame2[1])) { //if regex and all parts of the URL the same ignoring page number, compare the page number
+									HighestPageNumberSoFar = Math.max(HighestPageNumberSoFar, parseInt(URLProcessed2.URL.match(Converter.FindWhat)[0], 10)) //Update highest page number
 								}
 							}
 							//We now have the maximum number based on the user input
 							for (let i2 = Converter.PageNumberStartsAt; i2 <= HighestPageNumberSoFar; i2++) { //Generate a URL of each page number
-								//OutputSet.add(PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1])
 								AddToOutput({
-									URL:PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1], //Insert each page number URL
-									IdentifiedType:"pagination",
-									KeyName:SetKeyName
+									URL: PartsOfURLSame[0] + i2.toString(10) + PartsOfURLSame[1], //Insert each page number URL
+									URLReverseLabel: URLDomainReversedLabels,
+									IdentifiedType: "pagination",
+									KeyName: SetKeyName
 								});
 							}
 						} else if (Converter.Type == "blacklisted") {
-							ListOfURLs[i].IdentifiedType = "blacklisted"
-							AddToOutput(ListOfURLs[i])
+							URLProcessed.IdentifiedType = "blacklisted"
+							AddToOutput(URLProcessed)
 						}
 					});
 					if ((UrlMatchedAnyConverter == false)&&document.getElementById("FilterSetting_other").checked) {
-						//OutputSet.add(ListOfURLs[i].URL)
-						ListOfURLs[i].IdentifiedType = "other"
-						AddToOutput(ListOfURLs[i])
+						URLProcessed.IdentifiedType = "other"
+						AddToOutput(URLProcessed)
 					}
 					
 				}
@@ -714,6 +719,14 @@ Sort by: <select onchange="SortSettingChanged()">
 						return 0;
 					} else {
 						return ((a.URL < b.URL) ? -1 : 1) * ReverseSetting;
+					}
+				});
+			} else if (document.getElementById("SortSetting_ABCRevLabel").selected) {
+				Filtered_OutputURLObjects.sort((a, b) => {
+					if (a.URLReverseLabel === b.URLReverseLabel) {
+						return 0;
+					} else {
+						return ((a.URLReverseLabel < b.URLReverseLabel) ? -1 : 1) * ReverseSetting;
 					}
 				});
 			} else if (document.getElementById("SortSetting_IdentifiedType").selected) {
@@ -802,17 +815,36 @@ Sort by: <select onchange="SortSettingChanged()">
 				//they'll be labeled as "other" with a blank keyname, and then when the third URL gets processed, and then converted into the first two
 				//URLs, they won't be added, despite those having known information (IdentifiedType and KeyName)
 				for (let i = 0, j=OutputURLObjects.length; i < j; i++) {
-					if (URLObject.URL == OutputURLObjects[i].URL) { //Match is found, update any missing info in OutputURLObjects[i].URL
-						if (OutputURLObjects[i].IdentifiedType == "other" && URLObject.IdentifiedType != "other") {
-							OutputURLObjects[i].IdentifiedType = URLObject.IdentifiedType
+					let URLObjectProcessed = OutputURLObjects[i]
+					if (URLObject.URL == URLObjectProcessed.URL) { //Match is found, update any missing info in URLObjectProcessed.URL
+						if (URLObjectProcessed.IdentifiedType == "other" && URLObject.IdentifiedType != "other") {
+							URLObjectProcessed.IdentifiedType = URLObject.IdentifiedType
 						}
-						if (OutputURLObjects[i].KeyName == "" && URLObject.KeyName != "") {
-							OutputURLObjects[i].KeyName = URLObject.KeyName
+						if (URLObjectProcessed.KeyName == "" && URLObject.KeyName != "") {
+							URLObjectProcessed.KeyName = URLObject.KeyName
 						}
 						break;
 					}
 				}
 			}
+		}
+	}
+	function ReverseURLLabel(String) {
+		let URLObj = {}
+		try {
+			URLObj = new URL(String)
+			let Scheme = URLObj.protocol + "//"
+			let DomainName = URLObj.hostname.split(".")
+			let TLD = DomainName.at(-1)
+			let Path = URLObj.pathname
+			if (Path == "/") {
+				Path = ""
+			}
+			let DomainNameLabelsReverse = DomainName.slice(0, -1).reverse().join(".")
+			
+			return Scheme + DomainNameLabelsReverse + "." + TLD + Path
+		} catch {
+			return ""
 		}
 	}
 </script>
