@@ -1,0 +1,218 @@
+
+<html>
+	<head>
+		<style>
+			html {
+			background-color: rgb(29, 30, 38);
+			color: rgb(221, 221, 221);
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			span.NoLineBreak {
+				white-space: nowrap;
+			}
+			input[type='text'] { font-family: monospace;}
+			input[type='number'] { font-family: monospace;}
+			
+			td label {   /* thanks to Patrick McElhaney - https://stackoverflow.com/questions/9739259/tick-a-checkbox-in-a-table-cell-by-clicking-anywhere-in-the-table-cell , causes table cells with labels inside them to focus onto whats inside a label */
+				display: block;
+				text-align: center;
+			}
+			div.TabbedItems {
+				padding-left: 1rem;
+			}
+		</style>
+	</head>
+<body style="max-width: 1000px; margin: auto; padding: 15px">
+<h1 style="text-align: center;">General URL converter</h1>
+
+Paste your URLs here:<br>
+<textarea id="InputURLs" cols="60" rows="10" oninput="InputURLsChanged = true; ProcessURLs();"></textarea><br>
+Settings:<br>
+<div class="TabbedItems">
+	<div><label><input type="checkbox" checked onchange="InputURLsChanged = true" id="Setting_https">Force <kbd>https</kbd></label></div>
+</div>
+Sort: <select id="SortSettings" onchange="ProcessURLs()">
+	<option data-sortby="">Creation Order</option>
+	<option data-sortby="URL">Alphabetically</option>
+	<option data-sortby="URLRevLabel" selected>Alphabetically (Reversed Domain name then TLD)</option>
+	<option data-sortby="IdentifiedType">Type</option>
+	<option data-sortby="KeyName">Keyname</option>
+</select> <label><input type="checkbox" id="ReverseSort" onchange="ProcessURLs()">Reverse</label>
+<hr>
+<textarea id="OutputURLs" cols="60" rows="10" style="background-color: #000000; color: #808080;"></textarea>
+<script>
+	let Saved_OutputList = {
+		URLList: [],
+		URLSet: new Set()
+	};
+	let InputURLsChanged = false;
+	//This is a list of converters. Each URL entered runs though all converters to output variants of a given URL.
+		let URLConverters = [
+			{
+				PatternToTest: {
+					hostname: "example.com",
+					pathname: "/images/:filename",
+					search: "?format=thumb"
+				},
+				Type: "Normal",
+				KeyName: "SampleTest",
+				CreateVarients(InputURL) {
+					let ProcessedURLObject = new URL(InputURL)
+					ProcessedURLObject.searchParams.set("format", "thumb")
+					let ProcessedURL = ProcessedURLObject.href
+					ProcessedURLObject.searchParams.set("format", "original")
+					let ProcessedURL2 = ProcessedURLObject.href
+					return [ProcessedURL, ProcessedURL2]
+				}
+			}
+		]
+	
+	TestURLs();
+	
+	function TestURLs() {
+		document.getElementById("InputURLs").value = `
+http://example.com/images/sampleimage.jpg?format=thumb
+http://example.com/images/sampleimage.jpg?format=original
+http://example.com/differentpath/foobar.html
+https://wikipedia.org
+http://yournamehere.tumblr.com
+https://yournamehere.tumblr.com
+`
+	InputURLsChanged = true
+	ProcessURLs()
+	}
+	function GenerateOutputURLs(URL = "", IdentifiedType = "", KeyName = "") {
+		this.URL = URL
+		this.URLRevLabel = ReverseURLLabel(URL)
+		this.IdentifiedType = IdentifiedType
+		this.KeyName = KeyName
+	}
+	function AddToOutput(OutputURLObject) {
+		let URLString = OutputURLObject.URL
+		if (typeof URLString != "string") {
+			console.error("This URL is an object")
+			return
+		}
+		if (!Saved_OutputList.URLSet.has(URLString)) {
+			Saved_OutputList.URLSet.add(URLString)
+			Saved_OutputList.URLList.push(OutputURLObject)
+		} else {
+			//Update previous URL that may have entries missing that the current URL isn't missing.
+				let MatchedPrevItem = Saved_OutputList.URLList.find(Item => Item.URL == URLString)
+				if ((MatchedPrevItem.IdentifiedType == "") && (OutputURLObject.IdentifiedType != "")) {
+					MatchedPrevItem.IdentifiedType = OutputURLObject.IdentifiedType
+				}
+				if ((MatchedPrevItem.KeyName == "") && (OutputURLObject.KeyName != "")) {
+					MatchedPrevItem.KeyName = OutputURLObject.KeyName
+				}
+		}
+	
+	}
+	function ProcessURLs() {
+		let InputURLText = []
+		if (InputURLsChanged) {
+			//Main process
+				Saved_OutputList.URLSet.clear(); //Clear the set as to not include previous version every edit.
+				Saved_OutputList.URLList.length = 0
+				
+				InputURLText = document.getElementById("InputURLs").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"\']+/g) ?? []
+				InputURLText = [...new Set(InputURLText)]
+				InputURLText = InputURLText.map(URLItem => {
+					if (document.getElementById("Setting_https").checked) {
+						return "h" + URLItem.replace("ttp://", "ttps://")
+					} else {
+						return "h" + URLItem
+					}
+				})
+				InputURLText = [...new Set(InputURLText)] //If URLs went from http to https, that may also results in duplicates.
+				InputURLText = InputURLText.filter(Item => {
+					try {
+						new URL(Item)
+						return true
+					} catch {
+						return false
+					}
+					
+				});
+			//Match URLs with converters
+				InputURLText.forEach(EnteredURL => {
+					let URLObject = new URL(EnteredURL)
+					let HaveMatchedAtLeastOnce = false
+					URLConverters.forEach(Converter => {
+						//Here, we need to know if the URL is compatible with the converter
+						let Pattern = new URLPattern(Converter.PatternToTest)
+						let HasPassed = Pattern.test(URLObject.href)
+						let GeneratedURLs = [];
+						if (HasPassed) {
+							GeneratedURLs = Converter.CreateVarients(URLObject.href)
+							if (Converter.Type == "Normal") {
+								GeneratedURLs.forEach(Link => {
+									let OutputURLObject = new GenerateOutputURLs(Link, Converter.Type, Converter.KeyName)
+									AddToOutput(OutputURLObject)
+								})
+							}
+						} else {
+							let OutputLink = new GenerateOutputURLs(URLObject, "Other", "Other")
+							AddToOutput(OutputLink)
+						}
+					});
+				});
+			InputURLsChanged = false
+		}
+		let OutputDisplay = Saved_OutputList.URLList
+		OutputDisplay = OutputDisplay.filter(Item => true)
+		
+		let SortSelects = document.getElementById("SortSettings")
+		let SelectedSortIndex = SortSelects.selectedIndex
+		let SelectedOption = [...SortSelects.children].find(Ele => Ele.selected)
+		let SortSelectedSortProperty = SelectedOption.dataset.sortby
+		
+		let ReverseSetting = 1
+		if (document.getElementById("ReverseSort").checked) {
+			ReverseSetting = -1
+		}
+		
+		if (SelectedSortIndex != 0) {
+			OutputDisplay.sort((a, b) => {
+				if (a[SortSelectedSortProperty] === b[SortSelectedSortProperty]) {
+					return 0;
+				} else {
+					return ((a[SortSelectedSortProperty] < b[SortSelectedSortProperty]) ? -1 : 1) * ReverseSetting;
+				}
+			});
+		}
+		let OutputString = ""
+		OutputDisplay.forEach((Ele,Index, Arr) => {
+			OutputString += Ele.URL
+			if (Index != Arr.length-1) {
+				OutputString += "\n"
+			}
+		});
+		
+		document.getElementById("OutputURLs").value = OutputString
+	
+	}
+	function ReverseURLLabel(String) {
+		let URLObj = {}
+		try {
+			URLObj = new URL(String)
+			let DomainName = URLObj.hostname.split(".")
+			let TLD = DomainName.at(-1)
+			if (DomainName.length > 1) {
+				DomainName.pop()
+			}
+			DomainName.reverse()
+			URLObj.hostname = DomainName.join(".")
+			
+			return URLObj.href
+		} catch {
+			return ""
+		}
+	}
+</script>

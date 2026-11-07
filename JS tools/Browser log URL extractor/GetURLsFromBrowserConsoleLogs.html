@@ -289,16 +289,15 @@ Extraction modes:
 		let URLObj = {}
 		try {
 			URLObj = new URL(String)
-			let Scheme = URLObj.protocol + "//"
 			let DomainName = URLObj.hostname.split(".")
 			let TLD = DomainName.at(-1)
-			let Path = URLObj.pathname
-			if (Path == "/") {
-				Path = ""
+			if (DomainName.length > 1) {
+				DomainName.pop()
 			}
-			let DomainNameLabelsReverse = DomainName.slice(0, -1).reverse().join(".")
+			DomainName.reverse()
+			URLObj.hostname = DomainName.join(".")
 			
-			return Scheme + DomainNameLabelsReverse + "." + TLD + Path
+			return URLObj.href
 		} catch {
 			return ""
 		}
