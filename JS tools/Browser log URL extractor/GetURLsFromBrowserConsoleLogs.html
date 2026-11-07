@@ -295,7 +295,7 @@ Extraction modes:
 				DomainName.pop()
 			}
 			DomainName.reverse()
-			URLObj.hostname = DomainName.join(".")
+			URLObj.hostname = DomainName.join(".") + "." + TLD
 			
 			return URLObj.href
 		} catch {

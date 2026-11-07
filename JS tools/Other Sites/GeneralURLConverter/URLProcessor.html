@@ -77,8 +77,8 @@ Sort: <select id="SortSettings" onchange="ProcessURLs()">
 	
 	function TestURLs() {
 		document.getElementById("InputURLs").value = `
-http://example.com/images/sampleimage.jpg?format=thumb
 http://example.com/images/sampleimage.jpg?format=original
+http://example.com/images/sampleimage.jpg?format=thumb
 http://example.com/differentpath/foobar.html
 https://wikipedia.org
 http://yournamehere.tumblr.com
@@ -87,9 +87,9 @@ https://yournamehere.tumblr.com
 	InputURLsChanged = true
 	ProcessURLs()
 	}
-	function GenerateOutputURLs(URL = "", IdentifiedType = "", KeyName = "") {
-		this.URL = URL
-		this.URLRevLabel = ReverseURLLabel(URL)
+	function GenerateOutputURLs(URLLink = "", IdentifiedType = "", KeyName = "") {
+		this.URL = URLLink
+		this.URLRevLabel = ReverseURLLabel(URLLink)
 		this.IdentifiedType = IdentifiedType
 		this.KeyName = KeyName
 	}
@@ -105,10 +105,10 @@ https://yournamehere.tumblr.com
 		} else {
 			//Update previous URL that may have entries missing that the current URL isn't missing.
 				let MatchedPrevItem = Saved_OutputList.URLList.find(Item => Item.URL == URLString)
-				if ((MatchedPrevItem.IdentifiedType == "") && (OutputURLObject.IdentifiedType != "")) {
+				if ((MatchedPrevItem.IdentifiedType == "Other") && (OutputURLObject.IdentifiedType != "Other")) {
 					MatchedPrevItem.IdentifiedType = OutputURLObject.IdentifiedType
 				}
-				if ((MatchedPrevItem.KeyName == "") && (OutputURLObject.KeyName != "")) {
+				if ((MatchedPrevItem.KeyName == "Other") && (OutputURLObject.KeyName != "")) {
 					MatchedPrevItem.KeyName = OutputURLObject.KeyName
 				}
 		}
@@ -158,7 +158,7 @@ https://yournamehere.tumblr.com
 								})
 							}
 						} else {
-							let OutputLink = new GenerateOutputURLs(URLObject, "Other", "Other")
+							let OutputLink = new GenerateOutputURLs(URLObject.href, "Other", "Other")
 							AddToOutput(OutputLink)
 						}
 					});
@@ -208,7 +208,7 @@ https://yournamehere.tumblr.com
 				DomainName.pop()
 			}
 			DomainName.reverse()
-			URLObj.hostname = DomainName.join(".")
+			URLObj.hostname = DomainName.join(".") + "." + TLD
 			
 			return URLObj.href
 		} catch {
