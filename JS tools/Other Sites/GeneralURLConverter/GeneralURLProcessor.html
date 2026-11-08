@@ -124,8 +124,8 @@ Sort by: <select onchange="SortSettingChanged()">
 		//On notepad++ to convert, use ReplaceAll on:
 		//- "\|" with "\n" to convert the vertical-bar-separated words into a list
 		//- "[\r\n]" with "|" to convert it into  vertical-bar-separated words.
-		//It must be "(?:(?!(?:" + <vertical-bar-separated words> + "))[A-Za-z\d\\-]+)" to ensure no capturing groups.
-		const Github_UsernamePart = "(?:(?!(?:about|apps|codespaces|collections|contact|customer\\-stories|enterprise|features|git\\-guides|images|login|mobile|organizations|orgs|premium-support|pricing|readme|search|security|signup|sitemap|solutions|sponsors|team|topics|trending|users))[A-Za-z\d\\-]+)"
+		//It must be "(?:(?!(?:" + <vertical-bar-separated words> + "))[A-Za-z\\d\\-]+)" to ensure no capturing groups.
+		const Github_UsernamePart = "(?:(?!(?:about|apps|codespaces|collections|contact|customer\\-stories|enterprise|features|git\\-guides|images|login|mobile|organizations|orgs|premium-support|pricing|readme|search|security|signup|sitemap|solutions|sponsors|team|topics|trending|users))[A-Za-z\\d\\-]+)"
 	//Bluesky stuff
 		//Bluesky instances (URL format as far as I know:
 		//https://bsky.app/profile/Username.bsky.social )
@@ -352,7 +352,7 @@ Sort by: <select onchange="SortSettingChanged()">
 				//removing empty repositories using WBGS's "Check if URLs are available in the Live Web" feature, and filter out URLs with 401s (or
 				//potentially any 4XX errors).
 				Type:"normal",
-				FindWhat: RegExp("^(((https?:\\/\\/github\\.com\\/" + Github_UsernamePart + ")\\/[A-Za-z\d_.\\-]+).*$)"),
+				FindWhat: RegExp("^(((https?:\\/\\/github\\.com\\/" + Github_UsernamePart + ")\\/[A-Za-z\\d_.\\-]+).*$)"),
 				ReplaceWith:[{Replacement:"$2", KeyName:"Github_Repository"}, {Replacement:"$2/releases", KeyName:"Github_Releases"}, {Replacement:"$2", KeyName:"Github_Profile"}, {Replacement:"$2/archive/refs/heads/master.zip", KeyName:"Github_Repository_Download"}]
 			},
 			{
@@ -365,7 +365,7 @@ Sort by: <select onchange="SortSettingChanged()">
 				//Github releases tag
 				//https://github.com/UserName/RepositoryName/releases/tag/VersionName -> https://github.com/UserName/RepositoryName/releases/expanded_assets/VersionName
 				Type:"normal",
-				FindWhat: RegExp("^(https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z\d_.\\-]+\\/releases)\\/tag\\/([A-Za-z\d_.\\-]+)"),
+				FindWhat: RegExp("^(https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z\\d_.\\-]+\\/releases)\\/tag\\/([A-Za-z\d_.\\-]+)"),
 				ReplaceWith:[{Replacement:"$1/expanded_assets/$2", KeyName:"Github_ReleasesTag_DownloadPage"}]
 			},
 			{
@@ -373,7 +373,7 @@ Sort by: <select onchange="SortSettingChanged()">
 				//https://github.com/UserName/RepositoryName/issues?page=6&q=
 				//https://github.com/UserName/RepositoryName/issues?page=2&q=is%3Aissue+is%3Aopen
 				Type:"pagination",
-				FindWhat: RegExp("(?:(?<=(?:^https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z\d_.\\-]+\\/issues\\?page=)))\\d+(.*$)"),
+				FindWhat: RegExp("(?:(?<=(?:^https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z\\d_.\\-]+\\/issues\\?page=)))\\d+(.*$)"),
 				PageNumberStartsAt:1,
 				KeyName:"Github_Repository_IssueForum"
 			},
@@ -382,7 +382,7 @@ Sort by: <select onchange="SortSettingChanged()">
 				//https://github.com/UserName/RepositoryName/issues/12345
 				//https://github.com/UserName/RepositoryName/issues/12
 				Type:"normal",
-				FindWhat: RegExp("^(https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z\d_.\\-]+\\/issues\\/\\d+).*$"),
+				FindWhat: RegExp("^(https?:\\/\\/github\\.com\\/" + Github_UsernamePart + "\\/[A-Za-z\\d_.\\-]+\\/issues\\/\\d+).*$"),
 				ReplaceWith:[{Replacement:"$1", KeyName:"Github_Repository_IssueThread"}]
 			},
 			{
