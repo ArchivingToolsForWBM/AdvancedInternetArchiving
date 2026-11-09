@@ -19,13 +19,22 @@
 			input[type='text'] { font-family: monospace;}
 			input[type='number'] { font-family: monospace;}
 			
-			td label {   /* thanks to Patrick McElhaney - https://stackoverflow.com/questions/9739259/tick-a-checkbox-in-a-table-cell-by-clicking-anywhere-in-the-table-cell , causes table cells with labels inside them to focus onto whats inside a label */
+			td label.TableCheckBoxes {   /* thanks to Patrick McElhaney - https://stackoverflow.com/questions/9739259/tick-a-checkbox-in-a-table-cell-by-clicking-anywhere-in-the-table-cell , causes table cells with labels inside them to focus onto whats inside a label */
 				display: block;
 				text-align: center;
 			}
 			div.TabbedItems {
 				padding-left: 1rem;
 			}
+			
+			div.ScrollableContainer {
+				border: 1px solid;
+				overflow: auto;
+				resize: both;
+				width: 500px;
+				height: 240px;
+			}
+			
 		</style>
 	</head>
 <body style="max-width: 1000px; margin: auto; padding: 15px">
@@ -33,23 +42,49 @@
 
 Paste your URLs here:<br>
 <textarea id="InputURLs" cols="60" rows="10" oninput="InputURLsChanged = true; ProcessURLs();"></textarea><br>
-Settings:<br>
-<div class="TabbedItems">
-	<div><label><input type="checkbox" checked onchange="InputURLsChanged = true" id="Setting_https">Force <kbd>https</kbd></label></div>
-</div>
-Sort: <select id="SortSettings" onchange="ProcessURLs()">
-	<option data-sortby="">Creation Order</option>
-	<option data-sortby="URL">Alphabetically</option>
-	<option data-sortby="URLRevLabel" selected>Alphabetically (Reversed Domain name then TLD)</option>
-	<option data-sortby="IdentifiedType">Type</option>
-	<option data-sortby="KeyName">Keyname</option>
-</select> <label><input type="checkbox" id="ReverseSort" onchange="ProcessURLs()">Reverse</label>
 <hr>
-<textarea id="OutputURLs" cols="60" rows="10" style="background-color: #000000; color: #808080;"></textarea>
+<table>
+	<tr>
+		<th>Output list</th>
+		<th>Output settings</th>
+	</tr>
+	<tr>
+		<td>
+			<div class="ScrollableContainer" id="OutputTable"></div><br>
+			<span style="font-family: monospace">Number of results: <span id="ResultCount">0</span></span><br>
+			<div><button onclick="CopyList()">Copy list</button><span></span></div><br>
+			
+		</td>
+		<td style="text-align: left;">
+			<div>
+				<div>
+					Sort: <select id="SortSettings" onchange="ProcessURLs()">
+						<option data-sortby="">Creation Order</option>
+						<option data-sortby="URL">Alphabetically</option>
+						<option data-sortby="URLRevLabel" selected>Alphabetically (Reversed Domain name then TLD)</option>
+						<option data-sortby="Type">Type</option>
+						<option data-sortby="KeyName">Keyname</option>
+					</select> <label><input type="checkbox" id="ReverseSort" onchange="ProcessURLs()">Reverse</label>
+				</div>
+				<div>
+					Filter by Key: <button onclick="ModifyCheckboxes(1); ProcessURLs()">Check all</button><button onclick="ModifyCheckboxes(0); ProcessURLs()">Uncheck all</button><button onclick="ModifyCheckboxes(2); ProcessURLs()">Invert</button>
+					<div class="ScrollableContainer" style="width: 230px;">
+					</div><br>
+				</div>
+				Misc:
+				<div class="TabbedItems">
+					<div><label><input type="checkbox" checked onchange="InputURLsChanged = true; ProcessURLs();" id="Setting_https">Force <kbd>https</kbd></label></div>
+				</div>
+			</div>
+		</td>
+	</tr>
+</table>
+
 <script>
-	let Saved_OutputList = {
+	let Saved_ProcessedData = {
 		URLList: [],
-		URLSet: new Set()
+		URLSet: new Set(),
+		OutputText: ""
 	};
 	let InputURLsChanged = false;
 	//This is a list of converters. Each URL entered runs though all converters to output variants of a given URL.
@@ -87,10 +122,10 @@ https://yournamehere.tumblr.com
 	InputURLsChanged = true
 	ProcessURLs()
 	}
-	function GenerateOutputURLs(URLLink = "", IdentifiedType = "", KeyName = "") {
+	function GenerateOutputURLs(URLLink = "", Type = "", KeyName = "") {
 		this.URL = URLLink
 		this.URLRevLabel = ReverseURLLabel(URLLink)
-		this.IdentifiedType = IdentifiedType
+		this.Type = Type
 		this.KeyName = KeyName
 	}
 	function AddToOutput(OutputURLObject) {
@@ -99,14 +134,14 @@ https://yournamehere.tumblr.com
 			console.error("This URL is an object")
 			return
 		}
-		if (!Saved_OutputList.URLSet.has(URLString)) {
-			Saved_OutputList.URLSet.add(URLString)
-			Saved_OutputList.URLList.push(OutputURLObject)
+		if (!Saved_ProcessedData.URLSet.has(URLString)) {
+			Saved_ProcessedData.URLSet.add(URLString)
+			Saved_ProcessedData.URLList.push(OutputURLObject)
 		} else {
 			//Update previous URL that may have entries missing that the current URL isn't missing.
-				let MatchedPrevItem = Saved_OutputList.URLList.find(Item => Item.URL == URLString)
-				if ((MatchedPrevItem.IdentifiedType == "Other") && (OutputURLObject.IdentifiedType != "Other")) {
-					MatchedPrevItem.IdentifiedType = OutputURLObject.IdentifiedType
+				let MatchedPrevItem = Saved_ProcessedData.URLList.find(Item => Item.URL == URLString)
+				if ((MatchedPrevItem.Type == "Other") && (OutputURLObject.Type != "Other")) {
+					MatchedPrevItem.Type = OutputURLObject.Type
 				}
 				if ((MatchedPrevItem.KeyName == "Other") && (OutputURLObject.KeyName != "")) {
 					MatchedPrevItem.KeyName = OutputURLObject.KeyName
@@ -118,8 +153,9 @@ https://yournamehere.tumblr.com
 		let InputURLText = []
 		if (InputURLsChanged) {
 			//Main process
-				Saved_OutputList.URLSet.clear(); //Clear the set as to not include previous version every edit.
-				Saved_OutputList.URLList.length = 0
+				Saved_ProcessedData.URLSet.clear(); //Clear the set as to not include previous version every edit.
+				Saved_ProcessedData.URLList.length = 0
+				Saved_ProcessedData.OutputText = ""
 				
 				InputURLText = document.getElementById("InputURLs").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"\']+/g) ?? []
 				InputURLText = [...new Set(InputURLText)]
@@ -165,39 +201,114 @@ https://yournamehere.tumblr.com
 				});
 			InputURLsChanged = false
 		}
-		let OutputDisplay = Saved_OutputList.URLList
-		OutputDisplay = OutputDisplay.filter(Item => true)
-		
-		let SortSelects = document.getElementById("SortSettings")
-		let SelectedSortIndex = SortSelects.selectedIndex
-		let SelectedOption = [...SortSelects.children].find(Ele => Ele.selected)
-		let SortSelectedSortProperty = SelectedOption.dataset.sortby
-		
-		let ReverseSetting = 1
-		if (document.getElementById("ReverseSort").checked) {
-			ReverseSetting = -1
-		}
-		
-		if (SelectedSortIndex != 0) {
-			OutputDisplay.sort((a, b) => {
-				if (a[SortSelectedSortProperty] === b[SortSelectedSortProperty]) {
-					return 0;
-				} else {
-					return ((a[SortSelectedSortProperty] < b[SortSelectedSortProperty]) ? -1 : 1) * ReverseSetting;
-				}
-			});
-		}
-		let OutputString = ""
-		OutputDisplay.forEach((Ele,Index, Arr) => {
-			OutputString += Ele.URL
-			if (Index != Arr.length-1) {
-				OutputString += "\n"
+		//Process outputs
+			let OutputDisplay = Saved_ProcessedData.URLList
+			OutputDisplay = OutputDisplay.filter(Item => true)
+			
+			let SortSelects = document.getElementById("SortSettings")
+			let SelectedSortIndex = SortSelects.selectedIndex
+			let SelectedOption = [...SortSelects.children].find(Ele => Ele.selected)
+			let SortSelectedSortProperty = SelectedOption.dataset.sortby
+			
+			let ReverseSetting = 1
+			if (document.getElementById("ReverseSort").checked) {
+				ReverseSetting = -1
 			}
-		});
-		
-		document.getElementById("OutputURLs").value = OutputString
-	
+			
+			if (SelectedSortIndex != 0) {
+				OutputDisplay.sort((a, b) => {
+					if (a[SortSelectedSortProperty] === b[SortSelectedSortProperty]) {
+						return 0;
+					} else {
+						return ((a[SortSelectedSortProperty] < b[SortSelectedSortProperty]) ? -1 : 1) * ReverseSetting;
+					}
+				});
+			}
+			document.getElementById("ResultCount").textContent = OutputDisplay.length
+			let OutputString = ""
+		//Process items into a list
+			let OutputDivSpot = document.getElementById("OutputTable")
+			ClearChildNodes(OutputDivSpot)
+			
+			let Ele_OutputTable = document.createElement("table")
+			let Ele_OutputTableRow = document.createElement("tr")
+			Ele_OutputTable.appendChild(Ele_OutputTableRow)
+			
+			let Ele_OutputTableHeader_URL = document.createElement("th")
+			Ele_OutputTableHeader_URL.appendChild(document.createTextNode("URL"))
+			Ele_OutputTableRow.appendChild(Ele_OutputTableHeader_URL)
+			
+			let Ele_OutputTableHeader_Type = document.createElement("th")
+			Ele_OutputTableHeader_Type.appendChild(document.createTextNode("Type"))
+			Ele_OutputTableRow.appendChild(Ele_OutputTableHeader_Type)
+			
+			let Ele_OutputTableHeader_Key = document.createElement("th")
+			Ele_OutputTableHeader_Key.appendChild(document.createTextNode("Key"))
+			Ele_OutputTableRow.appendChild(Ele_OutputTableHeader_Key)
+			
+			OutputDisplay.forEach((OutputURL,Index, Arr) => {
+				OutputString += OutputURL.URL
+				if (Index != Arr.length-1) {
+					OutputString += "\n"
+				}
+				
+				let Ele_URLItemRow = document.createElement("tr")
+				
+				let Ele_URLCell = document.createElement("td")
+				Ele_URLCell.style.fontFamily = "monospace"
+				Ele_URLCell.style.whiteSpace = "pre"
+				Ele_URLCell.appendChild(document.createTextNode(OutputURL.URL))
+				Ele_URLItemRow.appendChild(Ele_URLCell)
+				
+				let Ele_TypeCell = document.createElement("td")
+				Ele_TypeCell.style.fontFamily = "monospace"
+				Ele_TypeCell.style.whiteSpace = "pre"
+				Ele_TypeCell.appendChild(document.createTextNode(OutputURL.Type))
+				Ele_URLItemRow.appendChild(Ele_TypeCell)
+				
+				let Ele_KeyCell = document.createElement("td")
+				Ele_KeyCell.style.fontFamily = "monospace"
+				Ele_KeyCell.style.whiteSpace = "pre"
+				Ele_KeyCell.appendChild(document.createTextNode(OutputURL.KeyName))
+				Ele_URLItemRow.appendChild(Ele_KeyCell)
+				Ele_OutputTable.appendChild(Ele_URLItemRow)
+			});
+			
+			Saved_ProcessedData.OutputText = OutputString
+			OutputDivSpot.appendChild(Ele_OutputTable)
 	}
+	function CopyList() {
+		setClipboard(Saved_ProcessedData.OutputText)
+	}
+	//Copy text from textarea
+		function DeleteCopyMessage(HTMLElement) {
+			HTMLElement.textContent = ""
+		}
+		
+		function setClipboard(String) {
+			//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
+			const type = "text/plain";
+			const blob = new Blob([String], { type });
+			const data = [new ClipboardItem({ [type]: blob })];
+			
+			let EventElement = event.target
+			let CopiedMessage = EventElement.parentNode.querySelector("span")
+		
+			navigator.clipboard.write(data).then(
+				((EventElement) => {
+				/* success */
+					CopiedMessage.textContent = "Copied!"
+					CopiedMessage.style.color = "#00FF00"
+					setTimeout(DeleteCopyMessage.bind(null, CopiedMessage), 1500)
+				}).bind(null, EventElement),
+				((EventElement) => {
+				/* failure */
+					CopiedMessage.textContent = "Failed!"
+					CopiedMessage.style.color = "#FF0000"
+					setTimeout(DeleteCopyMessage.bind(null, CopiedMessage), 1500)
+				}).bind(null, EventElement)
+			);
+		}
 	function ReverseURLLabel(String) {
 		let URLObj = {}
 		try {
@@ -214,5 +325,20 @@ https://yournamehere.tumblr.com
 		} catch {
 			return ""
 		}
+	}
+	function ClearChildNodes(HTMLElement) {
+		while (HTMLElement.lastElementChild) {
+			HTMLElement.removeChild(HTMLElement.lastElementChild);
+		}
+	}
+	function ModifyCheckboxes(Flag) {
+		let ZoneToFindCheckboxes = [...event.target.parentNode.querySelectorAll("input[type=checkbox]")]
+		ZoneToFindCheckboxes.forEach(ChkBox => {
+			if (Flag < 2) {
+				ChkBox.checked = Flag
+			} else {
+				ChkBox.checked = !ChkBox.checked
+			}
+		});
 	}
 </script>
