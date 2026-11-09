@@ -96,7 +96,6 @@ Paste your URLs here:<br>
 					search: "?format=thumb"
 				},
 				Type: "Normal",
-				KeyName: "SampleTest",
 				CreateVarients(InputURL) {
 					let ProcessedURLObject = new URL(InputURL)
 					ProcessedURLObject.searchParams.set("format", "thumb")
@@ -107,11 +106,34 @@ Paste your URLs here:<br>
 				}
 			}
 		]
+	//This identifies URLs for giving them keynames for filtering and sorting. If a matching URL is found,
+	//the loop terminates with its keyname being set.
+		let URLIdentifiers = [
+			{
+				IdentifiedPattern: {
+					protocol: "http{s}?",
+					hostname: "example.com",
+					pathname: "/images/*",
+					search: "format=thumb*"
+				},
+				KeyName: "ExampleImage_Thumb"
+			},
+			{
+				IdentifiedPattern: {
+					protocol: "http{s}?",
+					hostname: "example.com",
+					pathname: "/images/*",
+					search: "format=original*"
+				},
+				KeyName: "ExampleImage_Orig"
+			},
+		]
 	
 	TestURLs();
 	
 	function TestURLs() {
 		document.getElementById("InputURLs").value = `
+http://example.com/images/sampleimage.jpg?format=thumb&somethingelse=whatever
 http://example.com/images/sampleimage.jpg?format=original
 http://example.com/images/sampleimage.jpg?format=thumb
 http://example.com/differentpath/foobar.html
@@ -138,9 +160,6 @@ https://yournamehere.tumblr.com
 				let MatchedPrevItem = Saved_ProcessedData.URLList.find(Item => Item.URL == URLString)
 				if ((MatchedPrevItem.Type == "Other") && (OutputURLObject.Type != "Other")) {
 					MatchedPrevItem.Type = OutputURLObject.Type
-				}
-				if ((MatchedPrevItem.KeyName == "") && (OutputURLObject.KeyName != "")) {
-					MatchedPrevItem.KeyName = OutputURLObject.KeyName
 				}
 		}
 	
@@ -195,83 +214,102 @@ https://yournamehere.tumblr.com
 						}
 					});
 				});
-			InputURLsChanged = false
+			//Identify to add a keyname for each url outputted
+				let URLIdentifiersLength = URLIdentifiers.length
+				
+				Saved_ProcessedData.URLList.forEach(URLItemToKeyName => {
+					for (let i = 0; i < URLIdentifiersLength; i++) {
+						let Identifier = URLIdentifiers[i]
+						
+						let Pattern = new URLPattern(Identifier.IdentifiedPattern)
+						if (Pattern.test(URLItemToKeyName.URL)) {
+							URLItemToKeyName.KeyName = Identifier.KeyName
+							break
+						}
+					}
+				})
+				
+				Saved_ProcessedData.URLList
+				
+			//Make it so that changing the output options not needlessly re-run the same inputs.
+				InputURLsChanged = false
 		}
 		//Process outputs
 			let OutputDisplay = Saved_ProcessedData.URLList
-			OutputDisplay = OutputDisplay.filter(Item => true)
-			
-			let SortSelects = document.getElementById("SortSettings")
-			let SelectedSortIndex = SortSelects.selectedIndex
-			let SelectedOption = [...SortSelects.children].find(Ele => Ele.selected)
-			let SortSelectedSortProperty = SelectedOption.dataset.sortby
-			
-			let ReverseSetting = 1
-			if (document.getElementById("ReverseSort").checked) {
-				ReverseSetting = -1
-			}
-			
-			if (SelectedSortIndex != 0) {
-				OutputDisplay.sort((a, b) => {
-					if (a[SortSelectedSortProperty] === b[SortSelectedSortProperty]) {
-						return 0;
-					} else {
-						return ((a[SortSelectedSortProperty] < b[SortSelectedSortProperty]) ? -1 : 1) * ReverseSetting;
-					}
-				});
-			}
-			document.getElementById("ResultCount").textContent = OutputDisplay.length
-			let OutputString = ""
-		//Process items into a list
-			let OutputDivSpot = document.getElementById("OutputTable")
-			ClearChildNodes(OutputDivSpot)
-			
-			let Ele_OutputTable = document.createElement("table")
-			let Ele_OutputTableRow = document.createElement("tr")
-			Ele_OutputTable.appendChild(Ele_OutputTableRow)
-			
-			let Ele_OutputTableHeader_URL = document.createElement("th")
-			Ele_OutputTableHeader_URL.appendChild(document.createTextNode("URL"))
-			Ele_OutputTableRow.appendChild(Ele_OutputTableHeader_URL)
-			
-			let Ele_OutputTableHeader_Type = document.createElement("th")
-			Ele_OutputTableHeader_Type.appendChild(document.createTextNode("Type"))
-			Ele_OutputTableRow.appendChild(Ele_OutputTableHeader_Type)
-			
-			let Ele_OutputTableHeader_Key = document.createElement("th")
-			Ele_OutputTableHeader_Key.appendChild(document.createTextNode("Key"))
-			Ele_OutputTableRow.appendChild(Ele_OutputTableHeader_Key)
-			
-			OutputDisplay.forEach((OutputURL,Index, Arr) => {
-				OutputString += OutputURL.URL
-				if (Index != Arr.length-1) {
-					OutputString += "\n"
+			//Filter
+				OutputDisplay = OutputDisplay.filter(Item => true)
+			//Sort
+				let SortSelects = document.getElementById("SortSettings")
+				let SelectedSortIndex = SortSelects.selectedIndex
+				let SelectedOption = [...SortSelects.children].find(Ele => Ele.selected)
+				let SortSelectedSortProperty = SelectedOption.dataset.sortby
+				
+				let ReverseSetting = 1
+				if (document.getElementById("ReverseSort").checked) {
+					ReverseSetting = -1
 				}
 				
-				let Ele_URLItemRow = document.createElement("tr")
+				if (SelectedSortIndex != 0) {
+					OutputDisplay.sort((a, b) => {
+						if (a[SortSelectedSortProperty] === b[SortSelectedSortProperty]) {
+							return 0;
+						} else {
+							return ((a[SortSelectedSortProperty] < b[SortSelectedSortProperty]) ? -1 : 1) * ReverseSetting;
+						}
+					});
+				}
+			//Output format
+				document.getElementById("ResultCount").textContent = OutputDisplay.length
+				let OutputString = ""
+				let OutputDivSpot = document.getElementById("OutputTable")
+				ClearChildNodes(OutputDivSpot)
 				
-				let Ele_URLCell = document.createElement("td")
-				Ele_URLCell.style.fontFamily = "monospace"
-				Ele_URLCell.style.whiteSpace = "pre"
-				Ele_URLCell.appendChild(document.createTextNode(OutputURL.URL))
-				Ele_URLItemRow.appendChild(Ele_URLCell)
+				let Ele_OutputTable = document.createElement("table")
+				let Ele_OutputTableRow = document.createElement("tr")
+				Ele_OutputTable.appendChild(Ele_OutputTableRow)
 				
-				let Ele_TypeCell = document.createElement("td")
-				Ele_TypeCell.style.fontFamily = "monospace"
-				Ele_TypeCell.style.whiteSpace = "pre"
-				Ele_TypeCell.appendChild(document.createTextNode(OutputURL.Type))
-				Ele_URLItemRow.appendChild(Ele_TypeCell)
+				let Ele_OutputTableHeader_URL = document.createElement("th")
+				Ele_OutputTableHeader_URL.appendChild(document.createTextNode("URL"))
+				Ele_OutputTableRow.appendChild(Ele_OutputTableHeader_URL)
 				
-				let Ele_KeyCell = document.createElement("td")
-				Ele_KeyCell.style.fontFamily = "monospace"
-				Ele_KeyCell.style.whiteSpace = "pre"
-				Ele_KeyCell.appendChild(document.createTextNode(OutputURL.KeyName))
-				Ele_URLItemRow.appendChild(Ele_KeyCell)
-				Ele_OutputTable.appendChild(Ele_URLItemRow)
-			});
-			
-			Saved_ProcessedData.OutputText = OutputString
-			OutputDivSpot.appendChild(Ele_OutputTable)
+				let Ele_OutputTableHeader_Type = document.createElement("th")
+				Ele_OutputTableHeader_Type.appendChild(document.createTextNode("Type"))
+				Ele_OutputTableRow.appendChild(Ele_OutputTableHeader_Type)
+				
+				let Ele_OutputTableHeader_Key = document.createElement("th")
+				Ele_OutputTableHeader_Key.appendChild(document.createTextNode("Key"))
+				Ele_OutputTableRow.appendChild(Ele_OutputTableHeader_Key)
+				
+				OutputDisplay.forEach((OutputURL,Index, Arr) => {
+					OutputString += OutputURL.URL
+					if (Index != Arr.length-1) {
+						OutputString += "\n"
+					}
+					
+					let Ele_URLItemRow = document.createElement("tr")
+					
+					let Ele_URLCell = document.createElement("td")
+					Ele_URLCell.style.fontFamily = "monospace"
+					Ele_URLCell.style.whiteSpace = "pre"
+					Ele_URLCell.appendChild(document.createTextNode(OutputURL.URL))
+					Ele_URLItemRow.appendChild(Ele_URLCell)
+					
+					let Ele_TypeCell = document.createElement("td")
+					Ele_TypeCell.style.fontFamily = "monospace"
+					Ele_TypeCell.style.whiteSpace = "pre"
+					Ele_TypeCell.appendChild(document.createTextNode(OutputURL.Type))
+					Ele_URLItemRow.appendChild(Ele_TypeCell)
+					
+					let Ele_KeyCell = document.createElement("td")
+					Ele_KeyCell.style.fontFamily = "monospace"
+					Ele_KeyCell.style.whiteSpace = "pre"
+					Ele_KeyCell.appendChild(document.createTextNode(OutputURL.KeyName))
+					Ele_URLItemRow.appendChild(Ele_KeyCell)
+					Ele_OutputTable.appendChild(Ele_URLItemRow)
+				});
+				
+				Saved_ProcessedData.OutputText = OutputString
+				OutputDivSpot.appendChild(Ele_OutputTable)
 	}
 	function CopyList() {
 		setClipboard(Saved_ProcessedData.OutputText)
