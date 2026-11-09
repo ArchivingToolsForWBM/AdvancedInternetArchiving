@@ -122,7 +122,7 @@ https://yournamehere.tumblr.com
 	InputURLsChanged = true
 	ProcessURLs()
 	}
-	function GenerateOutputURLs(URLLink = "", Type = "", KeyName = "") {
+	function GenerateOutputURLs({URLLink = "", Type = "", KeyName = ""}) {
 		this.URL = URLLink
 		this.URLRevLabel = ReverseURLLabel(URLLink)
 		this.Type = Type
@@ -130,10 +130,6 @@ https://yournamehere.tumblr.com
 	}
 	function AddToOutput(OutputURLObject) {
 		let URLString = OutputURLObject.URL
-		if (typeof URLString != "string") {
-			console.error("This URL is an object")
-			return
-		}
 		if (!Saved_ProcessedData.URLSet.has(URLString)) {
 			Saved_ProcessedData.URLSet.add(URLString)
 			Saved_ProcessedData.URLList.push(OutputURLObject)
@@ -143,7 +139,7 @@ https://yournamehere.tumblr.com
 				if ((MatchedPrevItem.Type == "Other") && (OutputURLObject.Type != "Other")) {
 					MatchedPrevItem.Type = OutputURLObject.Type
 				}
-				if ((MatchedPrevItem.KeyName == "Other") && (OutputURLObject.KeyName != "")) {
+				if ((MatchedPrevItem.KeyName == "") && (OutputURLObject.KeyName != "")) {
 					MatchedPrevItem.KeyName = OutputURLObject.KeyName
 				}
 		}
@@ -189,12 +185,12 @@ https://yournamehere.tumblr.com
 							GeneratedURLs = Converter.CreateVarients(URLObject.href)
 							if (Converter.Type == "Normal") {
 								GeneratedURLs.forEach(Link => {
-									let OutputURLObject = new GenerateOutputURLs(Link, Converter.Type, Converter.KeyName)
+									let OutputURLObject = new GenerateOutputURLs({URLLink: Link, Type: Converter.Type, KeyName:Converter.KeyName})
 									AddToOutput(OutputURLObject)
 								})
 							}
 						} else {
-							let OutputLink = new GenerateOutputURLs(URLObject.href, "Other", "Other")
+							let OutputLink = new GenerateOutputURLs({URLLink: URLObject.href, Type: "Other"})
 							AddToOutput(OutputLink)
 						}
 					});
