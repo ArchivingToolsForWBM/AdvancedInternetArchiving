@@ -61,7 +61,7 @@ Paste your URLs here:<br>
 					Sort: <select id="SortSettings" onchange="ProcessURLs()">
 						<option data-sortby="">Creation Order</option>
 						<option data-sortby="URL">Alphabetically</option>
-						<option data-sortby="URLRevLabel" selected>Alphabetically (Reversed Domain name then TLD)</option>
+						<option data-sortby="URLHostLabelsReverse" selected>Alphabetically (Reversed Domain name then TLD)</option>
 						<option data-sortby="Type">Type</option>
 						<option data-sortby="KeyName">Keyname</option>
 					</select> <label><input type="checkbox" id="ReverseSort" onchange="ProcessURLs()">Reverse</label>
@@ -124,7 +124,7 @@ https://yournamehere.tumblr.com
 	}
 	function GenerateOutputURLs({URLLink = "", Type = "", KeyName = ""}) {
 		this.URL = URLLink
-		this.URLRevLabel = ReverseURLLabel(URLLink)
+		this.URLHostLabelsReverse = ReverseURLLabel(URLLink)
 		this.Type = Type
 		this.KeyName = KeyName
 	}
