@@ -34,7 +34,9 @@
 				width: 500px;
 				height: 240px;
 			}
-			
+			div.OutputPanels {
+				padding: 10px;
+			}
 		</style>
 	</head>
 <body style="max-width: 1000px; margin: auto; padding: 15px">
@@ -57,7 +59,7 @@ Paste your URLs here:<br>
 		</td>
 		<td style="text-align: left;">
 			<div>
-				<div>
+				<div class="OutputPanels">
 					Sort: <select id="SortSettings" onchange="ProcessURLs()">
 						<option data-sortby="">Creation Order</option>
 						<option data-sortby="URL">Alphabetically</option>
@@ -66,10 +68,16 @@ Paste your URLs here:<br>
 						<option data-sortby="KeyName">Keyname</option>
 					</select> <label><input type="checkbox" id="ReverseSort" onchange="ProcessURLs()">Reverse</label>
 				</div>
-				<div>
-					Filter by Key: <button onclick="ModifyCheckboxes(1); ProcessURLs()">Check all</button><button onclick="ModifyCheckboxes(0); ProcessURLs()">Uncheck all</button><button onclick="ModifyCheckboxes(2); ProcessURLs()">Invert</button>
-					<div class="ScrollableContainer" style="width: 230px;">
-					</div><br>
+				<div class="OutputPanels">
+					<div>
+						Filter by Key: <button onclick="ModifyCheckboxes(1); ProcessURLs()">Check all</button><button onclick="ModifyCheckboxes(0); ProcessURLs()">Uncheck all</button><button onclick="ModifyCheckboxes(2); ProcessURLs()">Invert</button><br>
+						<div class="ScrollableContainer" style="width: 230px;" id="KeyNameFilterList">
+						
+						</div>
+					</div>
+					<div>
+						<label style="font-family: monospace;"><input type="checkbox" checked id="BlankKeyNames" onchange="ProcessURLs();">Blank KeyNames</label>
+					</div>
 				</div>
 				Misc:
 				<div class="TabbedItems">
@@ -84,8 +92,10 @@ Paste your URLs here:<br>
 	let Saved_ProcessedData = {
 		URLList: [],
 		URLSet: new Set(),
-		OutputText: ""
+		OutputText: "",
+		KeyNameList: {}
 	};
+	
 	let InputURLsChanged = false;
 	//This is a list of converters. Each URL entered runs though all converters to output variants of a given URL.
 		let URLConverters = [
@@ -127,9 +137,31 @@ Paste your URLs here:<br>
 				},
 				KeyName: "ExampleImage_Orig"
 			},
+			{
+				IdentifiedPattern: {
+					protocol: "http{s}?",
+					hostname: "eexample.com",
+					pathname: "/images/*",
+					search: "format=thumb*"
+				},
+				KeyName: "ExampleImage_Thumb"
+			},
+			{
+				IdentifiedPattern: {
+					protocol: "http{s}?",
+					hostname: "eexample.com",
+					pathname: "/images/*",
+					search: "format=original*"
+				},
+				KeyName: "ExampleImage_Orig"
+			}
 		]
-	
-	TestURLs();
+	//This automatically sets up the counter of how many URLs with a given keyname
+		SetupKeyNameCount();
+	//Set up the filter key list based on reconized URLs
+		GenerateKeyFilterList();
+	//Test function
+		TestURLs();
 	
 	function TestURLs() {
 		document.getElementById("InputURLs").value = `
@@ -141,8 +173,38 @@ https://wikipedia.org
 http://yournamehere.tumblr.com
 https://yournamehere.tumblr.com
 `
+	}
 	InputURLsChanged = true
 	ProcessURLs()
+	
+	function SetupKeyNameCount() {
+		URLIdentifiers.forEach(Identifier => {
+			Saved_ProcessedData.KeyNameList[Identifier.KeyName] = 0n
+		});
+	}
+	function GenerateKeyFilterList() {
+		let FilterList = document.getElementById("KeyNameFilterList")
+		let KeyNameListArray = Object.keys(Saved_ProcessedData.KeyNameList)
+		KeyNameListArray.sort()
+		KeyNameListArray.forEach(KeyName => {
+			let Div_CheckboxItem = document.createElement("div")
+			Div_CheckboxItem.hidden = true
+			let Label_CheckboxItem = document.createElement("label")
+			Label_CheckboxItem.style.fontFamily = "monospace"
+			Div_CheckboxItem.appendChild(Label_CheckboxItem)
+			let InputCheckbox_FilterOption = document.createElement("input")
+			InputCheckbox_FilterOption.type = "checkbox"
+			InputCheckbox_FilterOption.checked = true
+			InputCheckbox_FilterOption.id = "KeyNameFilterOption_" + KeyName
+			InputCheckbox_FilterOption.addEventListener("change", ProcessURLs.bind())
+			Label_CheckboxItem.appendChild(InputCheckbox_FilterOption)
+			Label_CheckboxItem.appendChild(document.createTextNode(KeyName))
+			let Span_KeyCount = document.createElement("span")
+			Span_KeyCount.id = "KeyNameCount_" + KeyName
+			Label_CheckboxItem.appendChild(Span_KeyCount)
+			
+			FilterList.appendChild(Div_CheckboxItem)
+		})
 	}
 	function GenerateOutputURLs({URLLink = "", Type = "", KeyName = ""}) {
 		this.URL = URLLink
@@ -168,9 +230,16 @@ https://yournamehere.tumblr.com
 		let InputURLText = []
 		if (InputURLsChanged) {
 			//Main process
-				Saved_ProcessedData.URLSet.clear(); //Clear the set as to not include previous version every edit.
-				Saved_ProcessedData.URLList.length = 0
-				Saved_ProcessedData.OutputText = ""
+				//Start things clean
+					Saved_ProcessedData.URLSet.clear();
+					Saved_ProcessedData.URLList.length = 0
+					Saved_ProcessedData.OutputText = ""
+					SetupKeyNameCount();
+					[...document.getElementById("KeyNameFilterList").querySelectorAll("input[type=checkbox]")].forEach(FilterOption => {
+						let DivCheckboxOption = FilterOption.parentNode.parentNode
+						DivCheckboxOption.hidden = true
+						DivCheckboxOption.querySelector("span").textContent = ""
+					});
 				
 				InputURLText = document.getElementById("InputURLs").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"\']+/g) ?? []
 				InputURLText = [...new Set(InputURLText)]
@@ -224,11 +293,17 @@ https://yournamehere.tumblr.com
 						let Pattern = new URLPattern(Identifier.IdentifiedPattern)
 						if (Pattern.test(URLItemToKeyName.URL)) {
 							URLItemToKeyName.KeyName = Identifier.KeyName
+							Saved_ProcessedData.KeyNameList[Identifier.KeyName]++
+							document.getElementById("KeyNameFilterOption_" + URLItemToKeyName.KeyName).parentNode.parentNode.hidden = false
 							break
 						}
 					}
 				})
-				
+			//Display how many occurance of a keyname based on output
+				Object.entries(Saved_ProcessedData.KeyNameList).forEach(KeyName => {
+					document.getElementById("KeyNameCount_" + KeyName[0]).textContent = " (" + KeyName[1] + ")"
+				})
+			//Save the data
 				Saved_ProcessedData.URLList
 				
 			//Make it so that changing the output options not needlessly re-run the same inputs.
@@ -237,7 +312,17 @@ https://yournamehere.tumblr.com
 		//Process outputs
 			let OutputDisplay = Saved_ProcessedData.URLList
 			//Filter
-				OutputDisplay = OutputDisplay.filter(Item => true)
+				OutputDisplay = OutputDisplay.filter(Item => {
+				if (Item.KeyName != "") {
+					if (!document.getElementById("KeyNameFilterOption_" + Item.KeyName).checked) {
+						return false
+					}
+				}
+				if ((!document.getElementById("BlankKeyNames").checked) && Item.KeyName == "") {
+					return false
+				}
+					return true
+				})
 			//Sort
 				let SortSelects = document.getElementById("SortSettings")
 				let SelectedSortIndex = SortSelects.selectedIndex
