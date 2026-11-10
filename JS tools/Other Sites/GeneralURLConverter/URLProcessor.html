@@ -169,8 +169,13 @@ Paste your URLs here:<br>
 				CreateVarients(InputURL) {
 					let ProcessedURLObject = new URL(InputURL)
 					ProcessedURLObject.search = ""
-					let URLPath = ProcessedURLObject.pathname.split("/")
+					let URLPathArr = ProcessedURLObject.pathname.split("/")
+					let URLPath_UserBio = URLPathArr.slice(0, 2).join("/")
+					ProcessedURLObject.pathname = URLPath_UserBio
+					let Output_UserBio = ProcessedURLObject.href
 					
+					
+					return [Output_UserBio]
 				}
 			}
 		]
