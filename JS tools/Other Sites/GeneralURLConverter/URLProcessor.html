@@ -189,6 +189,8 @@ https://yournamehere.tumblr.com
 		KeyNameListArray.forEach(KeyName => {
 			let Div_CheckboxItem = document.createElement("div")
 			Div_CheckboxItem.hidden = true
+				//^These are hidden by default, so that the keyname checkbox list only shows
+				// revelent URLs and not have a huge list where most keynames aren't used.
 			let Label_CheckboxItem = document.createElement("label")
 			Label_CheckboxItem.style.fontFamily = "monospace"
 			Div_CheckboxItem.appendChild(Label_CheckboxItem)
@@ -295,6 +297,7 @@ https://yournamehere.tumblr.com
 							URLItemToKeyName.KeyName = Identifier.KeyName
 							Saved_ProcessedData.KeyNameList[Identifier.KeyName]++
 							document.getElementById("KeyNameFilterOption_" + URLItemToKeyName.KeyName).parentNode.parentNode.hidden = false
+								//^Make only keynames that are being used based on input.
 							break
 						}
 					}
