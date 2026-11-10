@@ -101,6 +101,9 @@ Paste your URLs here:<br>
 	
 	let InputURLsChanged = false;
 	//This is a list of converters. Each URL entered runs though all converters to output variants of a given URL.
+	//Notes
+	// - Method "CreateVarients" must return an array whose elements are the URL string.
+	// - Method "SpecialCondition" must return a boolean value: true to accept the match, or false that it failed
 		let URLConverters = [
 			{
 				PatternToTest: {
@@ -116,6 +119,58 @@ Paste your URLs here:<br>
 					ProcessedURLObject.searchParams.set("format", "original")
 					let ProcessedURL2 = ProcessedURLObject.href
 					return [ProcessedURL, ProcessedURL2]
+				}
+			},
+			{
+				//Repository: https://github.com/Username/RepositoryName
+				//Download link (before redirect): https://github.com/Username/RepositoryName/archive/refs/heads/main.zip
+				PatternToTest: {
+					hostname: "github.com",
+					pathname: "/:username/*"
+				},
+				SpecialCondition(InputURL) {
+					let URLObj = new URL(InputURL)
+					let UsernamePart = URLObj.pathname.split("/")[1]
+					let ReservedNames = new Set([
+						"about",
+						"apps",
+						"codespaces",
+						"collections",
+						"contact",
+						"customer-stories",
+						"enterprise",
+						"features",
+						"git-guides",
+						"images",
+						"login",
+						"mobile",
+						"organizations",
+						"orgs",
+						"premium-support",
+						"pricing",
+						"readme",
+						"search",
+						"security",
+						"signup",
+						"sitemap",
+						"solutions",
+						"sponsors",
+						"team",
+						"topics",
+						"trending",
+						"users"
+					]);
+					if (ReservedNames.has(UsernamePart)) {
+						return false
+					}
+					return true
+				},
+				Type: "Normal",
+				CreateVarients(InputURL) {
+					let ProcessedURLObject = new URL(InputURL)
+					ProcessedURLObject.search = ""
+					let URLPath = ProcessedURLObject.pathname.split("/")
+					
 				}
 			}
 		]
@@ -143,31 +198,22 @@ Paste your URLs here:<br>
 			{
 				IdentifiedPattern: {
 					protocol: "http{s}?",
-					hostname: "eexample.com",
-					pathname: "/images/*",
-					search: "format=thumb*"
+					hostname: "github.com",
+					pathname: "/:Username/*"
 				},
-				KeyName: "ExampleImage_Thumb"
+				KeyName: "Github_UserBio"
 			},
-			{
-				IdentifiedPattern: {
-					protocol: "http{s}?",
-					hostname: "eexample.com",
-					pathname: "/images/*",
-					search: "format=original*"
-				},
-				KeyName: "ExampleImage_Orig"
-			}
 		]
 	//This automatically sets up the counter of how many URLs with a given keyname
 		SetupKeyNameCount();
 	//Set up the filter key list based on reconized URLs
-		GenerateKeyFilterList();
+		GenerateCheckboxKeyFilterList();
 	//Test function
 		TestURLs();
 	
 	function TestURLs() {
 		document.getElementById("InputURLs").value = `
+https://github.com/ArchivingToolsForWBM/AdvancedInternetArchiving
 http://example.com/images/sampleimage.jpg?format=thumb&somethingelse=whatever
 http://example.com/images/sampleimage.jpg?format=original
 http://example.com/images/sampleimage.jpg?format=thumb
@@ -185,7 +231,7 @@ https://yournamehere.tumblr.com
 			Saved_ProcessedData.KeyNameList[Identifier.KeyName] = 0n
 		});
 	}
-	function GenerateKeyFilterList() {
+	function GenerateCheckboxKeyFilterList() {
 		let FilterList = document.getElementById("KeyNameFilterList")
 		let KeyNameListArray = Object.keys(Saved_ProcessedData.KeyNameList)
 		KeyNameListArray.sort()
@@ -273,8 +319,12 @@ https://yournamehere.tumblr.com
 						//Here, we need to know if the URL is compatible with the converter
 						let Pattern = new URLPattern(Converter.PatternToTest)
 						let HasPassed = Pattern.test(URLObject.href)
+						let Condition = true
+						if (typeof Converter.SpecialCondition === "function") {
+							Condition = Converter.SpecialCondition(URLObject.href)
+						}
 						let GeneratedURLs = [];
-						if (HasPassed) {
+						if (HasPassed && Condition) {
 							GeneratedURLs = Converter.CreateVarients(URLObject.href)
 							if (Converter.Type == "Normal") {
 								GeneratedURLs.forEach(Link => {
