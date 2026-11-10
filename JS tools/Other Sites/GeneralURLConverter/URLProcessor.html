@@ -26,6 +26,9 @@
 			div.TabbedItems {
 				padding-left: 1rem;
 			}
+			textarea {
+				white-space: pre;
+			}
 			
 			div.ScrollableContainer {
 				border: 1px solid;
@@ -70,7 +73,7 @@ Paste your URLs here:<br>
 				</div>
 				<div class="OutputPanels">
 					<div>
-						Filter by Key: <button onclick="ModifyCheckboxes(1); ProcessURLs()">Check all</button><button onclick="ModifyCheckboxes(0); ProcessURLs()">Uncheck all</button><button onclick="ModifyCheckboxes(2); ProcessURLs()">Invert</button><br>
+						Filter by KeyName: <button onclick="ModifyCheckboxes(1); ProcessURLs()">Check all</button><button onclick="ModifyCheckboxes(0); ProcessURLs()">Uncheck all</button><button onclick="ModifyCheckboxes(2); ProcessURLs()">Invert</button><br>
 						<div class="ScrollableContainer" style="width: 230px;" id="KeyNameFilterList">
 						
 						</div>
@@ -365,7 +368,7 @@ https://yournamehere.tumblr.com
 				Ele_OutputTableRow.appendChild(Ele_OutputTableHeader_Type)
 				
 				let Ele_OutputTableHeader_Key = document.createElement("th")
-				Ele_OutputTableHeader_Key.appendChild(document.createTextNode("Key"))
+				Ele_OutputTableHeader_Key.appendChild(document.createTextNode("KeyName"))
 				Ele_OutputTableRow.appendChild(Ele_OutputTableHeader_Key)
 				
 				OutputDisplay.forEach((OutputURL,Index, Arr) => {
@@ -456,6 +459,11 @@ https://yournamehere.tumblr.com
 	function ModifyCheckboxes(Flag) {
 		let ZoneToFindCheckboxes = [...event.target.parentNode.querySelectorAll("input[type=checkbox]")]
 		ZoneToFindCheckboxes.forEach(ChkBox => {
+			let DivBox = ChkBox.parentNode.parentNode
+			if (DivBox.hidden) {
+				return
+				//^Only affect the checkboxes that are visible.
+			}
 			if (Flag < 2) {
 				ChkBox.checked = Flag
 			} else {
