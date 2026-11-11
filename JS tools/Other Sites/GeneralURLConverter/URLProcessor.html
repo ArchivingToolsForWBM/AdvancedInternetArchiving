@@ -100,6 +100,45 @@ Paste your URLs here:<br>
 	};
 	
 	let InputURLsChanged = false;
+	
+	//These are handlers for determining if a github URL is user or not.
+		const Github_ReservedNames = new Set([
+			"about",
+			"apps",
+			"codespaces",
+			"collections",
+			"contact",
+			"customer-stories",
+			"enterprise",
+			"features",
+			"git-guides",
+			"images",
+			"login",
+			"mobile",
+			"organizations",
+			"orgs",
+			"premium-support",
+			"pricing",
+			"readme",
+			"search",
+			"security",
+			"signup",
+			"sitemap",
+			"solutions",
+			"sponsors",
+			"team",
+			"topics",
+			"trending",
+			"users"
+		]);
+		function IsGithubUser(url) {
+			let URLObj = new URL(url)
+			let UsernamePart = URLObj.pathname.split("/")[1]
+			if (Github_ReservedNames.has(UsernamePart)) {
+				return false
+			}
+			return true
+		}
 	//This is a list of converters. Each URL entered runs though all converters to output variants of a given URL.
 	//Notes
 	// - Method "CreateVarients" must return an array whose elements are the URL string.
@@ -129,58 +168,44 @@ Paste your URLs here:<br>
 					pathname: "/:username/*"
 				},
 				SpecialCondition(InputURL) {
-					let URLObj = new URL(InputURL)
-					let UsernamePart = URLObj.pathname.split("/")[1]
-					let ReservedNames = new Set([
-						"about",
-						"apps",
-						"codespaces",
-						"collections",
-						"contact",
-						"customer-stories",
-						"enterprise",
-						"features",
-						"git-guides",
-						"images",
-						"login",
-						"mobile",
-						"organizations",
-						"orgs",
-						"premium-support",
-						"pricing",
-						"readme",
-						"search",
-						"security",
-						"signup",
-						"sitemap",
-						"solutions",
-						"sponsors",
-						"team",
-						"topics",
-						"trending",
-						"users"
-					]);
-					if (ReservedNames.has(UsernamePart)) {
-						return false
-					}
-					return true
+					return IsGithubUser(InputURL)
 				},
 				Type: "Normal",
 				CreateVarients(InputURL) {
-					let ProcessedURLObject = new URL(InputURL)
-					ProcessedURLObject.search = ""
-					let URLPathArr = ProcessedURLObject.pathname.split("/")
-					let URLPath_UserBio = URLPathArr.slice(0, 2).join("/")
-					ProcessedURLObject.pathname = URLPath_UserBio
-					let Output_UserBio = ProcessedURLObject.href
+					let GithubURL_UserBio = new URL(InputURL)
+					let ConvertOutputs = []
 					
+					GithubURL_UserBio.search = ""
+					let URLPathArr_UserBio = GithubURL_UserBio.pathname.split("/")
+					let URLPath_UserBio = URLPathArr_UserBio.slice(0, 2).join("/")
+					GithubURL_UserBio.pathname = URLPath_UserBio
+					ConvertOutputs.push(GithubURL_UserBio.href)
 					
-					return [Output_UserBio]
+					let GithubURL_Repository = new URL(InputURL)
+					GithubURL_Repository.search = ""
+					let URLPathArr_Repository = GithubURL_Repository.pathname.split("/")
+					if (URLPathArr_Repository.length >= 2) {
+						let URLPath_Repository = URLPathArr_Repository.slice(0, 3).join("/")
+						GithubURL_Repository.pathname = URLPath_Repository
+						ConvertOutputs.push(GithubURL_Repository.href)
+						
+						let Github_Repository_Download = new URL(InputURL)
+						Github_Repository_Download.search = ""
+						URLPathArr_Repository_Download = Github_Repository_Download.pathname.split("/")
+						let URLPath_Repository_Download = URLPathArr_Repository_Download.slice(0, 3).join("/") + "/archive/refs/heads/main.zip"
+						Github_Repository_Download.pathname = URLPath_Repository_Download
+						ConvertOutputs.push(Github_Repository_Download.href)
+					}
+					
+					return ConvertOutputs
 				}
 			}
 		]
 	//This identifies URLs for giving them keynames for filtering and sorting. If a matching URL is found,
 	//the loop terminates with its keyname being set.
+	//Notes:
+	// - SpecialCondition(url_string) shall return a boolean for special conditions, such as a path that have
+	//   a username, but cannot be words of reserved. True means it passes, and false if it shouldn't.
 		let URLIdentifiers = [
 			{
 				IdentifiedPattern: {
@@ -204,9 +229,28 @@ Paste your URLs here:<br>
 				IdentifiedPattern: {
 					protocol: "http{s}?",
 					hostname: "github.com",
-					pathname: "/:Username/*"
+					pathname: "/:Username"
 				},
-				KeyName: "Github_UserBio"
+				KeyName: "Github_User"
+			},
+			{
+				IdentifiedPattern: {
+					protocol: "http{s}?",
+					hostname: "github.com",
+					pathname: "/:Username/:Repository"
+				},
+				KeyName: "Github_User_Repository"
+			},
+			{
+				IdentifiedPattern: {
+					protocol: "http{s}?",
+					hostname: "github.com",
+					pathname: "/:Username/:Repository/archive/refs/heads/*"
+				},
+				KeyName: "Github_User_Repository_Download",
+				SpecialCondition(url) {
+					return IsGithubUser(url)
+				}
 			},
 		]
 	//This automatically sets up the counter of how many URLs with a given keyname
@@ -245,6 +289,7 @@ https://yournamehere.tumblr.com
 			Div_CheckboxItem.hidden = true
 				//^These are hidden by default, so that the keyname checkbox list only shows
 				// revelent URLs and not have a huge list where most keynames aren't used.
+			Div_CheckboxItem.style.whiteSpace = "nowrap"
 			let Label_CheckboxItem = document.createElement("label")
 			Label_CheckboxItem.style.fontFamily = "monospace"
 			Div_CheckboxItem.appendChild(Label_CheckboxItem)
@@ -351,6 +396,10 @@ https://yournamehere.tumblr.com
 						let Identifier = URLIdentifiers[i]
 						
 						let Pattern = new URLPattern(Identifier.IdentifiedPattern)
+						let Condition = true
+						if (typeof Identifier.SpecialCondition === "function") {
+							Condition = Identifier.SpecialCondition(URLItemToKeyName.URL)
+						}
 						if (Pattern.test(URLItemToKeyName.URL)) {
 							URLItemToKeyName.KeyName = Identifier.KeyName
 							Saved_ProcessedData.KeyNameList[Identifier.KeyName]++
