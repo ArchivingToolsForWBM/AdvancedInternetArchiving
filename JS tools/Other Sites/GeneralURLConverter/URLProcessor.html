@@ -79,7 +79,7 @@ Paste your URLs here:<br>
 						</div>
 					</div>
 					<div>
-						<label style="font-family: monospace;"><input type="checkbox" checked id="BlankKeyNames" onchange="ProcessURLs();">Blank KeyNames <span id="KeyNameLessCountDisplay"> (0)</span></label>
+						<label style="font-family: monospace;"><input type="checkbox" checked id="BlankKeyNames" onchange="ProcessURLs();">No Keynames <span id="KeyNameLessCountDisplay"> (0)</span></label>
 					</div>
 				</div>
 				Misc:
@@ -262,7 +262,10 @@ Paste your URLs here:<br>
 		TestURLs();
 	
 	function TestURLs() {
-		document.getElementById("InputURLs").value = `
+		document.getElementById("InputURLs").value = `https://example.com/pagination/user1/posts?page=2
+https://example.com/pagination/user1/posts?page=4
+https://example.com/pagination/user2/posts?page=3
+https://example.com/pagination/user2/posts?page=10
 https://github.com/ArchivingToolsForWBM/AdvancedInternetArchiving
 http://example.com/images/sampleimage.jpg?format=thumb&somethingelse=whatever
 http://example.com/images/sampleimage.jpg?format=original
