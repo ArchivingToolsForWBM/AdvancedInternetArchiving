@@ -341,53 +341,63 @@ https://yournamehere.tumblr.com
 						DivCheckboxOption.hidden = true
 						DivCheckboxOption.querySelector("span").textContent = ""
 					});
-				
-				InputURLText = document.getElementById("InputURLs").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"\']+/g) ?? []
-				InputURLText = [...new Set(InputURLText)]
-				InputURLText = InputURLText.map(URLItem => {
+				//Extract URLs from input text, without any dupes
+					InputURLText = document.getElementById("InputURLs").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"\']+/g) ?? []
+					InputURLText = [...new Set(InputURLText)]
+				//Convert URL text that lack the "h" in http/https (because console log truncate the middle portion of the href)
+					InputURLText = InputURLText.map(URLItem => {
 					if (document.getElementById("Setting_https").checked) {
 						return "h" + URLItem.replace("ttp://", "ttps://")
 					} else {
 						return "h" + URLItem
 					}
-				})
-				InputURLText = [...new Set(InputURLText)] //If URLs went from http to https, that may also results in duplicates.
-				InputURLText = InputURLText.filter(Item => {
-					try {
-						new URL(Item)
-						return true
-					} catch {
-						return false
-					}
-					
-				});
-			//Match URLs with converters
-				InputURLText.forEach(EnteredURL => {
-					let URLObject = new URL(EnteredURL)
-					let HaveMatchedAtLeastOnce = false
-					URLConverters.forEach(Converter => {
-						//Here, we need to know if the URL is compatible with the converter
-						let Pattern = new URLPattern(Converter.PatternToTest)
-						let HasPassed = Pattern.test(URLObject.href)
-						let Condition = true
-						if (typeof Converter.SpecialCondition === "function") {
-							Condition = Converter.SpecialCondition(URLObject.href)
+					})
+				//Because post-conversion may result in dupes
+					InputURLText = [...new Set(InputURLText)] //If URLs went from http to https, that may also results in duplicates.
+				//Remove non-genuine URLs.
+					InputURLText = InputURLText.filter(Item => {
+						try {
+							new URL(Item)
+							return true
+						} catch {
+							return false
 						}
-						let GeneratedURLs = [];
-						if (HasPassed && Condition) {
-							GeneratedURLs = Converter.CreateVarients(URLObject.href)
+						
+					});
+			//Test and convert URLs
+				let InputLength = InputURLText.length
+				for (let Index = 0; Index < InputLength; Index++) {
+					let Str_EnteredURL = InputURLText[Index]
+					let URL_Obj = new URL(Str_EnteredURL)
+					let HaveMatchedAConverter = false
+					URLConverters.forEach(Converter => {
+						//Here, we need to know if the URL is compatible any converter that matches.
+							let Pattern = new URLPattern(Converter.PatternToTest)
+							let HasPassed = Pattern.test(URL_Obj.href)
+							let Condition = true
+							if (typeof Converter.SpecialCondition === "function") {
+								Condition = Converter.SpecialCondition(URL_Obj.href)
+							}
+							let GeneratedURLs = [];
+							if (!(HasPassed && Condition)) {
+								return
+							}
+						//If matches, process it
+							HaveMatchedAConverter = true
+							GeneratedURLs = Converter.CreateVarients(URL_Obj.href)
 							if (Converter.Type == "Normal") {
 								GeneratedURLs.forEach(Link => {
-									let OutputURLObject = new GenerateOutputURLs({URLLink: Link, Type: Converter.Type, KeyName:Converter.KeyName})
+									let OutputURLObject = new GenerateOutputURLs({URLLink: Link, Type: Converter.Type})
 									AddToOutput(OutputURLObject)
 								})
 							}
-						} else {
-							let OutputLink = new GenerateOutputURLs({URLLink: URLObject.href, Type: "Other"})
+					});
+					//If a URL not match with any converter, label it as "other"
+						if (!HaveMatchedAConverter) {
+							let OutputLink = new GenerateOutputURLs({URLLink: URL_Obj.href, Type: "Other"})
 							AddToOutput(OutputLink)
 						}
-					});
-				});
+				}
 			//Identify to add a keyname for each url outputted
 				let URLIdentifiersLength = URLIdentifiers.length
 				
