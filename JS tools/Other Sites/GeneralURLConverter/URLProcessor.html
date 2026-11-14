@@ -74,12 +74,12 @@ Paste your URLs here:<br>
 				<div class="OutputPanels">
 					<div>
 						Filter by KeyName: <button onclick="ModifyCheckboxes(1); ProcessURLs()">Check all</button><button onclick="ModifyCheckboxes(0); ProcessURLs()">Uncheck all</button><button onclick="ModifyCheckboxes(2); ProcessURLs()">Invert</button><br>
-						<div class="ScrollableContainer" style="width: 230px;" id="KeyNameFilterList">
+						<div class="ScrollableContainer" style="width: 400px;" id="KeyNameFilterList">
 						
 						</div>
 					</div>
 					<div>
-						<label style="font-family: monospace;"><input type="checkbox" checked id="BlankKeyNames" onchange="ProcessURLs();">Blank KeyNames</label>
+						<label style="font-family: monospace;"><input type="checkbox" checked id="BlankKeyNames" onchange="ProcessURLs();">Blank KeyNames <span id="KeyNameLessCountDisplay"> (0)</span></label>
 					</div>
 				</div>
 				Misc:
@@ -96,7 +96,8 @@ Paste your URLs here:<br>
 		URLList: [],
 		URLSet: new Set(),
 		OutputText: "",
-		KeyNameList: {}
+		KeyNameList: {},
+		KeyNameLessCount: 0n
 	};
 	
 	let InputURLsChanged = false;
@@ -199,7 +200,7 @@ Paste your URLs here:<br>
 					
 					return ConvertOutputs
 				}
-			}
+			},
 		]
 	//This identifies URLs for giving them keynames for filtering and sorting. If a matching URL is found,
 	//the loop terminates with its keyname being set.
@@ -335,6 +336,7 @@ https://yournamehere.tumblr.com
 					Saved_ProcessedData.URLSet.clear();
 					Saved_ProcessedData.URLList.length = 0
 					Saved_ProcessedData.OutputText = ""
+					Saved_ProcessedData.KeyNameLessCount = 0n
 					SetupKeyNameCount();
 					[...document.getElementById("KeyNameFilterList").querySelectorAll("input[type=checkbox]")].forEach(FilterOption => {
 						let DivCheckboxOption = FilterOption.parentNode.parentNode
@@ -400,8 +402,8 @@ https://yournamehere.tumblr.com
 				}
 			//Identify to add a keyname for each url outputted
 				let URLIdentifiersLength = URLIdentifiers.length
-				
 				Saved_ProcessedData.URLList.forEach(URLItemToKeyName => {
+					let KeyNameMatched = false
 					for (let i = 0; i < URLIdentifiersLength; i++) {
 						let Identifier = URLIdentifiers[i]
 						
@@ -410,7 +412,8 @@ https://yournamehere.tumblr.com
 						if (typeof Identifier.SpecialCondition === "function") {
 							Condition = Identifier.SpecialCondition(URLItemToKeyName.URL)
 						}
-						if (Pattern.test(URLItemToKeyName.URL)) {
+						if (Pattern.test(URLItemToKeyName.URL) && Condition) {
+							KeyNameMatched = true
 							URLItemToKeyName.KeyName = Identifier.KeyName
 							Saved_ProcessedData.KeyNameList[Identifier.KeyName]++
 							document.getElementById("KeyNameFilterOption_" + URLItemToKeyName.KeyName).parentNode.parentNode.hidden = false
@@ -418,11 +421,15 @@ https://yournamehere.tumblr.com
 							break
 						}
 					}
+					if (!KeyNameMatched) {
+						Saved_ProcessedData.KeyNameLessCount++
+					}
 				})
 			//Display how many occurance of a keyname based on output
 				Object.entries(Saved_ProcessedData.KeyNameList).forEach(KeyName => {
-					document.getElementById("KeyNameCount_" + KeyName[0]).textContent = " (" + KeyName[1] + ")"
+					document.getElementById("KeyNameCount_" + KeyName[0]).textContent = " (" + KeyName[1].toString() + ")"
 				})
+				document.getElementById("KeyNameLessCountDisplay").textContent = " (" + Saved_ProcessedData.KeyNameLessCount.toString(10) + ")"
 			//Save the data
 				Saved_ProcessedData.URLList
 				
