@@ -386,8 +386,10 @@ https://yournamehere.tumblr.com
 								//Find another same URL (after our current one) but with the highest page number.
 									let MinPageNumber = Converter.MinPageNum ?? 1
 									let MaxPageNumber = ObtainPageNumber(Converter.PatternToTest, Str_EnteredURL1)
-									let Str_EnteredURL1_BeforePageNumb = ""
-									let Str_EnteredURL1_AfterPageNumb = ""
+									
+									let Str_EnteredURL1_BeforePageNumb = Str_EnteredURL1.match(Converter.Regex_PathAndQueryBeforePageNumb)[0]
+									let StringToProcess1 = new URL(Str_EnteredURL1).pathname + new URL(Str_EnteredURL1).search
+									let Str_EnteredURL1_AfterPageNumb = StringToProcess1.replace(Converter.Regex_PathAndQueryBeforePageNumb, "").replace(/\d+/, "")
 									
 									for (let Index2 = Index1+1; Index2 < InputLength; Index2++) {
 										let Str_EnteredURL2 = InputURLText[Index2]
@@ -397,18 +399,10 @@ https://yournamehere.tumblr.com
 											if (!DidMatch2) {
 												continue
 											}
-										//Check to make sure the URL is the same save for the page number
-											Str_EnteredURL1_BeforePageNumb = Str_EnteredURL1.match(Converter.Regex_PathAndQueryBeforePageNumb)[0]
-											Str_EnteredURL1_AfterPageNumb = ""
-											try {
-												Str_EnteredURL1_AfterPageNumb = Str_EnteredURL1.match(Converter.Regex_PathAndQueryAfterPageNumb)[0]
-											} catch {}
-											
+										//Check to make sure the URL is the same except for the page number
 											let Str_EnteredURL2_BeforePageNumb = Str_EnteredURL2.match(Converter.Regex_PathAndQueryBeforePageNumb)[0]
-											let Str_EnteredURL2_AfterPageNumb = ""
-											try {
-												Str_EnteredURL2_AfterPageNumb = Str_EnteredURL1.match(Converter.Regex_PathAndQueryAfterPageNumb)[0]
-											} catch {}
+											let StringToProcess2 = new URL(Str_EnteredURL2).pathname + new URL(Str_EnteredURL2).search
+											let Str_EnteredURL2_AfterPageNumb = StringToProcess2.replace(Converter.Regex_PathAndQueryBeforePageNumb, "").replace(/\d+/, "")
 											if ((Str_EnteredURL1_BeforePageNumb == Str_EnteredURL2_BeforePageNumb)&&(Str_EnteredURL1_AfterPageNumb == Str_EnteredURL2_AfterPageNumb)) {
 												MaxPageNumber = Math.max(MaxPageNumber, ObtainPageNumber(Converter.PatternToTest, Str_EnteredURL2))
 											}
