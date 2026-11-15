@@ -92,7 +92,7 @@ Paste your URLs here:<br>
 </table>
 
 <script>
-	let Saved_ProcessedData = {
+	const Saved_ProcessedData = {
 		URLList: [],
 		URLSet: new Set(),
 		OutputText: "",
@@ -142,15 +142,22 @@ Paste your URLs here:<br>
 		}
 	//This is a list of converters. Each URL entered runs though all converters to output variants of a given URL.
 	//Notes
+	// - PatternToTest value can either be a URL pattern object or a string using a pattern syntax (uses JS's
+	//   URLPattern object)
+	// - Pagination notes:
+	// -- MinPageNum is the starting page number, to generate each URL from this number, to a known max number.
+	//    If unspecified, treats it as if it's 1.
+	// -- In a pattern, the capturing group to identify a page number is "<PageNumb>".
 	// - Method "CreateVarients" must return an array whose elements are the URL string.
 	// - Method "SpecialCondition" must return a boolean value: true to accept the match, or false that it failed
-		let URLConverters = [
+		const URLConverters = [
 			{
-				PatternToTest: {
-					hostname: "example.com",
-					pathname: "/images/:filename",
-					search: "?format=thumb"
-				},
+				PatternToTest: "http{s}?://example.com/pagination/:Username/posts\\?page=:PageNumb(\\d+)",
+				Type: "Pagination",
+				MinPageNum: 1
+			},
+			{
+				PatternToTest: "http{s}?://example.com/images/:filename\\?format=thumb",
 				Type: "Normal",
 				CreateVarients(InputURL) {
 					let ProcessedURLObject = new URL(InputURL)
@@ -164,10 +171,7 @@ Paste your URLs here:<br>
 			{
 				//Repository: https://github.com/Username/RepositoryName
 				//Download link (before redirect): https://github.com/Username/RepositoryName/archive/refs/heads/main.zip
-				PatternToTest: {
-					hostname: "github.com",
-					pathname: "/:username/*"
-				},
+				PatternToTest: "http{s}?://github.com/:username/*",
 				SpecialCondition(InputURL) {
 					return IsGithubUser(InputURL)
 				},
@@ -200,54 +204,34 @@ Paste your URLs here:<br>
 					
 					return ConvertOutputs
 				}
-			},
+			}
 		]
 	//This identifies URLs for giving them keynames for filtering and sorting. If a matching URL is found,
 	//the loop terminates with its keyname being set.
 	//Notes:
+	// - IdentifiedPattern value can either be a pattern object or a URL using the URL pattern syntax (uses JS
+	//   URLPattern constructor).
 	// - SpecialCondition(url_string) shall return a boolean for special conditions, such as a path that have
 	//   a username, but cannot be words of reserved. True means it passes, and false if it shouldn't.
 		let URLIdentifiers = [
 			{
-				IdentifiedPattern: {
-					protocol: "http{s}?",
-					hostname: "example.com",
-					pathname: "/images/*",
-					search: "format=thumb*"
-				},
+				IdentifiedPattern: "http{s}?://example.com/images/*\\?format=thumb",
 				KeyName: "ExampleImage_Thumb"
 			},
 			{
-				IdentifiedPattern: {
-					protocol: "http{s}?",
-					hostname: "example.com",
-					pathname: "/images/*",
-					search: "format=original*"
-				},
+				IdentifiedPattern: "http{s}?://example.com/images/*\\?format=original",
 				KeyName: "ExampleImage_Orig"
 			},
 			{
-				IdentifiedPattern: {
-					protocol: "http{s}?",
-					hostname: "github.com",
-					pathname: "/:Username"
-				},
+				IdentifiedPattern: "http{s}?://github.com/:Username",
 				KeyName: "Github_User"
 			},
 			{
-				IdentifiedPattern: {
-					protocol: "http{s}?",
-					hostname: "github.com",
-					pathname: "/:Username/:Repository"
-				},
+				IdentifiedPattern: "http{s}?://github.com/:Username/:Repository",
 				KeyName: "Github_User_Repository"
 			},
 			{
-				IdentifiedPattern: {
-					protocol: "http{s}?",
-					hostname: "github.com",
-					pathname: "/:Username/:Repository/archive/refs/heads/*"
-				},
+				IdentifiedPattern: "http{s}?://github.com/:Username/:Repository/archive/refs/heads/*",
 				KeyName: "Github_User_Repository_Download",
 				SpecialCondition(url) {
 					return IsGithubUser(url)
@@ -262,7 +246,8 @@ Paste your URLs here:<br>
 		TestURLs();
 	
 	function TestURLs() {
-		document.getElementById("InputURLs").value = `https://example.com/pagination/user1/posts?page=2
+		document.getElementById("InputURLs").value = `https://example.com/pagination/user1/posts?page=20
+https://yournamehere.tumblr.com
 https://example.com/pagination/user1/posts?page=4
 https://example.com/pagination/user2/posts?page=3
 https://example.com/pagination/user2/posts?page=10
@@ -371,35 +356,58 @@ https://yournamehere.tumblr.com
 					});
 			//Test and convert URLs
 				let InputLength = InputURLText.length
-				for (let Index = 0; Index < InputLength; Index++) {
-					let Str_EnteredURL = InputURLText[Index]
-					let URL_Obj = new URL(Str_EnteredURL)
+				for (let Index1 = 0; Index1 < InputLength; Index1++) {
+					let Str_EnteredURL1 = InputURLText[Index1]
+					let Obj_EnteredURL1 = new URL(Str_EnteredURL1)
 					let HaveMatchedAConverter = false
 					URLConverters.forEach(Converter => {
 						//Here, we need to know if the URL is compatible any converter that matches.
-							let Pattern = new URLPattern(Converter.PatternToTest)
-							let HasPassed = Pattern.test(URL_Obj.href)
-							let Condition = true
-							if (typeof Converter.SpecialCondition === "function") {
-								Condition = Converter.SpecialCondition(URL_Obj.href)
-							}
-							let GeneratedURLs = [];
-							if (!(HasPassed && Condition)) {
+							let DidMatch = CheckIfURLMatchConverter(Converter, Obj_EnteredURL1)
+							if (!DidMatch) {
 								return
 							}
 						//If matches, process it
+							let GeneratedURLs = [];
 							HaveMatchedAConverter = true
-							GeneratedURLs = Converter.CreateVarients(URL_Obj.href)
-							if (Converter.Type == "Normal") {
-								GeneratedURLs.forEach(Link => {
-									let OutputURLObject = new GenerateOutputURLs({URLLink: Link, Type: Converter.Type})
-									AddToOutput(OutputURLObject)
-								})
+							switch (Converter.Type) {
+								case "Normal":
+								//A simple replacement with a part of the URL
+									GeneratedURLs = Converter.CreateVarients(Obj_EnteredURL1.href)
+									GeneratedURLs.forEach(Link => {
+										AddToOutput(new GenerateOutputURLs({URLLink: Link, Type: Converter.Type}))
+									})
+									break
+								
+								case "Pagination":
+								//Find another same URL (after our current one) but with the highest page number.
+									let MinPageNumber = Converter.MinPageNum ?? 1
+									let MaxPageNumber = ObtainPageNumber(Converter.PatternToTest, Str_EnteredURL1)
+									for (let Index2 = Index1+1; Index2 < InputLength; Index2++) {
+										let Str_EnteredURL2 = InputURLText[Index2]
+										let Obj_EnteredURL2 = new URL(Str_EnteredURL2)
+										//Check if matches the current converter
+											let DidMatch2 = CheckIfURLMatchConverter(Converter, Obj_EnteredURL2)
+											if (!DidMatch2) {
+												continue
+											}
+										//Testing
+											let a = Str_EnteredURL1
+											let b = Obj_EnteredURL1
+										//Check to make sure the URL is the same save for the page number
+											let c = 0
+									}
+									break
+								
+								default:
+								//If a user enters a converter with an unknown type that matched with a URL
+									GeneratedURLs.forEach(Link => {
+										AddToOutput(new GenerateOutputURLs({URLLink: Link, Type: Converter.Type}))
+									})
 							}
 					});
 					//If a URL not match with any converter, label it as "other"
 						if (!HaveMatchedAConverter) {
-							let OutputLink = new GenerateOutputURLs({URLLink: URL_Obj.href, Type: "Other"})
+							let OutputLink = new GenerateOutputURLs({URLLink: Obj_EnteredURL1.href, Type: "Other"})
 							AddToOutput(OutputLink)
 						}
 				}
@@ -525,6 +533,34 @@ https://yournamehere.tumblr.com
 				
 				Saved_ProcessedData.OutputText = OutputString
 				OutputDivSpot.appendChild(Ele_OutputTable)
+	}
+	function CheckIfURLMatchConverter(Obj_Converter, Obj_URL) {
+		let Pattern = new URLPattern(Obj_Converter.PatternToTest)
+		let PatternHaveMatched = Pattern.test(Obj_URL.href)
+		let Bool_SpecialConditionPassed = true
+		if (typeof Obj_Converter.SpecialCondition === "function") {
+			Bool_SpecialConditionPassed = Obj_Converter.SpecialCondition(Obj_URL.href)
+		}
+		return (PatternHaveMatched && Bool_SpecialConditionPassed)
+	}
+	function ObtainPageNumber(StrObj_URLPattern, Str_URL) {
+		let PageCount = 0
+		let PatternMatcher = new URLPattern(ObtainPageNumber).exec(Str_URL)
+		let URLPartNamesToGetPageNumber = [
+			"pathname",
+			"search",
+		]
+		for (let i = 0; i < URLPartNamesToGetPageNumber.length; i++) {
+			let URLPart = URLPartNamesToGetPageNumber[i]
+			try {
+				if (PatternMatcher[URLPart].groups.PageNumb === undefined) {
+					continue
+				}
+				PageCount = parseInt(PatternMatcher[URLPart].groups.PageNumb)
+				break
+			} catch {}
+		}
+		return PageCount
 	}
 	function CopyList() {
 		setClipboard(Saved_ProcessedData.OutputText)
