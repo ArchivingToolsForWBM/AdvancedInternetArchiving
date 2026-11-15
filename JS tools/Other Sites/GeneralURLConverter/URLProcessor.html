@@ -142,8 +142,10 @@ Paste your URLs here:<br>
 		}
 	//This is a list of converters. Each URL entered runs though all converters to output variants of a given URL.
 	//Notes
-	// - PatternToTest value can either be a URL pattern object or a string using a pattern syntax (uses JS's
+	// - "PatternToTest" value can either be a URL pattern object or a string using a pattern syntax (uses JS's
 	//   URLPattern object)
+	// - "Type" determines what kind of generation it is. "Normal" replaces certain parts of a URL with a known
+	//   valid string, and "Pagination" generates each URL based on known max page number.
 	// - Pagination notes:
 	// -- MinPageNum is the starting page number, to generate each URL from this number, to a known max number.
 	//    If unspecified, treats it as if it's 1.
@@ -154,7 +156,9 @@ Paste your URLs here:<br>
 			{
 				PatternToTest: "http{s}?://example.com/pagination/:Username/posts\\?page=:PageNumb(\\d+)",
 				Type: "Pagination",
-				MinPageNum: 1
+				MinPageNum: 1,
+				Regex_PathAndQueryBeforePageNumb: /\/pagination\/(?:[a-zA-Z\d\-]+)\/posts\?page=/,
+				Regex_PathAndQueryAfterPageNumb: /$/
 			},
 			{
 				PatternToTest: "http{s}?://example.com/images/:filename\\?format=thumb",
@@ -382,6 +386,9 @@ https://yournamehere.tumblr.com
 								//Find another same URL (after our current one) but with the highest page number.
 									let MinPageNumber = Converter.MinPageNum ?? 1
 									let MaxPageNumber = ObtainPageNumber(Converter.PatternToTest, Str_EnteredURL1)
+									let Str_EnteredURL1_BeforePageNumb = ""
+									let Str_EnteredURL1_AfterPageNumb = ""
+									
 									for (let Index2 = Index1+1; Index2 < InputLength; Index2++) {
 										let Str_EnteredURL2 = InputURLText[Index2]
 										let Obj_EnteredURL2 = new URL(Str_EnteredURL2)
@@ -390,12 +397,29 @@ https://yournamehere.tumblr.com
 											if (!DidMatch2) {
 												continue
 											}
-										//Testing
-											let a = Str_EnteredURL1
-											let b = Obj_EnteredURL1
 										//Check to make sure the URL is the same save for the page number
-											let c = 0
+											Str_EnteredURL1_BeforePageNumb = Str_EnteredURL1.match(Converter.Regex_PathAndQueryBeforePageNumb)[0]
+											Str_EnteredURL1_AfterPageNumb = ""
+											try {
+												Str_EnteredURL1_AfterPageNumb = Str_EnteredURL1.match(Converter.Regex_PathAndQueryAfterPageNumb)[0]
+											} catch {}
+											
+											let Str_EnteredURL2_BeforePageNumb = Str_EnteredURL2.match(Converter.Regex_PathAndQueryBeforePageNumb)[0]
+											let Str_EnteredURL2_AfterPageNumb = ""
+											try {
+												Str_EnteredURL2_AfterPageNumb = Str_EnteredURL1.match(Converter.Regex_PathAndQueryAfterPageNumb)[0]
+											} catch {}
+											if ((Str_EnteredURL1_BeforePageNumb == Str_EnteredURL2_BeforePageNumb)&&(Str_EnteredURL1_AfterPageNumb == Str_EnteredURL2_AfterPageNumb)) {
+												MaxPageNumber = Math.max(MaxPageNumber, ObtainPageNumber(Converter.PatternToTest, Str_EnteredURL2))
+											}
 									}
+									for (let PageCount = MinPageNumber; PageCount < MaxPageNumber+1; PageCount++) {
+										AddToOutput(new GenerateOutputURLs({
+											URLLink: Obj_EnteredURL1.protocol + "//" + Obj_EnteredURL1.hostname + Str_EnteredURL1_BeforePageNumb + PageCount.toString(10) + Str_EnteredURL1_AfterPageNumb,
+											Type: Converter.Type
+										}))
+									}
+									
 									break
 								
 								default:
@@ -545,7 +569,7 @@ https://yournamehere.tumblr.com
 	}
 	function ObtainPageNumber(StrObj_URLPattern, Str_URL) {
 		let PageCount = 0
-		let PatternMatcher = new URLPattern(ObtainPageNumber).exec(Str_URL)
+		let PatternMatcher = new URLPattern(StrObj_URLPattern).exec(Str_URL)
 		let URLPartNamesToGetPageNumber = [
 			"pathname",
 			"search",
