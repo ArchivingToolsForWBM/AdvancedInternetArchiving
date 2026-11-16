@@ -157,8 +157,7 @@ Paste your URLs here:<br>
 				PatternToTest: "http{s}?://example.com/pagination/:Username/posts\\?page=:PageNumb(\\d+)",
 				Type: "Pagination",
 				MinPageNum: 1,
-				Regex_PathAndQueryBeforePageNumb: /\/pagination\/(?:[a-zA-Z\d\-]+)\/posts\?page=/,
-				Regex_PathAndQueryAfterPageNumb: /$/
+				Regex_PathAndQueryBeforePageNumb: /\/pagination\/(?:[a-zA-Z\d\-]+)\/posts\?page=/
 			},
 			{
 				PatternToTest: "http{s}?://example.com/images/:filename\\?format=thumb",
