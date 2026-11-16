@@ -66,7 +66,7 @@ Paste your URLs here:<br>
 					Sort: <select id="SortSettings" onchange="ProcessURLs()">
 						<option data-sortby="">Creation Order</option>
 						<option data-sortby="URL">Alphabetically</option>
-						<option data-sortby="URLHostLabelsReverse" selected>Alphabetically (Reversed Domain name then TLD)</option>
+						<option data-sortby="URLSmartSort" selected>Alphabetically (Reversed Domain name then TLD, page number padded with zeroes)</option>
 						<option data-sortby="Type">Type</option>
 						<option data-sortby="KeyName">Keyname</option>
 					</select> <label><input type="checkbox" id="ReverseSort" onchange="ProcessURLs()">Reverse</label>
@@ -300,11 +300,11 @@ https://yournamehere.tumblr.com
 			FilterList.appendChild(Div_CheckboxItem)
 		})
 	}
-	function GenerateOutputURLs({URLLink = "", Type = "", KeyName = ""}) {
+	function GenerateOutputURLs({URLLink = "https://www.example.com", URLLinkSmartSort = "https://example.www.com", Type = "Normal"}) {
 		this.URL = URLLink
-		this.URLHostLabelsReverse = ReverseURLLabel(URLLink)
+		this.URLSmartSort = URLLinkSmartSort
 		this.Type = Type
-		this.KeyName = KeyName
+		this.KeyName = ""
 	}
 	function AddToOutput(OutputURLObject) {
 		let URLString = OutputURLObject.URL
@@ -378,7 +378,7 @@ https://yournamehere.tumblr.com
 								//A simple replacement with a part of the URL
 									GeneratedURLs = Converter.CreateVarients(Obj_EnteredURL1.href)
 									GeneratedURLs.forEach(Link => {
-										AddToOutput(new GenerateOutputURLs({URLLink: Link, Type: Converter.Type}))
+										AddToOutput(new GenerateOutputURLs({URLLink: Link, URLLinkSmartSort: ReverseURLLabel(Link), Type: Converter.Type}))
 									})
 									break
 								
@@ -407,9 +407,12 @@ https://yournamehere.tumblr.com
 												MaxPageNumber = Math.max(MaxPageNumber, ObtainPageNumber(Converter.PatternToTest, Str_EnteredURL2))
 											}
 									}
+								//Generate URLs of each page from MinPageNumber to MaxPageNumber
+									let MaxDigitsOfMaxNumber = MaxPageNumber.toString(10).length
 									for (let PageCount = MinPageNumber; PageCount < MaxPageNumber+1; PageCount++) {
 										AddToOutput(new GenerateOutputURLs({
 											URLLink: Obj_EnteredURL1.protocol + "//" + Obj_EnteredURL1.hostname + Str_EnteredURL1_BeforePageNumb + PageCount.toString(10) + Str_EnteredURL1_AfterPageNumb,
+											URLLinkSmartSort: ReverseURLLabel(Obj_EnteredURL1.protocol + "//" + Obj_EnteredURL1.hostname + Str_EnteredURL1_BeforePageNumb + PageCount.toString(10).padStart(MaxDigitsOfMaxNumber, "0") + Str_EnteredURL1_AfterPageNumb),
 											Type: Converter.Type
 										}))
 									}
