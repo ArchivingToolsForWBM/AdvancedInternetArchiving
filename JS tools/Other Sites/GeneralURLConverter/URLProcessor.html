@@ -46,7 +46,7 @@
 <h1 style="text-align: center;">General URL converter</h1>
 
 Paste your URLs here:<br>
-<textarea id="InputURLs" cols="60" rows="10" oninput="InputURLsChanged = true;UserAbort = false; ProcessURLs();"></textarea><br>
+<textarea id="InputURLs" cols="60" rows="10" oninput="InputURLsChanged = true; ExcessivePaginationStatus = ''; ProcessURLs();"></textarea><br>
 <hr>
 <table>
 	<tr>
@@ -98,7 +98,8 @@ Paste your URLs here:<br>
 		KeyNameList: {},
 		KeyNameLessCount: 0n
 	};
-	let UserAbort = false
+	let ExcessivePaginationStatus = ""
+	const ExcessivePaginationCountTrigger = 5000
 	let InputURLsChanged = false;
 	
 	//These are handlers for determining if a github URL is user or not.
@@ -358,7 +359,7 @@ https://yournamehere.tumblr.com
 					let Obj_EnteredURL1 = new URL(Str_EnteredURL1)
 					let HaveMatchedAConverter = false
 					URLConverters.forEach(Converter => {
-						if (UserAbort) {
+						if (ExcessivePaginationStatus == "Aborted") {
 							return
 						}
 						//Here, we need to know if the URL is compatible any converter that matches.
@@ -405,10 +406,14 @@ https://yournamehere.tumblr.com
 									}
 								//Generate URLs of each page from MinPageNumber to MaxPageNumber
 									let NumberOfPagedURLs = MaxPageNumber-MinPageNumber+1
-									if (NumberOfPagedURLs > 10000) {
-										if (!confirm("A URL " + Str_EnteredURL1 + " have more than 10000 pages to generate (" + NumberOfPagedURLs.toString(10) + " URLs), do you wish to continue?")) {
-											UserAbort = true
-											return
+									if (ExcessivePaginationStatus != "UserWantsToContinue") {
+										if (NumberOfPagedURLs > ExcessivePaginationCountTrigger) {
+											if (!confirm("A URL " + Str_EnteredURL1 + " have more than " + ExcessivePaginationCountTrigger.toString(10) +" page varations to generate (" + NumberOfPagedURLs.toString(10) + " URLs), do you wish to continue?\n\nWarning: Confirming this will allow all future URLs with that many pages in this run to be processed.")) {
+												ExcessivePaginationStatus = "Aborted"
+												return
+											} else {
+												ExcessivePaginationStatus = "UserWantsToContinue"
+											}
 										}
 									}
 									let MaxDigitsOfMaxNumber = MaxPageNumber.toString(10).length
@@ -436,7 +441,7 @@ https://yournamehere.tumblr.com
 						}
 				}
 			//If user abort
-				if (UserAbort) {
+				if (ExcessivePaginationStatus == "Aborted") {
 					ClearSaveData()
 				}
 			//Identify to add a keyname for each url outputted
