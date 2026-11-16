@@ -90,11 +90,11 @@ https://exampleError.com Error! Cannot fetch the target URL due to system overlo
 				<div class="TabbedFilters"><label><input type="checkbox" onchange="AutoUpdate()" class="Filter_URLOutput" checked id="FilterSetting_Unsure_Error">Error</label></div>
 				<div class="TabbedFilters"><label><input type="checkbox" onchange="AutoUpdate()" class="Filter_URLOutput" checked id="FilterSetting_Unsure_NoMatch">URL not matching with any of result</label></div>
 			</div>
-			Sort: <select onchange="CheckShouldReverseSortDisabled(); AutoUpdate()">
-				<option id="Sort_Output_None" selected>None (same order as entered)</option>
-				<option id="Sort_Output_URLs_ABC">By URLs you entered alphabetically</option>
-				<option id="Sort_Output_WBMResult">By WBM result alphabetically</option>
-				<option id="Sort_Output_URLs_Status">By URLs save status flagged</option>
+			Sort: <select onchange="CheckShouldReverseSortDisabled(); AutoUpdate()" id="Select_SortEmailListResults">
+				<option data-sortoption="" id="Sort_Output_None" selected>None (same order as entered)</option>
+				<option data-sortoption="GivenURL" id="Sort_Output_URLs_ABC">By URLs you entered alphabetically</option>
+				<option data-sortoption="StatusMessage" id="Sort_Output_WBMResult">By WBM result alphabetically</option>
+				<option data-sortoption="StatusType" id="Sort_Output_URLs_Status">By URLs save status flagged</option>
 			</select> <label><input type="checkbox" onchange="AutoUpdate()" disabled id="Sort_Output_Reverse">Reverse</label><br>
 			Other:
 				<div class="TabbedFilters"><label><input type="checkbox" onchange="AutoUpdate()" id="Option_IncludeStatusAsPlaintext">Include save result and status in plaintext</label></div>
@@ -314,7 +314,7 @@ https://exampleError.com Error! Cannot fetch the target URL due to system overlo
 				
 				})
 				//Count the stats
-				ListOfURLs.forEach(EnteredURLs => SaveStatusTypeList[EnteredURLs.StatusType].Count++)
+					ListOfURLs.forEach(EnteredURLs => SaveStatusTypeList[EnteredURLs.StatusType].Count++)
 
 				//Finished processing, save them to a list for optimization purposes
 				OutputList.InputURLList = ListOfURLs
@@ -325,169 +325,160 @@ https://exampleError.com Error! Cannot fetch the target URL due to system overlo
 				ListOfURLs = OutputList.InputURLList
 				ListOfWBMResult = OutputList.WBMResultList
 			}
-			//Display
+			//Display counts and error
 			
-			if (ListOfURLs.length == 0) {
-				ClearOutput()
-				return
-			}
-			
-			let Count_Success_Total = SaveStatusTypeList.Success_FirstArchive.Count + SaveStatusTypeList.Success_SavedBefore.Count
-			if (Count_Success_Total == ListOfURLs.length && (ListOfURLs.length != 0)) {
-				document.getElementById("AllSavedIndicator").hidden = false
-			} else {
-				document.getElementById("AllSavedIndicator").hidden = true
-			}
-			
-			Filtered_ListOfURLs = ListOfURLs.filter((ArrayElement) => {
-				return document.getElementById("FilterSetting_"+ArrayElement.StatusType).checked
-			});
-
-			document.getElementById("Statistic_NumberOfItems_TotalURLs").textContent = BigInt(ListOfURLs.length).toString(10)
-			
-			document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").textContent  = BigInt(Filtered_ListOfURLs.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Filtered_ListOfURLs.length, MaxQuantity: ListOfURLs.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision}) + ")"
-			document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Filtered_ListOfURLs.length, MaxQuantity: ListOfURLs.length, Direction: "to right", ColorFull: "#0000ff"})
-			
-			document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").textContent  = BigInt(ListOfURLs.length - Filtered_ListOfURLs.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: ListOfURLs.length - Filtered_ListOfURLs.length, MaxQuantity: ListOfURLs.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision}) +")"
-			document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: ListOfURLs.length - Filtered_ListOfURLs.length, MaxQuantity: ListOfURLs.length, Direction: "to right", ColorFull: "#0000ff"})
-
-			let GreyIfZeroItems = ["#808080", "#FFFFFF"]
-			Object.entries(SaveStatusTypeList).forEach(Status => {
-				let StatusName = Status[0]
-				let StatusCount = Status[1].Count
-				let StatusColor = Status[1].Color
-				
-				document.getElementById("Statistic_NumberOfItems_" + StatusName).textContent = BigInt(StatusCount).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: StatusCount, MaxQuantity: ListOfURLs.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
-				document.getElementById("Statistic_NumberOfItems_" + StatusName).style.backgroundImage = CSSLinearGradientProgressBar({Quantity: StatusCount, MaxQuantity: ListOfURLs.length, Direction: "to right", ColorFull: StatusColor, ColorEmpty: "#000000"})
-				let GreyIfZeroIndex = Number(StatusCount != 0)
-				document.getElementById("Statistic_NumberOfItems_" + StatusName).style.color = GreyIfZeroItems[GreyIfZeroIndex]
-			})
-
-			document.getElementById("Statistic_NumberOfItems_Success_Total").textContent  = BigInt(Count_Success_Total).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Success_Total, MaxQuantity: ListOfURLs.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision}) +")"
-			document.getElementById("Statistic_NumberOfItems_Success_Total").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_Success_Total, MaxQuantity: ListOfURLs.length, Direction: "to right", ColorFull: "#0000ff"})
-
-			//Unsure totals
-			let Count_Unsure_Total = SaveStatusTypeList.Unsure_Error.Count + SaveStatusTypeList.Unsure_NoMatch.Count
-			document.getElementById("Statistic_NumberOfItems_Unsure_Total").textContent  = BigInt(Count_Unsure_Total).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Unsure_Total, MaxQuantity: ListOfURLs.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision}) +")"
-			document.getElementById("Statistic_NumberOfItems_Unsure_Total").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_Unsure_Total, MaxQuantity: ListOfURLs.length, Direction: "to right", ColorFull: "#0000ff"})
-			
-			document.getElementById("StatisticDate_Earliest").textContent  = SaveStatusDateRange.Earliest
-			document.getElementById("StatisticDate_Latest").textContent  = SaveStatusDateRange.Latest
-			let SortDirection = 1
-			if (document.getElementById("Sort_Output_Reverse").checked) {
-				SortDirection = -1
-			}
-			if (document.getElementById("Sort_Output_URLs_ABC").selected) {
-				Filtered_ListOfURLs.sort((a,b) => {
-					if (a.GivenURL === b.GivenURL) {
-						return 0;
-					} else {
-						return ((a.GivenURL < b.GivenURL) ? -1 : 1) * SortDirection;
-					}
-				})
-			} else if (document.getElementById("Sort_Output_WBMResult").selected) {
-				Filtered_ListOfURLs.sort((a, b) => {
-					if (a.StatusMessage === b.StatusMessage) {
-						return 0;
-					} else {
-						return ((a.StatusMessage < b.StatusMessage) ? -1 : 1) * SortDirection;
-					}
-				});
-			} else if (document.getElementById("Sort_Output_URLs_Status").selected) {
-				Filtered_ListOfURLs.sort((a, b) => {
-					if (a.StatusType === b.StatusType) {
-						return 0;
-					} else {
-						return ((a.StatusType < b.StatusType) ? -1 : 1) * SortDirection;
-					}
-				});
-			}
-			//Display filtered list using HTML table. Shows the URLs, the color indicator, and the WBM response.
-			let OutputTable = document.getElementById("Output_table")
-			while (OutputTable.lastElementChild) {
-				OutputTable.removeChild(OutputTable.lastElementChild);
-			}
-			let TextArea_EnteredURLResult = document.getElementById("Textarea_EnteredURLResult")
-			TextArea_EnteredURLResult.value = ""
-			let Plaintext_ListOfEnteredURLsResult = ""
-			if (Filtered_ListOfURLs.length != 0) {
-				let DocumentFrag = new DocumentFragment()
-				let ResultTable = document.createElement("table")
-				DocumentFrag.appendChild(ResultTable)
-				let TableHeaderRow = document.createElement("tr")
-				TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Position"))
-				TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("URL"))
-				TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Save result"))
-				TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Timestamp"))
-				TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Status identified"))
-				ResultTable.appendChild(TableHeaderRow)
-				Filtered_ListOfURLs.forEach((ArrayElement, Index, ArrayItself) => {
-					Plaintext_ListOfEnteredURLsResult += ArrayElement.GivenURL
-					if (document.getElementById("Option_IncludeStatusAsPlaintext").checked) {
-						Plaintext_ListOfEnteredURLsResult += "\t" + ArrayElement.StatusMessage + "\t" + ArrayElement.StatusType
-					}
-					if (Index != ArrayItself.length-1) {
-						Plaintext_ListOfEnteredURLsResult += "\n"
-					}
-					
-					
-					let RowItem = document.createElement("tr")
-					
-					let Cell_Position = document.createElement("td")
-					Cell_Position.style.fontFamily = "monospace"
-					Cell_Position.style.textAlign = "center"
-					Cell_Position.style.backgroundColor = SaveStatusTypeList[ArrayElement.StatusType].Color
-					Cell_Position.appendChild(document.createTextNode(BigInt(ArrayElement.Position+1).toString(10)))
-					RowItem.appendChild(Cell_Position)
-					
-					let Cell_URL = document.createElement("td")
-					Cell_URL.style.fontFamily = "monospace"
-					Cell_URL.style.backgroundColor = SaveStatusTypeList[ArrayElement.StatusType].Color
-					Cell_URL.appendChild(document.createTextNode(ArrayElement.GivenURL))
-					RowItem.appendChild(Cell_URL)
-					
-					let Cell_SaveResult = document.createElement("td")
-					Cell_SaveResult.style.fontFamily = "monospace"
-					Cell_SaveResult.style.backgroundColor = SaveStatusTypeList[ArrayElement.StatusType].Color
-					Cell_SaveResult.appendChild(document.createTextNode(ArrayElement.StatusMessage))
-					RowItem.appendChild(Cell_SaveResult)
-					
-					let Cell_Timestamp = document.createElement("td")
-					Cell_Timestamp.style.fontFamily = "monospace"
-					Cell_Timestamp.style.whiteSpace = "nowrap"
-					Cell_Timestamp.style.backgroundColor = SaveStatusTypeList[ArrayElement.StatusType].Color
-					Cell_Timestamp.appendChild(document.createTextNode(ArrayElement.Timestamp))
-					RowItem.appendChild(Cell_Timestamp)
-					
-					let Cell_StatusType = document.createElement("td")
-					Cell_StatusType.style.fontFamily = "monospace"
-					Cell_StatusType.style.backgroundColor = SaveStatusTypeList[ArrayElement.StatusType].Color
-					Cell_StatusType.appendChild(document.createTextNode(ArrayElement.StatusType))
-					RowItem.appendChild(Cell_StatusType)
-					
-					ResultTable.appendChild(RowItem)
-				});
-				OutputTable.appendChild(DocumentFrag)
-				TextArea_EnteredURLResult.value = Plaintext_ListOfEnteredURLsResult
-			}
-			
-			let Filtered_ListOfWBMResult = ListOfWBMResult.filter((ArrayElement) => {
-				return (ArrayElement.InputURLMatchWith == -1)
-			});
-			
-			let Plaintext_ListOfLeftOverWBMResult = ""
-			document.getElementById("Count_NonMatchingWBMResults").textContent  = BigInt(Filtered_ListOfWBMResult.length).toString(10)
-			Filtered_ListOfWBMResult.forEach((ArrayElement, Index, ArrayItself) => {
-				Plaintext_ListOfLeftOverWBMResult += ArrayElement.Result
-				if (Index != ArrayItself.length-1) {
-					Plaintext_ListOfLeftOverWBMResult += "\n"
+				if (ListOfURLs.length == 0) {
+					ClearOutput()
+					return
 				}
-			});
-			document.getElementById("Textarea_LeftoverWBMResult").value = Plaintext_ListOfLeftOverWBMResult
+				
+				let Count_Success_Total = SaveStatusTypeList.Success_FirstArchive.Count + SaveStatusTypeList.Success_SavedBefore.Count
+				if (Count_Success_Total == ListOfURLs.length && (ListOfURLs.length != 0)) {
+					document.getElementById("AllSavedIndicator").hidden = false
+				} else {
+					document.getElementById("AllSavedIndicator").hidden = true
+				}
+			//Filter and stats
+				Filtered_ListOfURLs = ListOfURLs.filter((ArrayElement) => {
+					return document.getElementById("FilterSetting_"+ArrayElement.StatusType).checked
+				});
+	
+				document.getElementById("Statistic_NumberOfItems_TotalURLs").textContent = BigInt(ListOfURLs.length).toString(10)
+				
+				document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").textContent  = BigInt(Filtered_ListOfURLs.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Filtered_ListOfURLs.length, MaxQuantity: ListOfURLs.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision}) + ")"
+				document.getElementById("Statistic_NumberOfItems_RemainingAfterFilter").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Filtered_ListOfURLs.length, MaxQuantity: ListOfURLs.length, Direction: "to right", ColorFull: "#0000ff"})
+				
+				document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").textContent  = BigInt(ListOfURLs.length - Filtered_ListOfURLs.length).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: ListOfURLs.length - Filtered_ListOfURLs.length, MaxQuantity: ListOfURLs.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision}) +")"
+				document.getElementById("Statistic_NumberOfItems_RemovedAfterFilter").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: ListOfURLs.length - Filtered_ListOfURLs.length, MaxQuantity: ListOfURLs.length, Direction: "to right", ColorFull: "#0000ff"})
+
+				let GreyIfZeroItems = ["#808080", "#FFFFFF"]
+				Object.entries(SaveStatusTypeList).forEach(Status => {
+					let StatusName = Status[0]
+					let StatusCount = Status[1].Count
+					let StatusColor = Status[1].Color
+					
+					document.getElementById("Statistic_NumberOfItems_" + StatusName).textContent = BigInt(StatusCount).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: StatusCount, MaxQuantity: ListOfURLs.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision, Clamped: true}) + ")"
+					document.getElementById("Statistic_NumberOfItems_" + StatusName).style.backgroundImage = CSSLinearGradientProgressBar({Quantity: StatusCount, MaxQuantity: ListOfURLs.length, Direction: "to right", ColorFull: StatusColor, ColorEmpty: "#000000"})
+					let GreyIfZeroIndex = Number(StatusCount != 0)
+					document.getElementById("Statistic_NumberOfItems_" + StatusName).style.color = GreyIfZeroItems[GreyIfZeroIndex]
+				})
+
+				document.getElementById("Statistic_NumberOfItems_Success_Total").textContent  = BigInt(Count_Success_Total).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Success_Total, MaxQuantity: ListOfURLs.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision}) +")"
+				document.getElementById("Statistic_NumberOfItems_Success_Total").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_Success_Total, MaxQuantity: ListOfURLs.length, Direction: "to right", ColorFull: "#0000ff"})
+
+				//Unsure totals
+				let Count_Unsure_Total = SaveStatusTypeList.Unsure_Error.Count + SaveStatusTypeList.Unsure_NoMatch.Count
+				document.getElementById("Statistic_NumberOfItems_Unsure_Total").textContent  = BigInt(Count_Unsure_Total).toString(10) + " (" + DisplayIntOutOfIntAsPercentageText({Quantity: Count_Unsure_Total, MaxQuantity: ListOfURLs.length, NumberOfDigitsAfterDec: Setting_PercentagePrecision}) +")"
+				document.getElementById("Statistic_NumberOfItems_Unsure_Total").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: Count_Unsure_Total, MaxQuantity: ListOfURLs.length, Direction: "to right", ColorFull: "#0000ff"})
+				
+				document.getElementById("StatisticDate_Earliest").textContent  = SaveStatusDateRange.Earliest
+				document.getElementById("StatisticDate_Latest").textContent  = SaveStatusDateRange.Latest
 			
-			if (ListOfURLs.length > ListOfWBMResult.length) {
-				document.getElementById("URLsToWBMResultRatioMismatchWarning").textContent = "The WBM result have "+ BigInt(ListOfURLs.length - ListOfWBMResult.length).toString(10) + " fewer result(s) than your entered URLs. It is possible you entered more URLs than what is allowed. (There are " + BigInt(ListOfURLs.length).toString(10) + " entered URL(s) and " + BigInt(ListOfWBMResult.length).toString(10) +" WBM result(s))"
-			}
+			//Sort
+				let Ele_Select_SortEmailListResults = document.getElementById("Select_SortEmailListResults")
+				let Select_SortWBGSResultsIndex = Ele_Select_SortEmailListResults.selectedIndex
+				let Ele_SelectedSortOption = [...Ele_Select_SortEmailListResults.children].find(Ele => Ele.selected)
+				let Select_PropertyToSortBy = Ele_SelectedSortOption.dataset.sortoption
+				
+				let SortDirection = 1
+				if (document.getElementById("Sort_Output_Reverse").checked) {
+					SortDirection = -1
+				}
+				if (Select_PropertyToSortBy != "") {
+					Filtered_ListOfURLs.sort((a,b) => {
+						if (a[Select_PropertyToSortBy] === b[Select_PropertyToSortBy]) {
+							return 0;
+						} else {
+							return ((a[Select_PropertyToSortBy] < b[Select_PropertyToSortBy]) ? -1 : 1) * SortDirection;
+						}
+					})
+				}
+			//Display filtered list using HTML table. Shows the URLs, the color indicator, and the WBM response.
+				let OutputTable = document.getElementById("Output_table")
+				while (OutputTable.lastElementChild) {
+					OutputTable.removeChild(OutputTable.lastElementChild);
+				}
+				let TextArea_EnteredURLResult = document.getElementById("Textarea_EnteredURLResult")
+				TextArea_EnteredURLResult.value = ""
+				let Plaintext_ListOfEnteredURLsResult = ""
+				if (Filtered_ListOfURLs.length != 0) {
+					let DocumentFrag = new DocumentFragment()
+					let ResultTable = document.createElement("table")
+					DocumentFrag.appendChild(ResultTable)
+					let TableHeaderRow = document.createElement("tr")
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Position"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("URL"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Save result"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Timestamp"))
+					TableHeaderRow.appendChild(document.createElement("th")).appendChild(document.createTextNode("Status identified"))
+					ResultTable.appendChild(TableHeaderRow)
+					Filtered_ListOfURLs.forEach((ArrayElement, Index, ArrayItself) => {
+						Plaintext_ListOfEnteredURLsResult += ArrayElement.GivenURL
+						if (document.getElementById("Option_IncludeStatusAsPlaintext").checked) {
+							Plaintext_ListOfEnteredURLsResult += "\t" + ArrayElement.StatusMessage + "\t" + ArrayElement.StatusType
+						}
+						if (Index != ArrayItself.length-1) {
+							Plaintext_ListOfEnteredURLsResult += "\n"
+						}
+						
+						
+						let RowItem = document.createElement("tr")
+						
+						let Cell_Position = document.createElement("td")
+						Cell_Position.style.fontFamily = "monospace"
+						Cell_Position.style.textAlign = "center"
+						Cell_Position.style.backgroundColor = SaveStatusTypeList[ArrayElement.StatusType].Color
+						Cell_Position.appendChild(document.createTextNode(BigInt(ArrayElement.Position+1).toString(10)))
+						RowItem.appendChild(Cell_Position)
+						
+						let Cell_URL = document.createElement("td")
+						Cell_URL.style.fontFamily = "monospace"
+						Cell_URL.style.backgroundColor = SaveStatusTypeList[ArrayElement.StatusType].Color
+						Cell_URL.appendChild(document.createTextNode(ArrayElement.GivenURL))
+						RowItem.appendChild(Cell_URL)
+						
+						let Cell_SaveResult = document.createElement("td")
+						Cell_SaveResult.style.fontFamily = "monospace"
+						Cell_SaveResult.style.backgroundColor = SaveStatusTypeList[ArrayElement.StatusType].Color
+						Cell_SaveResult.appendChild(document.createTextNode(ArrayElement.StatusMessage))
+						RowItem.appendChild(Cell_SaveResult)
+						
+						let Cell_Timestamp = document.createElement("td")
+						Cell_Timestamp.style.fontFamily = "monospace"
+						Cell_Timestamp.style.whiteSpace = "nowrap"
+						Cell_Timestamp.style.backgroundColor = SaveStatusTypeList[ArrayElement.StatusType].Color
+						Cell_Timestamp.appendChild(document.createTextNode(ArrayElement.Timestamp))
+						RowItem.appendChild(Cell_Timestamp)
+						
+						let Cell_StatusType = document.createElement("td")
+						Cell_StatusType.style.fontFamily = "monospace"
+						Cell_StatusType.style.backgroundColor = SaveStatusTypeList[ArrayElement.StatusType].Color
+						Cell_StatusType.appendChild(document.createTextNode(ArrayElement.StatusType))
+						RowItem.appendChild(Cell_StatusType)
+						
+						ResultTable.appendChild(RowItem)
+					});
+					OutputTable.appendChild(DocumentFrag)
+					TextArea_EnteredURLResult.value = Plaintext_ListOfEnteredURLsResult
+				}
+				
+				let Filtered_ListOfWBMResult = ListOfWBMResult.filter((ArrayElement) => {
+					return (ArrayElement.InputURLMatchWith == -1)
+				});
+				
+				let Plaintext_ListOfLeftOverWBMResult = ""
+				document.getElementById("Count_NonMatchingWBMResults").textContent  = BigInt(Filtered_ListOfWBMResult.length).toString(10)
+				Filtered_ListOfWBMResult.forEach((ArrayElement, Index, ArrayItself) => {
+					Plaintext_ListOfLeftOverWBMResult += ArrayElement.Result
+					if (Index != ArrayItself.length-1) {
+						Plaintext_ListOfLeftOverWBMResult += "\n"
+					}
+				});
+				document.getElementById("Textarea_LeftoverWBMResult").value = Plaintext_ListOfLeftOverWBMResult
+				
+				if (ListOfURLs.length > ListOfWBMResult.length) {
+					document.getElementById("URLsToWBMResultRatioMismatchWarning").textContent = "The WBM result have "+ BigInt(ListOfURLs.length - ListOfWBMResult.length).toString(10) + " fewer result(s) than your entered URLs. It is possible you entered more URLs than what is allowed. (There are " + BigInt(ListOfURLs.length).toString(10) + " entered URL(s) and " + BigInt(ListOfWBMResult.length).toString(10) +" WBM result(s))"
+				}
 		}
 	}
 	function ClearOutput() {

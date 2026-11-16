@@ -553,20 +553,22 @@ Misc:
 			if (document.getElementById("Sort_Output_Reverse").checked) {
 				ReverseSetting = -1
 			}
-			switch (Select_PropertyToSortBy_DataType) {
-				case "string":
-				FilteredListForDisplay.sort((a, b) => {
-					if (a[Select_PropertyToSortBy] === b[Select_PropertyToSortBy]) {
-						return 0;
-					} else {
-						return ((a[Select_PropertyToSortBy] < b[Select_PropertyToSortBy]) ? -1 : 1) * ReverseSetting;
-					}
-				});
-				break
-				case "number":
-				FilteredListForDisplay.sort((a, b) => {
-					return Number(a[Select_PropertyToSortBy] - b[Select_PropertyToSortBy]) * ReverseSetting //if this was bigint, do subtraction first, then convert to a double-float (which rounds here) to prevent potential issues if 2 large numbers are close to one another.
-				});
+			if (Select_PropertyToSortBy != "") {
+				switch (Select_PropertyToSortBy_DataType) {
+					case "string":
+					FilteredListForDisplay.sort((a, b) => {
+						if (a[Select_PropertyToSortBy] === b[Select_PropertyToSortBy]) {
+							return 0;
+						} else {
+							return ((a[Select_PropertyToSortBy] < b[Select_PropertyToSortBy]) ? -1 : 1) * ReverseSetting;
+						}
+					});
+					break
+					case "number":
+					FilteredListForDisplay.sort((a, b) => {
+						return Number(a[Select_PropertyToSortBy] - b[Select_PropertyToSortBy]) * ReverseSetting //if this was bigint, do subtraction first, then convert to a double-float (which rounds here) to prevent potential issues if 2 large numbers are close to one another.
+					});
+				}
 			}
 		//Output data
 			if (InputList.length == 0) {
