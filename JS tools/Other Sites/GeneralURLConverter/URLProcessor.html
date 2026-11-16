@@ -46,7 +46,7 @@
 <h1 style="text-align: center;">General URL converter</h1>
 
 Paste your URLs here:<br>
-<textarea id="InputURLs" cols="60" rows="10" oninput="InputURLsChanged = true; ProcessURLs();"></textarea><br>
+<textarea id="InputURLs" cols="60" rows="10" oninput="InputURLsChanged = true;UserAbort = false; ProcessURLs();"></textarea><br>
 <hr>
 <table>
 	<tr>
@@ -99,7 +99,7 @@ Paste your URLs here:<br>
 		KeyNameList: {},
 		KeyNameLessCount: 0n
 	};
-	
+	let UserAbort = false
 	let InputURLsChanged = false;
 	
 	//These are handlers for determining if a github URL is user or not.
@@ -325,16 +325,7 @@ https://yournamehere.tumblr.com
 		if (InputURLsChanged) {
 			//Main process
 				//Start things clean
-					Saved_ProcessedData.URLSet.clear();
-					Saved_ProcessedData.URLList.length = 0
-					Saved_ProcessedData.OutputText = ""
-					Saved_ProcessedData.KeyNameLessCount = 0n
-					SetupKeyNameCount();
-					[...document.getElementById("KeyNameFilterList").querySelectorAll("input[type=checkbox]")].forEach(FilterOption => {
-						let DivCheckboxOption = FilterOption.parentNode.parentNode
-						DivCheckboxOption.hidden = true
-						DivCheckboxOption.querySelector("span").textContent = ""
-					});
+					ClearSaveData()
 				//Extract URLs from input text, without any dupes
 					InputURLText = document.getElementById("InputURLs").value.match(/ttp(s)?\:\/\/(?!data:)[^\s\"\']+/g) ?? []
 					InputURLText = [...new Set(InputURLText)]
@@ -365,6 +356,9 @@ https://yournamehere.tumblr.com
 					let Obj_EnteredURL1 = new URL(Str_EnteredURL1)
 					let HaveMatchedAConverter = false
 					URLConverters.forEach(Converter => {
+						if (UserAbort) {
+							return
+						}
 						//Here, we need to know if the URL is compatible any converter that matches.
 							let DidMatch = CheckIfURLMatchConverter(Converter, Obj_EnteredURL1)
 							if (!DidMatch) {
@@ -408,6 +402,13 @@ https://yournamehere.tumblr.com
 											}
 									}
 								//Generate URLs of each page from MinPageNumber to MaxPageNumber
+									let NumberOfPagedURLs = MaxPageNumber-MinPageNumber+1
+									if (NumberOfPagedURLs > 10000) {
+										if (!confirm("A URL " + Str_EnteredURL1 + " have more than 10000 pages to generate (" + NumberOfPagedURLs.toString(10) + " URLs), do you wish to continue?")) {
+											UserAbort = true
+											return
+										}
+									}
 									let MaxDigitsOfMaxNumber = MaxPageNumber.toString(10).length
 									for (let PageCount = MinPageNumber; PageCount < MaxPageNumber+1; PageCount++) {
 										AddToOutput(new GenerateOutputURLs({
@@ -432,6 +433,10 @@ https://yournamehere.tumblr.com
 							AddToOutput(OutputLink)
 						}
 				}
+			//If user abort
+				if (UserAbort) {
+					ClearSaveData()
+				}
 			//Identify to add a keyname for each url outputted
 				let URLIdentifiersLength = URLIdentifiers.length
 				Saved_ProcessedData.URLList.forEach(URLItemToKeyName => {
@@ -449,7 +454,7 @@ https://yournamehere.tumblr.com
 							URLItemToKeyName.KeyName = Identifier.KeyName
 							Saved_ProcessedData.KeyNameList[Identifier.KeyName]++
 							document.getElementById("KeyNameFilterOption_" + URLItemToKeyName.KeyName).parentNode.parentNode.hidden = false
-								//^Make only keynames that are being used based on input.
+								//^Make only keynames that are being used based on input visible.
 							break
 						}
 					}
@@ -585,6 +590,18 @@ https://yournamehere.tumblr.com
 	}
 	function CopyList() {
 		setClipboard(Saved_ProcessedData.OutputText)
+	}
+	function ClearSaveData() {
+		Saved_ProcessedData.URLSet.clear();
+		Saved_ProcessedData.URLList.length = 0
+		Saved_ProcessedData.OutputText = ""
+		Saved_ProcessedData.KeyNameLessCount = 0n
+		SetupKeyNameCount();
+		[...document.getElementById("KeyNameFilterList").querySelectorAll("input[type=checkbox]")].forEach(FilterOption => {
+			let DivCheckboxOption = FilterOption.parentNode.parentNode
+			DivCheckboxOption.hidden = true
+			DivCheckboxOption.querySelector("span").textContent = ""
+		});
 	}
 	//Copy text from textarea
 		function DeleteCopyMessage(HTMLElement) {
