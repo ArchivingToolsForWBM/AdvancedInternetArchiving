@@ -354,11 +354,11 @@ https://yournamehere.tumblr.com
 					InputURLText = [...new Set(InputURLText)]
 				//Convert URL text that lack the "h" in http/https (because console log truncate the middle portion of the href)
 					InputURLText = InputURLText.map(URLItem => {
-					if (document.getElementById("Setting_https").checked) {
-						return "h" + URLItem.replace("ttp://", "ttps://")
-					} else {
-						return "h" + URLItem
-					}
+						if (document.getElementById("Setting_https").checked) {
+							return "h" + URLItem.replace("ttp://", "ttps://")
+						} else {
+							return "h" + URLItem
+						}
 					})
 				//Because post-conversion may result in dupes
 					InputURLText = [...new Set(InputURLText)] //If URLs went from http to https, that may also results in duplicates.
