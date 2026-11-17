@@ -257,8 +257,12 @@ Paste your URLs here:<br>
 				}
 			},
 			{
-				IdentifiedPattern: new URLPattern({hostname: "*.*.fc2.com"}),
+				IdentifiedPattern: new URLPattern({hostname: "*.blog(\\d+).fc2.com"}),
 				KeyName: "FC2_blog"
+			},
+			{
+				IdentifiedPattern: new URLPattern({hostname: "blog-imgs-(\\d+).fc2.com"}),
+				KeyName: "FC2_blog_Images"
 			},
 		]
 	//This automatically sets up the counter of how many URLs with a given keyname
