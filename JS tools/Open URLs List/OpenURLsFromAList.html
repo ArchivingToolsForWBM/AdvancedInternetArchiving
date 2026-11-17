@@ -134,13 +134,15 @@
 		})
 		document.getElementById("Output_URLsVisited").value = URLsHaveVisitedString
 		document.getElementById("OutputCount_URLsVisited").textContent = SavedData.VistedURLs.length.toString(10)
+		let TotalURLs = SavedData.EnteredURLs.length + SavedData.VistedURLs.length
+		let URLsTraversed = SavedData.VistedURLs.length
 		document.getElementById("Output_ProgressBar").style.background = CSSLinearGradientProgressBar({
-			Quantity: SavedData.VistedURLs.length,
-			MaxQuantity: SavedData.EnteredURLs.length + SavedData.VistedURLs.length
+			Quantity: URLsTraversed,
+			MaxQuantity: TotalURLs
 		})
 		document.getElementById("Output_ProgressText").textContent = DisplayIntOutOfIntAsPercentageText({
-			Quantity: SavedData.VistedURLs.length,
-			MaxQuantity: SavedData.EnteredURLs.length + SavedData.VistedURLs.length
+			Quantity: URLsTraversed,
+			MaxQuantity: TotalURLs
 		})
 	}
 	function CorrectNumberInput() {
