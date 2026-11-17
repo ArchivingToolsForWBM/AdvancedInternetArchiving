@@ -154,12 +154,6 @@ Paste your URLs here:<br>
 	// - Method "SpecialCondition" must return a boolean value: true to accept the match, or false that it failed
 		const URLConverters = [
 			{
-				PatternToTest: "http{s}?://example.com/pagination/:Username/posts\\?page=:PageNumb(\\d+)",
-				Type: "Pagination",
-				MinPageNum: 1,
-				Regex_PathAndQueryBeforePageNumb: /\/pagination\/(?:[a-zA-Z\d\-]+)\/posts\?page=/
-			},
-			{
 				PatternToTest: "http{s}?://example.com/images/:filename\\?format=thumb",
 				Type: "Normal",
 				CreateVarients(InputURL) {
@@ -170,6 +164,12 @@ Paste your URLs here:<br>
 					let ProcessedURL2 = ProcessedURLObject.href
 					return [ProcessedURL, ProcessedURL2]
 				}
+			},
+			{
+				PatternToTest: "http{s}?://example.com/pagination/:Username/posts\\?page=:PageNumb(\\d+)",
+				Type: "Pagination",
+				MinPageNum: 1,
+				Regex_PathAndQueryBeforePageNumb: /\/pagination\/(?:[a-zA-Z\d\-]+)\/posts\?page=/
 			},
 			{
 				//Repository: https://github.com/Username/RepositoryName
@@ -207,7 +207,19 @@ Paste your URLs here:<br>
 					
 					return ConvertOutputs
 				}
-			}
+			},
+			{
+				PatternToTest: "http{s}?://*.*.fc2.com/page-:PageNumb(\\d+).html",
+				Type: "Pagination",
+				MinPageNum: 0,
+				Regex_PathAndQueryBeforePageNumb: /\/page-/
+			},
+			{
+				PatternToTest: "http{s}?://*.*.fc2.com/blog-entry-:PageNumb(\\d+).html",
+				Type: "Pagination",
+				MinPageNum: 1,
+				Regex_PathAndQueryBeforePageNumb: /\/blog-entry-/
+			},
 		]
 	//This identifies URLs for giving them keynames for filtering and sorting. If a matching URL is found,
 	//the loop terminates with its keyname being set.
@@ -243,6 +255,10 @@ Paste your URLs here:<br>
 				SpecialCondition(url) {
 					return IsGithubUser(url)
 				}
+			},
+			{
+				IdentifiedPattern: new URLPattern({hostname: "*.*.fc2.com"}),
+				KeyName: "FC2_blog"
 			},
 		]
 	//This automatically sets up the counter of how many URLs with a given keyname
