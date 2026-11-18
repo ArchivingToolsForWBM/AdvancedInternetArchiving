@@ -281,9 +281,13 @@ Paste your URLs here:<br>
 				KeyName: "FC2_blog_Images"
 			},
 			{
-				IdentifiedPattern: new URLPattern({hostname: "*.jugem.jp"}),
+				IdentifiedPattern: new URLPattern({hostname: "(^[a-zA-Z\\d+\\-]+)*.jugem.jp"}),
 				KeyName: "JugemBlogs"
-			}
+			},
+			{
+				IdentifiedPattern: new URLPattern({hostname: "img-cdn.jg.jugem.jp"}),
+				KeyName: "JugemImages"
+			},
 		]
 	//This automatically sets up the counter of how many URLs with a given keyname
 		SetupKeyNameCount();
