@@ -259,11 +259,17 @@ Paste your URLs here:<br>
 			},
 			{
 				IdentifiedPattern: "http{s}?://github.com/:Username",
-				KeyName: "Github_User"
+				KeyName: "Github_User",
+				SpecialCondition(url) {
+					return IsGithubUser(url)
+				}
 			},
 			{
 				IdentifiedPattern: "http{s}?://github.com/:Username/:Repository",
-				KeyName: "Github_User_Repository"
+				KeyName: "Github_User_Repository",
+				SpecialCondition(url) {
+					return IsGithubUser(url)
+				}
 			},
 			{
 				IdentifiedPattern: "http{s}?://github.com/:Username/:Repository/archive/refs/heads/*",
