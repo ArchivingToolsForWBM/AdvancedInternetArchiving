@@ -98,55 +98,58 @@ Paste your URLs here:<br>
 </table>
 
 <script>
-	const Saved_ProcessedData = {
-		URLList: [],
-		URLSet: new Set(),
-		OutputText: "",
-		KeyNameList: {},
-		KeyNameLessCount: 0n
-	};
-	let ExcessivePaginationStatus = ""
-	const ExcessivePaginationCountTrigger = 5000
-	let InputURLsChanged = false;
-	
-	//These are handlers for determining if a github URL is user or not.
-		const Github_ReservedNames = new Set([
-			"about",
-			"apps",
-			"codespaces",
-			"collections",
-			"contact",
-			"customer-stories",
-			"enterprise",
-			"features",
-			"git-guides",
-			"images",
-			"login",
-			"mobile",
-			"organizations",
-			"orgs",
-			"premium-support",
-			"pricing",
-			"readme",
-			"search",
-			"security",
-			"signup",
-			"sitemap",
-			"solutions",
-			"sponsors",
-			"team",
-			"topics",
-			"trending",
-			"users"
-		]);
-		function IsGithubUser(url) {
-			let URLObj = new URL(url)
-			let UsernamePart = URLObj.pathname.split("/")[1]
-			if (Github_ReservedNames.has(UsernamePart)) {
-				return false
+	//Config for testing
+		const TestSampleURLs = false
+	//Default values and important variables, don't touch unless you know what you're doing.
+		const Saved_ProcessedData = {
+			URLList: [],
+			URLSet: new Set(),
+			OutputText: "",
+			KeyNameList: {},
+			KeyNameLessCount: 0n
+		};
+		let ExcessivePaginationStatus = ""
+		const ExcessivePaginationCountTrigger = 5000
+		let InputURLsChanged = false;
+		
+		//Insert stuff here for special conditions
+			const Github_ReservedNames = new Set([
+				"about",
+				"apps",
+				"codespaces",
+				"collections",
+				"contact",
+				"customer-stories",
+				"enterprise",
+				"features",
+				"git-guides",
+				"images",
+				"login",
+				"mobile",
+				"organizations",
+				"orgs",
+				"premium-support",
+				"pricing",
+				"readme",
+				"search",
+				"security",
+				"signup",
+				"sitemap",
+				"solutions",
+				"sponsors",
+				"team",
+				"topics",
+				"trending",
+				"users"
+			]);
+			function IsGithubUser(url) {
+				let URLObj = new URL(url)
+				let UsernamePart = URLObj.pathname.split("/")[1]
+				if (Github_ReservedNames.has(UsernamePart)) {
+					return false
+				}
+				return true
 			}
-			return true
-		}
 	//This is a list of converters. Each URL entered runs though all converters to output variants of a given URL.
 	//Notes
 	// - "PatternToTest" value can either be a URL pattern object or a string using a pattern syntax (uses JS's
@@ -227,6 +230,12 @@ Paste your URLs here:<br>
 				MinPageNum: 1,
 				Regex_PathAndQueryBeforePageNumb: /\/blog-entry-/
 			},
+			{
+				PatternToTest: "http{s}?://*.jugem.jp/\\?page=:PageNumb(\\d+)*",
+				Type: "Pagination",
+				MinPageNum: 1,
+				Regex_PathAndQueryBeforePageNumb: /\/\?page=/
+			}
 		]
 	//This identifies URLs for giving them keynames for filtering and sorting. If a matching URL is found,
 	//the loop terminates with its keyname being set.
@@ -271,13 +280,19 @@ Paste your URLs here:<br>
 				IdentifiedPattern: new URLPattern({hostname: "blog-imgs-(\\d+).fc2.com"}),
 				KeyName: "FC2_blog_Images"
 			},
+			{
+				IdentifiedPattern: new URLPattern({hostname: "*.jugem.jp"}),
+				KeyName: "JugemBlogs"
+			}
 		]
 	//This automatically sets up the counter of how many URLs with a given keyname
 		SetupKeyNameCount();
 	//Set up the filter key list based on reconized URLs
 		GenerateCheckboxKeyFilterList();
-	//Test function
-		TestURLs();
+	//Test URLs
+		if (TestSampleURLs) {
+			TestURLs();
+		}
 	
 	function TestURLs() {
 		document.getElementById("InputURLs").value = `https://example.com/pagination/user1/posts?page=20
