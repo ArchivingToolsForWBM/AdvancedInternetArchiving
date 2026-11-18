@@ -65,10 +65,17 @@ Paste your URLs here:<br>
 					Sort: <select id="SortSettings" onchange="ProcessURLs()">
 						<option data-sortby="">Creation Order</option>
 						<option data-sortby="URL">Alphabetically</option>
-						<option data-sortby="URLSmartSort" selected>Alphabetically (Reversed Domain name then TLD, page number padded with zeroes)</option>
+						<option data-sortby="URLSmartSort" selected>Alphabetically (SmartSort)*</option>
 						<option data-sortby="Type">Type</option>
 						<option data-sortby="KeyName">Keyname</option>
-					</select> <label><input type="checkbox" id="ReverseSort" onchange="ProcessURLs()">Reverse</label>
+					</select> <label><input type="checkbox" id="ReverseSort" onchange="ProcessURLs()">Reverse</label><br><br>
+					Note:
+					<ul>
+						<li>
+							SmartSort: Does two things: it takes a given URL, makes a copy of that and modifies it: reverses the order of each substring between the dot (&ldquo;.&rdquo;), save for the TLD,
+							and for pagination, leading zeroes are prepended.
+						</li>
+					</ul>
 				</div>
 				<div class="OutputPanels">
 					<div>
@@ -257,7 +264,7 @@ Paste your URLs here:<br>
 				}
 			},
 			{
-				IdentifiedPattern: new URLPattern({hostname: "*.blog(\\d+).fc2.com"}),
+				IdentifiedPattern: new URLPattern({hostname: "*.blog(\\d*).fc2.com"}),
 				KeyName: "FC2_blog"
 			},
 			{
@@ -450,13 +457,21 @@ https://yournamehere.tumblr.com
 								default:
 								//If a user enters a converter with an unknown type that matched with a URL
 									GeneratedURLs.forEach(Link => {
-										AddToOutput(new GenerateOutputURLs({URLLink: Link, Type: Converter.Type}))
+										AddToOutput(new GenerateOutputURLs({
+											URLLink: Link,
+											URLLinkSmartSort: ReverseURLLabel(Link),
+											Type: Converter.Type
+										}))
 									})
 							}
 					});
 					//If a URL not match with any converter, label it as "other"
 						if (!HaveMatchedAConverter) {
-							let OutputLink = new GenerateOutputURLs({URLLink: Obj_EnteredURL1.href, Type: "Other"})
+							let OutputLink = new GenerateOutputURLs({
+								URLLink: Obj_EnteredURL1.href,
+								URLLinkSmartSort: ReverseURLLabel(Obj_EnteredURL1.href),
+								Type: "Other"
+							})
 							AddToOutput(OutputLink)
 						}
 				}
@@ -560,6 +575,12 @@ https://yournamehere.tumblr.com
 				Ele_OutputTableHeader_Key.appendChild(document.createTextNode("KeyName"))
 				Ele_OutputTableRow.appendChild(Ele_OutputTableHeader_Key)
 				
+				if (SortSelectedSortProperty == "URLSmartSort") {
+					let Ele_OutputTableHeader_SmartSort = document.createElement("th")
+					Ele_OutputTableHeader_SmartSort.appendChild(document.createTextNode("SmartSort reference"))
+					Ele_OutputTableRow.appendChild(Ele_OutputTableHeader_SmartSort)
+				}
+				
 				OutputDisplay.forEach((OutputURL, Index, Arr) => {
 					OutputString += OutputURL.URL
 					if (Index != Arr.length-1) {
@@ -593,6 +614,15 @@ https://yournamehere.tumblr.com
 					Ele_KeyCell.appendChild(document.createTextNode(OutputURL.KeyName))
 					Ele_URLItemRow.appendChild(Ele_KeyCell)
 					Ele_OutputTable.appendChild(Ele_URLItemRow)
+					
+					if (SortSelectedSortProperty == "URLSmartSort") {
+						let Ele_SortSmart = document.createElement("td")
+						Ele_SortSmart.style.fontFamily = "monospace"
+						Ele_SortSmart.style.whiteSpace = "pre"
+						Ele_SortSmart.appendChild(document.createTextNode(OutputURL.URLSmartSort))
+						Ele_URLItemRow.appendChild(Ele_SortSmart)
+						Ele_OutputTable.appendChild(Ele_URLItemRow)
+					}
 				});
 				
 				Saved_ProcessedData.OutputText = OutputString
