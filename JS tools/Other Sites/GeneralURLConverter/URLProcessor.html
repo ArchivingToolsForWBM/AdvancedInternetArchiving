@@ -62,6 +62,11 @@ Paste your URLs here:<br>
 		<td style="text-align: left;">
 			<div>
 				<div class="OutputPanels">
+					<div>
+						<div class="TabbedItems">
+							<label><input type="checkbox" id="Setting_AllowPagination" checked onchange="InputURLsChanged = true; ExcessivePaginationStatus = ''; ProcessURLs()">Generate paginated URLs</label>
+						</div>
+					</div>
 					Sort: <select id="SortSettings" onchange="ProcessURLs()">
 						<option data-sortby="">Creation Order</option>
 						<option data-sortby="URL">Alphabetically</option>
@@ -432,53 +437,61 @@ https://yournamehere.tumblr.com
 									break
 								
 								case "Pagination":
-								//Find another same URL (after our current one) but with the highest page number.
-									let MinPageNumber = Converter.MinPageNum ?? 1
-									let MaxPageNumber = ObtainPageNumber(Converter.PatternToTest, Str_EnteredURL1)
-									
-									let Str_EnteredURL1_BeforePageNumb = Str_EnteredURL1.match(Converter.Regex_PathAndQueryBeforePageNumb)[0]
-									let StringToProcess1 = new URL(Str_EnteredURL1).pathname + new URL(Str_EnteredURL1).search
-									let Str_EnteredURL1_AfterPageNumb = StringToProcess1.replace(Converter.Regex_PathAndQueryBeforePageNumb, "").replace(/\d+/, "")
-									
-									for (let Index2 = Index1+1; Index2 < InputLength; Index2++) {
-										let Str_EnteredURL2 = InputURLText[Index2]
-										let Obj_EnteredURL2 = new URL(Str_EnteredURL2)
-										//Check if matches the current converter
-											let DidMatch2 = CheckIfURLMatchConverter(Converter, Obj_EnteredURL2)
-											if (!DidMatch2) {
-												continue
-											}
-										//Check to make sure the URL is the same except for the page number
-											let Str_EnteredURL2_BeforePageNumb = Str_EnteredURL2.match(Converter.Regex_PathAndQueryBeforePageNumb)[0]
-											let StringToProcess2 = new URL(Str_EnteredURL2).pathname + new URL(Str_EnteredURL2).search
-											let Str_EnteredURL2_AfterPageNumb = StringToProcess2.replace(Converter.Regex_PathAndQueryBeforePageNumb, "").replace(/\d+/, "")
-											if ((Str_EnteredURL1_BeforePageNumb == Str_EnteredURL2_BeforePageNumb)&&(Str_EnteredURL1_AfterPageNumb == Str_EnteredURL2_AfterPageNumb)) {
-												MaxPageNumber = Math.max(MaxPageNumber, ObtainPageNumber(Converter.PatternToTest, Str_EnteredURL2))
-											}
-									}
-								//Generate URLs of each page from MinPageNumber to MaxPageNumber
-									let NumberOfPagedURLs = MaxPageNumber-MinPageNumber+1
-									if (ExcessivePaginationStatus != "UserWantsToContinue") {
-										if (NumberOfPagedURLs > ExcessivePaginationCountTrigger) {
-											if (!confirm("A URL " + Str_EnteredURL1 + " have more than " + ExcessivePaginationCountTrigger.toString(10) +" page varations to generate (" + NumberOfPagedURLs.toString(10) + " URLs), do you wish to continue?\n\nWarning: Confirming this will allow all future URLs with that many pages in this run to be processed.")) {
-												ExcessivePaginationStatus = "Aborted"
-												return
-											} else {
-												ExcessivePaginationStatus = "UserWantsToContinue"
+								if (document.getElementById("Setting_AllowPagination").checked) {
+									//Find another same URL (after our current one) but with the highest page number.
+										let MinPageNumber = Converter.MinPageNum ?? 1
+										let MaxPageNumber = ObtainPageNumber(Converter.PatternToTest, Str_EnteredURL1)
+										
+										let Str_EnteredURL1_BeforePageNumb = Str_EnteredURL1.match(Converter.Regex_PathAndQueryBeforePageNumb)[0]
+										let StringToProcess1 = new URL(Str_EnteredURL1).pathname + new URL(Str_EnteredURL1).search
+										let Str_EnteredURL1_AfterPageNumb = StringToProcess1.replace(Converter.Regex_PathAndQueryBeforePageNumb, "").replace(/\d+/, "")
+										
+										for (let Index2 = Index1+1; Index2 < InputLength; Index2++) {
+											let Str_EnteredURL2 = InputURLText[Index2]
+											let Obj_EnteredURL2 = new URL(Str_EnteredURL2)
+											//Check if matches the current converter
+												let DidMatch2 = CheckIfURLMatchConverter(Converter, Obj_EnteredURL2)
+												if (!DidMatch2) {
+													continue
+												}
+											//Check to make sure the URL is the same except for the page number
+												let Str_EnteredURL2_BeforePageNumb = Str_EnteredURL2.match(Converter.Regex_PathAndQueryBeforePageNumb)[0]
+												let StringToProcess2 = new URL(Str_EnteredURL2).pathname + new URL(Str_EnteredURL2).search
+												let Str_EnteredURL2_AfterPageNumb = StringToProcess2.replace(Converter.Regex_PathAndQueryBeforePageNumb, "").replace(/\d+/, "")
+												if ((Str_EnteredURL1_BeforePageNumb == Str_EnteredURL2_BeforePageNumb)&&(Str_EnteredURL1_AfterPageNumb == Str_EnteredURL2_AfterPageNumb)) {
+													MaxPageNumber = Math.max(MaxPageNumber, ObtainPageNumber(Converter.PatternToTest, Str_EnteredURL2))
+												}
+										}
+									//Generate URLs of each page from MinPageNumber to MaxPageNumber
+										let NumberOfPagedURLs = MaxPageNumber-MinPageNumber+1
+										if (ExcessivePaginationStatus != "UserWantsToContinue") {
+											if (NumberOfPagedURLs > ExcessivePaginationCountTrigger) {
+												if (!confirm("A URL " + Str_EnteredURL1 + " have more than " + ExcessivePaginationCountTrigger.toString(10) +" page varations to generate (" + NumberOfPagedURLs.toString(10) + " URLs), do you wish to continue?\n\nWarning: Confirming this will allow all future URLs with that many pages in this run to be processed.")) {
+													ExcessivePaginationStatus = "Aborted"
+													return
+												} else {
+													ExcessivePaginationStatus = "UserWantsToContinue"
+												}
 											}
 										}
-									}
-									let MaxDigitsOfMaxNumber = MaxPageNumber.toString(10).length
-									for (let PageCount = MinPageNumber; PageCount < MaxPageNumber+1; PageCount++) {
+										let MaxDigitsOfMaxNumber = MaxPageNumber.toString(10).length
+										for (let PageCount = MinPageNumber; PageCount < MaxPageNumber+1; PageCount++) {
+											AddToOutput(new GenerateOutputURLs({
+												URLLink: Obj_EnteredURL1.protocol + "//" + Obj_EnteredURL1.hostname + Str_EnteredURL1_BeforePageNumb + PageCount.toString(10) + Str_EnteredURL1_AfterPageNumb,
+												URLLinkSmartSort: ReverseURLLabel(Obj_EnteredURL1.protocol + "//" + Obj_EnteredURL1.hostname + Str_EnteredURL1_BeforePageNumb + PageCount.toString(10).padStart(MaxDigitsOfMaxNumber, "0") + Str_EnteredURL1_AfterPageNumb),
+												Type: Converter.Type
+											}))
+										}
+										
+										break
+								} else {
+									//If user disallows generating pagination, insert the list as-is with the "Type" saying Pagination_Cancelled 
 										AddToOutput(new GenerateOutputURLs({
-											URLLink: Obj_EnteredURL1.protocol + "//" + Obj_EnteredURL1.hostname + Str_EnteredURL1_BeforePageNumb + PageCount.toString(10) + Str_EnteredURL1_AfterPageNumb,
-											URLLinkSmartSort: ReverseURLLabel(Obj_EnteredURL1.protocol + "//" + Obj_EnteredURL1.hostname + Str_EnteredURL1_BeforePageNumb + PageCount.toString(10).padStart(MaxDigitsOfMaxNumber, "0") + Str_EnteredURL1_AfterPageNumb),
-											Type: Converter.Type
+											URLLink: Str_EnteredURL1,
+											URLLinkSmartSort: ReverseURLLabel(Str_EnteredURL1),
+											Type: "Pagination_Cancelled"
 										}))
-									}
-									
-									break
-								
+								}
 								default:
 								//If a user enters a converter with an unknown type that matched with a URL
 									GeneratedURLs.forEach(Link => {
