@@ -223,6 +223,18 @@ Paste your URLs here:<br>
 					return ConvertOutputs
 				}
 			},
+			//https://Username.blog12.fc2.com/blog-entry-12.html 
+			//This creates a blog entry page that sometimes aren't linked from the main page.
+			{
+				PatternToTest: {hostname: "*.*.fc2.com"},
+				Type: "Normal",
+				CreateVarients(InputURL) {
+					let FC2BlogURL = new URL(InputURL)
+					FC2BlogURL.pathname = "blog-entry-1.html"
+					return [FC2BlogURL.href]
+				}
+				
+			},
 			{
 				PatternToTest: "http{s}?://*.*.fc2.com/page-:PageNumb(\\d+).html",
 				Type: "Pagination",
@@ -392,10 +404,12 @@ https://yournamehere.tumblr.com
 				//Convert URL text that lack the "h" in http/https (because console log truncate the middle portion of the href)
 					InputURLText = InputURLText.map(URLItem => {
 						if (document.getElementById("Setting_https").checked) {
-							return "h" + URLItem.replace("ttp://", "ttps://")
+							URLItem = "h" + URLItem.replace("ttp://", "ttps://")
 						} else {
-							return "h" + URLItem
+							URLItem = "h" + URLItem
 						}
+						URLItem = URLItem.replace(/\.$/, "") //Remove the "." at the end of the URL
+						return URLItem
 					})
 				//Because post-conversion may result in dupes
 					InputURLText = [...new Set(InputURLText)] //If URLs went from http to https, that may also results in duplicates.
