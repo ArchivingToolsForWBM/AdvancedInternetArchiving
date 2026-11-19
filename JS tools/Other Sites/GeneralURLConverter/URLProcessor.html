@@ -155,6 +155,12 @@ Paste your URLs here:<br>
 				}
 				return true
 			}
+			function NotAFC2BlogUser(url) {
+				if (new URL(url).hostname == "admin.blog.fc2.com") {
+					return false
+				}
+				return true
+			}
 	//This is a list of converters. Each URL entered runs though all converters to output variants of a given URL.
 	//Notes
 	// - "PatternToTest" value can either be a URL pattern object or a string using a pattern syntax (uses JS's
@@ -167,6 +173,8 @@ Paste your URLs here:<br>
 	// -- In a pattern, the capturing group to identify a page number is "<PageNumb>".
 	// - Method "CreateVarients" must return an array whose elements are the URL string.
 	// - Method "SpecialCondition" must return a boolean value: true to accept the match, or false that it failed
+	// - If a URL matches at least one of these converters, and any of the converters match doesn't output the
+	//   original, unmodified URL, it will not output that URL.
 		const URLConverters = [
 			{
 				PatternToTest: "http{s}?://example.com/images/:filename\\?format=thumb",
@@ -227,25 +235,46 @@ Paste your URLs here:<br>
 			//This creates a blog entry page that sometimes aren't linked from the main page.
 			{
 				PatternToTest: {hostname: "*.*.fc2.com"},
-				Type: "Normal",
+				Type: "Pagination",
 				CreateVarients(InputURL) {
 					let FC2BlogURL = new URL(InputURL)
 					FC2BlogURL.pathname = "blog-entry-1.html"
 					return [FC2BlogURL.href]
+				},
+				SpecialCondition(InputURL) {
+					return NotAFC2BlogUser(InputURL)
 				}
-				
+			},
+			{
+				PatternToTest: {
+					hostname: "*.*.fc2.com",
+					pathname: "/img/*"
+				},
+				Type: "Normal",
+				CreateVarients(InputURL) {
+					return [InputURL]
+				},
+				SpecialCondition(InputURL) {
+					return NotAFC2BlogUser(InputURL)
+				}
 			},
 			{
 				PatternToTest: "http{s}?://*.*.fc2.com/page-:PageNumb(\\d+).html",
 				Type: "Pagination",
 				MinPageNum: 0,
-				Regex_HostPathAndQueryBeforePageNumb: /[a-zA-Z\d\-\.]+\/page-/
+				Regex_HostPathAndQueryBeforePageNumb: /[a-zA-Z\d\-\.]+\/page-/,
+				SpecialCondition(InputURL) {
+					return NotAFC2BlogUser(InputURL)
+				}
 			},
 			{
 				PatternToTest: "http{s}?://*.*.fc2.com/blog-entry-:PageNumb(\\d+).html",
 				Type: "Pagination",
 				MinPageNum: 1,
-				Regex_HostPathAndQueryBeforePageNumb: /[a-zA-Z\d\-\.]+\/blog-entry-/
+				Regex_HostPathAndQueryBeforePageNumb: /[a-zA-Z\d\-\.]+\/blog-entry-/,
+				SpecialCondition(InputURL) {
+					return NotAFC2BlogUser(InputURL)
+				}
 			},
 			{
 				PatternToTest: "http{s}?://*.jugem.jp/\\?page=:PageNumb(\\d+)*",
@@ -261,6 +290,7 @@ Paste your URLs here:<br>
 	//   URLPattern constructor).
 	// - SpecialCondition(url_string) shall return a boolean for special conditions, such as a path that have
 	//   a username, but cannot be words of reserved. True means it passes, and false if it shouldn't.
+	// - Only zero or the first one of these may match for each URL.
 		let URLIdentifiers = [
 			{
 				IdentifiedPattern: "http{s}?://example.com/pagination/*/posts\?page=*",
@@ -297,11 +327,30 @@ Paste your URLs here:<br>
 			},
 			{
 				IdentifiedPattern: new URLPattern({hostname: "*.blog(\\d*).fc2.com"}),
-				KeyName: "FC2_blog"
+				KeyName: "FC2_blog",
+				SpecialCondition(InputURL) {
+					let Obj_URL = new URL(InputURL)
+					let IsAUser = NotAFC2BlogUser(InputURL)
+					let IsNotImagePage = Obj_URL.pathname.split("/")[1] != "img"
+					return IsAUser && IsNotImagePage
+				}
 			},
 			{
 				IdentifiedPattern: new URLPattern({hostname: "blog-imgs-(\\d+).fc2.com"}),
-				KeyName: "FC2_blog_Images"
+				KeyName: "FC2_blog_Images",
+				SpecialCondition(InputURL) {
+					return NotAFC2BlogUser(InputURL)
+				}
+			},
+			{
+				IdentifiedPattern: new URLPattern({
+					hostname: "*.*.fc2.com",
+					pathname: "/img/*"
+				}),
+				KeyName: "FC2_blog_Images_Page",
+				SpecialCondition(InputURL) {
+					return NotAFC2BlogUser(InputURL)
+				}
 			},
 			{
 				IdentifiedPattern: new URLPattern({hostname: "(^[a-zA-Z\\d+\\-]+)*.jugem.jp"}),
