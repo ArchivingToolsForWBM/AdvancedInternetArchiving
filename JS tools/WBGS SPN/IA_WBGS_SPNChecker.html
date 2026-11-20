@@ -89,9 +89,10 @@ https://exampleNoResultsAtAll.com
 https://exampleSavedButHTTP4xx	Already captured	429	https://web.archive.org/web/20210101000000/https://exampleSavedButHTTP4xx	0	
 https://exampleBlockListed			This URL is in the Save Page Now service block list and cannot be captured	0 outlinks captured	
 https://exampleError401			The target server requires authentication for https://exampleError401 (HTTP status=404).	0 outlinks captured	
-https://exampleError404			The target server cannot find the requested resource https://exampleError404 (HTTP status=404).	0 outlinks captured	
 https://exampleError403			The target server blocks access to https://exampleError403. (HTTP status=403)		
-https://DoesNotExist.com			Cannot resolve host https://DoesNotExist.com		</textarea><br>
+https://exampleError404			The target server cannot find the requested resource https://exampleError404 (HTTP status=404).	0 outlinks captured	
+https://DoesNotExist.com			Cannot resolve host https://DoesNotExist.com		
+https://CrawlerTrap.com			https://CrawlerTrap.com URL is a Crawler Trap.		</textarea><br>
 			<div><button onclick="setClipboard(document.getElementById('SampleInput').value)">Copy</button><span></span></div>
 			After the process finishes (you should get an email saying &ldquo;Wayback gsheets capture report&rdquo; if it did), or if a process queues or gets stuck on the remaining few URLs, <abbr title="I experienced a bug with google sheets where the system may copy up to I think 200 rows of data, make sure you copy the entire list!"><s>select columns A-F</s></abbr> select the cells covering columns A-F and copy (CTRL+C). Then on this HTML file, paste (CTRL+V) your list in the following textarea. The data should be converted into
 			<a href="https://en.wikipedia.org/wiki/Tab-separated_values">tab-seperated values</a>.
@@ -140,9 +141,10 @@ Filters: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)
 	<div class="TabbedItems TabbedFiltersGroup" id="FilterGroup_CantSaves">Cannot save: <button onclick="ChangeCheckboxesByChildren(1, event.target.parentNode)">Check all</button><button onclick="ChangeCheckboxesByChildren(0, event.target.parentNode)">Uncheck all</button><button onclick="ChangeCheckboxesByChildren(2, event.target.parentNode)">Invert</button>
 		<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_BlockListed" checked data-status_list_name="CantSave_BlockListed">&ldquo;This URL is in the Save Page Now service block list and cannot be captured.&rdquo; (dark red)</label></div>
 		<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error401" checked data-status_list_name="CantSave_Error401">&ldquo;The target server requires authentication for &lt;URL&gt; (HTTP status=401).&rdquo; (dark red)</label></div>
-		<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error404" checked data-status_list_name="CantSave_Error404">&ldquo;The target server cannot find &lt;URL&gt;. (HTTP status=404)&rdquo; (dark red)</label></div>
 		<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error403" checked data-status_list_name="CantSave_Error403">&ldquo;The target server blocks access to &lt;URL&gt;. (HTTP status=403)&rdquo; (dark red)</label></div>
+		<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_Error404" checked data-status_list_name="CantSave_Error404">&ldquo;The target server cannot find &lt;URL&gt;. (HTTP status=404)&rdquo; (dark red)</label></div>
 		<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_CantResolve" checked data-status_list_name="CantSave_CantResolve">&ldquo;Cannot resolve host &lt;URL&gt;&rdquo; (dark red)</label></div>
+		<div class="TabbedItems"><label style="color: #900000;"><input type="checkbox" onchange="AutoUpdate()" id="Filter_CantSave_CrawlerTrap" checked data-status_list_name="CantSave_CrawlerTrap">&ldquo;&lt;URL&gt;&rdquo; URL is a Crawler Trap.</label></div>
 		Please note that pages flagged as "can't save" can change between being able to be save or not. That's why they're checked by default.
 	</div>
 </div>
@@ -236,6 +238,10 @@ Misc:
 		<tr style="font-family: monospace">
 			<td><kbd>CantSave_CantResolve</kbd></td>
 			<td id="Statistic_NumberOfItems_CantSave_CantResolve" class="Stat"></td>
+		</tr>
+		<tr style="font-family: monospace">
+			<td><kbd>CantSave_CrawlerTrap</kbd></td>
+			<td id="Statistic_NumberOfItems_CantSave_CrawlerTrap" class="Stat"></td>
 		</tr>
 		<tr>
 			<th colspan="2">Classification totals</th>
@@ -343,6 +349,9 @@ Misc:
 				Color: "#400000"
 			},
 			CantSave_CantResolve: {
+				Color: "#400000"
+			},
+			CantSave_CrawlerTrap: {
 				Color: "#400000"
 			}
 		}
@@ -471,12 +480,14 @@ Misc:
 							SaveStatus = "CantSave_BlockListed"
 						} else if (/^The target server requires authentication for/.test(Col_D_SavedURLOrError)) {
 							SaveStatus = "CantSave_Error401"
-						} else if (/^(The target server cannot find the requested resource|The target server cannot find)/.test(Col_D_SavedURLOrError)) {
-							SaveStatus = "CantSave_Error404"
 						} else if (/^The target server blocks access to/.test(Col_D_SavedURLOrError)) {
 							SaveStatus = "CantSave_Error403"
+						} else if (/^(The target server cannot find the requested resource|The target server cannot find)/.test(Col_D_SavedURLOrError)) {
+							SaveStatus = "CantSave_Error404"
 						} else if (/^Cannot resolve host/.test(Col_D_SavedURLOrError)) {
 							SaveStatus = "CantSave_CantResolve"
+						} else if (/URL is a Crawler Trap.$/.test(Col_D_SavedURLOrError)) {
+							SaveStatus = "CantSave_CrawlerTrap"
 						} else {
 							SaveStatus = "Unsure_Error"
 						}
@@ -578,7 +589,7 @@ Misc:
 			//Totals of the 3 group of types
 				let Count_Success = SaveStatusTypeList.Success_SavedBefore.Count + SaveStatusTypeList.Success_FirstArchive.Count
 				let Count_Unsures = SaveStatusTypeList.Unsure_NoIAResult.Count + SaveStatusTypeList.Unsure_BlankColumnD.Count + SaveStatusTypeList.Unsure_Redirected.Count + SaveStatusTypeList.Unsure_Error.Count + SaveStatusTypeList.Unsure_SavedANon2XX.Count
-				let Count_CantSaves = SaveStatusTypeList.CantSave_BlockListed.Count + SaveStatusTypeList.CantSave_Error401.Count + SaveStatusTypeList.CantSave_Error403.Count + SaveStatusTypeList.CantSave_Error404.Count + SaveStatusTypeList.CantSave_CantResolve.Count
+				let Count_CantSaves = SaveStatusTypeList.CantSave_BlockListed.Count + SaveStatusTypeList.CantSave_Error401.Count + SaveStatusTypeList.CantSave_Error403.Count + SaveStatusTypeList.CantSave_Error404.Count + SaveStatusTypeList.CantSave_CantResolve.Count + SaveStatusTypeList.CantSave_CrawlerTrap.Count
 				if (Count_Success == InputList.length && InputList.length != 0) {
 					document.getElementById("AllSavedIndicator").hidden = false
 				} else {	//If the user then enters another list of URLs without resetting or refreshing this must also reset.
