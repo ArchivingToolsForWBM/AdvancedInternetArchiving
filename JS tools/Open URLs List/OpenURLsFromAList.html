@@ -123,6 +123,8 @@
 		//Update the display
 			UpdateHTMLOutputLists()
 			UpdateBatchCount()
+		//Reenable button if it previously reached the end of the list
+			document.getElementById("Btn_StartStopOpenBatchInterval").disabled = (AutoStopOpeningBatchCountdownValue <= 0) || (SavedData.EnteredURLs.length == 0)
 	}
 	function ClearSaveData() {
 		SavedData.EnteredURLs.length = 0
