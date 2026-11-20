@@ -235,7 +235,7 @@ Paste your URLs here:<br>
 			//This creates a blog entry page that sometimes aren't linked from the main page.
 			{
 				PatternToTest: {hostname: "*.*.fc2.com"},
-				Type: "Pagination",
+				Type: "Normal",
 				CreateVarients(InputURL) {
 					let FC2BlogURL = new URL(InputURL)
 					FC2BlogURL.pathname = "blog-entry-1.html"
@@ -540,8 +540,8 @@ https://yournamehere.tumblr.com
 											let MaxDigitsOfMaxNumber = MaxPageNumber.toString(10).length
 											for (let PageCount = MinPageNumber; PageCount < MaxPageNumber+1; PageCount++) {
 												AddToOutput(new GenerateOutputURLs({
-													URLLink: Obj_EnteredURL1.protocol + "//" + Obj_EnteredURL1.hostname + Str_EnteredURL1_BeforePageNumb + PageCount.toString(10) + Str_EnteredURL1_AfterPageNumb,
-													URLLinkSmartSort: ReverseURLLabel(Obj_EnteredURL1.protocol + "//" + Obj_EnteredURL1.hostname + Str_EnteredURL1_BeforePageNumb + PageCount.toString(10).padStart(MaxDigitsOfMaxNumber, "0") + Str_EnteredURL1_AfterPageNumb),
+													URLLink: Obj_EnteredURL1.protocol + "//" + Str_EnteredURL1_BeforePageNumb + PageCount.toString(10) + Str_EnteredURL1_AfterPageNumb,
+													URLLinkSmartSort: ReverseURLLabel(Obj_EnteredURL1.protocol + "//" + Str_EnteredURL1_BeforePageNumb + PageCount.toString(10).padStart(MaxDigitsOfMaxNumber, "0") + Str_EnteredURL1_AfterPageNumb),
 													Type: Converter.Type
 												}))
 											}
