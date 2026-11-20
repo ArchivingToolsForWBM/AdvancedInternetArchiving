@@ -131,19 +131,24 @@ Extraction modes:
 				}
 			})
 		ListOfURLs = ListOfURLs.map((ArrayElement) => {
-				let ProcessedURL = ArrayElement
-				if (document.getElementById("Option_IgnoreFragment").checked) {
-					ProcessedURL = ProcessedURL.replace(/#.*$/, "")
-				};
-				if (document.getElementById("Option_ForceHTTPS").checked && document.getElementById("Option_HarMode").checked == false) {
-					ProcessedURL = ProcessedURL.replace(/^ttp:\/\//, "ttps://")
-				};
-				let DomainNameTLDLabelOrder = ReverseURLLabel("h" + ProcessedURL)
-				return {
-					URL: ProcessedURL,
-					URLReverseLabel: DomainNameTLDLabelOrder
-				}
+			let ProcessedURL = ArrayElement
+			if (document.getElementById("Option_IgnoreFragment").checked) {
+				ProcessedURL = ProcessedURL.replace(/#.*$/, "")
+			};
+			if (document.getElementById("Option_ForceHTTPS").checked && document.getElementById("Option_HarMode").checked == false) {
+				ProcessedURL = ProcessedURL.replace(/^ttp:\/\//, "ttps://")
+			};
+			return ProcessedURL
 		});
+		ListOfURLs = [...new Set(ListOfURLs)] //Because forcing HTTPS and other modifications above may result in dupes
+		ListOfURLs = ListOfURLs.map((ArrayElement) => {
+			let ProcessedURL = ArrayElement
+			let DomainNameTLDLabelOrder = ReverseURLLabel("h" + ProcessedURL)
+			return {
+				URL: ProcessedURL,
+				URLReverseLabel: DomainNameTLDLabelOrder
+			}
+		})
 		//Correct the URL string (console log may quote a string with a period added at the end, for example)
 			if (document.getElementById("Option_HarMode").checked == false) {
 				for (let Index = 0; Index < ListOfURLs.length; Index++) {
