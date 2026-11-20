@@ -239,6 +239,7 @@ Paste your URLs here:<br>
 				CreateVarients(InputURL) {
 					let FC2BlogURL = new URL(InputURL)
 					FC2BlogURL.pathname = "blog-entry-1.html"
+					FC2BlogURL.search = ""
 					return [FC2BlogURL.href]
 				},
 				SpecialCondition(InputURL) {
