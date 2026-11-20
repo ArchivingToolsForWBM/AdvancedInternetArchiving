@@ -72,20 +72,34 @@
 	</tr>
 	<tr>
 		<td colspan="2">
-			<kbd>Number of URLs in a batch:</kbd> <input type="number" id="Input_BatchSize" onchange="CorrectNumberInput();" value="5" min="1">
-			<pre>Number of batches until all URLs visited: <span id="OutputCount_NumberOfBatchesToCompletion">0</span></pre>
-			<button onclick="OpenBatch();">Open Batch</button><br><br>
+			<kbd>Number of URLs in a batch:</kbd> <input type="number" id="Input_BatchSize" onchange="CorrectBatchSize();" value="5" min="1">
+			<button onclick="OpenBatch();" id="Btn_OpenBatch">Open Batch</button><br><br>
+			<div>
+				<h3>Open batch of URLs by interval:</h3>
+				Delay (Seconds): <input type="range" min="1000" max="20000" step="100" value="2000" style="width: 250px" oninput="AdjustOpenBatchInterval();" id="InputRange_OpenBatchInterval"> <span id="BatchInterval"></span> Second(s)<br>
+				Auto-stop opening batches after <input type="number" min="0" value="0" id="AutoStopOpeningBatchCountdown" onchange="CorrectAutoStopBatchCountDown();"> batches<br>
+				<button id="Btn_StartStopOpenBatchInterval" onclick="StartStopOpenBatchInterval();" style="width: 180px; height: 32px;">Open batch in an interval</button><br>
+				<kbd>Status: <span id="IntervalStatus"></span></kbd>
+			</div>
+			
 			<div id="Output_ProgressBar" style="width: 400px; text-align: center;"><pre>Progress: <span id="Output_ProgressText"></span></pre></div>
+			<pre>Number of batches until all URLs visited: <span id="OutputCount_NumberOfBatchesToCompletion">0</span></pre>
+			
 		</td>
 	</tr>
 </table>
 
 <script>
-	SavedData = {
+	let SavedData = {
 		EnteredURLs: [],
 		VistedURLs: []
 	}
+	let OpenBatchIntervalOnOff = false
+	let IntervalID_OpenURLsDelay = -1
 	Process()
+	AdjustOpenBatchInterval()
+	StartStopOpenBatchIntervalUpdateUI()
+	let AutoStopOpeningBatchCountdownValue = 0
 	
 	function Process() {
 		//Clear data
@@ -113,6 +127,80 @@
 	function ClearSaveData() {
 		SavedData.EnteredURLs.length = 0
 		SavedData.VistedURLs.length = 0
+	}
+	function AdjustOpenBatchInterval() {
+		let Element = document.getElementById("InputRange_OpenBatchInterval")
+		let IntervalSecondsDisplay = document.getElementById("BatchInterval")
+		IntervalSecondsDisplay.textContent = (Element.value/1000).toFixed(1)
+	}
+	function StartStopOpenBatchInterval() {
+		OpenBatchIntervalOnOff = !OpenBatchIntervalOnOff
+		StartStopOpenBatchIntervalUpdateUI()
+		let IntervalValue = parseInt(document.getElementById("InputRange_OpenBatchInterval").value)
+		if (OpenBatchIntervalOnOff) {
+			IntervalID_OpenURLsDelay = setInterval(IntervalExecute, IntervalValue)
+		} else {
+			clearInterval(IntervalID_OpenURLsDelay)
+		}
+	}
+	function CorrectAutoStopBatchCountDown() {
+		let Element = event.target
+		let Value = parseInt(Element.value)
+		if (isNaN(Value)) {
+			Value = 0
+		}
+		if (Value < 0) {
+			Value = 0
+		}
+		AutoStopOpeningBatchCountdownValue = Value
+		Element.value = Value.toString(10)
+		document.getElementById("Btn_StartStopOpenBatchInterval").disabled = (AutoStopOpeningBatchCountdownValue <= 0) || (SavedData.EnteredURLs.length == 0)
+	}
+	function IntervalExecute() {
+		TerminateIntervalIfAutoStoppedOrNoURLsLeft()
+		if (AutoStopOpeningBatchCountdownValue <= 0) {
+			return
+		}
+		AutoStopOpeningBatchCountdownValue--
+		document.getElementById("AutoStopOpeningBatchCountdown").value = AutoStopOpeningBatchCountdownValue.toString(10)
+		OpenBatch()
+		TerminateIntervalIfAutoStoppedOrNoURLsLeft()
+	}
+	function TerminateIntervalIfAutoStoppedOrNoURLsLeft() {
+		if ((SavedData.EnteredURLs.length == 0|| AutoStopOpeningBatchCountdownValue == 0)) {
+			OpenBatchIntervalOnOff = true //Ensure the following function called to always turn it off
+			StartStopOpenBatchInterval()
+			clearInterval(IntervalID_OpenURLsDelay)
+			document.getElementById("Btn_StartStopOpenBatchInterval").disabled = true
+		}
+	}
+	function StartStopOpenBatchIntervalUpdateUI() {
+		let Btn_StartStop = document.getElementById("Btn_StartStopOpenBatchInterval")
+		let InputNumberBatchSize = document.getElementById("Input_BatchSize")
+		let InputRange_Delay = document.getElementById("InputRange_OpenBatchInterval")
+		let IntervalStatus = document.getElementById("IntervalStatus")
+		let BatchCountdown = document.getElementById("AutoStopOpeningBatchCountdown")
+		
+		const Statuses = [
+			{
+				Text: "Open Batch in an interval",
+				Color: "#00C000",
+				Status: "Stopped"
+			},
+			{
+				Text: "Stop",
+				Color: "#E00000",
+				Status: "Running"
+			}
+		]
+		Btn_StartStop.textContent = Statuses[Number(OpenBatchIntervalOnOff)].Text
+		Btn_StartStop.style.backgroundColor = Statuses[Number(OpenBatchIntervalOnOff)].Color
+		Btn_OpenBatch.disabled = OpenBatchIntervalOnOff
+		InputNumberBatchSize.disabled = OpenBatchIntervalOnOff
+		InputRange_Delay.disabled = OpenBatchIntervalOnOff
+		IntervalStatus.textContent = Statuses[Number(OpenBatchIntervalOnOff)].Status
+		BatchCountdown.disabled = OpenBatchIntervalOnOff
+		
 	}
 	function UpdateHTMLOutputLists() {
 		let URLsToOpenString = ""
@@ -145,7 +233,7 @@
 			MaxQuantity: TotalURLs
 		})
 	}
-	function CorrectNumberInput() {
+	function CorrectBatchSize() {
 		let ElementUsed = event.target
 		let Value = clamp(parseInt(ElementUsed.value), 1, 100)
 		ElementUsed.value = Value.toString(10)
