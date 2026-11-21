@@ -47,10 +47,6 @@
 
 Paste your URLs here:<br>
 <textarea id="InputURLs" cols="60" rows="10" oninput="InputURLsChanged = true; ExcessivePaginationStatus = ''; ProcessURLs();"></textarea><br>
-<div id="URLProgress" hidden>
-	Progress: <span id="URL_Progress_Text">0%</span>
-	<div id="URL_Progress_Bar" style="width: 500px; height: 10px; background-color: #505050; border: 1px solid white; border-radius: 5px;"></div>
-</div>
 <hr>
 <table>
 	<tr>
@@ -59,6 +55,10 @@ Paste your URLs here:<br>
 	</tr>
 	<tr>
 		<td>
+			<div id="URLProgress" hidden>
+				<kbd>Progress: <span id="URL_Progress_Text">0%</span></kbd>
+				<div id="URL_Progress_Bar" style="width: 500px; height: 10px; background-color: #505050; border: 1px solid white; border-radius: 5px;"></div>
+			</div><br>
 			<div class="ScrollableContainer" id="OutputTable"></div><br>
 			<span style="font-family: monospace">Number of results: <span id="ResultCount">0</span></span><br>
 			<div><button onclick="CopyList()">Copy list</button><span></span></div>
@@ -592,8 +592,8 @@ https://yournamehere.tumblr.com
 							let NumberOfURLsProcessed = Index1+1
 							document.getElementById("URLProgress").hidden = false
 							document.getElementById("URL_Progress_Text").textContent = DisplayIntOutOfIntAsPercentageText({Quantity: NumberOfURLsProcessed, MaxQuantity: InputLength, NumberOfDigitsAfterDec: 0})
-							document.getElementById("URL_Progress_Bar").style.backgroundColor = CSSLinearGradientProgressBar({Quantity: NumberOfURLsProcessed, MaxQuantity: InputLength, ColorFull: "#C0C0C0", ColorEmpty: "#505050"})
-							//Disable stuff that would require re-running mainprocess to avoid 2 executions at the same time
+							document.getElementById("URL_Progress_Bar").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: NumberOfURLsProcessed, MaxQuantity: InputLength, ColorFull: "#00C000", ColorEmpty: "#505050"})
+							//Disable stuff that would require re-running mainprocess to avoid 2 executions at the same time by the user
 								document.getElementById("InputURLs").disabled = true
 								document.getElementById("Setting_https").disabled = true
 							
@@ -602,9 +602,14 @@ https://yournamehere.tumblr.com
 						}
 						
 				}
+				document.getElementById("URL_Progress_Text").textContent = DisplayIntOutOfIntAsPercentageText({Quantity: 1, MaxQuantity: 1, NumberOfDigitsAfterDec: 0})
+				document.getElementById("URL_Progress_Bar").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: 1, MaxQuantity: 1, ColorFull: "#00C000", ColorEmpty: "#505050"})
 			//If user abort
 				if (ExcessivePaginationStatus == "Aborted") {
 					ClearSaveData()
+					document.getElementById("InputURLs").disabled = false
+					document.getElementById("Setting_https").disabled = false
+					document.getElementById("URLProgress").hidden = true
 				}
 			//Identify to add a keyname for each url outputted
 				let URLIdentifiersLength = URLIdentifiers.length
