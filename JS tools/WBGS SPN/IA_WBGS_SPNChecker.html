@@ -879,7 +879,11 @@ Misc:
 							OutputString = LeadingZeroes + OutputString
 						}
 					let DecimalPart = OutputString.substring(OutputString.length - NumberOfDigitsAfterDec)
-			return WholeNumberPart + "." + DecimalPart + "%"
+					let DecimalPoint = ""
+					if (NumberOfDigitsAfterDec_BigInt > 0n) {
+						DecimalPoint = "."
+					}
+			return WholeNumberPart + DecimalPoint + DecimalPart + "%"
 		}
 	}
 	function CSSLinearGradientProgressBar({Quantity = 0, MaxQuantity = 100, Direction = "to right", ColorFull = "#C0C0C0", ColorEmpty = "#000000"}) {

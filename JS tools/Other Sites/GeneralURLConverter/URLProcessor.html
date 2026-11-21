@@ -47,6 +47,10 @@
 
 Paste your URLs here:<br>
 <textarea id="InputURLs" cols="60" rows="10" oninput="InputURLsChanged = true; ExcessivePaginationStatus = ''; ProcessURLs();"></textarea><br>
+<div id="URLProgress" hidden>
+	Progress: <span id="URL_Progress_Text">0%</span>
+	<div id="URL_Progress_Bar" style="width: 500px; height: 10px; background-color: #505050; border: 1px solid white; border-radius: 5px;"></div>
+</div>
 <hr>
 <table>
 	<tr>
@@ -442,7 +446,13 @@ https://yournamehere.tumblr.com
 		}
 	
 	}
-	function ProcessURLs() {
+	function YieldToMain() {
+		if (globalThis.scheduler?.yield) {
+			return scheduler.yield()
+		}
+		return new Promise((resolve) => setTimeout(resolve, 0))
+	}
+	async function ProcessURLs() {
 		let InputURLText = []
 		if (InputURLsChanged) {
 			//Main process
@@ -475,6 +485,7 @@ https://yournamehere.tumblr.com
 					});
 			//Test and convert URLs
 				let InputLength = InputURLText.length
+				let PreviousYeildTime = performance.now()
 				for (let Index1 = 0; Index1 < InputLength; Index1++) {
 					let Str_EnteredURL1 = InputURLText[Index1]
 					let Obj_EnteredURL1 = new URL(Str_EnteredURL1)
@@ -576,6 +587,20 @@ https://yournamehere.tumblr.com
 							})
 							AddToOutput(OutputLink)
 						}
+					//Display progress bar
+						if (performance.now() - PreviousYeildTime > 50) {
+							let NumberOfURLsProcessed = Index1+1
+							document.getElementById("URLProgress").hidden = false
+							document.getElementById("URL_Progress_Text").textContent = DisplayIntOutOfIntAsPercentageText({Quantity: NumberOfURLsProcessed, MaxQuantity: InputLength, NumberOfDigitsAfterDec: 0})
+							document.getElementById("URL_Progress_Bar").style.backgroundColor = CSSLinearGradientProgressBar({Quantity: NumberOfURLsProcessed, MaxQuantity: InputLength, ColorFull: "#C0C0C0", ColorEmpty: "#505050"})
+							//Disable stuff that would require re-running mainprocess to avoid 2 executions at the same time
+								document.getElementById("InputURLs").disabled = true
+								document.getElementById("Setting_https").disabled = true
+							
+							await YieldToMain() //Pause execution to allow browser to paint HTML
+							PreviousYeildTime = performance.now()
+						}
+						
 				}
 			//If user abort
 				if (ExcessivePaginationStatus == "Aborted") {
@@ -729,6 +754,9 @@ https://yournamehere.tumblr.com
 				
 				Saved_ProcessedData.OutputText = OutputString
 				OutputDivSpot.appendChild(Ele_OutputTable)
+			//Process done
+				document.getElementById("InputURLs").disabled = false
+				document.getElementById("Setting_https").disabled = false
 	}
 	function CheckIfURLMatchConverter(Obj_Converter, Obj_URL) {
 		let Pattern = new URLPattern(Obj_Converter.PatternToTest)
@@ -838,5 +866,135 @@ https://yournamehere.tumblr.com
 				ChkBox.checked = !ChkBox.checked
 			}
 		});
+	}
+	function DisplayIntOutOfIntAsPercentageText({Quantity = 0, MaxQuantity = 100, NumberOfDigitsAfterDec = 2, Clamped = true}) {
+		//Quantity = Amount in relation of MaxQuantity
+		//MaxQuantity = Total
+		//Clamped = (boolean): false = allow greater than 100%, true = only 0%-100% will display.
+		//This function calculates a percentage of a value (will be bigint), and returns a
+		//string representing a percentage using fixed-point arithmetic (https://en.wikipedia.org/wiki/Fixed-point_arithmetic ).
+		//Unlike a typical Quantity*100/MaxQuantity (or Quantity / MaxQuantity * 100) in double-precision, which rounds based on binary.
+		//This also reports if rounding to 0 or 100% have occurred.
+		//Note: Don't use negative or decimal numbers for any of the parameters!
+		
+		//Output: A string:
+		//"--" if MaxQuantity is 0 (division by zero in bigint is not handled unlike double-precision floating point)
+		//"<number>%" a percentage. Rounds half-up.
+		//"Greater than <1*(10**(2+NumberOfDigitsAfterDec_BigInt))-1>" if results between 99.99..% and 100% (avoids rounding up towards 100%).
+		//"Less than <1/(10**NumberOfDigitsAfterDec_BigInt)>" is same as above but avoids rounding towards 0%.
+		
+		//100.0 is 1000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 1
+		//100.00 is 10000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 2
+		//100.000 is 100000 in fixed point notation when NumberOfDigitsAfterDec_BigInt = 3
+		Quantity = BigInt(Quantity)
+		MaxQuantity = BigInt(MaxQuantity)
+		NumberOfDigitsAfterDec_BigInt = BigInt(NumberOfDigitsAfterDec)
+		if (MaxQuantity == 0n) {
+			return "--"
+		} else {
+			let Percentage = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) / MaxQuantity
+			let Modulo = Quantity * (100n * 10n ** (NumberOfDigitsAfterDec_BigInt)) % MaxQuantity
+			//Check if remainder is greater than or equal to half of MaxQuantity, if so, increment
+			//Percentage by 1 unit.
+			
+			//Get halfway point, note: this must be rounded half up as well so that if Modulo is 0.5 greater in the case MaxQuantity is an odd number,
+			//would correctly round upwards. Example: 3/2 is 1.5 (default round to 1), since we are dealing with integers, Remainder being 2 or more should be
+			//consider a round up for percentage
+				let HalfwayPointOfMaxQuantity = MaxQuantity / 2n
+				if ((MaxQuantity % 2n) != 0n) {
+					HalfwayPointOfMaxQuantity++
+				}
+			//Round half-up
+				if (Modulo >= HalfwayPointOfMaxQuantity) { //round upwards
+					Percentage++
+					if (Clamped) {Percentage = BigintClamp(Percentage, 0n, 100n * 10n ** (NumberOfDigitsAfterDec_BigInt))}
+					//We rounded the number up (actually increased the value), but it can potentially be at 100%, lets check it and if it did, override it.
+					if (Percentage == 100n*10n**NumberOfDigitsAfterDec_BigInt) {
+						//Rounded to 100% detected
+						//Note to self:
+						//Should say 99% if NumberOfDigitsAfterDec_BigInt = 0
+						//Should say 99.9% if NumberOfDigitsAfterDec_BigInt = 1
+						//99.99 if NumberOfDigitsAfterDec_BigInt = 2
+						//and so on.
+						//So basically the number of 9s after the decimal
+						//is NumberOfDigitsAfterDec_BigInt.
+							let DecimalPortion = ""
+							if (NumberOfDigitsAfterDec_BigInt != 0n) {
+								DecimalPortion += "."
+								for (let NineCount = 0; NineCount < NumberOfDigitsAfterDec; NineCount++) {
+									DecimalPortion += "9"
+								}
+							}
+						return "Greater than 99" + DecimalPortion + "%"
+					}
+				} else {
+					//Rounded downwards (default)
+					
+					if ((Modulo != 0n)&&(Percentage == 0n)) {
+						//Rounded to 0% detected
+						//Note to self:
+						//Should say 1% if NumberOfDigitsAfterDec_BigInt = 0
+						//Should say 0.1% if NumberOfDigitsAfterDec_BigInt = 1
+						//0.01% if NumberOfDigitsAfterDec_BigInt = 2
+						//and so on.
+						//Basically, if NumberOfDigitsAfterDec_BigInt = 2, the number of zeros
+						//between the decimal point and "1" is NumberOfDigitsAfterDec_BigInt - 1
+							let DecimalPortion = ""
+							if (NumberOfDigitsAfterDec_BigInt != 0n) {
+								DecimalPortion += "."
+								for (let ZeroCount = 0; ZeroCount < NumberOfDigitsAfterDec - 1; ZeroCount++) {
+									DecimalPortion += "0"
+								}
+								return "Less than 0" + DecimalPortion + "1%"
+							} else {
+								return "Less than 1%"
+							}
+					}
+				}
+				//Split the number separated by decimal point.
+					if (Clamped) {Percentage = BigintClamp(Percentage, 0n, 100n * 10n ** (NumberOfDigitsAfterDec_BigInt))}
+					let OutputString = Percentage.toString(10)
+					let WholeNumberPart = OutputString.substring(0, OutputString.length - NumberOfDigitsAfterDec)
+					if (WholeNumberPart == "") {
+						WholeNumberPart = "0"
+					}
+					//This make sure that leading zeros (when less than 1%) exists, should the value in fixed point have fewer digits
+					//so that it can display things like 0.01 (stored internally in fixed point as 1) instead of 0.1 when NumberOfDigitsAfterDec is set to 2.
+					//It is due to the fact that toString(10) removes all leading zeros.
+						if (OutputString.length < NumberOfDigitsAfterDec) {
+							let NumberOfLeadingZeroesNeeded = NumberOfDigitsAfterDec - OutputString.length //example: 34 (length = 2) which is supposed to be 0.00034% when NumberOfDigitsAfterDec = 5, so 5-2 = 3, so 3 0s are needed.
+							let LeadingZeroes = ""
+							for (let Count = 0; Count < NumberOfLeadingZeroesNeeded; Count++) {
+								LeadingZeroes += "0"
+							}
+							OutputString = LeadingZeroes + OutputString
+						}
+					let DecimalPart = OutputString.substring(OutputString.length - NumberOfDigitsAfterDec)
+					let DecimalPoint = ""
+					if (NumberOfDigitsAfterDec_BigInt > 0n) {
+						DecimalPoint = "."
+					}
+			return WholeNumberPart + DecimalPoint + DecimalPart + "%"
+		}
+	}
+	function BigintClamp(num, min, max) {
+		//Restrict a number within a specified range, bigInt edition (since NaN cannot be represented in bigint).
+			return num <= min ? min : num >= max ? max : num;
+	}
+	function clamp(num, min, max) {
+		//Restrict a number within a specified range.
+			if (isNaN(num) == true) {
+				num = 0
+			}
+			return num <= min ? min : num >= max ? max : num;
+	}
+	function CSSLinearGradientProgressBar({Quantity = 0, MaxQuantity = 100, Direction = "to right", ColorFull = "#C0C0C0", ColorEmpty = "#000000"}) {
+		//Returns a percentage displayed as a gradient representing a bar graph as CSS. Preferably as a background image.
+		let Percentage = 0
+		if (MaxQuantity != 0) {
+			Percentage = Quantity * 100/MaxQuantity //Multiply first so that it only rounds at the last step, minimizing rounding errors.
+		}
+		Percentage = clamp(Percentage, 0, 100)
+		return "linear-gradient("+Direction+", "+ColorFull+" "+Percentage.toFixed(17)+"%, "+ColorEmpty+" "+Percentage.toFixed(17)+"% 100%)"
 	}
 </script>
