@@ -107,8 +107,10 @@ Paste your URLs here:<br>
 </table>
 
 <script>
-	//Config for testing
+	//Config for testing/debug
 		const TestSampleURLs = false
+		const ProgressBarDisplayUpdateDelayMS = 17
+		const ProgressPercentageDecimalDigits = 2
 	//Default values and important variables, don't touch unless you know what you're doing.
 		const Saved_ProcessedData = {
 			URLList: [],
@@ -588,11 +590,9 @@ https://yournamehere.tumblr.com
 							AddToOutput(OutputLink)
 						}
 					//Display progress bar
-						if (performance.now() - PreviousYeildTime > 50) {
+						if (performance.now() - PreviousYeildTime > ProgressBarDisplayUpdateDelayMS) {
 							let NumberOfURLsProcessed = Index1+1
-							document.getElementById("URLProgress").hidden = false
-							document.getElementById("URL_Progress_Text").textContent = DisplayIntOutOfIntAsPercentageText({Quantity: NumberOfURLsProcessed, MaxQuantity: InputLength, NumberOfDigitsAfterDec: 0})
-							document.getElementById("URL_Progress_Bar").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: NumberOfURLsProcessed, MaxQuantity: InputLength, ColorFull: "#00C000", ColorEmpty: "#505050"})
+							DisplayProgress(Index1+1, InputLength)
 							//Disable stuff that would require re-running mainprocess to avoid 2 executions at the same time by the user
 								document.getElementById("InputURLs").disabled = true
 								document.getElementById("Setting_https").disabled = true
@@ -602,9 +602,10 @@ https://yournamehere.tumblr.com
 						}
 						
 				}
-				document.getElementById("URLProgress").hidden = false
-				document.getElementById("URL_Progress_Text").textContent = DisplayIntOutOfIntAsPercentageText({Quantity: 1, MaxQuantity: 1, NumberOfDigitsAfterDec: 0})
-				document.getElementById("URL_Progress_Bar").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: 1, MaxQuantity: 1, ColorFull: "#00C000", ColorEmpty: "#505050"})
+				if (InputLength != 0) {
+					//Display 100% progress (if there is at least 1 URL)
+						DisplayProgress(InputLength, InputLength)
+				}
 			//If user abort
 				if (ExcessivePaginationStatus == "Aborted") {
 					ClearSaveData()
@@ -763,6 +764,12 @@ https://yournamehere.tumblr.com
 			//Process done
 				document.getElementById("InputURLs").disabled = false
 				document.getElementById("Setting_https").disabled = false
+	}
+	function DisplayProgress(ProgressCurrent, ProgressTotal) {
+		document.getElementById("URLProgress").hidden = false
+		let Remaining = ProgressTotal - ProgressCurrent
+		document.getElementById("URL_Progress_Text").textContent = DisplayIntOutOfIntAsPercentageText({Quantity: ProgressCurrent, MaxQuantity: ProgressTotal, NumberOfDigitsAfterDec: ProgressPercentageDecimalDigits}) + " " + ProgressCurrent.toString(10) + "/" + ProgressTotal + " (remaining: " + Remaining + ")"
+		document.getElementById("URL_Progress_Bar").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: ProgressCurrent, MaxQuantity: ProgressTotal, ColorFull: "#00C000", ColorEmpty: "#505050"})
 	}
 	function CheckIfURLMatchConverter(Obj_Converter, Obj_URL) {
 		let Pattern = new URLPattern(Obj_Converter.PatternToTest)
