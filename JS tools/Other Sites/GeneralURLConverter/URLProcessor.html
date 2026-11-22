@@ -121,6 +121,7 @@ Paste your URLs here. NOTE: Make sure you have a complete list as you paste, esp
 				Misc:
 				<div class="TabbedItems">
 					<div><label><input type="checkbox" checked onchange="InputURLsChanged = true; ProcessURLs();" id="Setting_https">Force <kbd>https</kbd></label></div>
+					<div><label><input type="checkbox" checked onchange="InputURLsChanged = true; ProcessURLs();" id="Setting_NoTrailingSlash">Remove trailing slash</label></div>
 				</div>
 			</div>
 		</td>
@@ -492,6 +493,9 @@ https://yournamehere.tumblr.com
 							URLItem = "h" + URLItem
 						}
 						URLItem = URLItem.replace(/\.$/, "") //Remove the "." at the end of the URL
+						if (document.getElementById("Setting_NoTrailingSlash").checked) {
+							URLItem = URLItem.replace(/\/$/, "") //Remove trailing slash
+						}
 						return URLItem
 					})
 				//Because post-conversion may result in dupes
