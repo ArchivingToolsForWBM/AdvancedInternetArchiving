@@ -72,12 +72,12 @@
 	</tr>
 	<tr>
 		<td colspan="2">
-			<kbd>Number of URLs in a batch:</kbd> <input type="number" id="Input_BatchSize" onchange="CorrectBatchSize();" value="5" min="1">
+			<kbd>Number of URLs in a batch:</kbd> <input type="number" id="Input_BatchSize" onchange="CorrectBatchSize();" value="1" min="1">
 			<button onclick="OpenBatch();" id="Btn_OpenBatch">Open Batch</button><br><br>
 			<div>
 				<h3>Open batch of URLs by interval:</h3>
-				Delay (Seconds): <input type="range" min="1000" max="20000" step="100" value="2000" style="width: 250px" oninput="AdjustOpenBatchInterval();" id="InputRange_OpenBatchInterval"> <span id="BatchInterval"></span> Second(s)<br>
-				Auto-stop opening batches after <input type="number" min="0" value="0" id="AutoStopOpeningBatchCountdown" onchange="CorrectAutoStopBatchCountDown();"> batches<br>
+				Delay (Seconds): <input type="range" min="1000" max="20000" step="100" value="5000" style="width: 250px" oninput="AdjustOpenBatchInterval();" id="InputRange_OpenBatchInterval"> <span id="BatchInterval"></span> Second(s)<br>
+				Auto-stop opening batches after <input type="number" min="0" value="60" id="AutoStopOpeningBatchCountdown" onchange="CorrectAutoStopBatchCountDown();"> batches<br>
 				<button id="Btn_StartStopOpenBatchInterval" onclick="StartStopOpenBatchInterval();" style="width: 180px; height: 32px;">Open batch in an interval</button><br>
 				<kbd>Status: <span id="IntervalStatus"></span></kbd>
 			</div>
@@ -100,6 +100,7 @@
 	StartStopOpenBatchIntervalUpdateUI()
 	let AutoStopOpeningBatchCountdownValue = 0
 	Process()
+	CorrectAutoStopBatchCountDown()
 	
 	function Process() {
 		//Clear data
@@ -146,7 +147,7 @@
 		}
 	}
 	function CorrectAutoStopBatchCountDown() {
-		let Element = event.target
+		let Element = document.getElementById("AutoStopOpeningBatchCountdown")
 		let Value = parseInt(Element.value)
 		if (isNaN(Value)) {
 			Value = 0
