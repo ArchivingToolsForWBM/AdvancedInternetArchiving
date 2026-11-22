@@ -40,6 +40,17 @@
 			div.OutputPanels {
 				padding: 10px;
 			}
+			li {
+				padding-top: 0.5rem;
+				padding-bottom: 0.5rem;
+			}
+			details {
+				background-color: #303030;
+				border: 1px solid white;
+			}
+			summary {
+				background-color: #606060
+			}
 		</style>
 	</head>
 <body style="max-width: 1000px; margin: auto; padding: 15px">
@@ -84,6 +95,14 @@ Paste your URLs here. NOTE: Make sure you have a complete list as you paste, esp
 							<li>
 								SmartSort: Does two things: it takes a given URL, makes a copy of that and modifies it: reverses the order of each substring between the dot (&ldquo;.&rdquo;), save for the TLD,
 								and for pagination, leading zeroes are prepended. The sorter will sort based on that URL while keeping the original.
+							</li>
+							<li>
+								Generate paginated URLs: When checked and URLs entered, it will generate more URLs between known page numbers. For example, a URL <kbd>https://example.com/pagination/user1/posts?page=1</kbd> and
+								<kbd>https://example.com/pagination/user1/posts?page=9</kbd> is entered. This script will generate URLs of all integers from 1 to 9.<br><br>
+								
+								Warning: Computationally expensive and runs very slow if there are large number of them in between, or that there are lots of other URLs with such a system.<br><br>
+								
+								Note that if this is unchecked, the SmartSort variation will not have leading zeroes on its page number, resulting in them NOT being sorted in page numbers properly.
 							</li>
 						</ul>
 					</details>
