@@ -45,7 +45,7 @@
 <body style="max-width: 1000px; margin: auto; padding: 15px">
 <h1 style="text-align: center;">General URL converter</h1>
 
-Paste your URLs here:<br>
+Paste your URLs here. NOTE: Make sure you have a complete list as you paste, espically with long URL lists.<br>
 <textarea id="InputURLs" cols="60" rows="10" oninput="InputURLsChanged = true; ExcessivePaginationStatus = ''; ProcessURLs();"></textarea><br>
 <hr>
 <table>
@@ -61,9 +61,9 @@ Paste your URLs here:<br>
 			</div><br>
 			<div class="ScrollableContainer" id="OutputTable"></div><br>
 			<span style="font-family: monospace">Number of results: <span id="ResultCount">0</span></span><br>
-			<div><button onclick="CopyList()">Copy list</button><span></span></div>
+			<div><button onclick="CopyList()" id="Btn_CopyList">Copy list</button><span></span></div>
 		</td>
-		<td style="text-align: left;">
+		<td style="text-align: left;" id="OutputSettings">
 			<div>
 				<div class="OutputPanels">
 					<div>
@@ -78,13 +78,15 @@ Paste your URLs here:<br>
 						<option data-sortby="Type">Type</option>
 						<option data-sortby="KeyName">Keyname</option>
 					</select> <label><input type="checkbox" id="ReverseSort" onchange="ProcessURLs()">Reverse</label><br><br>
-					Note:
-					<ul>
-						<li>
-							SmartSort: Does two things: it takes a given URL, makes a copy of that and modifies it: reverses the order of each substring between the dot (&ldquo;.&rdquo;), save for the TLD,
-							and for pagination, leading zeroes are prepended.
-						</li>
-					</ul>
+					<details>
+						<summary>Info</summary>
+						<ul>
+							<li>
+								SmartSort: Does two things: it takes a given URL, makes a copy of that and modifies it: reverses the order of each substring between the dot (&ldquo;.&rdquo;), save for the TLD,
+								and for pagination, leading zeroes are prepended. The sorter will sort based on that URL while keeping the original.
+							</li>
+						</ul>
+					</details>
 				</div>
 				<div class="OutputPanels">
 					<div>
@@ -594,8 +596,7 @@ https://yournamehere.tumblr.com
 							let NumberOfURLsProcessed = Index1+1
 							DisplayProgress(Index1+1, InputLength)
 							//Disable stuff that would require re-running mainprocess to avoid 2 executions at the same time by the user
-								document.getElementById("InputURLs").disabled = true
-								document.getElementById("Setting_https").disabled = true
+								DisableUIUseDuringProcess(true)
 							
 							await YieldToMain() //Pause execution to allow browser to paint HTML
 							PreviousYeildTime = performance.now()
@@ -605,13 +606,13 @@ https://yournamehere.tumblr.com
 				if (InputLength != 0) {
 					//Display 100% progress (if there is at least 1 URL)
 						DisplayProgress(InputLength, InputLength)
+				} else {
+					document.getElementById("URLProgress").hidden = true
 				}
 			//If user abort
 				if (ExcessivePaginationStatus == "Aborted") {
 					ClearSaveData()
-					document.getElementById("InputURLs").disabled = false
-					document.getElementById("Setting_https").disabled = false
-					document.getElementById("URLProgress").hidden = true
+					DisableUIUseDuringProcess(false)
 				}
 			//Identify to add a keyname for each url outputted
 				let URLIdentifiersLength = URLIdentifiers.length
@@ -762,8 +763,7 @@ https://yournamehere.tumblr.com
 				Saved_ProcessedData.OutputText = OutputString
 				OutputDivSpot.appendChild(Ele_OutputTable)
 			//Process done
-				document.getElementById("InputURLs").disabled = false
-				document.getElementById("Setting_https").disabled = false
+				DisableUIUseDuringProcess(false)
 	}
 	function DisplayProgress(ProgressCurrent, ProgressTotal) {
 		document.getElementById("URLProgress").hidden = false
@@ -879,6 +879,13 @@ https://yournamehere.tumblr.com
 				ChkBox.checked = !ChkBox.checked
 			}
 		});
+	}
+	function DisableUIUseDuringProcess(bool_DisableFlag) {
+		let LetUIInteractable = [...document.querySelectorAll("input, select, button, textarea")]
+		LetUIInteractable.forEach(Ele => Ele.disabled = bool_DisableFlag)
+		
+		document.getElementById("Btn_CopyList").disabled = bool_DisableFlag
+		document.getElementById("InputURLs").disabled = bool_DisableFlag
 	}
 	function DisplayIntOutOfIntAsPercentageText({Quantity = 0, MaxQuantity = 100, NumberOfDigitsAfterDec = 2, Clamped = true}) {
 		//Quantity = Amount in relation of MaxQuantity
