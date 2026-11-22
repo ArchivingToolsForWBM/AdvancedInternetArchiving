@@ -323,6 +323,13 @@ Paste your URLs here. NOTE: Make sure you have a complete list as you paste, esp
 					
 					let Str_URLFullRes = Obj_URL.href
 					return [InputURL, Str_URLFullRes]
+						//^NOTE: In the past, before around 2016, the image URL allowed
+						// user-made filenames at the end of the path part. This means
+						// it is theoretically possible that a full-resolution image
+						// could naturally have a "s" at the end before the extension
+						// (full-res: "examples.png" thumb: "exampless.png"), thus to
+						// guarantee at least the full-res is outputted, it would output
+						// both the original and the one with the last "s" removed.
 				}
 			},
 			{
