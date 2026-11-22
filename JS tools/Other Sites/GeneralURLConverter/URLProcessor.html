@@ -305,6 +305,26 @@ Paste your URLs here. NOTE: Make sure you have a complete list as you paste, esp
 					return NotAFC2BlogUser(InputURL)
 				}
 			},
+			//http://blog-imgs-12.fc2.com/a/b/c/username/<Filename>.png
+			//http://blog-imgs-12.fc2.com/a/b/c/username/<Filename>s.png
+			//Note the "s" between <Filename> and the "." denotes a downsized version of an image
+			{
+				PatternToTest: "http{s}?://blog-imgs-(\\d+).fc2.com/*/*/*/*/*",
+				Type: "Normal",
+				CreateVarients(InputURL) {
+					let Obj_URL = new URL(InputURL)
+					Obj_URL.search = "" //just in case
+					let Filename = Obj_URL.pathname.split("/").at(-1)
+					let [FileName_Name, FileName_Extension] = Filename.split(".")
+					FileName_Name = FileName_Name.replace(/s$/, "")
+					
+					Obj_URL.pathname = Obj_URL.pathname.replace(/[a-zA-Z\d\-\.]+$/, "")
+					Obj_URL.pathname += FileName_Name + "." + FileName_Extension
+					
+					let Str_URLFullRes = Obj_URL.href
+					return [InputURL, Str_URLFullRes]
+				}
+			},
 			{
 				PatternToTest: "http{s}?://*.jugem.jp/\\?page=:PageNumb(\\d+)*",
 				Type: "Pagination",
@@ -496,6 +516,7 @@ https://yournamehere.tumblr.com
 						if (document.getElementById("Setting_NoTrailingSlash").checked) {
 							URLItem = URLItem.replace(/\/$/, "") //Remove trailing slash
 						}
+						URLItem = URLItem.replace(/^https?:\/\/web\.archive\.org\/web\/[a-zA-Z\d_\-]+\//, "")
 						return URLItem
 					})
 				//Because post-conversion may result in dupes
