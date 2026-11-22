@@ -318,7 +318,7 @@ Paste your URLs here. NOTE: Make sure you have a complete list as you paste, esp
 					let [FileName_Name, FileName_Extension] = Filename.split(".")
 					FileName_Name = FileName_Name.replace(/s$/, "")
 					
-					Obj_URL.pathname = Obj_URL.pathname.replace(/[a-zA-Z\d\-\.]+$/, "")
+					Obj_URL.pathname = Obj_URL.pathname.replace(/[a-zA-Z\d\-\._]+$/, "")
 					Obj_URL.pathname += FileName_Name + "." + FileName_Extension
 					
 					let Str_URLFullRes = Obj_URL.href
