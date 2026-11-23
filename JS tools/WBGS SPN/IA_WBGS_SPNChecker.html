@@ -268,6 +268,7 @@ Misc:
 			<td style="text-align: center;" id="StatisticDate_Latest"></td>
 		</tr>
 	</table><br>
+	Current time (based on browser and system time): <kbd><span id="CurrentUTCTime"></span> UTC</kbd><span> <button onclick="setClipboard(GetCurrentUTCTime())">Copy</button><span></span></span><br><br>
 	<kbd><span id="OutputPlaintextItemCount">0</span> result(s)</kbd><br>
 	<textarea readonly id="Output_Plaintext" cols="100" rows="30" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br>
 	<div><button onclick="setClipboard(document.getElementById('Output_Plaintext').value)">Copy</button><span></span></div>
@@ -293,7 +294,6 @@ Misc:
 	let Date_Latest = "?"
 	//Settings
 		const Setting_PercentagePrecision = 2 //Number of digits after the decimal place, for percentages.
-	
 	//Don't touch anything below here
 		BigInt.prototype.toJSON = function() { return this.toString() }
 		//^This fixes an issue where you stringify an object that contains a bigint causes a typeerror ("Do not know how to serialize a BigInt"),
@@ -308,6 +308,15 @@ Misc:
 			document.getElementById("GsheetInput").addEventListener("keydown", this.keyHandler_Tab, false)
 		//Initialize statistics
 			ResetStatisticCounts()
+		//Display UTC time (note uses client's clock!)
+			ShowUTCClock()
+			let Interval_DisplayUTCClock = setInterval(ShowUTCClock, 1000)
+	function ShowUTCClock() {
+		document.getElementById("CurrentUTCTime").textContent = GetCurrentUTCTime()
+	}
+	function GetCurrentUTCTime() {
+		return Temporal.Now.instant().toString({smallestUnit: 'second'}).replace("T", " ").replace("Z", "")
+	}
 	function AutoUpdate() {
 		if (document.getElementById("AutoUpdate").checked) {
 			CheckURLs()
