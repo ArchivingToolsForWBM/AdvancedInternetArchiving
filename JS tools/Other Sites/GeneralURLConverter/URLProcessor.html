@@ -55,9 +55,20 @@
 	</head>
 <body style="max-width: 1000px; margin: auto; padding: 15px">
 <h1 style="text-align: center;">General URL converter</h1>
+<div>
+	This HTML file with javascript &ldquo;fuskers&rdquo; a given text to generate known URLs, mainly to
+	generate URLs of full-resolution images, page numbers, and other conversions.<br><br>
+	
+	To view the converters and labeling of the URL, open this HTML file via a text/code editor, and
+	scroll down to under <kbd>&lt;script&gt;</script>, and under &ldquo;<kbd>special conditions</kbd>&rdquo;
+	&ldquo;<kbd>URLConverters</kbd>&rdquo;, and &ldquo;<kbd>URLIdentifiers</kbd>&rdquo;,
+	read the comments and you can add your own custom converter.
+</div>
+<div>
+	Paste your URLs here. NOTE: Make sure you have a complete list as you paste, espically with long URL lists.<br>
+</div>
 
-Paste your URLs here. NOTE: Make sure you have a complete list as you paste, espically with long URL lists.<br>
-<textarea id="InputURLs" cols="60" rows="10" oninput="InputURLsChanged = true; ExcessivePaginationStatus = ''; ProcessURLs();"></textarea><br>
+<textarea id="InputURLs" cols="60" rows="10" oninput="InputURLsChanged = true; ProcessURLs();"></textarea><br>
 <hr>
 <table>
 	<tr>
@@ -79,7 +90,7 @@ Paste your URLs here. NOTE: Make sure you have a complete list as you paste, esp
 				<div class="OutputPanels">
 					<div>
 						<div class="TabbedItems">
-							<label><input type="checkbox" id="Setting_AllowPagination" checked onchange="InputURLsChanged = true; ExcessivePaginationStatus = ''; ProcessURLs()">Generate paginated URLs</label>
+							<label><input type="checkbox" id="Setting_AllowPagination" checked onchange="InputURLsChanged = true; ProcessURLs()">Generate paginated URLs</label>
 						</div>
 					</div>
 					Sort: <select id="SortSettings" onchange="ProcessURLs()">
@@ -118,6 +129,12 @@ Paste your URLs here. NOTE: Make sure you have a complete list as you paste, esp
 						<label style="font-family: monospace;"><input type="checkbox" checked id="BlankKeyNames" onchange="ProcessURLs();">No Keynames <span id="KeyNameLessCountDisplay"> (0)</span></label>
 					</div>
 				</div>
+				Filter by type:
+				<div class="TabbedItems">
+					<div><label><input type="checkbox" checked onchange="ProcessURLs();" id="Filter_Type_Normal" style="font-family: monospace;">Normal</label></div>
+					<div><label><input type="checkbox" checked onchange="ProcessURLs();" id="Filter_Type_Pagination" style="font-family: monospace;">Pagination (Hides them)</label></div>
+					<div><label><input type="checkbox" checked onchange="ProcessURLs();" id="Filter_Type_NoConverterMatched" style="font-family: monospace;">URLs not match any converter.</label></div>
+				</div>
 				Misc:
 				<div class="TabbedItems">
 					<div><label><input type="checkbox" checked onchange="InputURLsChanged = true; ProcessURLs();" id="Setting_https">Force <kbd>https</kbd></label></div>
@@ -141,7 +158,6 @@ Paste your URLs here. NOTE: Make sure you have a complete list as you paste, esp
 			KeyNameList: {},
 			KeyNameLessCount: 0n
 		};
-		let ExcessivePaginationStatus = ""
 		const ExcessivePaginationCountTrigger = 5000
 		let InputURLsChanged = false;
 		
@@ -189,18 +205,26 @@ Paste your URLs here. NOTE: Make sure you have a complete list as you paste, esp
 				}
 				return true
 			}
-	//This is a list of converters. Each URL entered runs though all converters to output variants of a given URL.
-	//Notes
+	//This is a list of converter objects. Each URL entered runs though all converters to output variants of a
+	//given URL. The following attributes/methods are REQUIRED unless specified "Optional".
+	//Notes:
 	// - "PatternToTest" value can either be a URL pattern object or a string using a pattern syntax (uses JS's
-	//   URLPattern object)
+	//   URLPattern object).
 	// - "Type" determines what kind of generation it is. "Normal" replaces certain parts of a URL with a known
-	//   valid string, and "Pagination" generates each URL based on known max page number.
-	// - Pagination notes:
-	// -- MinPageNum is the starting page number, to generate each URL from this number, to a known max number.
-	//    If unspecified, treats it as if it's 1.
-	// -- In a pattern, the capturing group to identify a page number is "<PageNumb>".
-	// - Method "CreateVarients" must return an array whose elements are the URL string.
-	// - Method "SpecialCondition" must return a boolean value: true to accept the match, or false that it failed
+	//   valid string, and "Pagination" generates URLs of every page number from the lowest to highest known page
+	//   number.
+	// -- Type: "Normal" notes:
+	// --- "CreateVarients(Str_URL)":
+	// ---- Is called with a single argument being a string representing a URL.
+	// ---- Must return an array whose elements are the URL string.
+	// -- Type: "Pagination" notes:
+	// --- "MinPageNum" (Optional) is the starting page number, to generate each URL from this number, to a known
+	//     max number based on the input. If unspecified, treats it as if it's 1. Note that some pages start at
+	//     "0" instead of 1.
+	// --- About "PatternToTest": Requires the capturing group to identify a page number, which is
+	//     ":PageNumb(\\d+)".
+	// - Method "SpecialCondition" (Optional): Can be used on either type "Normal" or "Pagination", when used, it
+	//   must return a boolean value: true to accept the match, or false that it failed.
 	// - If a URL matches at least one of these converters, and any of the converters match doesn't output the
 	//   original, unmodified URL, it will not output that URL.
 		const URLConverters = [
@@ -259,21 +283,6 @@ Paste your URLs here. NOTE: Make sure you have a complete list as you paste, esp
 					return ConvertOutputs
 				}
 			},
-			//https://Username.blog12.fc2.com/blog-entry-12.html 
-			//This creates a blog entry page that sometimes aren't linked from the main page.
-			{
-				PatternToTest: {hostname: "*.*.fc2.com"},
-				Type: "Normal",
-				CreateVarients(InputURL) {
-					let FC2BlogURL = new URL(InputURL)
-					FC2BlogURL.pathname = "blog-entry-1.html"
-					FC2BlogURL.search = ""
-					return [FC2BlogURL.href]
-				},
-				SpecialCondition(InputURL) {
-					return NotAFC2BlogUser(InputURL)
-				}
-			},
 			{
 				PatternToTest: {
 					hostname: "*.*.fc2.com",
@@ -307,9 +316,11 @@ Paste your URLs here. NOTE: Make sure you have a complete list as you paste, esp
 			},
 			//http://blog-imgs-12.fc2.com/a/b/c/username/<Filename>.png
 			//http://blog-imgs-12.fc2.com/a/b/c/username/<Filename>s.png
+			//http://blog-imgs-12-origin.fc2.com/a/b/c/username/<Filename>.png
+			//http://blog-imgs-12-origin.fc2.com/a/b/c/username/<Filename>s.png
 			//Note the "s" between <Filename> and the "." denotes a downsized version of an image
 			{
-				PatternToTest: "http{s}?://blog-imgs-(\\d+).fc2.com/*/*/*/*/*",
+				PatternToTest: "http{s}?://blog-imgs-(\\d+){-origin}?.fc2.com/*/*/*/*/*",
 				Type: "Normal",
 				CreateVarients(InputURL) {
 					let Obj_URL = new URL(InputURL)
@@ -340,12 +351,14 @@ Paste your URLs here. NOTE: Make sure you have a complete list as you paste, esp
 			}
 		]
 	//This identifies URLs for giving them keynames for filtering and sorting. If a matching URL is found,
-	//the loop terminates with its keyname being set.
+	//the loop terminates with its keyname being set. Again, much like URLConverters, all properties are
+	//required unless specified "Optional".
 	//Notes:
 	// - IdentifiedPattern value can either be a pattern object or a URL using the URL pattern syntax (uses JS
 	//   URLPattern constructor).
-	// - SpecialCondition(url_string) shall return a boolean for special conditions, such as a path that have
-	//   a username, but cannot be words of reserved. True means it passes, and false if it shouldn't.
+	// - SpecialCondition(url_string) (Optional) shall return a boolean for special conditions, such as a
+	//   path that have a username, but cannot be words of reserved. True means it passes, and false if it
+	//   shouldn't.
 	// - Only zero or the first one of these may match for each URL.
 		let URLIdentifiers = [
 			{
@@ -392,7 +405,7 @@ Paste your URLs here. NOTE: Make sure you have a complete list as you paste, esp
 				}
 			},
 			{
-				IdentifiedPattern: new URLPattern({hostname: "blog-imgs-(\\d+).fc2.com"}),
+				IdentifiedPattern: new URLPattern({hostname: "blog-imgs-(\\d+){-origin}?.fc2.com"}),
 				KeyName: "FC2_blog_Images",
 				SpecialCondition(InputURL) {
 					return NotAFC2BlogUser(InputURL)
@@ -407,6 +420,10 @@ Paste your URLs here. NOTE: Make sure you have a complete list as you paste, esp
 				SpecialCondition(InputURL) {
 					return NotAFC2BlogUser(InputURL)
 				}
+			},
+			{
+				IdentifiedPattern: new URLPattern({hostname: "*.web.fc2.com"}),
+				KeyName: "FC2_Web"
 			},
 			{
 				IdentifiedPattern: new URLPattern({hostname: "(^[a-zA-Z\\d+\\-]+)*.jugem.jp"}),
@@ -546,22 +563,19 @@ https://yournamehere.tumblr.com
 					let Obj_EnteredURL1 = new URL(Str_EnteredURL1)
 					let HaveMatchedAConverter = false
 					URLConverters.forEach(Converter => {
-						if (ExcessivePaginationStatus == "Aborted") {
-							return
-						}
 						//Here, we need to know if the URL is compatible any converter that matches.
 							let DidMatch = CheckIfURLMatchConverter(Converter, Obj_EnteredURL1)
 							if (!DidMatch) {
 								return
 							}
 						//If matches, process it
-							let GeneratedURLs = [];
+							let Generated_Str_URLs = [];
 							HaveMatchedAConverter = true
 							switch (Converter.Type) {
 								case "Normal":
 									//A simple replacement with a part of the URL
-										GeneratedURLs = Converter.CreateVarients(Obj_EnteredURL1.href)
-										GeneratedURLs.forEach(Link => {
+										Generated_Str_URLs = Converter.CreateVarients(Obj_EnteredURL1.href)
+										Generated_Str_URLs.forEach(Link => {
 											AddToOutput(new GenerateOutputURLs({URLLink: Link, URLLinkSmartSort: ReverseURLLabel(Link), Type: Converter.Type}))
 										})
 										break
@@ -594,16 +608,6 @@ https://yournamehere.tumblr.com
 											}
 										//Generate URLs of each page from MinPageNumber to MaxPageNumber
 											let NumberOfPagedURLs = MaxPageNumber-MinPageNumber+1
-											if (ExcessivePaginationStatus != "UserWantsToContinue") {
-												if (NumberOfPagedURLs > ExcessivePaginationCountTrigger) {
-													if (!confirm("A URL " + Str_EnteredURL1 + " have more than " + ExcessivePaginationCountTrigger.toString(10) +" page varations to generate (" + NumberOfPagedURLs.toString(10) + " URLs), do you wish to continue?\n\nWarning: Confirming this will allow all future URLs with that many pages in this run to be processed.")) {
-														ExcessivePaginationStatus = "Aborted"
-														return
-													} else {
-														ExcessivePaginationStatus = "UserWantsToContinue"
-													}
-												}
-											}
 											let MaxDigitsOfMaxNumber = MaxPageNumber.toString(10).length
 											for (let PageCount = MinPageNumber; PageCount < MaxPageNumber+1; PageCount++) {
 												AddToOutput(new GenerateOutputURLs({
@@ -614,17 +618,17 @@ https://yournamehere.tumblr.com
 											}
 											
 											break
-								} else {
-									//If user disallows generating pagination, insert the list as-is with the "Type" saying Pagination_Cancelled 
-										AddToOutput(new GenerateOutputURLs({
-											URLLink: Str_EnteredURL1,
-											URLLinkSmartSort: ReverseURLLabel(Str_EnteredURL1),
-											Type: "Pagination_Cancelled"
-										}))
-								}
+									} else {
+										//If user disallows generating pagination, insert the list as-is with the "Type" saying Pagination_Cancelled 
+											AddToOutput(new GenerateOutputURLs({
+												URLLink: Str_EnteredURL1,
+												URLLinkSmartSort: ReverseURLLabel(Str_EnteredURL1),
+												Type: "Pagination"
+											}))
+									}
 								default:
 								//If a user enters a converter with an unknown type that matched with a URL
-									GeneratedURLs.forEach(Link => {
+									Generated_Str_URLs.forEach(Link => {
 										AddToOutput(new GenerateOutputURLs({
 											URLLink: Link,
 											URLLinkSmartSort: ReverseURLLabel(Link),
@@ -633,12 +637,12 @@ https://yournamehere.tumblr.com
 									})
 							}
 					});
-					//If a URL not match with any converter, label it as "other"
+					//If a URL not match with any converter, label it as "NoConverterMatched"
 						if (!HaveMatchedAConverter) {
 							let OutputLink = new GenerateOutputURLs({
 								URLLink: Obj_EnteredURL1.href,
 								URLLinkSmartSort: ReverseURLLabel(Obj_EnteredURL1.href),
-								Type: "Other"
+								Type: "NoConverterMatched"
 							})
 							AddToOutput(OutputLink)
 						}
@@ -659,11 +663,6 @@ https://yournamehere.tumblr.com
 						DisplayProgress(InputLength, InputLength)
 				} else {
 					document.getElementById("URLProgress").hidden = true
-				}
-			//If user abort
-				if (ExcessivePaginationStatus == "Aborted") {
-					ClearSaveData()
-					DisableUIUseDuringProcess(false)
 				}
 			//Identify to add a keyname for each url outputted
 				let URLIdentifiersLength = URLIdentifiers.length
@@ -705,14 +704,17 @@ https://yournamehere.tumblr.com
 			let OutputDisplay = Saved_ProcessedData.URLList
 			//Filter
 				OutputDisplay = OutputDisplay.filter(Item => {
-				if (Item.KeyName != "") {
-					if (!document.getElementById("KeyNameFilterOption_" + Item.KeyName).checked) {
+					if (Item.KeyName != "") {
+						if (!document.getElementById("KeyNameFilterOption_" + Item.KeyName).checked) {
+							return false
+						}
+					}
+					if ((!document.getElementById("BlankKeyNames").checked) && Item.KeyName == "") {
 						return false
 					}
-				}
-				if ((!document.getElementById("BlankKeyNames").checked) && Item.KeyName == "") {
-					return false
-				}
+					if (!document.getElementById("Filter_Type_" + Item.Type).checked) {
+						return false
+					}
 					return true
 				})
 			//Sort
