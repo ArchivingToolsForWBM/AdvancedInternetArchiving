@@ -68,7 +68,7 @@
 	Paste your URLs here. NOTE: Make sure you have a complete list as you paste, espically with long URL lists.<br>
 </div>
 
-<textarea id="InputURLs" cols="60" rows="10" oninput="InputURLsChanged = true; ProcessURLs();"></textarea><br>
+<textarea id="InputURLs" cols="60" rows="10" onchange="InputURLsChanged = true; ProcessURLs();"></textarea><br>
 <hr>
 <table>
 	<tr>
@@ -88,57 +88,64 @@
 		<td style="text-align: left;" id="OutputSettings">
 			<div>
 				<div class="OutputPanels">
-					<div>
-						<div class="TabbedItems">
-							<label><input type="checkbox" id="Setting_AllowPagination" checked onchange="InputURLsChanged = true; ProcessURLs()">Generate paginated URLs</label>
+					<h1>Processing options</h1>
+					<div class="TabbedItems">
+						<div><label><input type="checkbox" id="Setting_AllowPagination" checked onchange="InputURLsChanged = true; ProcessURLs()">Generate paginated URLs</label></div>
+						<div><label><input type="checkbox" checked onchange="InputURLsChanged = true; ProcessURLs();" id="Setting_https">Force <kbd>https</kbd></label></div>
+						<div><label><input type="checkbox" checked onchange="InputURLsChanged = true; ProcessURLs();" id="Setting_NoTrailingSlash">Remove trailing slash</label></div>
+					</div>
+					<div class="TabbedItems" style="padding-top: 16px; padding-bottom: 16px;">
+						<details>
+							<summary>Info</summary>
+							<ul>
+								<li>
+									SmartSort: Does two things: it takes a given URL, makes a copy of that and modifies it: reverses the order of each substring between the dot (&ldquo;.&rdquo;), save for the TLD,
+									and for pagination, leading zeroes are prepended. The sorter will sort based on that URL while keeping the original.
+								</li>
+								<li>
+									Generate paginated URLs: When checked and URLs entered, it will generate more URLs between known page numbers. For example, a URL <kbd>https://example.com/pagination/user1/posts?page=1</kbd> and
+									<kbd>https://example.com/pagination/user1/posts?page=9</kbd> is entered. This script will generate URLs of all integers from 1 to 9.<br><br>
+									
+									Warning: Computationally expensive and runs very slow if there are large number of them in between, or that there are lots of other URLs with such a system.<br><br>
+									
+									Note that if this is unchecked, the SmartSort variation will not have leading zeroes on its page number, resulting in them NOT being sorted in page numbers properly.
+								</li>
+							</ul>
+						</details>
+					</div>
+					<h1>Output options</h1>
+					<div class="TabbedItems">
+						<div>
+							Sort: <select id="SortSettings" onchange="ProcessURLs()">
+								<option data-sortby="">Creation Order</option>
+								<option data-sortby="URL">Alphabetically</option>
+								<option data-sortby="URLSmartSort" selected>Alphabetically (SmartSort)*</option>
+								<option data-sortby="Type">Type</option>
+								<option data-sortby="KeyName">Keyname</option>
+							</select> <label><input type="checkbox" id="ReverseSort" onchange="ProcessURLs()">Reverse</label><br><br>
+						</div>
+						<div>
+							<div>
+								<div>
+									Filter by KeyName: <button onclick="ModifyCheckboxes(1); ProcessURLs()">Check all</button><button onclick="ModifyCheckboxes(0); ProcessURLs()">Uncheck all</button><button onclick="ModifyCheckboxes(2); ProcessURLs()">Invert</button><br>
+									<div class="ScrollableContainer" style="width: 400px;" id="KeyNameFilterList">
+									
+									</div>
+								</div>
+								<div>
+									<label style="font-family: monospace;"><input type="checkbox" checked id="BlankKeyNames" onchange="ProcessURLs();">No Keynames <span id="KeyNameLessCountDisplay"> (0)</span></label>
+								</div>
+								<div>
+									Filter by type:
+									<div class="TabbedItems">
+										<div><label><input type="checkbox" checked onchange="ProcessURLs();" id="Filter_Type_Normal" style="font-family: monospace;">Normal</label></div>
+										<div><label><input type="checkbox" checked onchange="ProcessURLs();" id="Filter_Type_Pagination" style="font-family: monospace;">Pagination (Hides them)</label></div>
+										<div><label><input type="checkbox" checked onchange="ProcessURLs();" id="Filter_Type_NoConverterMatched" style="font-family: monospace;">URLs not match any converter.</label></div>
+									</div>
+								</div>
+							</div>
 						</div>
 					</div>
-					Sort: <select id="SortSettings" onchange="ProcessURLs()">
-						<option data-sortby="">Creation Order</option>
-						<option data-sortby="URL">Alphabetically</option>
-						<option data-sortby="URLSmartSort" selected>Alphabetically (SmartSort)*</option>
-						<option data-sortby="Type">Type</option>
-						<option data-sortby="KeyName">Keyname</option>
-					</select> <label><input type="checkbox" id="ReverseSort" onchange="ProcessURLs()">Reverse</label><br><br>
-					<details>
-						<summary>Info</summary>
-						<ul>
-							<li>
-								SmartSort: Does two things: it takes a given URL, makes a copy of that and modifies it: reverses the order of each substring between the dot (&ldquo;.&rdquo;), save for the TLD,
-								and for pagination, leading zeroes are prepended. The sorter will sort based on that URL while keeping the original.
-							</li>
-							<li>
-								Generate paginated URLs: When checked and URLs entered, it will generate more URLs between known page numbers. For example, a URL <kbd>https://example.com/pagination/user1/posts?page=1</kbd> and
-								<kbd>https://example.com/pagination/user1/posts?page=9</kbd> is entered. This script will generate URLs of all integers from 1 to 9.<br><br>
-								
-								Warning: Computationally expensive and runs very slow if there are large number of them in between, or that there are lots of other URLs with such a system.<br><br>
-								
-								Note that if this is unchecked, the SmartSort variation will not have leading zeroes on its page number, resulting in them NOT being sorted in page numbers properly.
-							</li>
-						</ul>
-					</details>
-				</div>
-				<div class="OutputPanels">
-					<div>
-						Filter by KeyName: <button onclick="ModifyCheckboxes(1); ProcessURLs()">Check all</button><button onclick="ModifyCheckboxes(0); ProcessURLs()">Uncheck all</button><button onclick="ModifyCheckboxes(2); ProcessURLs()">Invert</button><br>
-						<div class="ScrollableContainer" style="width: 400px;" id="KeyNameFilterList">
-						
-						</div>
-					</div>
-					<div>
-						<label style="font-family: monospace;"><input type="checkbox" checked id="BlankKeyNames" onchange="ProcessURLs();">No Keynames <span id="KeyNameLessCountDisplay"> (0)</span></label>
-					</div>
-				</div>
-				Filter by type:
-				<div class="TabbedItems">
-					<div><label><input type="checkbox" checked onchange="ProcessURLs();" id="Filter_Type_Normal" style="font-family: monospace;">Normal</label></div>
-					<div><label><input type="checkbox" checked onchange="ProcessURLs();" id="Filter_Type_Pagination" style="font-family: monospace;">Pagination (Hides them)</label></div>
-					<div><label><input type="checkbox" checked onchange="ProcessURLs();" id="Filter_Type_NoConverterMatched" style="font-family: monospace;">URLs not match any converter.</label></div>
-				</div>
-				Misc:
-				<div class="TabbedItems">
-					<div><label><input type="checkbox" checked onchange="InputURLsChanged = true; ProcessURLs();" id="Setting_https">Force <kbd>https</kbd></label></div>
-					<div><label><input type="checkbox" checked onchange="InputURLsChanged = true; ProcessURLs();" id="Setting_NoTrailingSlash">Remove trailing slash</label></div>
 				</div>
 			</div>
 		</td>
@@ -348,6 +355,44 @@
 				Type: "Pagination",
 				MinPageNum: 1,
 				Regex_HostPathAndQueryBeforePageNumb: /[a-zA-Z\d\-\.]+\/\?page=/
+			},
+			//https://username.blog.shinobi.jp/Page/12/
+			//https://username.blog.shinobi.jp/Entry/12/
+			{
+				PatternToTest: "http{s}?://*.blog.shinobi.jp/((?:Entry|Page))/:PageNumb(\\d+){/}?",
+				Type: "Pagination",
+				MinPageNum: 1,
+				Regex_HostPathAndQueryBeforePageNumb: /[a-zA-Z\d\-\.]+\/(?:Entry|Page)\//
+			
+			},
+			//https://username.blog.shinobi.jp/catagoryname/?pageNo=12
+			{
+				PatternToTest: "http{s}?://*.blog.shinobi.jp/*/\\?pageNo=:PageNumb(\\d+)",
+				Type: "Pagination",
+				MinPageNum: 1,
+				Regex_HostPathAndQueryBeforePageNumb: /[a-zA-Z\d\-\.]+\/[a-zA-Z\d\-\.%]+\/\?pageNo=/
+			
+			},
+			//https://nblog.cnobi.jp/v1/blog/user/abc123/abc123
+			//https://nblog.cnobi.jp/v1/blog/user/abc123/abc123?w=150&h=30
+			{
+				PatternToTest: {
+					hostname: "nblog.cnobi.jp",
+					pathname: "/v*/blog/user/*/*"
+				},
+				Type: "Normal",
+				CreateVarients(InputURL) {
+					let Obj_URL = new URL(InputURL)
+					let OutputURLs = [];
+					Obj_URL.search = "";
+					OutputURLs.push(Obj_URL.href)
+					
+					Obj_URL = new URL(InputURL)
+					if (Obj_URL.search != "") {
+						OutputURLs.push(Obj_URL.href)
+					}
+					return OutputURLs
+				}
 			}
 		]
 	//This identifies URLs for giving them keynames for filtering and sorting. If a matching URL is found,
@@ -394,14 +439,18 @@
 					return IsGithubUser(url)
 				}
 			},
+			//https://username.blog123.fc2.com/admin/js/comment/dialog/palette.html?u=http%3A%2F%2Fusername.blog123.fc2.com%2Fblog-entry-12.html&lang=ja
 			{
 				IdentifiedPattern: new URLPattern({hostname: "*.blog(\\d*).fc2.com"}),
 				KeyName: "FC2_blog",
 				SpecialCondition(InputURL) {
 					let Obj_URL = new URL(InputURL)
+					let PathNameArr = Obj_URL.pathname.split("/")
+					
 					let IsAUser = NotAFC2BlogUser(InputURL)
-					let IsNotImagePage = Obj_URL.pathname.split("/")[1] != "img"
-					return IsAUser && IsNotImagePage
+					let IsNotImagePage = PathNameArr[1] != "img"
+					let isNotAdminPage = PathNameArr[1] != "admin"
+					return IsAUser && IsNotImagePage && isNotAdminPage
 				}
 			},
 			{
@@ -433,6 +482,15 @@
 				IdentifiedPattern: new URLPattern({hostname: "img-cdn.jg.jugem.jp"}),
 				KeyName: "JugemImages"
 			},
+			{
+				IdentifiedPattern: new URLPattern({hostname: "*.blog.shinobi.jp"}),
+				KeyName: "Shinobi_Blog"
+			},
+			//https://nblog.cnobi.jp/v1/blog/user/abc123/123
+			{
+				IdentifiedPattern: new URLPattern({hostname: "nblog.cnobi.jp"}),
+				KeyName: "Shinobi_Media"
+			}
 		]
 	//This automatically sets up the counter of how many URLs with a given keyname
 		SetupKeyNameCount();
