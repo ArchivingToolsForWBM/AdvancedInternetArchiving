@@ -255,7 +255,9 @@
 			},
 			{
 				//Repository: https://github.com/Username/RepositoryName
-				//Download link (before redirect): https://github.com/Username/RepositoryName/archive/refs/heads/main.zip
+				//Download link (before redirect):
+				// - https://github.com/Username/RepositoryName/archive/refs/heads/main.zip
+				// - https://github.com/Username/RepositoryName/archive/refs/heads/master.zip
 				PatternToTest: "http{s}?://github.com/:username/*",
 				SpecialCondition(InputURL) {
 					return IsGithubUser(InputURL)
@@ -282,8 +284,15 @@
 						let Github_Repository_Download = new URL(InputURL)
 						Github_Repository_Download.search = ""
 						URLPathArr_Repository_Download = Github_Repository_Download.pathname.split("/")
-						let URLPath_Repository_Download = URLPathArr_Repository_Download.slice(0, 3).join("/") + "/archive/refs/heads/main.zip"
-						Github_Repository_Download.pathname = URLPath_Repository_Download
+						
+						let URLPath_Repository_Download_Main = URLPathArr_Repository_Download.slice(0, 3).join("/") + "/archive/refs/heads/main.zip"
+						let URLPath_Repository_Download_Master = URLPathArr_Repository_Download.slice(0, 3).join("/") + "/archive/refs/heads/master.zip"
+						Github_Repository_Download.pathname = URLPath_Repository_Download_Main
+						ConvertOutputs.push(Github_Repository_Download.href)
+						
+						Github_Repository_Download = new URL(InputURL)
+						Github_Repository_Download.search = ""
+						Github_Repository_Download.pathname = URLPath_Repository_Download_Master
 						ConvertOutputs.push(Github_Repository_Download.href)
 					}
 					
