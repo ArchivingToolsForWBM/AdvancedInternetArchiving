@@ -119,6 +119,10 @@ https://CrawlerTrap.com			https://CrawlerTrap.com URL is a Crawler Trap.		</text
 Paste your google sheet result here:<br><br>
 <input type="checkbox" id="AutoUpdate" checked onchange="AutoUpdate()"><label for="AutoUpdate">Auto update</label><br>
 <textarea id="GsheetInput" cols="100" rows="30" oninput="SaveStatusesChanged(); AutoUpdate()" style="white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea><br><br>
+<div id="URLProgress" hidden>
+	<kbd>Progress: <span id="URL_Progress_Text">0%</span></kbd>
+	<div id="URL_Progress_Bar" style="width: 500px; height: 10px; background-color: #505050;"></div>
+</div><br>
 
 Preset settings:<br>
 <ul>
@@ -294,6 +298,7 @@ Misc:
 	let Date_Latest = "?"
 	//Settings
 		const Setting_PercentagePrecision = 2 //Number of digits after the decimal place, for percentages.
+		const Setting_ProgressBarUpdateFrequency = 17 //Number of milliseconds between each update on progress bar. Low values are strongly discouraged.
 	//Don't touch anything below here
 		BigInt.prototype.toJSON = function() { return this.toString() }
 		//^This fixes an issue where you stringify an object that contains a bigint causes a typeerror ("Do not know how to serialize a BigInt"),
@@ -370,6 +375,10 @@ Misc:
 			Latest: "?"
 		}
 	}
+	function DisableInputs(Bool_DisableFlag) {
+		let ListOfUIInputs = [...document.querySelectorAll("input, select, button, textarea")]
+		ListOfUIInputs.forEach(Ele => Ele.disabled = Bool_DisableFlag)
+	}
 	function SaveStatusesChanged() {
 		IsListOrModeChanged = true //If you edit the textarea, changed the "ignore fragment identifier", those are considered a change to the list.
 	}
@@ -388,13 +397,15 @@ Misc:
 		document.getElementById("Sort_Output_Reverse").disabled = document.getElementById("Sort_Output_None").selected
 		AutoUpdate()
 	}
-	function CheckURLs() {
-		
+	async function CheckURLs() {
 		let Output = ""
 		let InputList = []
 		let InvalidRowDetected = false
+		let PreviousYeildTime = performance.now()
 		
 		if (IsListOrModeChanged) { //if changed, reset the output.
+			document.getElementById("URLProgress").hidden = true
+			DisableInputs(true)
 			ResetStatisticCounts()
 			
 			//Note to self:
@@ -425,15 +436,27 @@ Misc:
 					//^Get gsheet row and its row number (0-based)
 				InputList = InputList.filter(ArrayElement => ArrayElement.SpreadSheetRowData != "\t\t\t\t\t") //Ignore completely blank default rows of cells.
 			//Main process. Returns an object with organized information
-				InputList = InputList.map((ArrayElement) => {
+				let OutputList = []
+				let InputListLength = InputList.length
+				for (let i = 0; i < InputListLength; i++) {
+					let ArrayElement = InputList[i]
+					//Display progress bar
+						if (performance.now() - PreviousYeildTime > Setting_ProgressBarUpdateFrequency) {
+							let NumberOfURLsProcessed = i+1
+							DisplayProgress(i+1, InputListLength)
+							
+							await YieldToMain() //Pause execution to allow browser to paint HTML
+							PreviousYeildTime = performance.now()
+						}
 					//If something is in an invalid format, terminate immediately with SaveStatus="InvalidRow"
 						if (!(/^[^\t]+?(\t[^\t]*?){5}$/).test(ArrayElement.SpreadSheetRowData)) {
 							InvalidRowDetected = true
-							return {
+							OutputList.push({
 								SaveStatus : "InvalidRow",
 								InvalidText : ArrayElement.SpreadSheetRowData,
 								SpreadSheetRowNumber : ArrayElement.SpreadSheetRowNumber, //The row numbers the URL were placed on the spreadsheet
-							}
+							})
+							continue
 						}
 					//Destructuring assignment FTW
 						let SpreadSheetRowData_Array = [Col_A_SentUrl, Col_B_YesNo, Col_C_HttpStatus, Col_D_SavedURLOrError, Col_E_OutlinksCount, Col_F_FirstArchive] = ArrayElement.SpreadSheetRowData.split(/\t/)
@@ -519,7 +542,7 @@ Misc:
 							OutLinksCountNumber = BigInt(Col_E_OutlinksCount.replaceAll(/[^\d+]/g, ""))
 						}
 					//Return the object (the naming with the column letters ommited so that this is also useful if in a 0.001% chance that the IA would change the output data format)
-						return {
+						OutputList.push({
 							SpreadSheetRowData_Array : SpreadSheetRowData_Array, //The array version of a google sheet row
 							SentURL : Col_A_SentUrl,
 							HTTPStatus : Col_C_HttpStatus,
@@ -529,8 +552,15 @@ Misc:
 							SpreadSheetRowNumber : ArrayElement.SpreadSheetRowNumber, //The row numbers the URL were placed on the spreadsheet
 							OutLinksCountNumber : OutLinksCountNumber, //Outlinks count, bigint for save count > 2^53 (just in case).
 							Timestamp : Timestamp
-						}
-				});
+						})
+				};
+			//Display 100% once done (needed else it gets near-complete and stops there)
+				if (InputListLength != 0) {
+					DisplayProgress(InputListLength, InputListLength)
+				}
+				
+			//Transfer.
+				InputList = OutputList
 			//Count the status type
 				if (!InvalidRowDetected) {
 					InputList.forEach(SaveResult => SaveStatusTypeList[SaveResult.SaveStatus].Count++)
@@ -556,10 +586,12 @@ Misc:
 				}
 			})
 			document.getElementById("Output_Plaintext_Error").value = ErrorText
+			DisableInputs(false)
 			return
 		}
 		//Filter
 			let FilteredListForDisplay = InputList.filter((ArrayElement) => {
+				DisableInputs(false)
 				return document.getElementById("Filter_" + ArrayElement.SaveStatus).checked
 			});
 		//Sort the filtered data. NOTE: array.reverse() is unstable, meaning the order of same keys will be reversed.
@@ -592,6 +624,7 @@ Misc:
 			}
 		//Output data
 			if (InputList.length == 0) {
+				DisableInputs(false)
 				ClearOutputs()
 				return
 			}
@@ -743,6 +776,19 @@ Misc:
 				} else {
 					OutputTable.appendChild(document.createElement("div")).appendChild(document.createTextNode("No results"))
 				}
+		DisableInputs(false)
+	}
+	function DisplayProgress(ProgressCurrent, ProgressTotal) {
+		document.getElementById("URLProgress").hidden = false
+		let Remaining = ProgressTotal - ProgressCurrent
+		document.getElementById("URL_Progress_Text").textContent = DisplayIntOutOfIntAsPercentageText({Quantity: ProgressCurrent, MaxQuantity: ProgressTotal, NumberOfDigitsAfterDec: Setting_PercentagePrecision}) + " " + ProgressCurrent.toString(10) + "/" + ProgressTotal + " (remaining: " + Remaining + ")"
+		document.getElementById("URL_Progress_Bar").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: ProgressCurrent, MaxQuantity: ProgressTotal, ColorFull: "#00C000", ColorEmpty: "#505050"})
+	}
+	function YieldToMain() {
+		if (globalThis.scheduler?.yield) {
+			return scheduler.yield()
+		}
+		return new Promise((resolve) => setTimeout(resolve, 0))
 	}
 	function Reset() {
 		document.getElementById("GsheetInput").value = ""
