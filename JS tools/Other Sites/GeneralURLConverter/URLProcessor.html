@@ -99,8 +99,8 @@
 							<summary>Info</summary>
 							<ul>
 								<li>
-									SmartSort: Does two things: it takes a given URL, makes a copy of that and modifies it: reverses the order of each substring between the dot (&ldquo;.&rdquo;), save for the TLD,
-									and for pagination, leading zeroes are prepended. The sorter will sort based on that URL while keeping the original.
+									SmartSort: Does two things: it takes a given URL, makes a copy of that and modifies it: reverses the order of the labels in the host name (items between the dot (&ldquo;.&rdquo;), save for the
+									TLD, and for pagination, leading zeroes are prepended. The sorter will sort based on that URL while keeping the original.
 								</li>
 								<li>
 									Generate paginated URLs: When checked and URLs entered, it will generate more URLs between known page numbers. For example, a URL <kbd>https://example.com/pagination/user1/posts?page=1</kbd> and
@@ -108,7 +108,7 @@
 									
 									Warning: Computationally expensive and runs very slow if there are large number of them in between, or that there are lots of other URLs with such a system.<br><br>
 									
-									Note that if this is unchecked, the SmartSort variation will not have leading zeroes on its page number, resulting in them NOT being sorted in page numbers properly.
+									Note that if this is unchecked, SmartSort would assume a fixed number of leading zeroes since it no longer searches for the maximum page number and determine the <kbd>padStart</kbd> target length.
 								</li>
 							</ul>
 						</details>
@@ -133,10 +133,10 @@
 									</div>
 								</div>
 								<div>
-									<label style="font-family: monospace;"><input type="checkbox" checked id="BlankKeyNames" onchange="ProcessURLs();">No Keynames <span id="KeyNameLessCountDisplay"> (0)</span></label>
+									<label style="font-family: monospace;"><input type="checkbox" checked id="BlankKeyNames" onchange="ProcessURLs();">No Keynames <span id="KeyNameLessCountDisplay"> (0)</span></label><br><br>
 								</div>
 								<div>
-									Filter by type:
+									Filter by type:<button onclick="ModifyCheckboxes(1); ProcessURLs()">Check all</button><button onclick="ModifyCheckboxes(0); ProcessURLs()">Uncheck all</button><button onclick="ModifyCheckboxes(2); ProcessURLs()">Invert</button>
 									<div class="TabbedItems">
 										<div><label><input type="checkbox" checked onchange="ProcessURLs();" id="Filter_Type_Normal" style="font-family: monospace;">Normal</label></div>
 										<div><label><input type="checkbox" checked onchange="ProcessURLs();" id="Filter_Type_Pagination" style="font-family: monospace;">Pagination (Hides them)</label></div>
@@ -154,9 +154,11 @@
 
 <script>
 	//Config for testing/debug
-		const TestSampleURLs = false
-		const ProgressBarDisplayUpdateDelayMS = 17
-		const ProgressPercentageDecimalDigits = 2
+		const Setting_TestSampleURLs = false
+		const Setting_ProgressBarUpdateFrequency = 17 //Number of milliseconds between each update on progress bar. Low values are strongly discouraged.
+		const Setting_ProgressPercentageDigitsAfterDecimal = 2 //Number of digits after decimal point of the progress percentage.
+	//Other
+		const Setting_PaginationOff_PadLength = 16 //The number of digits of a page number for SmartSort, when generating paginated URLs is disabled.
 	//Default values and important variables, don't touch unless you know what you're doing.
 		const Saved_ProcessedData = {
 			URLList: [],
@@ -165,53 +167,56 @@
 			KeyNameList: {},
 			KeyNameLessCount: 0n
 		};
-		const ExcessivePaginationCountTrigger = 5000
 		let InputURLsChanged = false;
 		
 		//Insert stuff here for special conditions
-			const Github_ReservedNames = new Set([
-				"about",
-				"apps",
-				"codespaces",
-				"collections",
-				"contact",
-				"customer-stories",
-				"enterprise",
-				"features",
-				"git-guides",
-				"images",
-				"login",
-				"mobile",
-				"organizations",
-				"orgs",
-				"premium-support",
-				"pricing",
-				"readme",
-				"search",
-				"security",
-				"signup",
-				"sitemap",
-				"solutions",
-				"sponsors",
-				"team",
-				"topics",
-				"trending",
-				"users"
-			]);
-			function IsGithubUser(url) {
-				let URLObj = new URL(url)
-				let UsernamePart = URLObj.pathname.split("/")[1]
-				if (Github_ReservedNames.has(UsernamePart)) {
-					return false
+			//Example, this is a github list of names that are not usernames, it is needed
+			//to determine if such a thing is a user or not.
+				const Github_ReservedNames = new Set([
+					"about",
+					"apps",
+					"codespaces",
+					"collections",
+					"contact",
+					"customer-stories",
+					"enterprise",
+					"features",
+					"git-guides",
+					"images",
+					"login",
+					"mobile",
+					"organizations",
+					"orgs",
+					"premium-support",
+					"pricing",
+					"readme",
+					"search",
+					"security",
+					"signup",
+					"sitemap",
+					"solutions",
+					"sponsors",
+					"team",
+					"topics",
+					"trending",
+					"users"
+				]);
+			//This is a reusable function that checks github if the link is in fact a user or his repository
+				function IsGithubUser(url) {
+					let URLObj = new URL(url)
+					let UsernamePart = URLObj.pathname.split("/")[1]
+					if (Github_ReservedNames.has(UsernamePart)) {
+						return false
+					}
+					return true
 				}
-				return true
-			}
-			function NotAFC2BlogUser(url) {
-				if (new URL(url).hostname == "admin.blog.fc2.com") {
-					return false
+			//Checks if the FC2 link is not an admin
+				function NotAFC2BlogUser(url) {
+					if (new URL(url).hostname == "admin.blog.fc2.com") {
+						return false
+					}
+					return true
 				}
-				return true
-			}
 	//This is a list of converter objects. Each URL entered runs though all converters to output variants of a
 	//given URL. The following attributes/methods are REQUIRED unless specified "Optional".
 	//Notes:
@@ -230,6 +235,9 @@
 	//     "0" instead of 1.
 	// --- About "PatternToTest": Requires the capturing group to identify a page number, which is
 	//     ":PageNumb(\\d+)".
+	// --- This searches for other URLs down the list to find a similar URL with a higher number. Similar, as in
+	//     to find the same URL (hostname, pathname, and search/query) but with a different page number, to avoid
+	//     contaminating the maximum page number with a different URL.
 	// - Method "SpecialCondition" (Optional): Can be used on either type "Normal" or "Pagination", when used, it
 	//   must return a boolean value: true to accept the match, or false that it failed.
 	// - If a URL matches at least one of these converters, and any of the converters match doesn't output the
@@ -506,7 +514,7 @@
 	//Set up the filter key list based on reconized URLs
 		GenerateCheckboxKeyFilterList();
 	//Test URLs
-		if (TestSampleURLs) {
+		if (Setting_TestSampleURLs) {
 			TestURLs();
 		}
 	
@@ -686,10 +694,16 @@ https://yournamehere.tumblr.com
 											
 											break
 									} else {
-										//If user disallows generating pagination, insert the list as-is with the "Type" saying Pagination_Cancelled 
+										//If user disallows generating pagination, insert the list as-is with the "Type" saying Pagination_Cancelled.
+											let Str_CurrentlyProcessed = Obj_EnteredURL1.hostname + Obj_EnteredURL1.pathname + Obj_EnteredURL1.search
+											let Str_EnteredURL1_BeforePageNumb = Str_CurrentlyProcessed.match(Converter.Regex_HostPathAndQueryBeforePageNumb)[0]
+											Str_CurrentlyProcessed = Str_CurrentlyProcessed.replace(Str_EnteredURL1.match(Converter.Regex_HostPathAndQueryBeforePageNumb)[0], "")
+											let Str_PageNum = Str_CurrentlyProcessed.match(/\d+/)[0].padStart(Setting_PaginationOff_PadLength, "0")
+											let Str_EnteredURL1_AfterPageNumb = Str_CurrentlyProcessed.replace(/\d+/, "")
+											let URLForSmartSort = Obj_EnteredURL1.protocol + "//" + Str_EnteredURL1_BeforePageNumb + Str_PageNum + Str_EnteredURL1_AfterPageNumb
 											AddToOutput(new GenerateOutputURLs({
 												URLLink: Str_EnteredURL1,
-												URLLinkSmartSort: ReverseURLLabel(Str_EnteredURL1),
+												URLLinkSmartSort: ReverseURLLabel(URLForSmartSort),
 												Type: "Pagination"
 											}))
 									}
@@ -714,7 +728,7 @@ https://yournamehere.tumblr.com
 							AddToOutput(OutputLink)
 						}
 					//Display progress bar
-						if (performance.now() - PreviousYeildTime > ProgressBarDisplayUpdateDelayMS) {
+						if (performance.now() - PreviousYeildTime > Setting_ProgressBarUpdateFrequency) {
 							let NumberOfURLsProcessed = Index1+1
 							DisplayProgress(Index1+1, InputLength)
 							//Disable stuff that would require re-running mainprocess to avoid 2 executions at the same time by the user
@@ -888,7 +902,7 @@ https://yournamehere.tumblr.com
 	function DisplayProgress(ProgressCurrent, ProgressTotal) {
 		document.getElementById("URLProgress").hidden = false
 		let Remaining = ProgressTotal - ProgressCurrent
-		document.getElementById("URL_Progress_Text").textContent = DisplayIntOutOfIntAsPercentageText({Quantity: ProgressCurrent, MaxQuantity: ProgressTotal, NumberOfDigitsAfterDec: ProgressPercentageDecimalDigits}) + " " + ProgressCurrent.toString(10) + "/" + ProgressTotal + " (remaining: " + Remaining + ")"
+		document.getElementById("URL_Progress_Text").textContent = DisplayIntOutOfIntAsPercentageText({Quantity: ProgressCurrent, MaxQuantity: ProgressTotal, NumberOfDigitsAfterDec: Setting_ProgressPercentageDigitsAfterDecimal}) + " " + ProgressCurrent.toString(10) + "/" + ProgressTotal + " (remaining: " + Remaining + ")"
 		document.getElementById("URL_Progress_Bar").style.backgroundImage = CSSLinearGradientProgressBar({Quantity: ProgressCurrent, MaxQuantity: ProgressTotal, ColorFull: "#00C000", ColorEmpty: "#505050"})
 	}
 	function CheckIfURLMatchConverter(Obj_Converter, Obj_URL) {
@@ -901,6 +915,7 @@ https://yournamehere.tumblr.com
 		return (PatternHaveMatched && Bool_SpecialConditionPassed)
 	}
 	function ObtainPageNumber(StrObj_URLPattern, Str_URL) {
+		//This function returns the page number of a paginated URL.
 		let PageCount = 0
 		let PatternMatcher = new URLPattern(StrObj_URLPattern).exec(Str_URL)
 		let URLPartNamesToGetPageNumber = [
