@@ -88,13 +88,7 @@
 		<td style="text-align: left;" id="OutputSettings">
 			<div>
 				<div class="OutputPanels">
-					<h1>Processing options</h1>
-					<div class="TabbedItems">
-						<div><label><input type="checkbox" id="Setting_AllowPagination" checked onchange="InputURLsChanged = true; ProcessURLs()">Generate paginated URLs</label></div>
-						<div><label><input type="checkbox" checked onchange="InputURLsChanged = true; ProcessURLs();" id="Setting_https">Force <kbd>https</kbd></label></div>
-						<div><label><input type="checkbox" checked onchange="InputURLsChanged = true; ProcessURLs();" id="Setting_NoTrailingSlash">Remove trailing slash</label></div>
-					</div>
-					<div class="TabbedItems" style="padding-top: 16px; padding-bottom: 16px;">
+					<div style="padding-top: 16px; padding-bottom: 16px;">
 						<details>
 							<summary>Info</summary>
 							<ul>
@@ -113,13 +107,19 @@
 							</ul>
 						</details>
 					</div>
+					<h1>Processing options</h1>
+					<div class="TabbedItems">
+						<div><label><input type="checkbox" id="Setting_AllowPagination" checked onchange="InputURLsChanged = true; ProcessURLs()">Generate paginated URLs</label></div>
+						<div><label><input type="checkbox" checked onchange="InputURLsChanged = true; ProcessURLs();" id="Setting_https">Force <kbd>https</kbd></label></div>
+						<div><label><input type="checkbox" checked onchange="InputURLsChanged = true; ProcessURLs();" id="Setting_NoTrailingSlash">Remove trailing slash</label></div>
+					</div>
 					<h1>Output options</h1>
 					<div class="TabbedItems">
 						<div>
 							Sort: <select id="SortSettings" onchange="ProcessURLs()">
 								<option data-sortby="">Creation Order</option>
 								<option data-sortby="URL">Alphabetically</option>
-								<option data-sortby="URLSmartSort" selected>Alphabetically (SmartSort)*</option>
+								<option data-sortby="URLSmartSort" selected>Alphabetically (SmartSort)</option>
 								<option data-sortby="Type">Type</option>
 								<option data-sortby="KeyName">Keyname</option>
 							</select> <label><input type="checkbox" id="ReverseSort" onchange="ProcessURLs()">Reverse</label><br><br>
