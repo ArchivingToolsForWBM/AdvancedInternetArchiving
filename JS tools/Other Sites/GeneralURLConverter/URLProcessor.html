@@ -201,6 +201,10 @@
 					"trending",
 					"users"
 				]);
+			//Other blacklisted stuff
+				const Nanos_ReservedNames = new Set([
+					"register"
+				])
 			//This is a reusable function that checks github if the link is in fact a user or his repository
 				function IsGithubUser(url) {
 					let URLObj = new URL(url)
@@ -213,6 +217,15 @@
 			//Checks if the FC2 link is not an admin
 				function NotAFC2BlogUser(url) {
 					if (new URL(url).hostname == "admin.blog.fc2.com") {
+						return false
+					}
+					return true
+				}
+			//Other
+				function IsNanosUser(url) {
+					let URLObj = new URL(url)
+					let UsernamePart = URLObj.pathname.split("/")[1]
+					if (Nanos_ReservedNames.has(UsernamePart)) {
 						return false
 					}
 					return true
@@ -379,7 +392,7 @@
 				PatternToTest: "http{s}?://*.blog.shinobi.jp/((?:Entry|Page))/:PageNumb(\\d+){/}?",
 				Type: "Pagination",
 				MinPageNum: 1,
-				Regex_HostPathAndQueryBeforePageNumb: /[a-zA-Z\d\-\.]+\/(?:Entry|Page)\//
+				Regex_HostPathAndQueryBeforePageNumb: /[a-zA-Z\d\-\._]+\/(?:Entry|Page)\//
 			
 			},
 			//https://username.blog.shinobi.jp/catagoryname/?pageNo=12
@@ -387,7 +400,7 @@
 				PatternToTest: "http{s}?://*.blog.shinobi.jp/*/\\?pageNo=:PageNumb(\\d+)",
 				Type: "Pagination",
 				MinPageNum: 1,
-				Regex_HostPathAndQueryBeforePageNumb: /[a-zA-Z\d\-\.]+\/[a-zA-Z\d\-\.%]+\/\?pageNo=/
+				Regex_HostPathAndQueryBeforePageNumb: /[a-zA-Z\d\-\._]+\/[a-zA-Z\d\-\.%_]+\/\?pageNo=/
 			
 			},
 			//https://nblog.cnobi.jp/v1/blog/user/abc123/abc123
@@ -410,7 +423,30 @@
 					}
 					return OutputURLs
 				}
-			}
+			},
+			//Nanos
+			//https://nanos.jp/username/album/1/
+			//https://nanos.jp/username/album/1/12/
+			//https://nanos.jp/username/page/12/
+			//Note that these URLs can have multiple page numbers on them.
+			{
+				PatternToTest: "http{s}?://nanos.jp/*/*/:PageNumb(\\d+){/}?",
+				Type: "Pagination",
+				MinPageNum: 1,
+				Regex_HostPathAndQueryBeforePageNumb: /nanos\.jp\/[a-zA-Z\d\-\.%_]+\/[a-zA-Z\d\-\.%_]+\//,
+				SpecialCondition(InputURL) {
+					return IsNanosUser(InputURL)
+				}
+			},
+			{
+				PatternToTest: "http{s}?://nanos.jp/*/*/(\\d+)/:PageNumb(\\d+){/}?",
+				Type: "Pagination",
+				MinPageNum: 1,
+				Regex_HostPathAndQueryBeforePageNumb: /nanos\.jp\/[a-zA-Z\d\-\.%_]+\/[a-zA-Z\d\-\.%_]+\/\d+\//,
+				SpecialCondition(InputURL) {
+					return IsNanosUser(InputURL)
+				}
+			},
 		]
 	//This identifies URLs for giving them keynames for filtering and sorting. If a matching URL is found,
 	//the loop terminates with its keyname being set. Again, much like URLConverters, all properties are
@@ -659,7 +695,7 @@ https://yournamehere.tumblr.com
 									if (document.getElementById("Setting_AllowPagination").checked) {
 										//Find another same URL (after our current one) but with the highest page number.
 											let MinPageNumber = Converter.MinPageNum ?? 1
-											let MaxPageNumber = ObtainPageNumber(Converter.PatternToTest, Str_EnteredURL1)
+											let MaxPageNumber = ObtainPageNumber(Converter.Regex_HostPathAndQueryBeforePageNumb, Str_EnteredURL1)
 											
 											let Str_EnteredURL1_BeforePageNumb = Str_EnteredURL1.match(Converter.Regex_HostPathAndQueryBeforePageNumb)[0]
 											let StringToProcess1 = new URL(Str_EnteredURL1).hostname + new URL(Str_EnteredURL1).pathname + new URL(Str_EnteredURL1).search
@@ -678,7 +714,7 @@ https://yournamehere.tumblr.com
 													let StringToProcess2 = new URL(Str_EnteredURL2).hostname + new URL(Str_EnteredURL2).pathname + new URL(Str_EnteredURL2).search
 													let Str_EnteredURL2_AfterPageNumb = StringToProcess2.replace(Converter.Regex_HostPathAndQueryBeforePageNumb, "").replace(/\d+/, "")
 													if ((Str_EnteredURL1_BeforePageNumb == Str_EnteredURL2_BeforePageNumb)&&(Str_EnteredURL1_AfterPageNumb == Str_EnteredURL2_AfterPageNumb)) {
-														MaxPageNumber = Math.max(MaxPageNumber, ObtainPageNumber(Converter.PatternToTest, Str_EnteredURL2))
+														MaxPageNumber = Math.max(MaxPageNumber, ObtainPageNumber(Converter.Regex_HostPathAndQueryBeforePageNumb, Str_EnteredURL2))
 													}
 											}
 										//Generate URLs of each page from MinPageNumber to MaxPageNumber
@@ -916,22 +952,12 @@ https://yournamehere.tumblr.com
 	}
 	function ObtainPageNumber(StrObj_URLPattern, Str_URL) {
 		//This function returns the page number of a paginated URL.
+		let Obj_URL = new URL(Str_URL)
+		let Str_URLButOnlyHostnamePathAndSearch = Obj_URL.hostname + Obj_URL.pathname + Obj_URL.search
 		let PageCount = 0
-		let PatternMatcher = new URLPattern(StrObj_URLPattern).exec(Str_URL)
-		let URLPartNamesToGetPageNumber = [
-			"pathname",
-			"search",
-		]
-		for (let i = 0; i < URLPartNamesToGetPageNumber.length; i++) {
-			let URLPart = URLPartNamesToGetPageNumber[i]
-			try {
-				if (PatternMatcher[URLPart].groups.PageNumb === undefined) {
-					continue
-				}
-				PageCount = parseInt(PatternMatcher[URLPart].groups.PageNumb)
-				break
-			} catch {}
-		}
+		try {
+			PageCount = Number(Str_URLButOnlyHostnamePathAndSearch.replace(StrObj_URLPattern, "").match(/\d+/)[0])
+		} catch {}
 		return PageCount
 	}
 	function CopyList() {
